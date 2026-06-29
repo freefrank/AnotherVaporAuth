@@ -50,18 +50,38 @@ documented Steam protocol but require **live Steam credentials** to integration
 test. The QR-approve (direction B) signature scheme in particular should be
 checked against a live capture before production use.
 
-The **Linux desktop build is verified** (release bundle ~27 MB, AOT). Android
-APK requires the Android SDK/NDK (not installed here).
+Both **Linux desktop and Android release builds are verified**:
+
+- Linux desktop: release bundle ~27 MB (AOT).
+- Android release APK: universal 71 MB; split-per-abi arm64 25.8 MB,
+  armeabi-v7a 21.7 MB, x86_64 28.3 MB. No NDK required.
 
 ```sh
 flutter pub get
-flutter test                 # run the suite (34 tests)
-flutter build linux --release    # verified: build/linux/x64/release/bundle (~27MB)
-flutter run -d linux             # or windows / macos
-flutter build apk                # Android (needs Android SDK)
+flutter test                       # 34 tests
+flutter build linux --release      # build/linux/x64/release/bundle (~27MB)
+flutter run -d linux               # or windows / macos
+flutter build apk --release                  # universal APK
+flutter build apk --release --split-per-abi  # per-ABI APKs (lighter)
 ```
 
-Manjaro/Arch desktop build deps: `sudo pacman -S --needed clang cmake ninja gtk3`.
+Manjaro/Arch toolchain:
+
+```sh
+# desktop
+sudo pacman -S --needed clang cmake ninja gtk3
+# android
+sudo pacman -S --needed jdk17-openjdk
+# + Android cmdline-tools in ~/Android/Sdk, then:
+sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+flutter config --android-sdk ~/Android/Sdk
+```
+
+Notes:
+- `android/build.gradle.kts` forces every plugin's `compileSdk` to 36 in
+  `afterEvaluate` (file_picker 8.x pins 34, which breaks the release build).
+- Release APKs here are signed with the debug key (test installs only); add a
+  release signing config for distribution.
 
 ## Toolchain
 

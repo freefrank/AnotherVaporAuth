@@ -16,7 +16,9 @@
 - [x] 5. i18n: en + zh ARB（编译期生成）
 - [x] 6. 验证: flutter analyze 零问题；34 测试通过；UI 冒烟渲染通过
 - [x] 7. Linux 桌面二进制构建成功（debug + release）—— release bundle 仅 27MB
-- [ ] Android APK 构建 —— 需 Android SDK/NDK（本机未装；`pacman -S android-sdk` 或 Android Studio 后 `flutter build apk`）
+- [x] 8. Android release APK 构建成功 —— 通用包 71MB；split-per-abi 出各架构轻量包
+  - 工具链：JDK17 + Android SDK(platform 35/36, build-tools 35/36)，无需 NDK
+  - 修复：`android/build.gradle.kts` 在 afterEvaluate 强制插件 compileSdk=36（file_picker 8.x 钉死 34）
 
 ## 测试覆盖（34 项）
 - PBKDF2 RFC6070 向量、AES-CBC 往返、TOTP/确认哈希跨实现向量
