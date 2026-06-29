@@ -94,8 +94,10 @@ class MemoryStorageProvider extends StorageProvider {
   @override
   Future<String> maFilesDir() async => _dir;
 
+  // Treat an empty store as "no directory yet" so load() creates a fresh
+  // manifest instead of throwing a parse exception.
   @override
-  Future<bool> dirExists() async => true;
+  Future<bool> dirExists() async => files.isNotEmpty;
   @override
   Future<void> ensureDir() async {}
   @override

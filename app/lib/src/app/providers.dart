@@ -17,6 +17,10 @@ final storageProvider =
 /// Shared Steam HTTP client.
 final apiClientProvider = Provider<SteamApiClient>((ref) => SteamApiClient());
 
+/// Time alignment hook (overridable in tests to avoid network).
+final timeAlignerProvider =
+    Provider<Future<void> Function()>((ref) => SteamTime.align);
+
 /// Persisted lightweight app settings (currently: locale override).
 final settingsStoreProvider =
     Provider<SettingsStore>((ref) => SettingsStore(ref.read(storageProvider)));
@@ -87,7 +91,7 @@ class AppController extends AsyncNotifier<AppData> {
   @override
   Future<AppData> build() async {
     // Align Steam time in the background (does not block first paint long).
-    unawaited(SteamTime.align());
+    unawaited(ref.read(timeAlignerProvider)());
     final storage = ref.read(storageProvider);
     final store = await AccountStore.load(storage);
 
