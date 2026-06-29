@@ -476,6 +476,24 @@ abstract class AppLocalizations {
   /// **'System default'**
   String get settingsLanguageSystem;
 
+  /// No description provided for @settingsTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsTheme;
+
+  /// No description provided for @themeNeon.
+  ///
+  /// In en, this message translates to:
+  /// **'Neon'**
+  String get themeNeon;
+
+  /// No description provided for @themePixel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pixel'**
+  String get themePixel;
+
   /// No description provided for @actionLogin.
   ///
   /// In en, this message translates to:

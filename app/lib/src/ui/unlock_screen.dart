@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/theme.dart';
+import 'widgets/motion.dart';
+import 'widgets/scanline_overlay.dart';
 
 class UnlockScreen extends ConsumerStatefulWidget {
   const UnlockScreen({super.key});
@@ -15,6 +18,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   final _controller = TextEditingController();
   bool _busy = false;
   String? _error;
+  int _shake = 0;
 
   @override
   void dispose() {
@@ -35,6 +39,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
       setState(() {
         _busy = false;
         _error = AppLocalizations.of(context).unlockInvalid;
+        _shake++;
       });
     }
   }
@@ -42,17 +47,33 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final t = Theme.of(context).extension<SdaTokens>()!;
     return Scaffold(
       appBar: AppBar(title: Text(l.unlockTitle)),
-      body: Center(
+      body: ScanlineOverlay(
+        child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 360),
+          child: ShakeWidget(
+          trigger: _shake,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.lock_outline, size: 48),
+                FloatingLogo(
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: t.panel2,
+                      border: t.border,
+                      borderRadius: BorderRadius.circular(t.radius),
+                      boxShadow: t.glowShadow(),
+                    ),
+                    child: Icon(Icons.lock_outline, size: 30, color: t.accent),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Text(l.unlockPrompt, textAlign: TextAlign.center),
                 const SizedBox(height: 16),
@@ -84,6 +105,8 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
               ],
             ),
           ),
+          ),
+        ),
         ),
       ),
     );

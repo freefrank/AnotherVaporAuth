@@ -86,6 +86,9 @@
   "settingsAutoConfirmTrades": "Auto-confirm trades",
   "settingsLanguage": "Language",
   "settingsLanguageSystem": "System default",
+  "settingsTheme": "Theme",
+  "themeNeon": "Neon",
+  "themePixel": "Pixel",
 
   "actionLogin": "Log in / refresh session",
   "actionConfirmations": "Trade confirmations",

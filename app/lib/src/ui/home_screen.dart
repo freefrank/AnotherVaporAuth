@@ -7,6 +7,9 @@ import '../app/providers.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/steam_totp.dart';
 import '../services/steam_time.dart';
+import 'widgets/countdown_ring.dart';
+import 'widgets/flip_code.dart';
+import 'widgets/scanline_overlay.dart';
 import 'approve_login_screen.dart';
 import 'confirmations_screen.dart';
 import 'import_helper.dart';
@@ -35,20 +38,22 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: accounts.isEmpty
-          ? Center(child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(l.accountsEmpty, textAlign: TextAlign.center),
-            ))
-          : ReorderableListView.builder(
-              itemCount: accounts.length,
-              onReorderItem: (o, n) =>
-                  ref.read(appControllerProvider.notifier).reorder(o, n),
-              itemBuilder: (context, i) => _AccountTile(
-                key: ValueKey(accounts[i].steamId),
-                account: accounts[i],
+      body: ScanlineOverlay(
+        child: accounts.isEmpty
+            ? Center(child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(l.accountsEmpty, textAlign: TextAlign.center),
+              ))
+            : ReorderableListView.builder(
+                itemCount: accounts.length,
+                onReorderItem: (o, n) =>
+                    ref.read(appControllerProvider.notifier).reorder(o, n),
+                itemBuilder: (context, i) => _AccountTile(
+                  key: ValueKey(accounts[i].steamId),
+                  account: accounts[i],
+                ),
               ),
-            ),
+      ),
       floatingActionButton: _HomeFab(),
     );
   }
@@ -103,26 +108,12 @@ class _AccountTile extends ConsumerWidget {
     final remaining = SteamTotp.secondsRemaining(tick);
 
     return ListTile(
-      title: Text(
-        code,
-        style: const TextStyle(
-          fontSize: 28,
-          fontFeatures: [FontFeature.tabularFigures()],
-          letterSpacing: 4,
-        ),
+      title: Align(
+        alignment: Alignment.centerLeft,
+        child: FlipCode(code: code, fontSize: 28, letterSpacing: 6),
       ),
       subtitle: Text(account.accountName ?? '${account.steamId}'),
-      leading: SizedBox(
-        width: 36,
-        height: 36,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            CircularProgressIndicator(value: remaining / 30, strokeWidth: 3),
-            Text('$remaining', style: const TextStyle(fontSize: 11)),
-          ],
-        ),
-      ),
+      leading: CountdownRing(remaining: remaining, size: 40, stroke: 3),
       trailing: PopupMenuButton<String>(
         onSelected: (value) => _onAction(context, ref, value),
         itemBuilder: (context) => [

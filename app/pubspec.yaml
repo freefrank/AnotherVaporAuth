@@ -17,6 +17,9 @@ dependencies:
   # State management
   flutter_riverpod: ^2.6.1
 
+  # Fonts for the Neon / Pixel design themes
+  google_fonts: ^6.2.1
+
   # Crypto (maFile PBKDF2+AES-CBC, RSA, HMAC)
   pointycastle: ^3.9.1
   crypto: ^3.0.6

@@ -47,4 +47,13 @@ class SettingsStore {
     }
     await _write(data);
   }
+
+  /// UI theme variant: 'neon' (default) or 'pixel'.
+  Future<String?> loadTheme() async => (await _read())['theme'] as String?;
+
+  Future<void> saveTheme(String variant) async {
+    final data = await _read();
+    data['theme'] = variant;
+    await _write(data);
+  }
 }

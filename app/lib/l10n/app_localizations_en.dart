@@ -212,6 +212,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLanguageSystem => 'System default';
 
   @override
+  String get settingsTheme => 'Theme';
+
+  @override
+  String get themeNeon => 'Neon';
+
+  @override
+  String get themePixel => 'Pixel';
+
+  @override
   String get actionLogin => 'Log in / refresh session';
 
   @override

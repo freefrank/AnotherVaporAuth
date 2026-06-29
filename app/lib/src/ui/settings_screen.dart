@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/theme.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -85,6 +86,28 @@ class SettingsScreen extends ConsumerWidget {
               manifest.autoConfirmTrades = v;
               saveManifest();
             },
+          ),
+          const Divider(),
+          _section(context, l.settingsTheme),
+          RadioGroup<SdaThemeVariant>(
+            groupValue: ref.watch(themeVariantProvider),
+            onChanged: (v) {
+              if (v != null) {
+                ref.read(themeVariantProvider.notifier).setVariant(v);
+              }
+            },
+            child: Column(
+              children: [
+                RadioListTile<SdaThemeVariant>(
+                  value: SdaThemeVariant.neon,
+                  title: Text(l.themeNeon),
+                ),
+                RadioListTile<SdaThemeVariant>(
+                  value: SdaThemeVariant.pixel,
+                  title: Text(l.themePixel),
+                ),
+              ],
+            ),
           ),
           const Divider(),
           _section(context, l.settingsLanguage),

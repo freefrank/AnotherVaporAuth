@@ -5,6 +5,7 @@ import '../../l10n/app_localizations.dart';
 import '../ui/home_screen.dart';
 import '../ui/unlock_screen.dart';
 import 'providers.dart';
+import 'theme.dart';
 
 class SdaApp extends ConsumerWidget {
   const SdaApp({super.key});
@@ -12,22 +13,32 @@ class SdaApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
-
-    // Neutral Material 3 baseline; visual style is intentionally minimal and
-    // will be themed later.
-    final scheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF1B2838), // Steam-ish navy placeholder
-      brightness: Brightness.dark,
-    );
+    final variant = ref.watch(themeVariantProvider);
 
     return MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      theme: ThemeData(colorScheme: scheme, useMaterial3: true),
+      theme: buildSdaTheme(variant),
       debugShowCheckedModeBanner: false,
+      builder: (context, child) => _Backdrop(child: child ?? const SizedBox()),
       home: const _Root(),
+    );
+  }
+}
+
+/// Paints the neon corner-gradient behind every screen (no-op in pixel theme).
+class _Backdrop extends StatelessWidget {
+  final Widget child;
+  const _Backdrop({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    return DecoratedBox(
+      decoration: BoxDecoration(color: t.bg, gradient: t.bgGradient),
+      child: child,
     );
   }
 }

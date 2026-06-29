@@ -86,6 +86,9 @@
   "settingsAutoConfirmTrades": "自动确认交易",
   "settingsLanguage": "语言",
   "settingsLanguageSystem": "跟随系统",
+  "settingsTheme": "主题",
+  "themeNeon": "霓虹",
+  "themePixel": "像素",
 
   "actionLogin": "登录 / 刷新会话",
   "actionConfirmations": "交易确认",

@@ -9,6 +9,7 @@ import '../services/steam_api_client.dart';
 import '../services/steam_time.dart';
 import '../services/storage_provider.dart';
 import 'settings_store.dart';
+import 'theme.dart';
 
 /// Platform storage (maFiles location).
 final storageProvider =
@@ -24,6 +25,26 @@ final timeAlignerProvider =
 /// Persisted lightweight app settings (currently: locale override).
 final settingsStoreProvider =
     Provider<SettingsStore>((ref) => SettingsStore(ref.read(storageProvider)));
+
+/// The active UI theme variant (neon / pixel), persisted.
+final themeVariantProvider =
+    NotifierProvider<ThemeController, SdaThemeVariant>(ThemeController.new);
+
+class ThemeController extends Notifier<SdaThemeVariant> {
+  @override
+  SdaThemeVariant build() {
+    ref.read(settingsStoreProvider).loadTheme().then((v) {
+      if (v == 'pixel') state = SdaThemeVariant.pixel;
+      if (v == 'neon') state = SdaThemeVariant.neon;
+    });
+    return SdaThemeVariant.neon;
+  }
+
+  Future<void> setVariant(SdaThemeVariant variant) async {
+    state = variant;
+    await ref.read(settingsStoreProvider).saveTheme(variant.name);
+  }
+}
 
 /// The active UI locale (null = follow system).
 final localeProvider =

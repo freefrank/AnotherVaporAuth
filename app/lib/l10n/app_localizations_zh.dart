@@ -208,6 +208,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsLanguageSystem => '跟随系统';
 
   @override
+  String get settingsTheme => '主题';
+
+  @override
+  String get themeNeon => '霓虹';
+
+  @override
+  String get themePixel => '像素';
+
+  @override
   String get actionLogin => '登录 / 刷新会话';
 
   @override
