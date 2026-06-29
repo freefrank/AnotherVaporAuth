@@ -1,0 +1,102 @@
+{
+  "@@locale": "en",
+  "appTitle": "Steam Desktop Authenticator",
+  "navAccounts": "Accounts",
+  "navSettings": "Settings",
+
+  "unlockTitle": "Unlock",
+  "unlockPrompt": "Enter your encryption passkey",
+  "unlockButton": "Unlock",
+  "unlockInvalid": "That passkey is invalid.",
+  "passkeyLabel": "Passkey",
+
+  "accountsEmpty": "No accounts yet. Import a maFile or log in to add one.",
+  "copyCode": "Copy code",
+  "codeCopied": "Login code copied to clipboard",
+  "copySteamId": "Copy SteamID",
+
+  "confirmationsTitle": "Confirmations",
+  "confirmationsEmpty": "No pending confirmations.",
+  "confirmationsRefresh": "Refresh",
+  "confAccept": "Accept",
+  "confDecline": "Decline",
+  "confSelectAll": "Select all",
+  "confAcceptSelected": "Accept selected",
+  "confDeclineSelected": "Decline selected",
+  "confTypeTrade": "Trade",
+  "confTypeMarket": "Market listing",
+  "confTypeOther": "Confirmation",
+  "confProcessing": "Processing {count} confirmation(s)…",
+  "@confProcessing": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "confResult": "{ok} succeeded, {fail} failed",
+  "@confResult": {
+    "placeholders": { "ok": { "type": "int" }, "fail": { "type": "int" } }
+  },
+
+  "loginTitle": "Log in to Steam",
+  "loginUsername": "Username",
+  "loginPassword": "Password",
+  "loginButton": "Log in",
+  "loginViaQr": "Log in with QR code",
+  "loginViaCredentials": "Log in with password",
+  "loginScanWithApp": "Scan this code with the Steam mobile app",
+  "loginNeedGuardCode": "Enter the Steam Guard code",
+  "loginNeedEmailCode": "Enter the code sent to your email",
+  "loginSubmitCode": "Submit",
+  "loginWaiting": "Waiting for confirmation…",
+  "loginFailed": "Login failed: {error}",
+  "@loginFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "approveTitle": "Approve sign in",
+  "approveScanPrompt": "Scan the QR code shown on the device you want to sign in.",
+  "approvePastePrompt": "Or paste the QR code link here",
+  "approveButton": "Approve",
+  "approveReject": "Reject",
+  "approveSuccess": "Sign in approved.",
+  "approveRejected": "Sign in rejected.",
+
+  "importTitle": "Import account",
+  "importPickFile": "Choose a .maFile",
+  "importSuccess": "Account imported.",
+  "importFailed": "Failed to import: {error}",
+  "@importFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "addAuthTitle": "Add authenticator",
+  "addAuthPhonePrompt": "Enter your phone number (with country code)",
+  "addAuthSmsPrompt": "Enter the SMS code sent to your phone",
+  "addAuthRevocationWarn": "Write down your revocation code: {code}",
+  "@addAuthRevocationWarn": {
+    "placeholders": { "code": { "type": "String" } }
+  },
+  "addAuthConfirmRevocation": "Re-enter your revocation code to confirm you saved it",
+  "addAuthLinked": "Authenticator linked successfully.",
+
+  "settingsEncryption": "Encryption",
+  "settingsSetPasskey": "Set / change encryption passkey",
+  "settingsPeriodicChecking": "Periodically check for confirmations",
+  "settingsCheckInterval": "Check interval (seconds)",
+  "settingsCheckAll": "Check all accounts",
+  "settingsAutoConfirmMarket": "Auto-confirm market transactions",
+  "settingsAutoConfirmTrades": "Auto-confirm trades",
+  "settingsLanguage": "Language",
+  "settingsLanguageSystem": "System default",
+
+  "actionLogin": "Log in / refresh session",
+  "actionConfirmations": "Trade confirmations",
+  "actionRemove": "Remove account",
+  "actionImport": "Import",
+  "actionAddAuthenticator": "Add authenticator",
+  "commonCancel": "Cancel",
+  "commonOk": "OK",
+  "commonConfirm": "Confirm",
+  "commonClose": "Close",
+  "commonError": "Error",
+  "sessionExpired": "Your Steam session has expired. Please log in again.",
+  "removeConfirm": "Remove this account from this device? Make sure you have your maFile backed up."
+}

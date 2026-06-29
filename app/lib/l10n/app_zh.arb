@@ -1,0 +1,102 @@
+{
+  "@@locale": "zh",
+  "appTitle": "Steam 桌面验证器",
+  "navAccounts": "账户",
+  "navSettings": "设置",
+
+  "unlockTitle": "解锁",
+  "unlockPrompt": "请输入加密口令",
+  "unlockButton": "解锁",
+  "unlockInvalid": "口令无效。",
+  "passkeyLabel": "口令",
+
+  "accountsEmpty": "暂无账户。导入 maFile 或登录以添加。",
+  "copyCode": "复制验证码",
+  "codeCopied": "验证码已复制到剪贴板",
+  "copySteamId": "复制 SteamID",
+
+  "confirmationsTitle": "确认",
+  "confirmationsEmpty": "没有待处理的确认。",
+  "confirmationsRefresh": "刷新",
+  "confAccept": "接受",
+  "confDecline": "拒绝",
+  "confSelectAll": "全选",
+  "confAcceptSelected": "批量接受",
+  "confDeclineSelected": "批量拒绝",
+  "confTypeTrade": "交易",
+  "confTypeMarket": "市场上架",
+  "confTypeOther": "确认",
+  "confProcessing": "正在处理 {count} 条确认…",
+  "@confProcessing": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "confResult": "成功 {ok} 条，失败 {fail} 条",
+  "@confResult": {
+    "placeholders": { "ok": { "type": "int" }, "fail": { "type": "int" } }
+  },
+
+  "loginTitle": "登录 Steam",
+  "loginUsername": "用户名",
+  "loginPassword": "密码",
+  "loginButton": "登录",
+  "loginViaQr": "扫码登录",
+  "loginViaCredentials": "密码登录",
+  "loginScanWithApp": "用 Steam 手机 App 扫描此二维码",
+  "loginNeedGuardCode": "请输入 Steam 令牌验证码",
+  "loginNeedEmailCode": "请输入邮箱收到的验证码",
+  "loginSubmitCode": "提交",
+  "loginWaiting": "等待确认…",
+  "loginFailed": "登录失败：{error}",
+  "@loginFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "approveTitle": "批准登录",
+  "approveScanPrompt": "扫描你想登录的设备上显示的二维码。",
+  "approvePastePrompt": "或在此粘贴二维码链接",
+  "approveButton": "批准",
+  "approveReject": "拒绝",
+  "approveSuccess": "登录已批准。",
+  "approveRejected": "登录已拒绝。",
+
+  "importTitle": "导入账户",
+  "importPickFile": "选择 .maFile 文件",
+  "importSuccess": "账户已导入。",
+  "importFailed": "导入失败：{error}",
+  "@importFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "addAuthTitle": "添加验证器",
+  "addAuthPhonePrompt": "请输入手机号（含国家区号）",
+  "addAuthSmsPrompt": "请输入手机收到的短信验证码",
+  "addAuthRevocationWarn": "请记下你的撤销码：{code}",
+  "@addAuthRevocationWarn": {
+    "placeholders": { "code": { "type": "String" } }
+  },
+  "addAuthConfirmRevocation": "请再次输入撤销码以确认你已保存",
+  "addAuthLinked": "验证器绑定成功。",
+
+  "settingsEncryption": "加密",
+  "settingsSetPasskey": "设置 / 修改加密口令",
+  "settingsPeriodicChecking": "周期检查确认",
+  "settingsCheckInterval": "检查间隔（秒）",
+  "settingsCheckAll": "检查所有账户",
+  "settingsAutoConfirmMarket": "自动确认市场交易",
+  "settingsAutoConfirmTrades": "自动确认交易",
+  "settingsLanguage": "语言",
+  "settingsLanguageSystem": "跟随系统",
+
+  "actionLogin": "登录 / 刷新会话",
+  "actionConfirmations": "交易确认",
+  "actionRemove": "移除账户",
+  "actionImport": "导入",
+  "actionAddAuthenticator": "添加验证器",
+  "commonCancel": "取消",
+  "commonOk": "确定",
+  "commonConfirm": "确认",
+  "commonClose": "关闭",
+  "commonError": "错误",
+  "sessionExpired": "你的 Steam 会话已过期，请重新登录。",
+  "removeConfirm": "从本设备移除该账户？请确保已备份 maFile。"
+}

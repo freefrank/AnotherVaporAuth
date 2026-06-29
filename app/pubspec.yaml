@@ -1,0 +1,52 @@
+name: sda
+description: "Steam Desktop Authenticator (Flutter rewrite)"
+publish_to: 'none'
+version: 0.9.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.6.1
+
+  # Crypto (maFile PBKDF2+AES-CBC, RSA, HMAC)
+  pointycastle: ^3.9.1
+  crypto: ^3.0.6
+  asn1lib: ^1.5.5
+
+  # Networking (Steam web API)
+  dio: ^5.7.0
+  cookie_jar: ^4.0.8
+  dio_cookie_manager: ^3.1.1
+
+  # QR (login direction A render / direction B scan)
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^6.0.2
+
+  # Files / storage
+  file_picker: ^8.1.4
+  path_provider: ^2.1.5
+  path: ^1.9.0
+
+  # i18n
+  intl: any
+
+  # utils
+  collection: ^1.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true
