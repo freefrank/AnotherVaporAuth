@@ -15,7 +15,8 @@
 - [x] 4. UI（Material3 骨架）: 解锁 / 主屏 / 确认（批量）/ 登录 / 添加验证器 / 扫码批准 / 设置
 - [x] 5. i18n: en + zh ARB（编译期生成）
 - [x] 6. 验证: flutter analyze 零问题；34 测试通过；UI 冒烟渲染通过
-- [ ] 平台二进制构建（桌面需 clang/cmake/ninja，安卓需 Android SDK）—— 本环境缺失，待有 SDK 的机器上 `flutter build`
+- [x] 7. Linux 桌面二进制构建成功（debug + release）—— release bundle 仅 27MB
+- [ ] Android APK 构建 —— 需 Android SDK/NDK（本机未装；`pacman -S android-sdk` 或 Android Studio 后 `flutter build apk`）
 
 ## 测试覆盖（34 项）
 - PBKDF2 RFC6070 向量、AES-CBC 往返、TOTP/确认哈希跨实现向量

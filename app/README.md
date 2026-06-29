@@ -50,15 +50,18 @@ documented Steam protocol but require **live Steam credentials** to integration
 test. The QR-approve (direction B) signature scheme in particular should be
 checked against a live capture before production use.
 
-Platform binaries were **not** built in the dev container (no Android SDK / no
-clang+cmake+ninja). Build on a machine with the toolchains:
+The **Linux desktop build is verified** (release bundle ~27 MB, AOT). Android
+APK requires the Android SDK/NDK (not installed here).
 
 ```sh
 flutter pub get
-flutter test                 # run the suite
-flutter run -d linux         # or windows / macos
-flutter build apk            # Android (needs Android SDK)
+flutter test                 # run the suite (34 tests)
+flutter build linux --release    # verified: build/linux/x64/release/bundle (~27MB)
+flutter run -d linux             # or windows / macos
+flutter build apk                # Android (needs Android SDK)
 ```
+
+Manjaro/Arch desktop build deps: `sudo pacman -S --needed clang cmake ninja gtk3`.
 
 ## Toolchain
 
