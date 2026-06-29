@@ -21,6 +21,8 @@
 1. **数据完全兼容**：新版能直接读取 / 写入现有 `maFiles`（含加密格式），老用户零成本迁移。
 2. **功能全量对齐**：包含联网功能（登录、确认、添加验证器、会话刷新）。
 3. **逻辑不变**：算法与协议与现版本等价（TOTP、确认签名、加密方案、Steam 新登录协议）。
+4. **多语言 (i18n)**：UI 文案全部走本地化资源，方便扩展多语言；首发至少英文 + 简体中文，架构上可随时加语言。
+5. **批量确认**：确认列表支持多选 / 全选，一次性批量接受或拒绝多条交易/市场确认。
 
 ## 2. 现成方案复用评估
 
@@ -116,12 +118,17 @@
 
 `access_token` 过期时用 `refresh_token` 换新（对应现版本 LoginType.Refresh）。
 
-### 6.3 确认 `Confirmations`
+### 6.3 确认 `Confirmations`（原生渲染，可行性已核实）
+
+**可行性结论**：现 mobileconf 接口为纯 JSON，无需 WebView / HTML 解析。多个独立实现（escrow-tf Go、ArchiSteamFarm、node-steam）均采用此方式，方案成熟。
 
 - `GET /mobileconf/getlist` 带 `p`(deviceid) / `a`(steamid) / `k`(用 identity_secret 生成的 HMAC-SHA1 签名) / `t`(时间) / `tag=list` / `access_token`。
-- 返回 JSON 确认列表 → 原生渲染。
-- 接受 / 拒绝：`GET /mobileconf/ajaxop`（tag=accept/reject，单个）或 multi 端点（批量），同样带签名。
-- 签名算法与现版本 `SteamGuardAccount.GenerateConfirmationHashForTime` 等价。
+- 返回 JSON：`{ success, conf: [ { id, type, type_name, creator_id, nonce, headline, summary[], creation_time, icon } ] }` —— 渲染所需字段齐全（标题、多行摘要、图标 URL、类型、时间）。
+- **类型**：`Trade` / `MarketListing` / `Other` —— 按类型分组/着色显示。
+- 接受 / 拒绝（单条）：`GET /mobileconf/ajaxop`，参数 `op=allow|cancel` + `cid=id` + `ck=nonce`，返回 `{ success }`。
+- **批量确认（一级功能）**：`/mobileconf/multiajaxop`（一次提交多个 `cid[]` / `ck[]` + 单一 `op`），原子提交；若端点失败则顺序逐条调用兜底并汇报每条结果。UI 提供多选 / 全选 + 「批量接受」/「批量拒绝」，操作中显示进度，结束后刷新列表。
+- 详情（可选）：`GET /mobileconf/details/<id>` 返回该确认的 HTML 片段，仅用于「查看详情」可选展示，**主列表不依赖它**。
+- 签名算法与现版本 `SteamGuardAccount.GenerateConfirmationHashForTime` 等价（identity_secret + tag + time 的 HMAC-SHA1）。
 
 ### 6.4 添加验证器 `AuthenticatorLinker`
 
@@ -143,7 +150,17 @@
 | 加密 | pointycastle | 纯 Dart 跨平台一致 PBKDF2/AES |
 | HTTP | dio + cookie jar | 拦截器 / 重试 / cookie 管理 |
 | RSA | pointycastle | 密码加密 |
+| 国际化 | flutter_localizations + intl + ARB（gen-l10n） | 官方方案，编译期生成强类型本地化键 |
 | 测试 | dart test（核心层）+ flutter test（UI） | 兼容性回归优先 |
+
+### 8.1 国际化 (i18n)
+
+- 所有 UI 文案禁止硬编码字符串，统一通过本地化键引用（`AppLocalizations.of(context).xxx`）。
+- 资源用 ARB 文件（`lib/l10n/app_en.arb`、`app_zh.arb`…），`flutter gen-l10n` 编译期生成强类型访问器。
+- 首发语言：英文（`en`，默认/回退）+ 简体中文（`zh`）。新增语言只需加 ARB 文件，无需改代码。
+- 支持占位符 / 复数 / 数字与日期本地化（倒计时、确认时间）。
+- 语言跟随系统，并在设置中提供手动切换。
+- **核心库 `steam_core` 不含任何 UI 文案**；其错误以错误码 / 枚举返回，由 UI 层映射为本地化文案，保持核心层语言无关。
 
 ## 9. 交付阶段（最终 100% 对齐）
 
