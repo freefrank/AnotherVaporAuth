@@ -94,7 +94,8 @@
 | 主屏：账户列表 + 当前验证码 + 倒计时进度环 + 复制 | `MainForm` | 默认离线可用 |
 | 欢迎 / 首次设置 | `WelcomeForm` | 引导导入或登录 |
 | 解锁（输入加密口令） | `InputForm` 口令流程 | 启动时若加密则要求 |
-| 登录（用户名/密码 + 设备确认/邮箱码；可选扫码登录） | `LoginForm` | 新协议 |
+| 登录（用户名/密码 + 设备确认/邮箱码；**扫码登录** 方向 A） | `LoginForm` | 新协议；二维码登录入口 |
+| 扫码批准登录（方向 B，扫别处二维码并批准） | 新增 | 摄像头/粘贴链接 → 批准/拒绝 |
 | 添加验证器向导（手机号→SMS→撤销码确认） | `PhoneInputForm` + 流程 | 必须已登录 |
 | 确认列表（交易/市场，批量接受/拒绝） | `ConfirmationFormWeb` / `TradePopupForm` | 原生渲染 |
 | 导入账户（选择 .maFile） | `ImportAccountForm` | 离线 |
@@ -112,7 +113,22 @@
 4. 轮询 `PollAuthSessionStatus` → 得到 `access_token` / `refresh_token`（JWT）。
 5. 组装 `SessionData { steamId, accessToken, refreshToken }` 存入 maFile。
 
-可选：`BeginAuthSessionViaQR` 作为扫码登录入口（后续增强）。
+**扫码登录（方向 A，正式支持）**：除用户名/密码外，提供 `BeginAuthSessionViaQR` 登录入口 ——
+
+1. `BeginAuthSessionViaQR` → 返回 `challenge_url` + `client_id`。
+2. 将 `challenge_url` 渲染为二维码展示（桌面显示在窗口、Android 显示在屏幕）。
+3. 用户用**手机 Steam 官方 App** 扫码并在手机上确认。
+4. 轮询 `PollAuthSessionStatus` → 拿到 `access_token` / `refresh_token`，组装 `SessionData`。
+
+与密码登录共用同一套轮询 / 会话组装逻辑，仅入口不同。前提：用户手机已装可扫码的 Steam 官方验证器。
+
+**扫码批准（方向 B，正式支持）**：本 app 作为「扫码端」，像 Steam 官方 App 那样批准在别处（网页 / Steam 客户端）发起的登录 ——
+
+1. 获取待批准登录的二维码内容：Android 用摄像头扫码；桌面无摄像头则粘贴 / 手输二维码里的 `https://s.team/q/<challenge>` 链接。
+2. 解析出 `client_id` / `challenge`（version + gid 等），用该账户已登录会话的 `access_token` 调用批准端点（`IAuthenticationService` 的移动确认 / `UpdateAuthSession...` 系列）并以账户签名。
+3. 提示用户确认目标登录信息后批准 / 拒绝。
+
+前提：该账户已在本 app 登录过（持有有效会话）。需账户已选择 / 解锁。
 
 ### 6.2 会话刷新
 
@@ -151,6 +167,8 @@
 | 加密 | pointycastle | 纯 Dart 跨平台一致 PBKDF2/AES |
 | HTTP | dio + cookie jar | 拦截器 / 重试 / cookie 管理 |
 | RSA | pointycastle | 密码加密 |
+| 二维码渲染 | qr_flutter | 渲染扫码登录（方向 A）二维码 |
+| 二维码扫描 | mobile_scanner | 摄像头扫码批准登录（方向 B，Android；桌面退化为粘贴链接） |
 | 国际化 | flutter_localizations + intl + ARB（gen-l10n） | 官方方案，编译期生成强类型本地化键 |
 | 测试 | dart test（核心层）+ flutter test（UI） | 兼容性回归优先 |
 
@@ -170,7 +188,7 @@
 1. **核心库 + 兼容性**：MaFile / Manifest / SteamGuardAccount / SteamTotp + 用真实 maFile 的加解密 & 验证码回归单测。
 2. **主屏 + 验证码**：导入 .maFile、解锁、账户列表、验证码 + 倒计时 + 复制（离线即可用）。
 3. **确认**：Confirmations 协议 + 原生确认列表 + 接受/拒绝/批量。
-4. **登录 / 会话刷新**：SteamAuthSession 新协议 + 刷新。
+4. **登录 / 会话刷新**：SteamAuthSession 新协议（用户名/密码 + **扫码登录方向 A** 二维码渲染 + **扫码批准方向 B** 摄像头/粘贴）+ 刷新。
 5. **添加验证器**：AuthenticatorLinker + 手机 + SMS 流程。
 6. **设置 / 自动确认 / 平台增强**：周期检查、自动确认、托盘 / WorkManager、扫码登录（可选）。
 
