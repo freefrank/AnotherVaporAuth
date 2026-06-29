@@ -1,0 +1,245 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Chinese (`zh`).
+class AppLocalizationsZh extends AppLocalizations {
+  AppLocalizationsZh([String locale = 'zh']) : super(locale);
+
+  @override
+  String get appTitle => 'Steam 桌面验证器';
+
+  @override
+  String get navAccounts => '账户';
+
+  @override
+  String get navSettings => '设置';
+
+  @override
+  String get unlockTitle => '解锁';
+
+  @override
+  String get unlockPrompt => '请输入加密口令';
+
+  @override
+  String get unlockButton => '解锁';
+
+  @override
+  String get unlockInvalid => '口令无效。';
+
+  @override
+  String get passkeyLabel => '口令';
+
+  @override
+  String get accountsEmpty => '暂无账户。导入 maFile 或登录以添加。';
+
+  @override
+  String get copyCode => '复制验证码';
+
+  @override
+  String get codeCopied => '验证码已复制到剪贴板';
+
+  @override
+  String get copySteamId => '复制 SteamID';
+
+  @override
+  String get confirmationsTitle => '确认';
+
+  @override
+  String get confirmationsEmpty => '没有待处理的确认。';
+
+  @override
+  String get confirmationsRefresh => '刷新';
+
+  @override
+  String get confAccept => '接受';
+
+  @override
+  String get confDecline => '拒绝';
+
+  @override
+  String get confSelectAll => '全选';
+
+  @override
+  String get confAcceptSelected => '批量接受';
+
+  @override
+  String get confDeclineSelected => '批量拒绝';
+
+  @override
+  String get confTypeTrade => '交易';
+
+  @override
+  String get confTypeMarket => '市场上架';
+
+  @override
+  String get confTypeOther => '确认';
+
+  @override
+  String confProcessing(int count) {
+    return '正在处理 $count 条确认…';
+  }
+
+  @override
+  String confResult(int ok, int fail) {
+    return '成功 $ok 条，失败 $fail 条';
+  }
+
+  @override
+  String get loginTitle => '登录 Steam';
+
+  @override
+  String get loginUsername => '用户名';
+
+  @override
+  String get loginPassword => '密码';
+
+  @override
+  String get loginButton => '登录';
+
+  @override
+  String get loginViaQr => '扫码登录';
+
+  @override
+  String get loginViaCredentials => '密码登录';
+
+  @override
+  String get loginScanWithApp => '用 Steam 手机 App 扫描此二维码';
+
+  @override
+  String get loginNeedGuardCode => '请输入 Steam 令牌验证码';
+
+  @override
+  String get loginNeedEmailCode => '请输入邮箱收到的验证码';
+
+  @override
+  String get loginSubmitCode => '提交';
+
+  @override
+  String get loginWaiting => '等待确认…';
+
+  @override
+  String loginFailed(String error) {
+    return '登录失败：$error';
+  }
+
+  @override
+  String get approveTitle => '批准登录';
+
+  @override
+  String get approveScanPrompt => '扫描你想登录的设备上显示的二维码。';
+
+  @override
+  String get approvePastePrompt => '或在此粘贴二维码链接';
+
+  @override
+  String get approveButton => '批准';
+
+  @override
+  String get approveReject => '拒绝';
+
+  @override
+  String get approveSuccess => '登录已批准。';
+
+  @override
+  String get approveRejected => '登录已拒绝。';
+
+  @override
+  String get importTitle => '导入账户';
+
+  @override
+  String get importPickFile => '选择 .maFile 文件';
+
+  @override
+  String get importSuccess => '账户已导入。';
+
+  @override
+  String importFailed(String error) {
+    return '导入失败：$error';
+  }
+
+  @override
+  String get addAuthTitle => '添加验证器';
+
+  @override
+  String get addAuthPhonePrompt => '请输入手机号（含国家区号）';
+
+  @override
+  String get addAuthSmsPrompt => '请输入手机收到的短信验证码';
+
+  @override
+  String addAuthRevocationWarn(String code) {
+    return '请记下你的撤销码：$code';
+  }
+
+  @override
+  String get addAuthConfirmRevocation => '请再次输入撤销码以确认你已保存';
+
+  @override
+  String get addAuthLinked => '验证器绑定成功。';
+
+  @override
+  String get settingsEncryption => '加密';
+
+  @override
+  String get settingsSetPasskey => '设置 / 修改加密口令';
+
+  @override
+  String get settingsPeriodicChecking => '周期检查确认';
+
+  @override
+  String get settingsCheckInterval => '检查间隔（秒）';
+
+  @override
+  String get settingsCheckAll => '检查所有账户';
+
+  @override
+  String get settingsAutoConfirmMarket => '自动确认市场交易';
+
+  @override
+  String get settingsAutoConfirmTrades => '自动确认交易';
+
+  @override
+  String get settingsLanguage => '语言';
+
+  @override
+  String get settingsLanguageSystem => '跟随系统';
+
+  @override
+  String get actionLogin => '登录 / 刷新会话';
+
+  @override
+  String get actionConfirmations => '交易确认';
+
+  @override
+  String get actionRemove => '移除账户';
+
+  @override
+  String get actionImport => '导入';
+
+  @override
+  String get actionAddAuthenticator => '添加验证器';
+
+  @override
+  String get commonCancel => '取消';
+
+  @override
+  String get commonOk => '确定';
+
+  @override
+  String get commonConfirm => '确认';
+
+  @override
+  String get commonClose => '关闭';
+
+  @override
+  String get commonError => '错误';
+
+  @override
+  String get sessionExpired => '你的 Steam 会话已过期，请重新登录。';
+
+  @override
+  String get removeConfirm => '从本设备移除该账户？请确保已备份 maFile。';
+}
