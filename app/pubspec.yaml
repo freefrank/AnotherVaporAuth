@@ -32,7 +32,7 @@ dependencies:
   mobile_scanner: ^6.0.2
 
   # Files / storage
-  file_picker: ^8.1.4
+  file_picker: ^11.0.0
   path_provider: ^2.1.5
   path: ^1.9.0
 

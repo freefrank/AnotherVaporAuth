@@ -12,7 +12,7 @@ import '../app/providers.dart';
 /// current store (re-encrypting under the store's passkey if it is encrypted).
 Future<void> importMaFileFlow(BuildContext context, WidgetRef ref) async {
   final l = AppLocalizations.of(context);
-  final result = await FilePicker.platform.pickFiles(
+  final result = await FilePicker.pickFiles(
     dialogTitle: l.importPickFile,
     type: FileType.any,
     withData: true,
