@@ -106,7 +106,6 @@ class QrApprovalClient {
       'GetAuthSessionInfo',
       request: req,
       accessToken: account.session.accessToken ?? '',
-      useGet: true,
     ))
         .parse();
     return AuthSessionInfo(
