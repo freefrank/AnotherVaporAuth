@@ -5,6 +5,55 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.59] — 2026-06-30
+
+### Added
+- **In-app sign-in approval**: approve or deny Steam logins from a dialog inside
+  AVA (device + location shown), like the official app — by polling, no push.
+  Polls on open, on tapping an account, and on pull-to-refresh.
+- **Animated avatars & frames**: pull each account's animated avatar and avatar
+  frame and play them (GIF natively; APNG decoded frame-by-frame). The static
+  avatar and persona (display) name are fetched too.
+- **Name switching**: tap the panel name to cycle username → persona → id (with
+  an animated transition); long-press to copy.
+- **Cyberpunk neon UI** (neon theme only): a full-screen neon pull-to-refresh,
+  always-on ambience (drifting grid, breathing glows, radar sweep, digital rain,
+  a corner HUD) and per-account glow borders. The pixel theme is unchanged.
+
+### Changed
+- **Add authenticator**: when the account already has an authenticator, AVA now
+  guides you through removing the existing one instead of just failing.
+- **Sign-in refresh** auto-fills the device code and can reuse a saved password,
+  so refreshing a session is mostly hands-free.
+- Bigger avatars and account-list fonts; tap the code to copy it (the copy
+  button is gone) and the code now shares a row with the countdown ring.
+- Steam `EResult` error codes are shown with readable names.
+
+### Fixed
+- Windows and Linux desktop release builds (libsecret/jsoncpp on Linux, the MSVC
+  `<experimental/coroutine>` error on Windows).
+
+—
+
+### 新增
+- **应用内批准登录**：在 AVA 内弹窗批准/拒绝 Steam 登录（显示设备 + 位置），与官方
+  App 一致——基于轮询,无需推送。打开 App、点击账户、下拉刷新时各轮询一次。
+- **动态头像与头像框**：拉取并播放每个账户的动态头像与头像框(GIF 原生播放;APNG 逐帧
+  解码)。同时获取静态头像与昵称。
+- **名称切换**：点主面板名称循环 用户名 → 昵称 → ID(带切换动效);长按复制。
+- **赛博朋克霓虹界面**(仅霓虹主题):全屏霓虹下拉刷新、静置环境动效(漂移网格、呼吸辉光、
+  雷达扫描、字符雨、四角 HUD)、账户行发光边框。像素主题保持原样。
+
+### 变更
+- **添加验证器**:当账户已有验证器时,AVA 会引导你移除现有验证器,而不是直接报错。
+- **登录刷新**自动填写设备验证码并可复用已保存的密码,刷新会话基本无需手动操作。
+- 头像与账户列表字体放大;点击验证码即可复制(复制按钮已移除),验证码与倒计时圈同行。
+- Steam `EResult` 错误码以可读名称显示。
+
+### 修复
+- Windows、Linux 桌面发布构建(Linux 的 libsecret/jsoncpp,Windows 的 MSVC
+  `<experimental/coroutine>` 报错)。
+
 ## [v0.58] — 2026-06-30
 
 ### Added
