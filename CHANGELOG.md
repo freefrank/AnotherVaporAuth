@@ -5,6 +5,28 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.56] — 2026-06-30
+
+Real-device validation of the full add-authenticator flow, including accounts
+with no phone (email-based activation).
+
+### Fixed
+- **Add authenticator no longer hangs** on the working spinner: `_add()` reads
+  localized strings and was invoked during `initState()`, which threw; it now
+  runs after the first frame.
+- **No-phone (email) activation**: when AddAuthenticator reports `confirm_type=3`
+  (no phone), the activation code is emailed rather than texted, so finalize
+  sends `validate_sms_code=false`. The finalize prompt and step label switch
+  between "activation code from email" and "SMS code" accordingly.
+
+—
+
+对完整的「添加验证器」流程做真机验证，覆盖**无手机号**（邮箱激活）的账户。
+
+### 修复
+- **添加验证器不再卡在转圈**：`_add()` 会读取本地化文案，却在 `initState()` 阶段被调用而抛异常；现改为首帧之后再执行。
+- **无手机（邮箱）激活**：当 AddAuthenticator 返回 `confirm_type=3`（无手机）时，激活码经**邮箱**而非短信下发，finalize 改为 `validate_sms_code=false`；激活提示与步骤标签也在「邮箱激活码 / 短信验证码」间自动切换。
+
 ## [v0.55] — 2026-06-30
 
 Real-device validation of the networked flows against a live Steam account, plus
@@ -138,6 +160,7 @@ following the SteamKit/SteamDatabase protobufs.
   TOTP、交易确认（原生 JSON、批量）、登录（密码 + 扫码）、添加验证器、双主题
   （霓虹 + 像素）、多语言。
 
+[v0.56]: https://github.com/freefrank/SteamDesktopAuthenticator/releases/tag/v0.56
 [v0.55]: https://github.com/freefrank/SteamDesktopAuthenticator/releases/tag/v0.55
 [v0.54]: https://github.com/freefrank/SteamDesktopAuthenticator/releases/tag/v0.54
 [v0.53]: https://github.com/freefrank/SteamDesktopAuthenticator/releases/tag/v0.53
