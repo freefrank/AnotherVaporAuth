@@ -109,15 +109,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     account: accounts[_selected],
                     tick: tick,
                     onCopy: _copy,
+                    wide: c.maxWidth >= 640,
                   );
                   if (c.maxWidth >= 640) {
-                    // Master-detail: a narrow account column + the detail pane.
-                    // Don't let the sidebar scale up to half the screen.
-                    final sidebarW = (c.maxWidth * 0.3).clamp(220.0, 320.0);
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        SizedBox(width: sidebarW, child: sidebar),
+                        SizedBox(width: context.r(240), child: sidebar),
                         Expanded(child: panel),
                       ],
                     );
@@ -365,8 +363,12 @@ class _MainPanel extends StatelessWidget {
   final SteamGuardAccount account;
   final int tick;
   final void Function(String code) onCopy;
+  final bool wide; // two-pane (tablet/desktop) layout
   const _MainPanel(
-      {required this.account, required this.tick, required this.onCopy});
+      {required this.account,
+      required this.tick,
+      required this.onCopy,
+      this.wide = false});
 
   @override
   Widget build(BuildContext context) {
@@ -375,12 +377,7 @@ class _MainPanel extends StatelessWidget {
     final code = _codeFor(account, tick);
     final remaining = SteamTotp.secondsRemaining(tick);
 
-    // Centre + cap the content width so the panel doesn't sprawl on tablets /
-    // desktops; on phones (< maxWidth) it stays full-width.
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Padding(
+    return Padding(
       padding: context.rInsets(all: 26),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -410,18 +407,21 @@ class _MainPanel extends StatelessWidget {
             ],
           ),
           SizedBox(height: context.r(22)),
-          // Relative scaling: the code occupies ~66% of the panel width (design
-          // proportion ≈ 58–65% of the phone), capped on wide screens. FittedBox
-          // scales the glyphs + glow, letter-spacing stays at 0.16em.
-          LayoutBuilder(
-            builder: (context, c) => SizedBox(
-              width: (c.maxWidth * 0.66).clamp(140.0, 340.0),
-              child: FittedBox(
-                fit: BoxFit.fitWidth,
-                child: FlipCode(code: code, fontSize: 56),
+          // Phone: scale the code to ~66% of the panel width (relative). Tablet /
+          // two-pane: keep the v0.56 fixed code size so the wide layout matches
+          // the design the user signed off on.
+          if (wide)
+            FlipCode(code: code, fontSize: t.codeSize)
+          else
+            LayoutBuilder(
+              builder: (context, c) => SizedBox(
+                width: (c.maxWidth * 0.66).clamp(140.0, 280.0),
+                child: FittedBox(
+                  fit: BoxFit.fitWidth,
+                  child: FlipCode(code: code, fontSize: 56),
+                ),
               ),
             ),
-          ),
           SizedBox(height: context.r(24)),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -445,8 +445,6 @@ class _MainPanel extends StatelessWidget {
             ],
           ),
         ],
-      ),
-        ),
       ),
     );
   }

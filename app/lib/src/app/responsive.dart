@@ -9,7 +9,10 @@ import 'package:flutter/widgets.dart';
 extension ResponsiveContext on BuildContext {
   static const double _refWidth = 390.0;
   static const double _min = 0.85;
-  static const double _max = 1.35;
+  // Don't upscale beyond the reference width: large screens (tablets, unfolded
+  // foldables) keep the base sizes and rely on the two-pane layout for space,
+  // so the tablet proportions match the v0.56 design.
+  static const double _max = 1.0;
 
   /// The viewport scale factor (1.0 ≈ a 390dp-wide phone).
   double get scale {
