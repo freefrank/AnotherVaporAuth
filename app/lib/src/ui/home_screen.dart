@@ -111,10 +111,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     onCopy: _copy,
                   );
                   if (c.maxWidth >= 640) {
+                    // Master-detail: a narrow account column + the detail pane.
+                    // Don't let the sidebar scale up to half the screen.
+                    final sidebarW = (c.maxWidth * 0.3).clamp(220.0, 320.0);
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        SizedBox(width: context.r(240), child: sidebar),
+                        SizedBox(width: sidebarW, child: sidebar),
                         Expanded(child: panel),
                       ],
                     );
