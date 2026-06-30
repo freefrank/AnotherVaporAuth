@@ -128,11 +128,16 @@ class MaFileCrypto {
     int iterations = pbkdf2Iterations,
   }) {
     if (items.isEmpty) return Future.value(const []);
-    return Isolate.run(() => [
+    List<String?> run() => [
           for (final (salt, iv, ct) in items)
             (salt.isEmpty || iv.isEmpty || ct.isEmpty)
                 ? null
                 : decrypt(password, salt, iv, ct, iterations: iterations),
-        ]);
+        ];
+    // Cheap work (low rounds, few items) is faster inline than paying the
+    // isolate-spawn cost; only offload heavy derivations (e.g. 50000-round
+    // maFile imports) to a background isolate.
+    if (iterations * items.length <= 5000) return Future.value(run());
+    return Isolate.run(run);
   }
 }

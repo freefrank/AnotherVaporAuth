@@ -7,6 +7,7 @@ import '../core/models/steam_guard_account.dart';
 import '../services/account_store.dart';
 import '../services/avatar_service.dart';
 import '../services/biometric_unlock.dart';
+import '../services/debug_log.dart';
 import '../services/steam_api_client.dart';
 import '../services/steam_time.dart';
 import '../services/storage_provider.dart';
@@ -162,14 +163,43 @@ class AppController extends AsyncNotifier<AppData> {
   Future<bool> unlock(String passKey) async {
     final data = state.value;
     if (data == null) return false;
-    final ok = await data.store.verifyPasskey(passKey);
-    if (!ok) return false;
-    final accounts = await data.store.getAllAccounts(passKey: passKey);
+    final store = data.store;
+    final sw = Stopwatch()..start();
+    List<SteamGuardAccount> accounts;
+    if (store.entries.isEmpty) {
+      if (!await store.verifyPasskey(passKey)) return false;
+      accounts = const [];
+    } else {
+      // getAllAccounts validates the key (empty == wrong key), so no separate
+      // verifyPasskey derivation is needed.
+      accounts = await store.getAllAccounts(passKey: passKey);
+      if (accounts.isEmpty) return false;
+    }
+    dlog('unlock: decrypt ${sw.elapsedMilliseconds}ms '
+        '(kdf=${store.manifest.kdfIterations}, ${accounts.length} accounts)');
     state = AsyncData(
       data.copyWith(accounts: accounts, locked: false, passKey: passKey),
     );
     Future.microtask(_fetchMissingAvatars);
+    // One-time migration of an old high-rounds store to the fast PIN scheme.
+    if (store.manifest.kdfIterations > AccountStore.avaIterations) {
+      unawaited(_migrateKdf(passKey, accounts));
+    }
     return true;
+  }
+
+  Future<void> _migrateKdf(
+      String passKey, List<SteamGuardAccount> accounts) async {
+    final store = state.value?.store;
+    if (store == null) return;
+    try {
+      final sw = Stopwatch()..start();
+      await store.reencrypt(passKey, accounts);
+      dlog('kdf migrated to ${store.manifest.kdfIterations} '
+          'in ${sw.elapsedMilliseconds}ms');
+    } catch (e) {
+      dlog('kdf migrate failed: $e');
+    }
   }
 
   Future<void> reload() async {

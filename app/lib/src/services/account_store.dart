@@ -194,7 +194,7 @@ class AccountStore {
     }
     final oldIterations = manifest.kdfIterations;
     final toEncrypt = newKey != null;
-    final newIterations = toEncrypt ? _avaIterations : oldIterations;
+    final newIterations = toEncrypt ? avaIterations : oldIterations;
     for (final entry in manifest.entries) {
       if (!await storage.fileExists(entry.filename)) continue;
       var contents = await storage.readFile(entry.filename);
@@ -236,10 +236,30 @@ class AccountStore {
 
   static const String _checkPlaintext = 'AVA-PASSKEY-CHECK';
 
-  /// PBKDF2 rounds for AVA's own PIN encryption. Far fewer than the maFile's
-  /// 50000 — a 6-digit PIN's tiny keyspace (and on-device storage) means high
-  /// rounds add little, while keeping unlock snappy.
-  static const int _avaIterations = 10000;
+  /// Re-encrypts already-decrypted [accounts] at [avaIterations]. Migrates an
+  /// old high-rounds store to the fast PIN scheme without re-deriving the slow
+  /// key (the accounts are already in memory after unlock).
+  Future<void> reencrypt(
+      String passKey, List<SteamGuardAccount> accounts) async {
+    if (!manifest.encrypted) return;
+    manifest.kdfIterations = avaIterations;
+    for (final acc in accounts) {
+      await saveAccount(acc, true, passKey: passKey);
+    }
+    final salt = MaFileCrypto.getRandomSalt();
+    final iv = MaFileCrypto.getInitializationVector();
+    final ct = MaFileCrypto.encrypt(passKey, salt, iv, _checkPlaintext,
+        iterations: avaIterations);
+    manifest.passkeyCheck = '$salt|$iv|$ct';
+    await save();
+  }
+
+  /// PBKDF2 rounds for AVA's own PIN encryption. Deliberately tiny: a 6-digit
+  /// PIN has only ~1e6 combinations, so anyone with the files brute-forces it
+  /// regardless of rounds — the real protection is on-device storage + the
+  /// keystore-backed biometric. High rounds (pointycastle does ~10k/sec) would
+  /// only make unlock slow for no real gain, so we keep them minimal.
+  static const int avaIterations = 100;
 
   void moveEntry(int from, int to) {
     if (from < 0 || to < 0 || from >= manifest.entries.length) return;

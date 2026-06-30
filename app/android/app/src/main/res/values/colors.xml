@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AVA's dark app background — used for the launch window so there is no
+         white flash before the Flutter UI draws. -->
+    <color name="ava_launch_bg">#FF06060F</color>
+</resources>
