@@ -4,9 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sda/src/app/app.dart';
 import 'package:sda/src/app/providers.dart';
 import 'package:sda/src/services/storage_provider.dart';
+import 'package:sda/src/ui/welcome_screen.dart';
 
 void main() {
-  testWidgets('app boots to empty home with in-memory storage', (tester) async {
+  testWidgets('app boots to welcome screen with in-memory storage',
+      (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -23,8 +25,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    // Empty store -> home screen with the "no accounts" message and an add FAB.
+    // Empty store -> welcome screen with the two CTA cards.
     expect(find.byType(Scaffold), findsWidgets);
-    expect(find.byIcon(Icons.add), findsOneWidget);
+    expect(find.byType(WelcomeScreen), findsOneWidget);
   });
 }
