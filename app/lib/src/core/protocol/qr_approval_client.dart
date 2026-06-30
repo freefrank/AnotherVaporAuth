@@ -69,6 +69,7 @@ class QrApprovalClient {
       'GetAuthSessionsForAccount',
       request: ProtoWriter(),
       accessToken: account.session.accessToken ?? '',
+      useGet: true,
     ))
         .parseAll();
     final ids = <int>[];
@@ -105,6 +106,7 @@ class QrApprovalClient {
       'GetAuthSessionInfo',
       request: req,
       accessToken: account.session.accessToken ?? '',
+      useGet: true,
     ))
         .parse();
     return AuthSessionInfo(

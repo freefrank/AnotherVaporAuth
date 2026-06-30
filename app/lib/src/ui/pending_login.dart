@@ -5,6 +5,7 @@ import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/qr_approval_client.dart';
+import '../services/debug_log.dart';
 import '../services/session_manager.dart';
 
 /// Polls [account]'s pending login sessions (GetAuthSessionsForAccount) and, for
@@ -25,6 +26,8 @@ Future<void> checkPendingLogins(
     }
   }
 
+  dlog('pendingLogins: check ${account.accountName} '
+      'token=${(account.session.accessToken ?? '').isNotEmpty} silent=$silent');
   if ((account.session.accessToken ?? '').isEmpty) {
     if (!silent) toast(l.loginNeedSession);
     return;
@@ -49,6 +52,7 @@ Future<void> checkPendingLogins(
   }
 
   final ids = await fetch();
+  dlog('pendingLogins: ${ids == null ? 'fetch failed' : '${ids.length} pending'}');
   if (ids == null) {
     if (!silent) toast(l.loginNeedSession);
     return;

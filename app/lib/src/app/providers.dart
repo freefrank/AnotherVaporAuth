@@ -7,6 +7,7 @@ import '../core/models/steam_guard_account.dart';
 import '../services/account_store.dart';
 import '../services/avatar_service.dart';
 import '../services/biometric_unlock.dart';
+import '../services/credential_store.dart';
 import '../services/debug_log.dart';
 import '../services/steam_api_client.dart';
 import '../services/steam_time.dart';
@@ -27,6 +28,10 @@ final avatarServiceProvider = Provider<AvatarService>((ref) => AvatarService());
 /// System-credential (biometric / device PIN) app unlock.
 final biometricUnlockProvider =
     Provider<BiometricUnlock>((ref) => BiometricUnlock());
+
+/// Stores account passwords (keystore) for automatic session re-establishment.
+final credentialStoreProvider =
+    Provider<CredentialStore>((ref) => CredentialStore());
 
 /// Time alignment hook (overridable in tests to avoid network).
 final timeAlignerProvider =
@@ -220,6 +225,7 @@ class AppController extends AsyncNotifier<AppData> {
     final data = state.value;
     if (data == null) return;
     await data.store.removeAccount(account);
+    await ref.read(credentialStoreProvider).clear(account.steamId);
     await reload();
   }
 

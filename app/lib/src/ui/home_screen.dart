@@ -116,8 +116,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     accounts: accounts,
                     selected: _selected,
                     tick: tick,
-                    onSelect: (i) => setState(() => _selected = i),
+                    onSelect: (i) {
+                      setState(() => _selected = i);
+                      // Tapping an account polls its pending sign-in requests.
+                      checkPendingLogins(context, ref, accounts[i],
+                          silent: true);
+                    },
                     onAdd: () => _addMenu(context),
+                    // Pull-to-refresh polls the selected account's sign-ins.
+                    onRefresh: () => checkPendingLogins(
+                        context, ref, accounts[_selected],
+                        silent: false),
                   );
                   final panel = _MainPanel(
                     account: accounts[_selected],
@@ -248,12 +257,14 @@ class _Sidebar extends StatelessWidget {
   final int tick;
   final void Function(int index) onSelect;
   final VoidCallback onAdd;
+  final Future<void> Function()? onRefresh;
   const _Sidebar({
     required this.accounts,
     required this.selected,
     required this.tick,
     required this.onSelect,
     required this.onAdd,
+    this.onRefresh,
   });
 
   @override
@@ -298,14 +309,18 @@ class _Sidebar extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: context.rInsets(h: 8, v: 4),
-              itemCount: accounts.length,
-              itemBuilder: (context, i) => _SidebarRow(
-                account: accounts[i],
-                code: _codeFor(accounts[i], tick),
-                selected: i == selected,
-                onTap: () => onSelect(i),
+            child: RefreshIndicator(
+              onRefresh: onRefresh ?? () async {},
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: context.rInsets(h: 8, v: 4),
+                itemCount: accounts.length,
+                itemBuilder: (context, i) => _SidebarRow(
+                  account: accounts[i],
+                  code: _codeFor(accounts[i], tick),
+                  selected: i == selected,
+                  onTap: () => onSelect(i),
+                ),
               ),
             ),
           ),

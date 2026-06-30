@@ -11,6 +11,7 @@ import '../app/responsive.dart';
 import '../app/theme.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/steam_auth_session.dart';
+import '../services/steam_time.dart';
 import 'widgets/cooldown_button.dart';
 import 'widgets/scanline_overlay.dart';
 import 'widgets/stepper3.dart';
@@ -53,6 +54,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (widget.account?.accountName != null) {
       _username.text = widget.account!.accountName!;
     }
+    // Refresh: pull the saved password (keystore) and start the login hands-free
+    // (the device code auto-submits, so no typing is needed).
+    if (widget.reason == LoginReason.refresh && widget.account != null) {
+      _maybeAutoLogin(widget.account!);
+    }
+  }
+
+  Future<void> _maybeAutoLogin(SteamGuardAccount acc) async {
+    final pwd = await ref.read(credentialStoreProvider).password(acc.steamId);
+    if (!mounted || pwd == null || pwd.isEmpty || _busy) return;
+    _password.text = pwd;
+    _startPassword();
   }
 
   @override
@@ -105,6 +118,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // app (device/email confirmation) — no code required.
     final canConfirm = _session.allowedConfirmations.any((g) =>
         g == GuardType.deviceConfirmation || g == GuardType.emailConfirmation);
+    // The device (TOTP) code lives in this very app — if we already hold the
+    // account's secret (e.g. a session refresh), generate and submit it
+    // automatically instead of asking the user to read a covered-up code.
+    final acc = widget.account;
+    if (codeType == GuardType.deviceCode &&
+        (acc?.sharedSecret?.isNotEmpty ?? false)) {
+      _autoDeviceCode(acc!, canConfirm);
+      return;
+    }
     setState(() {
       _busy = false;
       _needGuard = codeType;
@@ -114,6 +136,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // when no code is required at all. The code field, if shown, stays as an
     // alternative.
     if (canConfirm || codeType == GuardType.none) _beginPolling();
+  }
+
+  /// Auto-generates and submits the account's own Steam Guard (TOTP) code.
+  Future<void> _autoDeviceCode(SteamGuardAccount acc, bool canConfirm) async {
+    setState(() {
+      _busy = true;
+      _needGuard = null;
+      _canConfirm = canConfirm;
+      _status = AppLocalizations.of(context).loginWaiting;
+    });
+    try {
+      final code = acc.generateCode(SteamTime.currentSteamTime);
+      await _session.submitSteamGuardCode(code, GuardType.deviceCode);
+      _beginPolling();
+    } catch (e) {
+      // Fall back to manual entry on error.
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _needGuard = GuardType.deviceCode;
+        _error = '$e';
+      });
+    }
   }
 
   Future<void> _submitCode() async {
@@ -162,6 +207,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Let the platform password manager offer to save the credentials.
     TextInput.finishAutofillContext();
     final session = _session.toSessionData(result);
+    // Remember the password (keystore) so the session can be refreshed
+    // automatically next time. QR logins have no password to save.
+    if (_password.text.isNotEmpty && session.steamId != 0) {
+      await ref
+          .read(credentialStoreProvider)
+          .savePassword(session.steamId, _password.text);
+    }
     if (!mounted) return;
 
     if (widget.reason == LoginReason.refresh && widget.account != null) {
