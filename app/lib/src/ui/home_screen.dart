@@ -8,8 +8,8 @@ import '../app/theme.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/steam_totp.dart';
 import '../services/steam_time.dart';
+import 'widgets/countdown_ring.dart';
 import 'widgets/flip_code.dart';
-import 'widgets/motion.dart';
 import 'widgets/scanline_overlay.dart';
 import 'approve_login_screen.dart';
 import 'confirmations_screen.dart';
@@ -17,7 +17,7 @@ import 'import_helper.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
 
-/// Avatar accent palette for account chips (design uses bright square tiles).
+/// Avatar accent palette for the account dock tiles.
 const _palette = [
   Color(0xFF00F0FF),
   Color(0xFFFF2BD6),
@@ -32,8 +32,8 @@ String _initial(SteamGuardAccount a) {
   return n.isEmpty ? '?' : n.substring(0, 1).toUpperCase();
 }
 
-/// Main screen — design Variant B: a focused single code card plus a bottom
-/// account-switcher dock.
+/// Main screen — design screen 01, Variant B: a centred big countdown ring +
+/// large code + account name + copy, with a bottom account-switcher dock.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -54,11 +54,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ref.watch(tickProvider).valueOrNull ?? SteamTime.currentSteamTime;
 
     if (_selected >= accounts.length) _selected = 0;
+    final hasAccounts = accounts.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l.appTitle),
         actions: [
+          if (hasAccounts)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (v) => _onAction(context, accounts[_selected], v),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                    value: 'confirm', child: Text(l.actionConfirmations)),
+                PopupMenuItem(value: 'login', child: Text(l.actionLogin)),
+                PopupMenuItem(value: 'remove', child: Text(l.actionRemove)),
+              ],
+            ),
           IconButton(
             tooltip: l.navSettings,
             icon: const Icon(Icons.settings_outlined),
@@ -69,35 +81,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       body: ScanlineOverlay(
-        child: accounts.isEmpty
-            ? _EmptyState(onAdd: () => _addMenu(context))
-            : Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 460),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _FocusedCard(
-                          account: accounts[_selected],
-                          tick: tick,
-                          onCopy: _copy,
-                          onAction: (v) =>
-                              _onAction(context, accounts[_selected], v),
-                        ),
-                        const SizedBox(height: 22),
-                        _AccountDock(
-                          accounts: accounts,
-                          selected: _selected,
-                          onSelect: (i) => setState(() => _selected = i),
-                          onAdd: () => _addMenu(context),
-                        ),
-                      ],
-                    ),
-                  ),
+        child: hasAccounts
+            ? _FocusedView(
+                account: accounts[_selected],
+                tick: tick,
+                onCopy: _copy,
+                dock: _AccountDock(
+                  accounts: accounts,
+                  selected: _selected,
+                  onSelect: (i) => setState(() => _selected = i),
+                  onAdd: () => _addMenu(context),
                 ),
-              ),
+              )
+            : _EmptyState(onAdd: () => _addMenu(context)),
       ),
     );
   }
@@ -192,18 +188,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-/// The big focused account card with code, animated progress bar and copy.
-class _FocusedCard extends StatelessWidget {
+/// Centred ring + big code + name + copy, with the account dock underneath.
+class _FocusedView extends StatelessWidget {
   final SteamGuardAccount account;
   final int tick;
   final void Function(String code) onCopy;
-  final void Function(String action) onAction;
+  final Widget dock;
 
-  const _FocusedCard({
+  const _FocusedView({
     required this.account,
     required this.tick,
     required this.onCopy,
-    required this.onAction,
+    required this.dock,
   });
 
   @override
@@ -217,99 +213,41 @@ class _FocusedCard extends StatelessWidget {
       code = '—————';
     }
     final remaining = SteamTotp.secondsRemaining(tick);
-    final ringColor = t.ringColor(remaining);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(26),
-      decoration: BoxDecoration(
-        color: t.panel,
-        border: t.border,
-        borderRadius: BorderRadius.circular(t.radius),
-        boxShadow: t.glow ? t.glowShadow(blur: 24, opacity: 0.18) : t.cardShadow(),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              _Avatar(account: account, size: 38),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(account.accountName ?? '${account.steamId}',
-                        style: TextStyle(color: t.text, fontSize: 15)),
-                    Text('${account.steamId}',
-                        style: TextStyle(color: t.muted, fontSize: 12)),
-                  ],
-                ),
-              ),
-              PulsingDot(color: t.good),
-              const SizedBox(width: 6),
-              PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert, color: t.muted),
-                onSelected: onAction,
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                      value: 'confirm', child: Text(l.actionConfirmations)),
-                  PopupMenuItem(value: 'login', child: Text(l.actionLogin)),
-                  PopupMenuItem(value: 'remove', child: Text(l.actionRemove)),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          Center(
-            child: FlipCode(code: code, fontSize: t.codeSize, letterSpacing: 10),
-          ),
-          const SizedBox(height: 22),
-          _TotpBar(fraction: remaining / 30, color: ringColor, track: t.line),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('${remaining}s', style: TextStyle(color: t.muted)),
-              FilledButton.icon(
-                onPressed: () => onCopy(code),
-                icon: const Icon(Icons.copy, size: 16),
-                label: Text(l.copyCode),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Animated TOTP progress bar (width + colour transition over 1s, matching the
-/// countdown ring's cadence).
-class _TotpBar extends StatelessWidget {
-  final double fraction;
-  final Color color;
-  final Color track;
-  const _TotpBar({required this.fraction, required this.color, required this.track});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(99),
-      child: Container(
-        height: 8,
-        color: track,
-        alignment: Alignment.centerLeft,
-        child: LayoutBuilder(
-          builder: (context, c) => AnimatedContainer(
-            duration: const Duration(seconds: 1),
-            curve: Curves.linear,
-            width: c.maxWidth * fraction.clamp(0.0, 1.0),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(99),
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CountdownRing(remaining: remaining, size: 150, stroke: 8),
+            const SizedBox(height: 24),
+            FlipCode(
+              code: code,
+              fontSize: t.isPixel ? 38 : 42,
+              letterSpacing: 8,
             ),
-          ),
+            const SizedBox(height: 14),
+            Text(
+              account.accountName ?? '${account.steamId}',
+              style: TextStyle(color: t.text, fontSize: 14),
+            ),
+            const SizedBox(height: 4),
+            Text('${account.steamId}',
+                style: TextStyle(color: t.muted, fontSize: 12)),
+            const SizedBox(height: 22),
+            FilledButton.icon(
+              onPressed: () => onCopy(code),
+              icon: const Icon(Icons.copy, size: 16),
+              label: Text(l.copyCode),
+              style: FilledButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
+              ),
+            ),
+            const SizedBox(height: 34),
+            dock,
+          ],
         ),
       ),
     );
@@ -342,7 +280,7 @@ class _AccountDock extends StatelessWidget {
             onTap: () => onSelect(i),
             child: _Avatar(
               account: accounts[i],
-              size: 44,
+              size: 46,
               dimmed: i != selected,
               selected: i == selected,
             ),
@@ -350,8 +288,8 @@ class _AccountDock extends StatelessWidget {
         GestureDetector(
           onTap: onAdd,
           child: Container(
-            width: 44,
-            height: 44,
+            width: 46,
+            height: 46,
             decoration: BoxDecoration(
               border: Border.all(color: t.line, width: t.borderWidth),
               borderRadius: BorderRadius.circular(t.radiusSm),
@@ -389,9 +327,7 @@ class _Avatar extends StatelessWidget {
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(t.radiusSm),
-          border: selected
-              ? Border.all(color: t.accent, width: 2)
-              : null,
+          border: selected ? Border.all(color: t.accent, width: 2) : null,
           boxShadow: selected ? t.glowShadow(blur: 12) : null,
         ),
         child: Text(
