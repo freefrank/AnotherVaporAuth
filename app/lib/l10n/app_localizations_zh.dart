@@ -268,6 +268,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addAuthSmsPrompt => '请输入手机收到的短信验证码';
 
   @override
+  String get addAuthEmailPrompt => '请输入 Steam 发到邮箱的激活码';
+
+  @override
   String addAuthRevocationWarn(String code) {
     return '请记下你的撤销码：$code';
   }
@@ -282,7 +285,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addAuthStepPhone => '手机';
 
   @override
-  String get addAuthStepSms => '短信';
+  String get addAuthStepSms => '激活';
 
   @override
   String get addAuthStepRevocation => '撤销码';

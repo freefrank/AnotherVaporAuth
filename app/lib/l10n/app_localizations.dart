@@ -590,6 +590,12 @@ abstract class AppLocalizations {
   /// **'Enter the SMS code sent to your phone'**
   String get addAuthSmsPrompt;
 
+  /// No description provided for @addAuthEmailPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the activation code Steam emailed you'**
+  String get addAuthEmailPrompt;
+
   /// No description provided for @addAuthRevocationWarn.
   ///
   /// In en, this message translates to:
@@ -617,7 +623,7 @@ abstract class AppLocalizations {
   /// No description provided for @addAuthStepSms.
   ///
   /// In en, this message translates to:
-  /// **'SMS'**
+  /// **'Activate'**
   String get addAuthStepSms;
 
   /// No description provided for @addAuthStepRevocation.

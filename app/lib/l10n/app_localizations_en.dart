@@ -277,6 +277,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addAuthSmsPrompt => 'Enter the SMS code sent to your phone';
 
   @override
+  String get addAuthEmailPrompt =>
+      'Enter the activation code Steam emailed you';
+
+  @override
   String addAuthRevocationWarn(String code) {
     return 'Write down your revocation code: $code';
   }
@@ -292,7 +296,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addAuthStepPhone => 'Phone';
 
   @override
-  String get addAuthStepSms => 'SMS';
+  String get addAuthStepSms => 'Activate';
 
   @override
   String get addAuthStepRevocation => 'Revocation';

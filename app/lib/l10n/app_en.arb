@@ -103,6 +103,7 @@
   "addAuthTitle": "Add authenticator",
   "addAuthPhonePrompt": "Enter your phone number (with country code)",
   "addAuthSmsPrompt": "Enter the SMS code sent to your phone",
+  "addAuthEmailPrompt": "Enter the activation code Steam emailed you",
   "addAuthRevocationWarn": "Write down your revocation code: {code}",
   "@addAuthRevocationWarn": {
     "placeholders": { "code": { "type": "String" } }
@@ -110,7 +111,7 @@
   "addAuthConfirmRevocation": "Re-enter your revocation code to confirm you saved it",
   "addAuthLinked": "Authenticator linked successfully.",
   "addAuthStepPhone": "Phone",
-  "addAuthStepSms": "SMS",
+  "addAuthStepSms": "Activate",
   "addAuthStepRevocation": "Revocation",
 
   "settingsEncryption": "Encryption",

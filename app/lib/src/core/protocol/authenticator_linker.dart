@@ -40,6 +40,11 @@ class AuthenticatorLinker {
   String phoneCountryCode = '';
   SteamGuardAccount? linkedAccount;
 
+  /// How Steam will deliver the activation code (from AddAuthenticator's
+  /// `confirm_type`): 3 = email (no phone), otherwise SMS to the account phone.
+  int _confirmType = 0;
+  bool get activatesByEmail => _confirmType == 3;
+
   AuthenticatorLinker(this.api, this.session);
 
   String get _accessToken => session.accessToken ?? '';
@@ -84,8 +89,13 @@ class AuthenticatorLinker {
 
     final status = fields[10]?.asInt ?? 0;
     final sharedSecret = fields[1]?.bytes;
-    dlog('AddAuthenticator: status=$status '
-        'sharedSecret=${sharedSecret?.length ?? 0}B');
+    // confirm_type (field 12) tells us how Steam will deliver the activation
+    // code: SMS for phone accounts, email otherwise. phone_number_hint (11) is
+    // set when a phone is involved.
+    _confirmType = fields[12]?.asInt ?? 0;
+    final phoneHint = fields[11]?.asString ?? '';
+    dlog('AddAuthenticator: status=$status sharedSecret=${sharedSecret?.length ?? 0}B '
+        'confirmType=$_confirmType phoneHint="$phoneHint"');
 
     if (status == 29) return LinkResult.authenticatorPresent;
 
@@ -120,9 +130,10 @@ class AuthenticatorLinker {
     return LinkResult.awaitingFinalization;
   }
 
-  /// Finalizes the link with the SMS [smsCode] sent to the phone. Steam wants a
+  /// Finalizes the link with the [activationCode] Steam delivered — via SMS for
+  /// phone accounts, or via email when the account has no phone. Steam wants a
   /// run of correct TOTP codes; it asks for more via `want_more` until aligned.
-  Future<FinalizeResult> finalize(String smsCode) async {
+  Future<FinalizeResult> finalize(String activationCode) async {
     final account = linkedAccount;
     if (account == null) return FinalizeResult.generalFailure;
 
@@ -134,8 +145,8 @@ class AuthenticatorLinker {
         ..writeFixed64(1, session.steamId) // steamid (fixed64!)
         ..writeString(2, code) // authenticator_code
         ..writeUint64(3, time) // authenticator_time
-        ..writeString(4, smsCode) // activation_code
-        ..writeBool(6, true); // validate_sms_code
+        ..writeString(4, activationCode) // activation_code (SMS or email)
+        ..writeBool(6, !activatesByEmail); // validate_sms_code
 
       final fields = (await api.callProtobuf(
         'ITwoFactorService',

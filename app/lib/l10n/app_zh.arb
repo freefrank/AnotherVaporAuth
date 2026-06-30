@@ -103,6 +103,7 @@
   "addAuthTitle": "添加验证器",
   "addAuthPhonePrompt": "请输入手机号（含国家区号）",
   "addAuthSmsPrompt": "请输入手机收到的短信验证码",
+  "addAuthEmailPrompt": "请输入 Steam 发到邮箱的激活码",
   "addAuthRevocationWarn": "请记下你的撤销码：{code}",
   "@addAuthRevocationWarn": {
     "placeholders": { "code": { "type": "String" } }
@@ -110,7 +111,7 @@
   "addAuthConfirmRevocation": "请再次输入撤销码以确认你已保存",
   "addAuthLinked": "验证器绑定成功。",
   "addAuthStepPhone": "手机",
-  "addAuthStepSms": "短信",
+  "addAuthStepSms": "激活",
   "addAuthStepRevocation": "撤销码",
 
   "settingsEncryption": "加密",

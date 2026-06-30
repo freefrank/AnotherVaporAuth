@@ -35,7 +35,11 @@ class _AddAuthenticatorScreenState
   void initState() {
     super.initState();
     _linker = AuthenticatorLinker(ref.read(apiClientProvider), widget.session);
-    _add();
+    // Defer to after the first frame: _add() reads AppLocalizations.of(context),
+    // which must not be accessed during initState.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _add();
+    });
   }
 
   @override
@@ -254,7 +258,9 @@ class _AddAuthenticatorScreenState
               ),
             ),
             const SizedBox(height: 16),
-            Text(l.addAuthSmsPrompt),
+            Text(_linker.activatesByEmail
+                ? l.addAuthEmailPrompt
+                : l.addAuthSmsPrompt),
             const SizedBox(height: 8),
             TextField(
               controller: _sms,
