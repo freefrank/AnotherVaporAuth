@@ -61,7 +61,7 @@ jobs:
         run: |
           awk -v ver="$GITHUB_REF_NAME" '
             index($0, "## [" ver "]")==1 {p=1; print; next}
-            p && /^## \[/ {exit}
+            /^## \[/ {p=0}
             p {print}
           ' CHANGELOG.md > "$RUNNER_TEMP/RELEASE_NOTES.md"
           [ -s "$RUNNER_TEMP/RELEASE_NOTES.md" ] || echo "Release $GITHUB_REF_NAME" > "$RUNNER_TEMP/RELEASE_NOTES.md"
@@ -116,7 +116,7 @@ jobs:
         run: |
           awk -v ver="$GITHUB_REF_NAME" '
             index($0, "## [" ver "]")==1 {p=1; print; next}
-            p && /^## \[/ {exit}
+            /^## \[/ {p=0}
             p {print}
           ' CHANGELOG.md > "$RUNNER_TEMP/RELEASE_NOTES.md"
           [ -s "$RUNNER_TEMP/RELEASE_NOTES.md" ] || echo "Release $GITHUB_REF_NAME" > "$RUNNER_TEMP/RELEASE_NOTES.md"
@@ -161,7 +161,7 @@ jobs:
         run: |
           awk -v ver="$GITHUB_REF_NAME" '
             index($0, "## [" ver "]")==1 {p=1; print; next}
-            p && /^## \[/ {exit}
+            /^## \[/ {p=0}
             p {print}
           ' CHANGELOG.md > "$RUNNER_TEMP/RELEASE_NOTES.md"
           [ -s "$RUNNER_TEMP/RELEASE_NOTES.md" ] || echo "Release $GITHUB_REF_NAME" > "$RUNNER_TEMP/RELEASE_NOTES.md"
