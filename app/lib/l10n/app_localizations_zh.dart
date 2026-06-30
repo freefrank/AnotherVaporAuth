@@ -36,6 +36,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountsEmpty => '暂无账户。导入 maFile 或登录以添加。';
 
   @override
+  String get accountReady => '已就绪';
+
+  @override
   String get copyCode => '复制验证码';
 
   @override

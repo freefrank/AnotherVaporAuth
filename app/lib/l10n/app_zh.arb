@@ -11,6 +11,7 @@
   "passkeyLabel": "口令",
 
   "accountsEmpty": "暂无账户。导入 maFile 或登录以添加。",
+  "accountReady": "已就绪",
   "copyCode": "复制验证码",
   "codeCopied": "验证码已复制到剪贴板",
   "copySteamId": "复制 SteamID",

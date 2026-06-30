@@ -10,6 +10,7 @@ import '../core/steam_totp.dart';
 import '../services/steam_time.dart';
 import 'widgets/countdown_ring.dart';
 import 'widgets/flip_code.dart';
+import 'widgets/motion.dart';
 import 'widgets/scanline_overlay.dart';
 import 'approve_login_screen.dart';
 import 'confirmations_screen.dart';
@@ -17,7 +18,6 @@ import 'import_helper.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
 
-/// Avatar accent palette for the account dock tiles.
 const _palette = [
   Color(0xFF00F0FF),
   Color(0xFFFF2BD6),
@@ -32,8 +32,21 @@ String _initial(SteamGuardAccount a) {
   return n.isEmpty ? '?' : n.substring(0, 1).toUpperCase();
 }
 
-/// Main screen — design screen 01, Variant B: a centred big countdown ring +
-/// large code + account name + copy, with a bottom account-switcher dock.
+Color _avatarColor(SteamGuardAccount a) =>
+    _palette[a.steamId.hashCode.abs() % _palette.length];
+
+String _codeFor(SteamGuardAccount a, int tick) {
+  try {
+    return a.generateCode(tick);
+  } catch (_) {
+    return '—————';
+  }
+}
+
+/// Main screen — design screen 01, Variant A: a sidebar account list (each row
+/// shows its own live code) + a main panel for the selected account (avatar,
+/// big code, countdown ring + copy). Responsive: side-by-side on wide screens,
+/// stacked (panel on top, list below) on phones.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -52,7 +65,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const <SteamGuardAccount>[];
     final tick =
         ref.watch(tickProvider).valueOrNull ?? SteamTime.currentSteamTime;
-
     if (_selected >= accounts.length) _selected = 0;
     final hasAccounts = accounts.isNotEmpty;
 
@@ -81,19 +93,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       body: ScanlineOverlay(
-        child: hasAccounts
-            ? _FocusedView(
-                account: accounts[_selected],
-                tick: tick,
-                onCopy: _copy,
-                dock: _AccountDock(
-                  accounts: accounts,
-                  selected: _selected,
-                  onSelect: (i) => setState(() => _selected = i),
-                  onAdd: () => _addMenu(context),
-                ),
-              )
-            : _EmptyState(onAdd: () => _addMenu(context)),
+        child: !hasAccounts
+            ? _EmptyState(onAdd: () => _addMenu(context))
+            : LayoutBuilder(
+                builder: (context, c) {
+                  final sidebar = _Sidebar(
+                    accounts: accounts,
+                    selected: _selected,
+                    tick: tick,
+                    onSelect: (i) => setState(() => _selected = i),
+                    onAdd: () => _addMenu(context),
+                  );
+                  final panel = _MainPanel(
+                    account: accounts[_selected],
+                    tick: tick,
+                    onCopy: _copy,
+                  );
+                  if (c.maxWidth >= 640) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(width: 240, child: sidebar),
+                        Expanded(child: panel),
+                      ],
+                    );
+                  }
+                  return Column(
+                    children: [
+                      panel,
+                      const Divider(height: 1),
+                      Expanded(child: sidebar),
+                    ],
+                  );
+                },
+              ),
       ),
     );
   }
@@ -172,9 +205,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         );
         if (ok == true) {
-          await ref
-              .read(appControllerProvider.notifier)
-              .removeAccount(account);
+          await ref.read(appControllerProvider.notifier).removeAccount(account);
         }
         break;
     }
@@ -188,65 +219,134 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-/// Centred ring + big code + name + copy, with the account dock underneath.
-class _FocusedView extends StatelessWidget {
-  final SteamGuardAccount account;
+/// Left/bottom account list. Each row shows the account's own live code.
+class _Sidebar extends StatelessWidget {
+  final List<SteamGuardAccount> accounts;
+  final int selected;
   final int tick;
-  final void Function(String code) onCopy;
-  final Widget dock;
-
-  const _FocusedView({
-    required this.account,
+  final void Function(int index) onSelect;
+  final VoidCallback onAdd;
+  const _Sidebar({
+    required this.accounts,
+    required this.selected,
     required this.tick,
-    required this.onCopy,
-    required this.dock,
+    required this.onSelect,
+    required this.onAdd,
   });
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).extension<SdaTokens>()!;
-    String code;
-    try {
-      code = account.generateCode(tick);
-    } catch (_) {
-      code = '—————';
-    }
-    final remaining = SteamTotp.secondsRemaining(tick);
-
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CountdownRing(remaining: remaining, size: 150, stroke: 8),
-            const SizedBox(height: 24),
-            FlipCode(
-              code: code,
-              fontSize: t.isPixel ? 38 : 42,
-              letterSpacing: 8,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: t.panel,
+        border: Border(right: BorderSide(color: t.line, width: t.borderWidth)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 10, 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l.navAccounts,
+                    style: TextStyle(
+                        color: t.muted, fontSize: 11, letterSpacing: 1),
+                  ),
+                ),
+                InkWell(
+                  onTap: onAdd,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: t.border,
+                      borderRadius: BorderRadius.circular(t.radiusSm),
+                    ),
+                    child: Icon(Icons.add, size: 16, color: t.accent),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 14),
-            Text(
-              account.accountName ?? '${account.steamId}',
-              style: TextStyle(color: t.text, fontSize: 14),
-            ),
-            const SizedBox(height: 4),
-            Text('${account.steamId}',
-                style: TextStyle(color: t.muted, fontSize: 12)),
-            const SizedBox(height: 22),
-            FilledButton.icon(
-              onPressed: () => onCopy(code),
-              icon: const Icon(Icons.copy, size: 16),
-              label: Text(l.copyCode),
-              style: FilledButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              itemCount: accounts.length,
+              itemBuilder: (context, i) => _SidebarRow(
+                account: accounts[i],
+                code: _codeFor(accounts[i], tick),
+                selected: i == selected,
+                onTap: () => onSelect(i),
               ),
             ),
-            const SizedBox(height: 34),
-            dock,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SidebarRow extends StatelessWidget {
+  final SteamGuardAccount account;
+  final String code;
+  final bool selected;
+  final VoidCallback onTap;
+  const _SidebarRow({
+    required this.account,
+    required this.code,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(t.radiusSm),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: selected ? t.panel2 : Colors.transparent,
+          borderRadius: BorderRadius.circular(t.radiusSm),
+          border: Border(
+            left: BorderSide(
+              color: selected ? t.accent : Colors.transparent,
+              width: 2,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            _Avatar(account: account, size: 30),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    account.accountName ?? '${account.steamId}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: t.text, fontSize: 13.5),
+                  ),
+                  Text(
+                    code,
+                    style: TextStyle(
+                      color: t.accent,
+                      fontSize: 13,
+                      letterSpacing: 3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -254,50 +354,70 @@ class _FocusedView extends StatelessWidget {
   }
 }
 
-/// Bottom dock of account tiles + an add button.
-class _AccountDock extends StatelessWidget {
-  final List<SteamGuardAccount> accounts;
-  final int selected;
-  final void Function(int index) onSelect;
-  final VoidCallback onAdd;
-  const _AccountDock({
-    required this.accounts,
-    required this.selected,
-    required this.onSelect,
-    required this.onAdd,
-  });
+/// Main panel for the selected account.
+class _MainPanel extends StatelessWidget {
+  final SteamGuardAccount account;
+  final int tick;
+  final void Function(String code) onCopy;
+  const _MainPanel(
+      {required this.account, required this.tick, required this.onCopy});
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final t = Theme.of(context).extension<SdaTokens>()!;
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      alignment: WrapAlignment.center,
-      children: [
-        for (var i = 0; i < accounts.length; i++)
-          GestureDetector(
-            onTap: () => onSelect(i),
-            child: _Avatar(
-              account: accounts[i],
-              size: 46,
-              dimmed: i != selected,
-              selected: i == selected,
-            ),
+    final code = _codeFor(account, tick);
+    final remaining = SteamTotp.secondsRemaining(tick);
+
+    return Padding(
+      padding: const EdgeInsets.all(26),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _Avatar(account: account, size: 34),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(account.accountName ?? '${account.steamId}',
+                      style: TextStyle(color: t.text, fontSize: 14)),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      PulsingDot(color: t.good, size: 7),
+                      const SizedBox(width: 6),
+                      Text(l.accountReady,
+                          style: TextStyle(color: t.muted, fontSize: 12)),
+                    ],
+                  ),
+                ],
+              ),
+            ],
           ),
-        GestureDetector(
-          onTap: onAdd,
-          child: Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              border: Border.all(color: t.line, width: t.borderWidth),
-              borderRadius: BorderRadius.circular(t.radiusSm),
-            ),
-            child: Icon(Icons.add, color: t.muted),
+          const SizedBox(height: 22),
+          FlipCode(code: code, fontSize: t.codeSize, letterSpacing: 8),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CountdownRing(remaining: remaining, size: 74, stroke: 6),
+              const SizedBox(width: 20),
+              FilledButton.icon(
+                onPressed: () => onCopy(code),
+                icon: const Icon(Icons.copy, size: 16),
+                label: Text(l.copyCode),
+                style: FilledButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -305,38 +425,25 @@ class _AccountDock extends StatelessWidget {
 class _Avatar extends StatelessWidget {
   final SteamGuardAccount account;
   final double size;
-  final bool dimmed;
-  final bool selected;
-  const _Avatar({
-    required this.account,
-    required this.size,
-    this.dimmed = false,
-    this.selected = false,
-  });
+  const _Avatar({required this.account, required this.size});
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).extension<SdaTokens>()!;
-    final color = _palette[account.steamId.hashCode.abs() % _palette.length];
-    return Opacity(
-      opacity: dimmed ? 0.5 : 1,
-      child: Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(t.radiusSm),
-          border: selected ? Border.all(color: t.accent, width: 2) : null,
-          boxShadow: selected ? t.glowShadow(blur: 12) : null,
-        ),
-        child: Text(
-          _initial(account),
-          style: TextStyle(
-            color: const Color(0xFF06060F),
-            fontSize: size * 0.32,
-            fontWeight: FontWeight.bold,
-          ),
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: _avatarColor(account),
+        borderRadius: BorderRadius.circular(t.radiusSm),
+      ),
+      child: Text(
+        _initial(account),
+        style: TextStyle(
+          color: const Color(0xFF06060F),
+          fontSize: size * 0.36,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );

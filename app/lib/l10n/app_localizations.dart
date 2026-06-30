@@ -152,6 +152,12 @@ abstract class AppLocalizations {
   /// **'No accounts yet. Import a maFile or log in to add one.'**
   String get accountsEmpty;
 
+  /// No description provided for @accountReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get accountReady;
+
   /// No description provided for @copyCode.
   ///
   /// In en, this message translates to:

@@ -37,6 +37,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'No accounts yet. Import a maFile or log in to add one.';
 
   @override
+  String get accountReady => 'Ready';
+
+  @override
   String get copyCode => 'Copy code';
 
   @override

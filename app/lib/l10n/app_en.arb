@@ -11,6 +11,7 @@
   "passkeyLabel": "Passkey",
 
   "accountsEmpty": "No accounts yet. Import a maFile or log in to add one.",
+  "accountReady": "Ready",
   "copyCode": "Copy code",
   "codeCopied": "Login code copied to clipboard",
   "copySteamId": "Copy SteamID",
