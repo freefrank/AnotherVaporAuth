@@ -10,6 +10,7 @@ import '../app/providers.dart';
 import '../app/theme.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/steam_auth_session.dart';
+import 'widgets/cooldown_button.dart';
 import 'widgets/scanline_overlay.dart';
 import 'widgets/stepper3.dart';
 import 'add_authenticator_screen.dart';
@@ -261,7 +262,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             onSubmitted: (_) => _submitCode(),
           ),
           const SizedBox(height: 12),
-          FilledButton(
+          CooldownButton(
             onPressed: _busy ? null : _submitCode,
             child: Text(l.loginSubmitCode),
           ),

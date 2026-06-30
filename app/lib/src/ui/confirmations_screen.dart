@@ -7,6 +7,7 @@ import '../app/theme.dart';
 import '../core/models/confirmation.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/confirmations_client.dart';
+import '../services/session_manager.dart';
 import 'widgets/sda_panel.dart';
 import 'widgets/scanline_overlay.dart';
 
@@ -42,7 +43,7 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
       _error = null;
     });
     try {
-      final list = await _client.fetch(widget.account);
+      final list = await _fetchWithAutoRefresh();
       if (!mounted) return;
       setState(() {
         _confs = list;
@@ -52,8 +53,25 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = '$e';
+        _error = e is ConfirmationAuthException
+            ? AppLocalizations.of(context).confNeedsLogin
+            : '$e';
       });
+    }
+  }
+
+  /// Fetches confirmations; on a stale session (`needauth`) it transparently
+  /// refreshes the access token from the refresh token and retries once. Only
+  /// surfaces [ConfirmationAuthException] when there is no usable refresh token.
+  Future<List<Confirmation>> _fetchWithAutoRefresh() async {
+    try {
+      return await _client.fetch(widget.account);
+    } on ConfirmationAuthException {
+      final refreshed = await SessionManager(ref.read(apiClientProvider))
+          .refresh(widget.account.session);
+      if (!refreshed) rethrow;
+      await ref.read(appControllerProvider).value?.store.save();
+      return await _client.fetch(widget.account);
     }
   }
 

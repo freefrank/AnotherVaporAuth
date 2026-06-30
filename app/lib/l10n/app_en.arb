@@ -46,6 +46,7 @@
   "@confResult": {
     "placeholders": { "ok": { "type": "int" }, "fail": { "type": "int" } }
   },
+  "confNeedsLogin": "Session expired — sign in again to refresh this account.",
 
   "loginTitle": "Log in to Steam",
   "loginUsername": "Username",

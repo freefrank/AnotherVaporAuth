@@ -46,6 +46,7 @@
   "@confResult": {
     "placeholders": { "ok": { "type": "int" }, "fail": { "type": "int" } }
   },
+  "confNeedsLogin": "会话已失效 —— 请重新登录该账户以刷新。",
 
   "loginTitle": "登录 Steam",
   "loginUsername": "用户名",

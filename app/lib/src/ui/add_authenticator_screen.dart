@@ -77,6 +77,13 @@ class _AddAuthenticatorScreenState
         case LinkResult.mustConfirmEmail:
           _failWith('Please confirm the email Steam sent, then retry.');
           break;
+        case LinkResult.accountLocked:
+          _failWith('This account is locked/restricted by Steam — recover it '
+              'at help.steampowered.com before adding an authenticator.');
+          break;
+        case LinkResult.rateLimited:
+          _failWith('Too many attempts. Please wait a while and try again.');
+          break;
         case LinkResult.generalFailure:
           _failWith('Failed to add authenticator.');
           break;

@@ -314,6 +314,12 @@ abstract class AppLocalizations {
   /// **'{ok} succeeded, {fail} failed'**
   String confResult(int ok, int fail);
 
+  /// No description provided for @confNeedsLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired — sign in again to refresh this account.'**
+  String get confNeedsLogin;
+
   /// No description provided for @loginTitle.
   ///
   /// In en, this message translates to:

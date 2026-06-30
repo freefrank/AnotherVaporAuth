@@ -167,12 +167,23 @@ class SteamAuthSession {
       ..writeFixed64(2, steamId) // steamid (fixed64!)
       ..writeString(3, code)
       ..writeVarint(4, codeType);
-    await api.callProtobuf(
-      _iface,
-      'UpdateAuthSessionWithSteamGuardCode',
-      request: req,
-    );
+    try {
+      await api.callProtobuf(
+        _iface,
+        'UpdateAuthSessionWithSteamGuardCode',
+        request: req,
+      );
+    } on SteamApiException catch (e) {
+      // DuplicateRequest (29): the code was already accepted for this session
+      // (e.g. the same 30s TOTP was submitted moments ago). That's not a
+      // failure — proceed to polling. Genuine errors (mismatched/expired code)
+      // still propagate.
+      if (e.eresult != _eresultDuplicateRequest) rethrow;
+      dlog('guard code already accepted (DuplicateRequest) — proceed to poll');
+    }
   }
+
+  static const int _eresultDuplicateRequest = 29;
 
   /// Polls once for completion.
   Future<PollResult> poll() async {

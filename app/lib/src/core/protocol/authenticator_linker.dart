@@ -15,6 +15,8 @@ enum LinkResult {
   awaitingFinalization,
   generalFailure,
   authenticatorPresent,
+  accountLocked, // EResult 73 — account is locked/restricted by Steam
+  rateLimited, // EResult 84 — too many attempts, try later
 }
 
 enum FinalizeResult {
@@ -58,13 +60,27 @@ class AuthenticatorLinker {
       ..writeString(6, '1') // sms_phone_id
       ..writeVarint(8, 2); // version
 
-    final fields = (await api.callProtobuf(
-      'ITwoFactorService',
-      'AddAuthenticator',
-      request: req,
-      accessToken: _accessToken,
-    ))
-        .parse();
+    final Map<int, ProtoField> parsed;
+    try {
+      parsed = (await api.callProtobuf(
+        'ITwoFactorService',
+        'AddAuthenticator',
+        request: req,
+        accessToken: _accessToken,
+      ))
+          .parse();
+    } on SteamApiException catch (e) {
+      dlog('AddAuthenticator failed: eresult ${e.eresult}');
+      switch (e.eresult) {
+        case 73: // AccountLockedDown
+          return LinkResult.accountLocked;
+        case 84: // RateLimitExceeded
+          return LinkResult.rateLimited;
+        default:
+          return LinkResult.generalFailure;
+      }
+    }
+    final fields = parsed;
 
     final status = fields[10]?.asInt ?? 0;
     final sharedSecret = fields[1]?.bytes;

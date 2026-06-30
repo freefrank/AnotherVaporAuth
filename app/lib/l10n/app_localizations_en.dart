@@ -125,6 +125,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get confNeedsLogin =>
+      'Session expired — sign in again to refresh this account.';
+
+  @override
   String get loginTitle => 'Log in to Steam';
 
   @override
