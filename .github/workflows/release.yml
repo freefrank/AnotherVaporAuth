@@ -6,6 +6,9 @@ on:
   push:
     tags:
       - 'v*'
+  # Manual trigger for validating the desktop builds without cutting a release
+  # (the "Upload to release" steps are guarded to run only for tag pushes).
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -68,6 +71,7 @@ jobs:
           echo "path=$RUNNER_TEMP/RELEASE_NOTES.md" >> "$GITHUB_OUTPUT"
 
       - name: Upload to release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.APP_DIR }}/build/app/outputs/flutter-apk/SDA-*.apk
@@ -123,6 +127,7 @@ jobs:
           echo "path=$RUNNER_TEMP/RELEASE_NOTES.md" >> "$GITHUB_OUTPUT"
 
       - name: Upload to release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: SDA-*-linux-x64.tar.gz
@@ -168,6 +173,7 @@ jobs:
           echo "path=$RUNNER_TEMP/RELEASE_NOTES.md" >> "$GITHUB_OUTPUT"
 
       - name: Upload to release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: SDA-*-windows-x64.zip
