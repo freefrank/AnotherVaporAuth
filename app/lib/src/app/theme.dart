@@ -172,12 +172,18 @@ class SdaTokens extends ThemeExtension<SdaTokens> {
 ThemeData buildSdaTheme(SdaThemeVariant variant) {
   final t = SdaTokens.of(variant);
 
-  // Bundled fonts (no runtime download). Body/code font vs display font.
-  final codeFamily = t.isPixel ? 'VT323' : 'JetBrainsMono';
-  final displayFamily = t.isPixel ? 'PressStart2P' : 'ChakraPetch';
+  // Bundled fonts (no runtime download). Pixel theme uses Fusion Pixel for both
+  // Latin and CJK (single pixel family). Neon theme uses Latin display/code
+  // fonts with Noto Sans SC as the Chinese (CJK) fallback.
+  final codeFamily = t.isPixel ? 'FusionPixel' : 'JetBrainsMono';
+  final displayFamily = t.isPixel ? 'FusionPixel' : 'ChakraPetch';
+  final cjkFallback = t.isPixel
+      ? const ['FusionPixel', 'NotoSansSC']
+      : const ['NotoSansSC'];
 
   TextTheme displayCode(TextTheme base) => base.apply(
         fontFamily: codeFamily,
+        fontFamilyFallback: cjkFallback,
         bodyColor: t.text,
         displayColor: t.text,
       );
@@ -194,7 +200,8 @@ ThemeData buildSdaTheme(SdaThemeVariant variant) {
   );
 
   final base = ThemeData(useMaterial3: true, brightness: Brightness.dark);
-  final displayFont = TextStyle(fontFamily: displayFamily);
+  final displayFont =
+      TextStyle(fontFamily: displayFamily, fontFamilyFallback: cjkFallback);
 
   return base.copyWith(
     colorScheme: scheme,
