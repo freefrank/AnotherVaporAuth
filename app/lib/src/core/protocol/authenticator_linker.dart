@@ -77,6 +77,8 @@ class AuthenticatorLinker {
     } on SteamApiException catch (e) {
       dlog('AddAuthenticator failed: eresult ${e.eresult}');
       switch (e.eresult) {
+        case 29: // DuplicateRequest — an authenticator is already present
+          return LinkResult.authenticatorPresent;
         case 73: // AccountLockedDown
           return LinkResult.accountLocked;
         case 84: // RateLimitExceeded

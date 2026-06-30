@@ -149,6 +149,16 @@
   "addAuthStepSms": "激活",
   "addAuthStepRevocation": "撤销码",
 
+  "addPresentTitle": "该账户已有验证器",
+  "addPresentIntro": "Steam 同一账户只允许一个手机验证器。请先移除现有验证器，再点「重试」。",
+  "addPresentStep1": "仍有旧手机或 Steam App？打开它 → Steam 令牌 → 移除验证器。",
+  "addPresentStep2": "有撤销代码（Rxxxxx）？打开下方页面，选择「移除验证器」。",
+  "addPresentStep3": "两者都无法访问？通过 Steam 客服 → 帮助 → Steam 令牌手机验证器。",
+  "addPresentManageUrl": "store.steampowered.com/twofactor/manage",
+  "addPresentCopiedUrl": "链接已复制",
+  "commonRetry": "重试",
+  "commonCopy": "复制链接",
+
   "settingsEncryption": "加密",
   "settingsEncryptionDesc": "本机 maFiles 已用你的 6 位解锁 PIN 加密（AES-256-CBC）。",
   "settingsThemeDesc": "在霓虹与像素之间切换整体界面。",

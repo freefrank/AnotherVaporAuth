@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -19,7 +20,7 @@ class AddAuthenticatorScreen extends ConsumerStatefulWidget {
       _AddAuthenticatorScreenState();
 }
 
-enum _Step { working, needPhone, finalize, done, failed }
+enum _Step { working, needPhone, finalize, done, failed, present }
 
 class _AddAuthenticatorScreenState
     extends ConsumerState<AddAuthenticatorScreen> {
@@ -78,7 +79,12 @@ class _AddAuthenticatorScreenState
           });
           break;
         case LinkResult.authenticatorPresent:
-          _failWith(l.addErrPresent);
+          // Not an error: guide the user through removing the existing
+          // authenticator, then let them retry.
+          setState(() {
+            _busy = false;
+            _step = _Step.present;
+          });
           break;
         case LinkResult.mustConfirmEmail:
           _failWith(l.addErrConfirmEmail);
@@ -161,7 +167,9 @@ class _AddAuthenticatorScreenState
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final showStepper = _step != _Step.working && _step != _Step.failed;
+    final showStepper = _step != _Step.working &&
+        _step != _Step.failed &&
+        _step != _Step.present;
     return Scaffold(
       appBar: AppBar(title: Text(l.addAuthTitle)),
       body: ScanlineOverlay(
@@ -294,6 +302,92 @@ class _AddAuthenticatorScreenState
             FilledButton(
               onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
               child: Text(l.commonOk),
+            ),
+          ],
+        );
+      case _Step.present:
+        final t = Theme.of(context).extension<SdaTokens>()!;
+        Widget step(int n, String text) => Padding(
+              padding: context.rInsets(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: context.r(24),
+                    height: context.r(24),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: t.accent.withValues(alpha: 0.18),
+                      shape: BoxShape.circle,
+                      border:
+                          Border.all(color: t.accent.withValues(alpha: 0.6)),
+                    ),
+                    child: Text('$n',
+                        style: TextStyle(
+                            color: t.accent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: context.r(13))),
+                  ),
+                  SizedBox(width: context.r(12)),
+                  Expanded(child: Text(text)),
+                ],
+              ),
+            );
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(Icons.shield_outlined,
+                size: context.r(44), color: t.accent),
+            SizedBox(height: context.r(12)),
+            Text(l.addPresentTitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: context.r(18), fontWeight: FontWeight.bold)),
+            SizedBox(height: context.r(10)),
+            Text(l.addPresentIntro, textAlign: TextAlign.center),
+            SizedBox(height: context.r(20)),
+            step(1, l.addPresentStep1),
+            step(2, l.addPresentStep2),
+            // The 2FA management page + a copy button (no external browser dep).
+            Padding(
+              padding: context.rInsets(left: 36, bottom: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SelectableText(
+                      l.addPresentManageUrl,
+                      style: TextStyle(
+                          color: t.accent,
+                          decoration: TextDecoration.underline),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: l.commonCopy,
+                    icon: Icon(Icons.copy, size: context.r(18)),
+                    onPressed: () async {
+                      await Clipboard.setData(
+                          ClipboardData(text: 'https://${l.addPresentManageUrl}'));
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l.addPresentCopiedUrl)),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            step(3, l.addPresentStep3),
+            SizedBox(height: context.r(8)),
+            FilledButton.icon(
+              onPressed: _busy ? null : _add,
+              icon: const Icon(Icons.refresh),
+              label: Text(l.commonRetry),
+            ),
+            SizedBox(height: context.r(8)),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l.commonClose),
             ),
           ],
         );

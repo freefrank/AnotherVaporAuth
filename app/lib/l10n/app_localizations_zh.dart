@@ -382,6 +382,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addAuthStepRevocation => '撤销码';
 
   @override
+  String get addPresentTitle => '该账户已有验证器';
+
+  @override
+  String get addPresentIntro => 'Steam 同一账户只允许一个手机验证器。请先移除现有验证器，再点「重试」。';
+
+  @override
+  String get addPresentStep1 => '仍有旧手机或 Steam App？打开它 → Steam 令牌 → 移除验证器。';
+
+  @override
+  String get addPresentStep2 => '有撤销代码（Rxxxxx）？打开下方页面，选择「移除验证器」。';
+
+  @override
+  String get addPresentStep3 => '两者都无法访问？通过 Steam 客服 → 帮助 → Steam 令牌手机验证器。';
+
+  @override
+  String get addPresentManageUrl => 'store.steampowered.com/twofactor/manage';
+
+  @override
+  String get addPresentCopiedUrl => '链接已复制';
+
+  @override
+  String get commonRetry => '重试';
+
+  @override
+  String get commonCopy => '复制链接';
+
+  @override
   String get settingsEncryption => '加密';
 
   @override

@@ -806,6 +806,60 @@ abstract class AppLocalizations {
   /// **'Revocation'**
   String get addAuthStepRevocation;
 
+  /// No description provided for @addPresentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This account already has an authenticator'**
+  String get addPresentTitle;
+
+  /// No description provided for @addPresentIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam allows only one mobile authenticator per account. Remove the existing one, then tap Retry.'**
+  String get addPresentIntro;
+
+  /// No description provided for @addPresentStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Still have the old phone or Steam app? Open it → Steam Guard → Remove Authenticator.'**
+  String get addPresentStep1;
+
+  /// No description provided for @addPresentStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Have your revocation code (Rxxxxx)? Open the page below and choose “Remove Authenticator”.'**
+  String get addPresentStep2;
+
+  /// No description provided for @addPresentStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Lost access to both? Use Steam Support → Help → Steam Guard Mobile Authenticator.'**
+  String get addPresentStep3;
+
+  /// No description provided for @addPresentManageUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'store.steampowered.com/twofactor/manage'**
+  String get addPresentManageUrl;
+
+  /// No description provided for @addPresentCopiedUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get addPresentCopiedUrl;
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get commonRetry;
+
+  /// No description provided for @commonCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get commonCopy;
+
   /// No description provided for @settingsEncryption.
   ///
   /// In en, this message translates to:

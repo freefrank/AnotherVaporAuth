@@ -397,6 +397,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addAuthStepRevocation => 'Revocation';
 
   @override
+  String get addPresentTitle => 'This account already has an authenticator';
+
+  @override
+  String get addPresentIntro =>
+      'Steam allows only one mobile authenticator per account. Remove the existing one, then tap Retry.';
+
+  @override
+  String get addPresentStep1 =>
+      'Still have the old phone or Steam app? Open it → Steam Guard → Remove Authenticator.';
+
+  @override
+  String get addPresentStep2 =>
+      'Have your revocation code (Rxxxxx)? Open the page below and choose “Remove Authenticator”.';
+
+  @override
+  String get addPresentStep3 =>
+      'Lost access to both? Use Steam Support → Help → Steam Guard Mobile Authenticator.';
+
+  @override
+  String get addPresentManageUrl => 'store.steampowered.com/twofactor/manage';
+
+  @override
+  String get addPresentCopiedUrl => 'Link copied';
+
+  @override
+  String get commonRetry => 'Retry';
+
+  @override
+  String get commonCopy => 'Copy link';
+
+  @override
   String get settingsEncryption => 'Encryption';
 
   @override

@@ -149,6 +149,16 @@
   "addAuthStepSms": "Activate",
   "addAuthStepRevocation": "Revocation",
 
+  "addPresentTitle": "This account already has an authenticator",
+  "addPresentIntro": "Steam allows only one mobile authenticator per account. Remove the existing one, then tap Retry.",
+  "addPresentStep1": "Still have the old phone or Steam app? Open it → Steam Guard → Remove Authenticator.",
+  "addPresentStep2": "Have your revocation code (Rxxxxx)? Open the page below and choose “Remove Authenticator”.",
+  "addPresentStep3": "Lost access to both? Use Steam Support → Help → Steam Guard Mobile Authenticator.",
+  "addPresentManageUrl": "store.steampowered.com/twofactor/manage",
+  "addPresentCopiedUrl": "Link copied",
+  "commonRetry": "Retry",
+  "commonCopy": "Copy link",
+
   "settingsEncryption": "Encryption",
   "settingsEncryptionDesc": "Your local maFiles are encrypted (AES-256-CBC) with your 6-digit unlock PIN.",
   "settingsThemeDesc": "Switch the whole UI between Neon and Pixel.",
