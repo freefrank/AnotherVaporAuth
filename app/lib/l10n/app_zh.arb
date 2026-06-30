@@ -138,7 +138,7 @@
   "addAuthStepRevocation": "撤销码",
 
   "settingsEncryption": "加密",
-  "settingsEncryptionDesc": "PBKDF2 50k + AES-256-CBC —— 保护本机 maFiles。",
+  "settingsEncryptionDesc": "本机 maFiles 已用你的 6 位解锁 PIN 加密（AES-256-CBC）。",
   "settingsThemeDesc": "在霓虹与像素之间切换整体界面。",
   "settingsChange": "修改",
   "settingsSetPasskey": "设置 / 修改加密口令",

@@ -357,7 +357,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsEncryptionDesc =>
-      'PBKDF2 50k + AES-256-CBC —— 保护本机 maFiles。';
+      '本机 maFiles 已用你的 6 位解锁 PIN 加密（AES-256-CBC）。';
 
   @override
   String get settingsThemeDesc => '在霓虹与像素之间切换整体界面。';

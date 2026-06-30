@@ -761,7 +761,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsEncryptionDesc.
   ///
   /// In en, this message translates to:
-  /// **'PBKDF2 50k + AES-256-CBC — protects your local maFiles.'**
+  /// **'Your local maFiles are encrypted (AES-256-CBC) with your 6-digit unlock PIN.'**
   String get settingsEncryptionDesc;
 
   /// No description provided for @settingsThemeDesc.

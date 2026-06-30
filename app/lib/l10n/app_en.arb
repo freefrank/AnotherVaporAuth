@@ -138,7 +138,7 @@
   "addAuthStepRevocation": "Revocation",
 
   "settingsEncryption": "Encryption",
-  "settingsEncryptionDesc": "PBKDF2 50k + AES-256-CBC — protects your local maFiles.",
+  "settingsEncryptionDesc": "Your local maFiles are encrypted (AES-256-CBC) with your 6-digit unlock PIN.",
   "settingsThemeDesc": "Switch the whole UI between Neon and Pixel.",
   "settingsChange": "Change",
   "settingsSetPasskey": "Set / change encryption passkey",
