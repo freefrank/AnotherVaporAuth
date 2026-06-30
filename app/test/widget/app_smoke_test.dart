@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sda/src/app/app.dart';
-import 'package:sda/src/app/providers.dart';
-import 'package:sda/src/services/storage_provider.dart';
-import 'package:sda/src/ui/welcome_screen.dart';
+import 'package:ava/src/app/app.dart';
+import 'package:ava/src/app/providers.dart';
+import 'package:ava/src/services/storage_provider.dart';
+import 'package:ava/src/ui/welcome_screen.dart';
 
 void main() {
   testWidgets('app boots to welcome screen with in-memory storage',

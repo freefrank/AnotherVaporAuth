@@ -1,11 +1,11 @@
 <h1 align="center">
   <img src="icon.png" height="64" width="64" />
   <br/>
-  Steam 桌面验证器 — Flutter
+  AVA
 </h1>
 
 <p align="center">
-  用 <b>Flutter</b> 对 Steam Desktop Authenticator 进行的现代化、轻量、跨平台重写。<br/>
+  <b>A</b>nother<b>V</b>apor<b>A</b>uth —— 用 <b>Flutter</b> 打造的现代化、轻量、跨平台 Steam 验证器。<br/>
   <sup>社区项目 —— 与 Steam / Valve 无任何关联。</sup>
 </p>
 

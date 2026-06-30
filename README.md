@@ -1,12 +1,12 @@
 <h1 align="center">
   <img src="icon.png" height="64" width="64" />
   <br/>
-  Steam Desktop Authenticator — Flutter
+  AVA
 </h1>
 
 <p align="center">
-  A modern, lightweight, cross-platform rewrite of Steam Desktop Authenticator
-  in <b>Flutter</b>.<br/>
+  <b>A</b>nother<b>V</b>apor<b>A</b>uth — a modern, lightweight, cross-platform
+  authenticator for Steam, built with <b>Flutter</b>.<br/>
   <sup>Community project — not affiliated with Steam or Valve in any way.</sup>
 </p>
 

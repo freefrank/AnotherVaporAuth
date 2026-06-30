@@ -1,4 +1,4 @@
-# SDA — Flutter rewrite (v0.9.0)
+# AVA — Steam authenticator (Flutter)
 
 A modern, lightweight, cross-platform rewrite of Steam Desktop Authenticator in
 Flutter. Targets **Windows / macOS / Linux desktop + Android** from a single

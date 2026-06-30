@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => 'Steam 桌面验证器';
+  String get appTitle => 'AVA';
 
   @override
   String get navAccounts => '账户';
@@ -39,7 +39,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountReady => '已就绪';
 
   @override
-  String get welcomeTitle => '欢迎使用 Steam Authenticator';
+  String get welcomeTitle => '欢迎使用 AVA';
 
   @override
   String get welcomeSubtitle => '本机加密保存你的验证器。开始前请选择一种方式。';

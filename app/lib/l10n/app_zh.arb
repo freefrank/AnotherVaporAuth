@@ -1,6 +1,6 @@
 {
   "@@locale": "zh",
-  "appTitle": "Steam 桌面验证器",
+  "appTitle": "AVA",
   "navAccounts": "账户",
   "navSettings": "设置",
 
@@ -12,7 +12,7 @@
 
   "accountsEmpty": "暂无账户。导入 maFile 或登录以添加。",
   "accountReady": "已就绪",
-  "welcomeTitle": "欢迎使用 Steam Authenticator",
+  "welcomeTitle": "欢迎使用 AVA",
   "welcomeSubtitle": "本机加密保存你的验证器。开始前请选择一种方式。",
   "welcomeLoginCta": "登录 Steam 账户",
   "welcomeLoginSub": "新建一个验证器",

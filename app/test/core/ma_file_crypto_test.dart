@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sda/src/core/crypto/ma_file_crypto.dart';
+import 'package:ava/src/core/crypto/ma_file_crypto.dart';
 
 String _hex(List<int> bytes) =>
     bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();

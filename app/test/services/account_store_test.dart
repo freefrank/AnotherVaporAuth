@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sda/src/core/models/session_data.dart';
-import 'package:sda/src/core/models/steam_guard_account.dart';
-import 'package:sda/src/services/account_store.dart';
-import 'package:sda/src/services/storage_provider.dart';
+import 'package:ava/src/core/models/session_data.dart';
+import 'package:ava/src/core/models/steam_guard_account.dart';
+import 'package:ava/src/services/account_store.dart';
+import 'package:ava/src/services/storage_provider.dart';
 
 SteamGuardAccount _account(int steamId, String name) => SteamGuardAccount(
       sharedSecret: 'MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=',

@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Steam Desktop Authenticator",
+  "appTitle": "AVA",
   "navAccounts": "Accounts",
   "navSettings": "Settings",
 
@@ -12,7 +12,7 @@
 
   "accountsEmpty": "No accounts yet. Import a maFile or log in to add one.",
   "accountReady": "Ready",
-  "welcomeTitle": "Welcome to Steam Authenticator",
+  "welcomeTitle": "Welcome to AVA",
   "welcomeSubtitle": "Your authenticator is stored encrypted on this device. Choose how to begin.",
   "welcomeLoginCta": "Log in to Steam",
   "welcomeLoginSub": "Set up a new authenticator",

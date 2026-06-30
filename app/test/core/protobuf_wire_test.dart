@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sda/src/core/proto/protobuf_wire.dart';
+import 'package:ava/src/core/proto/protobuf_wire.dart';
 
 void main() {
   group('ProtoWriter/ProtoReader round trip', () {

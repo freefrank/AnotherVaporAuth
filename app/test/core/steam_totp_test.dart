@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sda/src/core/steam_totp.dart';
+import 'package:ava/src/core/steam_totp.dart';
 
 void main() {
   // Reference values produced by an independent Python implementation of the

@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sda/src/core/models/manifest.dart';
-import 'package:sda/src/core/models/steam_guard_account.dart';
+import 'package:ava/src/core/models/manifest.dart';
+import 'package:ava/src/core/models/steam_guard_account.dart';
 
 void main() {
   group('SteamGuardAccount JSON', () {

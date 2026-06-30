@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Steam Desktop Authenticator'**
+  /// **'AVA'**
   String get appTitle;
 
   /// No description provided for @navAccounts.
@@ -161,7 +161,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeTitle.
   ///
   /// In en, this message translates to:
-  /// **'Welcome to Steam Authenticator'**
+  /// **'Welcome to AVA'**
   String get welcomeTitle;
 
   /// No description provided for @welcomeSubtitle.

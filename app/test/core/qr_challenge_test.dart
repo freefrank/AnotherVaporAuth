@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sda/src/core/protocol/qr_approval_client.dart';
+import 'package:ava/src/core/protocol/qr_approval_client.dart';
 
 void main() {
   group('QrChallenge.tryParse', () {

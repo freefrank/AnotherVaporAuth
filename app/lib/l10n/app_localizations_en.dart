@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Steam Desktop Authenticator';
+  String get appTitle => 'AVA';
 
   @override
   String get navAccounts => 'Accounts';
@@ -40,7 +40,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountReady => 'Ready';
 
   @override
-  String get welcomeTitle => 'Welcome to Steam Authenticator';
+  String get welcomeTitle => 'Welcome to AVA';
 
   @override
   String get welcomeSubtitle =>
