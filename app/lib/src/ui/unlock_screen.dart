@@ -6,6 +6,7 @@ import '../app/providers.dart';
 import '../app/responsive.dart';
 import 'widgets/app_logo.dart';
 import 'widgets/motion.dart';
+import 'widgets/pin_field.dart';
 import 'widgets/scanline_overlay.dart';
 
 class UnlockScreen extends ConsumerStatefulWidget {
@@ -95,16 +96,12 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
                 SizedBox(height: context.r(16)),
                 Text(l.unlockPrompt, textAlign: TextAlign.center),
                 SizedBox(height: context.r(16)),
-                TextField(
+                PinField(
                   controller: _controller,
-                  obscureText: true,
+                  label: l.pinLabel,
                   autofocus: true,
                   onSubmitted: (_) => _submit(),
-                  decoration: InputDecoration(
-                    labelText: l.passkeyLabel,
-                    border: const OutlineInputBorder(),
-                    errorText: _error,
-                  ),
+                  errorText: _error,
                 ),
                 SizedBox(height: context.r(16)),
                 SizedBox(

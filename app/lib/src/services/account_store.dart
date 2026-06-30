@@ -35,7 +35,9 @@ class AccountStore {
       final manifest =
           Manifest.fromJson(jsonDecode(contents) as Map<String, dynamic>);
       final store = AccountStore(storage, manifest);
-      if (manifest.encrypted && manifest.entries.isEmpty) {
+      if (manifest.encrypted &&
+          manifest.entries.isEmpty &&
+          manifest.passkeyCheck == null) {
         manifest.encrypted = false;
         await store.save();
       }
@@ -53,7 +55,9 @@ class AccountStore {
       if (await storage.fileExists(entry.filename)) kept.add(entry);
     }
     manifest.entries = kept;
-    if (manifest.entries.isEmpty) manifest.encrypted = false;
+    if (manifest.entries.isEmpty && manifest.passkeyCheck == null) {
+      manifest.encrypted = false;
+    }
   }
 
   Future<void> save() async {
@@ -88,7 +92,17 @@ class AccountStore {
   }
 
   Future<bool> verifyPasskey(String passkey) async {
-    if (!manifest.encrypted || manifest.entries.isEmpty) return true;
+    if (!manifest.encrypted) return true;
+    // Prefer the verification token (works with zero accounts).
+    final check = manifest.passkeyCheck;
+    if (check != null) {
+      final parts = check.split('|');
+      if (parts.length == 3) {
+        final dec = MaFileCrypto.decrypt(passkey, parts[0], parts[1], parts[2]);
+        return dec == _checkPlaintext;
+      }
+    }
+    if (manifest.entries.isEmpty) return true;
     final accounts = await getAllAccounts(passKey: passkey, limit: 1);
     return accounts.length == 1;
   }
@@ -143,7 +157,9 @@ class AccountStore {
         manifest.entries.indexWhere((e) => e.steamId == account.steamId);
     if (idx < 0) return true;
     final entry = manifest.entries.removeAt(idx);
-    if (manifest.entries.isEmpty) manifest.encrypted = false;
+    if (manifest.entries.isEmpty && manifest.passkeyCheck == null) {
+      manifest.encrypted = false;
+    }
     await save();
     if (deleteMaFile) {
       try {
@@ -183,9 +199,21 @@ class AccountStore {
       entry.salt = newSalt;
     }
     manifest.encrypted = toEncrypt;
+    if (toEncrypt) {
+      // Store a passkey-verification token so the PIN can be checked even with
+      // no accounts.
+      final salt = MaFileCrypto.getRandomSalt();
+      final iv = MaFileCrypto.getInitializationVector();
+      final ct = MaFileCrypto.encrypt(newKey, salt, iv, _checkPlaintext);
+      manifest.passkeyCheck = '$salt|$iv|$ct';
+    } else {
+      manifest.passkeyCheck = null;
+    }
     await save();
     return true;
   }
+
+  static const String _checkPlaintext = 'AVA-PASSKEY-CHECK';
 
   void moveEntry(int from, int to) {
     if (from < 0 || to < 0 || from >= manifest.entries.length) return;

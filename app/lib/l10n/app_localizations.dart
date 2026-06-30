@@ -146,6 +146,72 @@ abstract class AppLocalizations {
   /// **'Unlock with biometrics / device PIN'**
   String get unlockWithBiometric;
 
+  /// No description provided for @pinSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set unlock PIN'**
+  String get pinSetupTitle;
+
+  /// No description provided for @pinSetupPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect AVA with a 6-digit PIN. You\'ll enter it (or your fingerprint) to unlock.'**
+  String get pinSetupPrompt;
+
+  /// No description provided for @pinLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit PIN'**
+  String get pinLabel;
+
+  /// No description provided for @pinConfirmLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm PIN'**
+  String get pinConfirmLabel;
+
+  /// No description provided for @pinSetButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Set PIN'**
+  String get pinSetButton;
+
+  /// No description provided for @settingsSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get settingsSet;
+
+  /// No description provided for @pinChangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change PIN'**
+  String get pinChangeTitle;
+
+  /// No description provided for @pinCurrentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current PIN'**
+  String get pinCurrentLabel;
+
+  /// No description provided for @pinNewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New PIN'**
+  String get pinNewLabel;
+
+  /// No description provided for @pinSixDigits.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a 6-digit PIN.'**
+  String get pinSixDigits;
+
+  /// No description provided for @pinMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The PINs don\'t match.'**
+  String get pinMismatch;
+
   /// No description provided for @unlockBiometricReason.
   ///
   /// In en, this message translates to:

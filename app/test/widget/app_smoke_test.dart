@@ -4,10 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ava/src/app/app.dart';
 import 'package:ava/src/app/providers.dart';
 import 'package:ava/src/services/storage_provider.dart';
-import 'package:ava/src/ui/welcome_screen.dart';
+import 'package:ava/src/ui/setup_pin_screen.dart';
 
 void main() {
-  testWidgets('app boots to welcome screen with in-memory storage',
+  testWidgets('app boots to the mandatory PIN setup with in-memory storage',
       (tester) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -25,8 +25,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    // Empty store -> welcome screen with the two CTA cards.
+    // A PIN is mandatory: an empty/unencrypted store boots to PIN setup.
     expect(find.byType(Scaffold), findsWidgets);
-    expect(find.byType(WelcomeScreen), findsOneWidget);
+    expect(find.byType(SetupPinScreen), findsOneWidget);
   });
 }

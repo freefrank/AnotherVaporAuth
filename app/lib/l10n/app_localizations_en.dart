@@ -33,6 +33,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unlockWithBiometric => 'Unlock with biometrics / device PIN';
 
   @override
+  String get pinSetupTitle => 'Set unlock PIN';
+
+  @override
+  String get pinSetupPrompt =>
+      'Protect AVA with a 6-digit PIN. You\'ll enter it (or your fingerprint) to unlock.';
+
+  @override
+  String get pinLabel => '6-digit PIN';
+
+  @override
+  String get pinConfirmLabel => 'Confirm PIN';
+
+  @override
+  String get pinSetButton => 'Set PIN';
+
+  @override
+  String get settingsSet => 'Set';
+
+  @override
+  String get pinChangeTitle => 'Change PIN';
+
+  @override
+  String get pinCurrentLabel => 'Current PIN';
+
+  @override
+  String get pinNewLabel => 'New PIN';
+
+  @override
+  String get pinSixDigits => 'Enter a 6-digit PIN.';
+
+  @override
+  String get pinMismatch => 'The PINs don\'t match.';
+
+  @override
   String get unlockBiometricReason => 'Unlock AVA';
 
   @override

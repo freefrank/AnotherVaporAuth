@@ -42,6 +42,23 @@ void main() {
   });
 
   group('AccountStore encryption', () {
+    test('PIN can be set on an empty store and survives reload', () async {
+      final storage = MemoryStorageProvider();
+      final store = AccountStore(storage);
+
+      // Set a PIN with zero accounts.
+      expect(await store.changeEncryptionKey(null, '123456'), isTrue);
+      expect(store.encrypted, isTrue);
+      expect(await store.verifyPasskey('123456'), isTrue);
+      expect(await store.verifyPasskey('000000'), isFalse);
+
+      // Reloading must NOT silently drop encryption just because it's empty.
+      final reloaded = await AccountStore.load(storage);
+      expect(reloaded.encrypted, isTrue);
+      expect(await reloaded.verifyPasskey('123456'), isTrue);
+      expect(await reloaded.verifyPasskey('999999'), isFalse);
+    });
+
     test('encrypt, verify passkey, decrypt back', () async {
       final storage = MemoryStorageProvider();
       final store = AccountStore(storage);

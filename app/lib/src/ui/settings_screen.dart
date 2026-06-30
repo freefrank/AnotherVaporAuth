@@ -6,6 +6,7 @@ import '../app/providers.dart';
 import '../app/responsive.dart';
 import '../app/theme.dart';
 import 'debug_log_screen.dart';
+import 'widgets/pin_field.dart';
 import 'widgets/scanline_overlay.dart';
 import 'widgets/sda_panel.dart';
 
@@ -50,7 +51,9 @@ class SettingsScreen extends ConsumerWidget {
                   description: l.settingsEncryptionDesc,
                   trailing: OutlinedButton(
                     onPressed: () => _changePasskey(context, ref),
-                    child: Text(l.settingsChange),
+                    child: Text((data?.encrypted ?? false)
+                        ? l.settingsChange
+                        : l.settingsSet),
                   ),
                 ),
                 // Biometric / device-credential unlock
@@ -193,23 +196,22 @@ class SettingsScreen extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l.settingsSetPasskey),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (data.encrypted)
-              TextField(
-                controller: oldKeyCtrl,
-                obscureText: true,
-                decoration: InputDecoration(labelText: l.passkeyLabel),
-              ),
-            TextField(
-              controller: newKeyCtrl,
-              obscureText: true,
-              decoration:
-                  InputDecoration(labelText: '${l.passkeyLabel} (new)'),
-            ),
-          ],
+        title: Text(l.pinChangeTitle),
+        content: SizedBox(
+          width: 260,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (data.encrypted) ...[
+                PinField(
+                    controller: oldKeyCtrl,
+                    label: l.pinCurrentLabel,
+                    autofocus: true),
+                const SizedBox(height: 12),
+              ],
+              PinField(controller: newKeyCtrl, label: l.pinNewLabel),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -223,7 +225,14 @@ class SettingsScreen extends ConsumerWidget {
     );
 
     if (ok != true) return;
-    final newKey = newKeyCtrl.text.isEmpty ? null : newKeyCtrl.text;
+    final newKey = newKeyCtrl.text;
+    if (newKey.length != 6) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l.pinSixDigits)));
+      }
+      return;
+    }
     final oldKey = oldKeyCtrl.text.isEmpty ? null : oldKeyCtrl.text;
     final success = await ref
         .read(appControllerProvider.notifier)

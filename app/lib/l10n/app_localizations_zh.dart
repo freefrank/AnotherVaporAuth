@@ -33,6 +33,39 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unlockWithBiometric => '用指纹 / 设备密码解锁';
 
   @override
+  String get pinSetupTitle => '设置解锁 PIN';
+
+  @override
+  String get pinSetupPrompt => '用 6 位 PIN 保护 AVA。解锁时输入它（或用指纹）。';
+
+  @override
+  String get pinLabel => '6 位 PIN';
+
+  @override
+  String get pinConfirmLabel => '确认 PIN';
+
+  @override
+  String get pinSetButton => '设置 PIN';
+
+  @override
+  String get settingsSet => '设置';
+
+  @override
+  String get pinChangeTitle => '修改 PIN';
+
+  @override
+  String get pinCurrentLabel => '当前 PIN';
+
+  @override
+  String get pinNewLabel => '新 PIN';
+
+  @override
+  String get pinSixDigits => '请输入 6 位 PIN。';
+
+  @override
+  String get pinMismatch => '两次 PIN 不一致。';
+
+  @override
   String get unlockBiometricReason => '解锁 AVA';
 
   @override

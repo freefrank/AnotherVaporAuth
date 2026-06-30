@@ -12,6 +12,10 @@ class Manifest {
   bool autoConfirmMarketTransactions;
   bool autoConfirmTrades;
 
+  /// `salt|iv|ciphertext` of a known plaintext, used to verify the passkey even
+  /// when there are no accounts (lets a PIN be set on an empty store).
+  String? passkeyCheck;
+
   Manifest({
     this.encrypted = false,
     this.firstRun = true,
@@ -21,11 +25,13 @@ class Manifest {
     this.checkAllAccounts = false,
     this.autoConfirmMarketTransactions = false,
     this.autoConfirmTrades = false,
+    this.passkeyCheck,
   }) : entries = entries ?? <ManifestEntry>[];
 
   factory Manifest.fromJson(Map<String, dynamic> json) => Manifest(
         encrypted: json['encrypted'] == true,
         firstRun: json['first_run'] ?? true,
+        passkeyCheck: json['passkey_check'] as String?,
         entries: (json['entries'] as List?)
                 ?.map((e) =>
                     ManifestEntry.fromJson(e as Map<String, dynamic>))
@@ -48,6 +54,7 @@ class Manifest {
         'periodic_checking_checkall': checkAllAccounts,
         'auto_confirm_market_transactions': autoConfirmMarketTransactions,
         'auto_confirm_trades': autoConfirmTrades,
+        if (passkeyCheck != null) 'passkey_check': passkeyCheck,
       };
 
   static int _asInt(dynamic v, int fallback) {
