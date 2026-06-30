@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
 import '../app/theme.dart';
+import 'debug_log_screen.dart';
 import 'widgets/scanline_overlay.dart';
 import 'widgets/sda_panel.dart';
 
@@ -116,6 +117,17 @@ class SettingsScreen extends ConsumerWidget {
                               .read(localeProvider.notifier)
                               .setLocale(const Locale('zh'))),
                     ],
+                  ),
+                ),
+                // Debug log (network trace for diagnosing the Steam flows)
+                _Card(
+                  title: 'Debug log',
+                  description: 'Network trace for diagnosing login / confirmations',
+                  trailing: OutlinedButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const DebugLogScreen()),
+                    ),
+                    child: const Text('Open'),
                   ),
                 ),
               ],
