@@ -55,12 +55,24 @@ jobs:
           mv app-x86_64-release.apk        "SDA-$v-x86_64.apk"
           mv app-release.apk               "SDA-$v-universal.apk"
 
+      - name: Extract changelog
+        id: notes
+        shell: bash
+        run: |
+          awk -v ver="$GITHUB_REF_NAME" '
+            index($0, "## [" ver "]")==1 {p=1; print; next}
+            p && /^## \[/ {exit}
+            p {print}
+          ' CHANGELOG.md > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          [ -s "$RUNNER_TEMP/RELEASE_NOTES.md" ] || echo "Release $GITHUB_REF_NAME" > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          echo "path=$RUNNER_TEMP/RELEASE_NOTES.md" >> "$GITHUB_OUTPUT"
+
       - name: Upload to release
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.APP_DIR }}/build/app/outputs/flutter-apk/SDA-*.apk
           draft: false
-          generate_release_notes: true
+          body_path: ${{ steps.notes.outputs.path }}
 
   linux:
     name: Linux desktop
@@ -98,10 +110,23 @@ jobs:
         working-directory: ${{ env.APP_DIR }}/build/linux/x64/release/bundle
         run: tar -czf "${{ github.workspace }}/SDA-${{ steps.ver.outputs.name }}-linux-x64.tar.gz" .
 
+      - name: Extract changelog
+        id: notes
+        shell: bash
+        run: |
+          awk -v ver="$GITHUB_REF_NAME" '
+            index($0, "## [" ver "]")==1 {p=1; print; next}
+            p && /^## \[/ {exit}
+            p {print}
+          ' CHANGELOG.md > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          [ -s "$RUNNER_TEMP/RELEASE_NOTES.md" ] || echo "Release $GITHUB_REF_NAME" > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          echo "path=$RUNNER_TEMP/RELEASE_NOTES.md" >> "$GITHUB_OUTPUT"
+
       - name: Upload to release
         uses: softprops/action-gh-release@v2
         with:
           files: SDA-*-linux-x64.tar.gz
+          body_path: ${{ steps.notes.outputs.path }}
 
   windows:
     name: Windows desktop
@@ -130,7 +155,20 @@ jobs:
         run: |
           Compress-Archive -Path "${{ env.APP_DIR }}/build/windows/x64/runner/Release/*" -DestinationPath "SDA-${{ steps.ver.outputs.name }}-windows-x64.zip"
 
+      - name: Extract changelog
+        id: notes
+        shell: bash
+        run: |
+          awk -v ver="$GITHUB_REF_NAME" '
+            index($0, "## [" ver "]")==1 {p=1; print; next}
+            p && /^## \[/ {exit}
+            p {print}
+          ' CHANGELOG.md > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          [ -s "$RUNNER_TEMP/RELEASE_NOTES.md" ] || echo "Release $GITHUB_REF_NAME" > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          echo "path=$RUNNER_TEMP/RELEASE_NOTES.md" >> "$GITHUB_OUTPUT"
+
       - name: Upload to release
         uses: softprops/action-gh-release@v2
         with:
           files: SDA-*-windows-x64.zip
+          body_path: ${{ steps.notes.outputs.path }}

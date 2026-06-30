@@ -39,7 +39,7 @@ Implemented and statically verified end-to-end:
 - **QR approve** external sign-ins (direction B; scan on mobile / paste on desktop)
 - i18n (English + 简体中文), system or manual language
 
-Verification: `flutter analyze` clean, **34 tests pass** (crypto RFC vectors,
+Verification: `flutter analyze` clean, **38 tests pass** (crypto RFC vectors,
 TOTP/confirmation cross-impl vectors, protobuf round-trip, lossless model JSON,
 AccountStore end-to-end, app smoke render).
 
@@ -58,7 +58,7 @@ Both **Linux desktop and Android release builds are verified**:
 
 ```sh
 flutter pub get
-flutter test                       # 34 tests
+flutter test                       # 38 tests
 flutter build linux --release      # build/linux/x64/release/bundle (~27MB)
 flutter run -d linux               # or windows / macos
 flutter build apk --release                  # universal APK

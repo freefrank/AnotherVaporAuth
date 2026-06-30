@@ -32,6 +32,7 @@
 - **双主题** —— 霓虹（Neon）与 像素（Pixel），设置内可切换。
 - **多语言**（English + 简体/繁體中文），更多语言规划中。
 - 完全**离线**：字体与资源全部打包，运行时不下载任何内容。
+- **应用内调试日志**（设置 → 调试日志）—— 可复制的 Steam 流程网络追踪，便于诊断。
 
 ## 目录结构
 
@@ -49,7 +50,7 @@ docs/     设计文档（docs/superpowers/specs/）
 ```sh
 cd app
 flutter pub get
-flutter test                       # analyze + 34 项测试
+flutter test                       # analyze + 38 项测试
 flutter run -d linux               # 或 windows / macos
 flutter build apk --release --split-per-abi
 ```

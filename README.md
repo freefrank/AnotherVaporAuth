@@ -35,6 +35,8 @@
 - **Two themes** — Neon (cyan/glow) and Pixel (retro) — switchable in settings.
 - **i18n** (English + 简体/繁體 Chinese) with more locales planned.
 - Fully **offline**: fonts and assets are bundled, nothing is downloaded at runtime.
+- **In-app Debug log** (Settings → Debug log) — a copyable network trace of the
+  Steam flows for diagnostics.
 
 ## Project layout
 
@@ -52,7 +54,7 @@ Requires the Flutter SDK (3.44.x). See `app/README.md` for details.
 ```sh
 cd app
 flutter pub get
-flutter test                       # analyze + 34 tests
+flutter test                       # analyze + 38 tests
 flutter run -d linux               # or windows / macos
 flutter build apk --release --split-per-abi
 ```
