@@ -5,6 +5,38 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.58] — 2026-06-30
+
+### Added
+- **App lock**: a mandatory 6-digit unlock PIN protects the local store; the
+  store can be encrypted even with no accounts.
+- **Biometric / device-credential unlock**: unlock with a fingerprint or the
+  device PIN/pattern/password (the passkey is held in the Android keystore);
+  manual PIN entry stays as a fallback.
+- **Export maFile**: account menu → export an account as an unencrypted
+  `<username>.maFile` via the system share sheet.
+
+### Changed
+- **Unlock is ~instant**: AVA's PIN store uses minimal PBKDF2 rounds (a 6-digit
+  PIN is keyspace-limited, so high rounds add no real security) and decrypts off
+  the slow path; old stores migrate automatically on first unlock. Dropped from
+  ~15s to tens of ms.
+- **No launch logo / white flash**: the launch screen is AVA's dark background
+  with a transparent Android 12+ splash icon.
+
+—
+
+### 新增
+- **应用锁**：强制 6 位解锁 PIN 保护本机数据；空账户也可加密。
+- **指纹 / 设备密码解锁**：用指纹或设备 PIN/图案/密码解锁（口令存于安卓 Keystore）；
+  手动输 PIN 作为兜底。
+- **导出 maFile**：账户菜单 → 将账户导出为未加密的 `<用户名>.maFile`，走系统分享。
+
+### 变更
+- **解锁近乎瞬时**：AVA 的 PIN 加密用极少 PBKDF2 轮数（6 位 PIN 受限于密钥空间，高轮数
+  无实际安全意义）并避开慢路径；旧数据首次解锁时自动迁移。从约 15 秒降到几十毫秒。
+- **无启动 logo / 白闪**：启动屏为 AVA 深色背景 + Android 12+ 透明 splash 图标。
+
 ## [v0.57] — 2026-06-30
 
 ### Added
@@ -185,6 +217,7 @@ following the SteamKit/SteamDatabase protobufs.
   TOTP、交易确认（原生 JSON、批量）、登录（密码 + 扫码）、添加验证器、双主题
   （霓虹 + 像素）、多语言。
 
+[v0.58]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.58
 [v0.57]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.57
 [v0.56]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.56
 [v0.55]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.55
