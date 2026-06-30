@@ -45,6 +45,54 @@ class _ShakeWidgetState extends State<ShakeWidget>
   }
 }
 
+/// Small status dot that pulses its glow (the design's `glowPulse`).
+class PulsingDot extends StatefulWidget {
+  final Color color;
+  final double size;
+  const PulsingDot({super.key, required this.color, this.size = 9});
+
+  @override
+  State<PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<PulsingDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1600),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, _) {
+        final glow = 4 + _c.value * 8;
+        return Container(
+          width: widget.size,
+          height: widget.size,
+          decoration: BoxDecoration(
+            color: widget.color,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: widget.color.withValues(alpha: 0.4 + _c.value * 0.4),
+                blurRadius: glow,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// Gentle vertical float (floatY 3.5s), used for the welcome / lock logo.
 class FloatingLogo extends StatefulWidget {
   final Widget child;
