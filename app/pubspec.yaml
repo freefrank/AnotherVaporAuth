@@ -49,10 +49,30 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+# Launcher icons: default to the Neon variant (the in-app logo switches with the
+# theme, but OS launcher icons can't change at runtime).
+flutter_launcher_icons:
+  image_path: "assets/icon/icon_neon.png"
+  android: true
+  min_sdk_android: 21
+  web:
+    generate: false
+  windows:
+    generate: true
+    image_path: "assets/icon/icon_neon.png"
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: "assets/icon/icon_neon.png"
 
 flutter:
   uses-material-design: true
   generate: true
+
+  assets:
+    - assets/icon/
 
   # Fonts bundled into the build (no runtime download).
   # - Neon theme: Chakra Petch (display) + JetBrains Mono (code, Latin) with

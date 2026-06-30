@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/theme.dart';
+import 'widgets/app_logo.dart';
 import 'widgets/motion.dart';
 import 'widgets/scanline_overlay.dart';
 import 'import_helper.dart';
@@ -28,27 +29,7 @@ class WelcomeScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  FloatingLogo(
-                    child: Container(
-                      width: 84,
-                      height: 84,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: t.panel2,
-                        border: t.border,
-                        borderRadius: BorderRadius.circular(t.radius),
-                        boxShadow: t.glowShadow(blur: 18),
-                      ),
-                      child: Text(
-                        '2FA',
-                        style: TextStyle(
-                          color: t.accent,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
+                  const FloatingLogo(child: AppLogo(size: 96)),
                   const SizedBox(height: 24),
                   Text(
                     l.welcomeTitle,

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" shape-rendering="crispEdges">
+<rect width="512" height="512" fill="#ff8a3d"/>
+<rect x="40" y="40" width="432" height="432" fill="#2c2747" stroke="#15111f" stroke-width="10"/>
+<rect x="243.0" y="29.0" width="26" height="26" fill="#fff3df" stroke="#15111f" stroke-width="5" transform="rotate(0 256.0 42.0)"/>
+<rect x="350.0" y="57.7" width="26" height="26" fill="#fff3df" stroke="#15111f" stroke-width="5" transform="rotate(30 363.0 70.7)"/>
+<rect x="428.3" y="136.0" width="26" height="26" fill="#fff3df" stroke="#15111f" stroke-width="5" transform="rotate(60 441.3 149.0)"/>
+<rect x="457.0" y="243.0" width="26" height="26" fill="#fff3df" stroke="#15111f" stroke-width="5" transform="rotate(90 470.0 256.0)"/>
+<rect x="428.3" y="350.0" width="26" height="26" fill="#fff3df" stroke="#15111f" stroke-width="5" transform="rotate(120 441.3 363.0)"/>
+<rect x="350.0" y="428.3" width="26" height="26" fill="#fff3df" stroke="#15111f" stroke-width="5" transform="rotate(150 363.0 441.3)"/>
+<rect x="243.0" y="457.0" width="26" height="26" fill="#fff3df" stroke="#15111f" stroke-width="5" transform="rotate(180 256.0 470.0)"/>
+<rect x="136.0" y="428.3" width="26" height="26" fill="#fff3df" stroke="#15111f" stroke-width="5" transform="rotate(210 149.0 441.3)"/>
+<rect x="57.7" y="350.0" width="26" height="26" fill="#fff3df" stroke="#15111f" stroke-width="5" transform="rotate(240 70.7 363.0)"/>
+<rect x="29.0" y="243.0" width="26" height="26" fill="#3a3358" stroke="#15111f" stroke-width="5" transform="rotate(270 42.0 256.0)"/>
+<rect x="57.7" y="136.0" width="26" height="26" fill="#3a3358" stroke="#15111f" stroke-width="5" transform="rotate(300 70.7 149.0)"/>
+<rect x="136.0" y="57.7" width="26" height="26" fill="#3a3358" stroke="#15111f" stroke-width="5" transform="rotate(330 149.0 70.7)"/>
+<path d="M256 110 L382 156 V288 C382 356 326 410 256 438 C186 410 130 356 130 288 V156 Z" fill="#43c8ff" stroke="#15111f" stroke-width="14" stroke-linejoin="miter"/>
+<rect x="152" y="172" width="208" height="30" fill="#7fdcff"/>
+<rect x="232" y="226" width="48" height="48" fill="#211d36" stroke="#15111f" stroke-width="8"/>
+<rect x="244" y="268" width="24" height="62" fill="#211d36" stroke="#15111f" stroke-width="8"/>
+</svg>

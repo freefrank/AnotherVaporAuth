@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
-import '../app/theme.dart';
+import 'widgets/app_logo.dart';
 import 'widgets/motion.dart';
 import 'widgets/scanline_overlay.dart';
 
@@ -47,7 +47,6 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
     return Scaffold(
       appBar: AppBar(title: Text(l.unlockTitle)),
       body: ScanlineOverlay(
@@ -61,19 +60,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                FloatingLogo(
-                  child: Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: t.panel2,
-                      border: t.border,
-                      borderRadius: BorderRadius.circular(t.radius),
-                      boxShadow: t.glowShadow(),
-                    ),
-                    child: Icon(Icons.lock_outline, size: 30, color: t.accent),
-                  ),
-                ),
+                const FloatingLogo(child: AppLogo(size: 84)),
                 const SizedBox(height: 16),
                 Text(l.unlockPrompt, textAlign: TextAlign.center),
                 const SizedBox(height: 16),
