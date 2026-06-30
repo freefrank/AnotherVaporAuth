@@ -19,6 +19,7 @@ class SteamGuardAccount {
   int status; // status
   String? deviceId; // device_id
   bool fullyEnrolled; // fully_enrolled
+  String? avatarUrl; // avatar_url — cached Steam profile avatar (full)
   SessionData session; // Session
 
   final Map<String, dynamic> extra;
@@ -36,6 +37,7 @@ class SteamGuardAccount {
     this.status = 0,
     this.deviceId,
     this.fullyEnrolled = false,
+    this.avatarUrl,
     SessionData? session,
     Map<String, dynamic>? extra,
   })  : session = session ?? SessionData(),
@@ -54,6 +56,7 @@ class SteamGuardAccount {
     'status',
     'device_id',
     'fully_enrolled',
+    'avatar_url',
     'Session',
   };
 
@@ -76,6 +79,7 @@ class SteamGuardAccount {
       status: _asInt(json['status']),
       deviceId: json['device_id'] as String?,
       fullyEnrolled: json['fully_enrolled'] == true,
+      avatarUrl: json['avatar_url'] as String?,
       session: sessionJson is Map<String, dynamic>
           ? SessionData.fromJson(sessionJson)
           : SessionData(),
@@ -97,6 +101,7 @@ class SteamGuardAccount {
         'status': status,
         'device_id': deviceId,
         'fully_enrolled': fullyEnrolled,
+        'avatar_url': avatarUrl,
         'Session': session.toJson(),
       };
 

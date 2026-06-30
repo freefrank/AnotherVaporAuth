@@ -447,13 +447,14 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).extension<SdaTokens>()!;
-    return Container(
+    final radius = BorderRadius.circular(t.radiusSm);
+    final fallback = Container(
       width: size,
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: _avatarColor(account),
-        borderRadius: BorderRadius.circular(t.radiusSm),
+        borderRadius: radius,
       ),
       child: Text(
         _initial(account),
@@ -462,6 +463,21 @@ class _Avatar extends StatelessWidget {
           fontSize: size * 0.36,
           fontWeight: FontWeight.bold,
         ),
+      ),
+    );
+    final url = account.avatarUrl;
+    if (url == null || url.isEmpty) return fallback;
+    return ClipRRect(
+      borderRadius: radius,
+      child: Image.network(
+        url,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        errorBuilder: (_, _, _) => fallback,
+        loadingBuilder: (ctx, child, progress) =>
+            progress == null ? child : fallback,
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/models/steam_guard_account.dart';
 import '../services/account_store.dart';
+import '../services/avatar_service.dart';
 import '../services/steam_api_client.dart';
 import '../services/steam_time.dart';
 import '../services/storage_provider.dart';
@@ -17,6 +18,9 @@ final storageProvider =
 
 /// Shared Steam HTTP client.
 final apiClientProvider = Provider<SteamApiClient>((ref) => SteamApiClient());
+
+/// Resolves Steam profile avatars (public community XML, no API key).
+final avatarServiceProvider = Provider<AvatarService>((ref) => AvatarService());
 
 /// Time alignment hook (overridable in tests to avoid network).
 final timeAlignerProvider =
@@ -120,7 +124,33 @@ class AppController extends AsyncNotifier<AppData> {
       return AppData(store: store, accounts: const [], locked: true);
     }
     final accounts = await store.getAllAccounts();
+    Future.microtask(_fetchMissingAvatars);
     return AppData(store: store, accounts: accounts, locked: false);
+  }
+
+  /// Lazily resolves + caches each account's Steam avatar (for accounts that
+  /// don't have one yet), then refreshes state so the UI shows it.
+  Future<void> _fetchMissingAvatars() async {
+    final data = state.value;
+    if (data == null || data.locked) return;
+    final svc = ref.read(avatarServiceProvider);
+    var changed = false;
+    for (final acc in data.accounts) {
+      if (acc.steamId == 0) continue;
+      if (acc.avatarUrl != null && acc.avatarUrl!.isNotEmpty) continue;
+      final url = await svc.fetchAvatarUrl(acc.steamId);
+      if (url != null) {
+        acc.avatarUrl = url;
+        await data.store
+            .saveAccount(acc, data.store.encrypted, passKey: data.passKey);
+        changed = true;
+      }
+    }
+    if (changed && state.value != null) {
+      final accounts =
+          await state.value!.store.getAllAccounts(passKey: state.value!.passKey);
+      state = AsyncData(state.value!.copyWith(accounts: accounts));
+    }
   }
 
   /// Attempts to unlock an encrypted store with [passKey].
@@ -133,6 +163,7 @@ class AppController extends AsyncNotifier<AppData> {
     state = AsyncData(
       data.copyWith(accounts: accounts, locked: false, passKey: passKey),
     );
+    Future.microtask(_fetchMissingAvatars);
     return true;
   }
 
