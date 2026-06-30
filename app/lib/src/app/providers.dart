@@ -125,7 +125,7 @@ class AppController extends AsyncNotifier<AppData> {
 
   /// Attempts to unlock an encrypted store with [passKey].
   Future<bool> unlock(String passKey) async {
-    final data = state.valueOrNull;
+    final data = state.value;
     if (data == null) return false;
     final ok = await data.store.verifyPasskey(passKey);
     if (!ok) return false;
@@ -137,28 +137,28 @@ class AppController extends AsyncNotifier<AppData> {
   }
 
   Future<void> reload() async {
-    final data = state.valueOrNull;
+    final data = state.value;
     if (data == null) return;
     final accounts = await data.store.getAllAccounts(passKey: data.passKey);
     state = AsyncData(data.copyWith(accounts: accounts));
   }
 
   Future<void> importMaFile(String contents) async {
-    final data = state.valueOrNull;
+    final data = state.value;
     if (data == null) return;
     await data.store.importMaFileContents(contents, data.passKey);
     await reload();
   }
 
   Future<void> removeAccount(SteamGuardAccount account) async {
-    final data = state.valueOrNull;
+    final data = state.value;
     if (data == null) return;
     await data.store.removeAccount(account);
     await reload();
   }
 
   Future<void> reorder(int oldIndex, int newIndex) async {
-    final data = state.valueOrNull;
+    final data = state.value;
     if (data == null) return;
     // newIndex is already adjusted for the removed item (onReorderItem).
     data.store.moveEntry(oldIndex, newIndex);
@@ -168,7 +168,7 @@ class AppController extends AsyncNotifier<AppData> {
 
   /// Persists an account back to disk (e.g. after a session refresh / link).
   Future<void> persistAccount(SteamGuardAccount account) async {
-    final data = state.valueOrNull;
+    final data = state.value;
     if (data == null) return;
     await data.store
         .saveAccount(account, data.store.encrypted, passKey: data.passKey);
@@ -177,7 +177,7 @@ class AppController extends AsyncNotifier<AppData> {
 
   /// Changes (or sets/removes) the encryption passkey.
   Future<bool> changePasskey(String? oldKey, String? newKey) async {
-    final data = state.valueOrNull;
+    final data = state.value;
     if (data == null) return false;
     final ok = await data.store.changeEncryptionKey(oldKey, newKey);
     if (ok) {

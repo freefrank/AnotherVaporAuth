@@ -15,13 +15,10 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   # State management
-  flutter_riverpod: ^2.6.1
-
-  # Fonts for the Neon / Pixel design themes
-  google_fonts: ^6.2.1
+  flutter_riverpod: ^3.0.0
 
   # Crypto (maFile PBKDF2+AES-CBC, RSA, HMAC)
-  pointycastle: ^3.9.1
+  pointycastle: ^4.0.0
   crypto: ^3.0.6
   asn1lib: ^1.5.5
 
@@ -32,10 +29,13 @@ dependencies:
 
   # QR (login direction A render / direction B scan)
   qr_flutter: ^4.1.0
-  mobile_scanner: ^6.0.2
+  mobile_scanner: ^7.2.0
 
   # Files / storage
-  file_picker: ^8.1.4
+  # file_selector (flutter.dev official) instead of file_picker: file_picker 11
+  # ships a built-in-Kotlin Android plugin that fails GeneratedPluginRegistrant
+  # compilation in this project. file_selector builds cleanly via Pigeon.
+  file_selector: ^1.0.3
   path_provider: ^2.1.5
   path: ^1.9.0
 
@@ -53,3 +53,28 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+
+  # Fonts bundled into the build (no runtime download). Neon theme uses
+  # Chakra Petch (display) + JetBrains Mono (code); Pixel theme uses
+  # Press Start 2P (display) + VT323 (code).
+  fonts:
+    - family: ChakraPetch
+      fonts:
+        - asset: assets/fonts/ChakraPetch-Regular.ttf
+        - asset: assets/fonts/ChakraPetch-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/ChakraPetch-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/ChakraPetch-Bold.ttf
+          weight: 700
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono-Regular.ttf
+        - asset: assets/fonts/JetBrainsMono-Bold.ttf
+          weight: 700
+    - family: PressStart2P
+      fonts:
+        - asset: assets/fonts/PressStart2P-Regular.ttf
+    - family: VT323
+      fonts:
+        - asset: assets/fonts/VT323-Regular.ttf

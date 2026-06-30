@@ -11,7 +11,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final data = ref.watch(appControllerProvider).valueOrNull;
+    final data = ref.watch(appControllerProvider).value;
     final manifest = data?.store.manifest;
     final locale = ref.watch(localeProvider);
 
@@ -151,7 +151,7 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<void> _changePasskey(BuildContext context, WidgetRef ref) async {
     final l = AppLocalizations.of(context);
-    final data = ref.read(appControllerProvider).valueOrNull;
+    final data = ref.read(appControllerProvider).value;
     if (data == null) return;
     final oldKeyCtrl = TextEditingController();
     final newKeyCtrl = TextEditingController();

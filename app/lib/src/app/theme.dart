@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// The two visual themes from the SDA motion design spec.
 enum SdaThemeVariant { neon, pixel }
@@ -173,12 +172,15 @@ class SdaTokens extends ThemeExtension<SdaTokens> {
 ThemeData buildSdaTheme(SdaThemeVariant variant) {
   final t = SdaTokens.of(variant);
 
-  TextTheme displayCode(TextTheme base) {
-    final body = t.isPixel
-        ? GoogleFonts.vt323TextTheme(base)
-        : GoogleFonts.jetBrainsMonoTextTheme(base);
-    return body.apply(bodyColor: t.text, displayColor: t.text);
-  }
+  // Bundled fonts (no runtime download). Body/code font vs display font.
+  final codeFamily = t.isPixel ? 'VT323' : 'JetBrainsMono';
+  final displayFamily = t.isPixel ? 'PressStart2P' : 'ChakraPetch';
+
+  TextTheme displayCode(TextTheme base) => base.apply(
+        fontFamily: codeFamily,
+        bodyColor: t.text,
+        displayColor: t.text,
+      );
 
   final scheme = ColorScheme.fromSeed(
     seedColor: t.accent,
@@ -192,8 +194,7 @@ ThemeData buildSdaTheme(SdaThemeVariant variant) {
   );
 
   final base = ThemeData(useMaterial3: true, brightness: Brightness.dark);
-  final displayFont =
-      t.isPixel ? GoogleFonts.pressStart2p() : GoogleFonts.chakraPetch();
+  final displayFont = TextStyle(fontFamily: displayFamily);
 
   return base.copyWith(
     colorScheme: scheme,

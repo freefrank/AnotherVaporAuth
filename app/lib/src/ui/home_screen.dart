@@ -61,10 +61,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final accounts =
-        ref.watch(appControllerProvider).valueOrNull?.accounts ??
+        ref.watch(appControllerProvider).value?.accounts ??
             const <SteamGuardAccount>[];
     final tick =
-        ref.watch(tickProvider).valueOrNull ?? SteamTime.currentSteamTime;
+        ref.watch(tickProvider).value ?? SteamTime.currentSteamTime;
     if (_selected >= accounts.length) _selected = 0;
     final hasAccounts = accounts.isNotEmpty;
 
