@@ -372,7 +372,12 @@ class _MainPanel extends StatelessWidget {
     final code = _codeFor(account, tick);
     final remaining = SteamTotp.secondsRemaining(tick);
 
-    return Padding(
+    // Centre + cap the content width so the panel doesn't sprawl on tablets /
+    // desktops; on phones (< maxWidth) it stays full-width.
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Padding(
       padding: context.rInsets(all: 26),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -407,7 +412,7 @@ class _MainPanel extends StatelessWidget {
           // scales the glyphs + glow, letter-spacing stays at 0.16em.
           LayoutBuilder(
             builder: (context, c) => SizedBox(
-              width: (c.maxWidth * 0.66).clamp(140.0, 280.0),
+              width: (c.maxWidth * 0.66).clamp(140.0, 340.0),
               child: FittedBox(
                 fit: BoxFit.fitWidth,
                 child: FlipCode(code: code, fontSize: 56),
@@ -417,23 +422,28 @@ class _MainPanel extends StatelessWidget {
           SizedBox(height: context.r(24)),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               CountdownRing(
                   remaining: remaining,
                   size: context.r(74),
                   stroke: context.r(6)),
               SizedBox(width: context.r(20)),
-              FilledButton.icon(
-                onPressed: () => onCopy(code),
-                icon: Icon(Icons.copy, size: context.r(16)),
-                label: Text(l.copyCode),
-                style: FilledButton.styleFrom(
-                  padding: context.rInsets(h: 22, v: 14),
+              Flexible(
+                child: FilledButton.icon(
+                  onPressed: () => onCopy(code),
+                  icon: Icon(Icons.copy, size: context.r(16)),
+                  label: Text(l.copyCode, overflow: TextOverflow.ellipsis),
+                  style: FilledButton.styleFrom(
+                    padding: context.rInsets(h: 22, v: 14),
+                  ),
                 ),
               ),
             ],
           ),
         ],
+      ),
+        ),
       ),
     );
   }

@@ -9,7 +9,7 @@ import 'package:flutter/widgets.dart';
 extension ResponsiveContext on BuildContext {
   static const double _refWidth = 390.0;
   static const double _min = 0.85;
-  static const double _max = 1.6;
+  static const double _max = 1.35;
 
   /// The viewport scale factor (1.0 ≈ a 390dp-wide phone).
   double get scale {
