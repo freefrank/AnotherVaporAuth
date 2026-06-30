@@ -88,7 +88,7 @@ class SteamAuthSession {
 
     // 2. Begin the session.
     final req = ProtoWriter()
-      ..writeString(1, 'SDA Flutter')
+      ..writeString(1, 'AVA')
       ..writeString(2, username)
       ..writeString(3, encryptedPassword)
       ..writeUint64(4, timestamp)
@@ -110,7 +110,7 @@ class SteamAuthSession {
   /// Begins a QR (direction A) auth session; returns the challenge URL to render.
   Future<String> beginWithQr() async {
     final req = ProtoWriter()
-      ..writeString(1, 'SDA Flutter')
+      ..writeString(1, 'AVA')
       ..writeVarint(2, _platformMobileApp)
       ..writeMessage(3, _deviceDetails())
       ..writeString(4, 'Mobile');
@@ -164,7 +164,7 @@ class SteamAuthSession {
     final codeType = type == GuardType.emailCode ? 2 : 3;
     final req = ProtoWriter()
       ..writeUint64(1, clientId)
-      ..writeUint64(2, steamId)
+      ..writeFixed64(2, steamId) // steamid (fixed64!)
       ..writeString(3, code)
       ..writeVarint(4, codeType);
     await api.callProtobuf(
@@ -241,7 +241,7 @@ class SteamAuthSession {
   }
 
   ProtoWriter _deviceDetails() => ProtoWriter()
-    ..writeString(1, 'SDA Flutter')
+    ..writeString(1, 'AVA')
     ..writeVarint(2, _platformMobileApp)
     ..writeVarint(3, -500); // EOSType Android
 }

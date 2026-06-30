@@ -18,8 +18,8 @@ class SessionManager {
     if (refreshToken == null || refreshToken.isEmpty) return false;
     try {
       final req = ProtoWriter()
-        ..writeString(1, refreshToken)
-        ..writeUint64(2, session.steamId);
+        ..writeString(1, refreshToken) // refresh_token
+        ..writeFixed64(2, session.steamId); // steamid (fixed64!)
       final fields = (await api.callProtobuf(
         'IAuthenticationService',
         'GenerateAccessTokenForApp',
