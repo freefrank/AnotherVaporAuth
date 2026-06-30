@@ -1,59 +1,87 @@
 <h1 align="center">
-  <img src="https://raw.githubusercontent.com/Jessecar96/SteamDesktopAuthenticator/master/icon.png" height="64" width="64" />
+  <img src="icon.png" height="64" width="64" />
   <br/>
-  Steam Desktop Authenticator
+  Steam Desktop Authenticator — Flutter
 </h1>
+
 <p align="center">
-  A desktop implementation of Steam's mobile authenticator app.<br/>
-  <sup><b>We are not affiliated with Steam or Scrap.TF in any way!</b> This project is run by community volunteers.
+  A modern, lightweight, cross-platform rewrite of Steam Desktop Authenticator
+  in <b>Flutter</b>.<br/>
+  <sup>Community project — not affiliated with Steam or Valve in any way.</sup>
 </p>
-<h3 align="center">
-  <p>ATTENTION: Steam Desktop Authenticator is no longer supported and will not receive any more updates.</br> You should only use Steam's official mobile app to login to your account. Using SDA or any other tool is dangerous and puts your account at risk.</p>
-  <p>WARNING: Recently there have been fake versions of SDA floating around that will steal your Steam account. Never download SDA from any place other than this github repo!</p>
-</h3>
-<h3 align="center" style="margin-bottom:0">
-  <a href="https://github.com/Jessecar96/SteamDesktopAuthenticator/releases/latest">[Download Here]</a>
-</h3>
-<p align="center">Supports Windows 10 and up.</p>
-<br>
 
-**Clicking "Download ZIP" will not work!** This project uses git submodules so you must use git to download it properly. Using [GitHub Desktop](https://desktop.github.com/) is an easy way to do that.
+<p align="center">
+  <b>Windows · macOS · Linux · Android</b> from a single codebase (iOS planned).
+</p>
 
-**DISCLAIMER: We provide no support for you when using Steam Desktop Authenticator! Steam Desktop Authenticator is no longer supported and will not receive any more updates. This project was made by community volunteers and is not affiliated with Steam or Scrap.TF. You use this program at your own risk, and accept the responsibility to make backups and prevent unauthorized access to your computer!**
+<p align="center">
+  <b>English</b> · <a href="README_ZH.md">简体中文</a>
+</p>
 
-**REMEMBER: Always make backups of your `maFiles` directory! If you lose your encryption key or delete `maFiles` by accident AND you didn't save your revocation code, you are screwed.**
+---
 
-**FINALLY: Using this application is a bad idea, because it COMPLETELY DEFEATS THE PURPOSE of two-factor authentication! If your desktop is infected with a virus, it will be able to hijack the authenticator app and completely subvert the protection. THIS APPLICATION DOES NOT PROTECT YOUR ACCOUNT; IT ONLY ALLOWS YOU TO USE STEAM FEATURES THAT REQUIRE THE AUTHENTICATOR WITHOUT HAVING A PHONE. If you have a phone that supports the Mobile Authenticator, you really shouldn't use this application!**
+> **Security note:** a desktop/PC authenticator defeats much of the purpose of
+> two-factor authentication — if your device is compromised, so is your token.
+> Prefer Steam's official mobile app where you can. Always back up your `maFiles`
+> and your revocation code. Use at your own risk.
 
-IF you lost your `maFiles` OR lost your encryption key, go [here](https://store.steampowered.com/twofactor/manage) and click "Remove Authenticator" then enter your revocation code that you wrote down when you first added your account to SDA.
+## Highlights
 
-If you did not follow the directions and did not write your revocation code down, you're well and truly screwed. The only option is beg to [Steam Support](https://support.steampowered.com/) and say you lost your mobile authenticator and the revocation code.
+- **maFile compatible** — reads/writes the legacy `.maFile` format
+  (PBKDF2 50k/SHA1 + AES-256-CBC), so existing accounts migrate with no changes.
+- Steam Guard codes with a live countdown ring, one-tap copy.
+- Trade / market **confirmations** with batch accept/reject (native JSON, no WebView).
+- Login (password + **QR**), session refresh, add authenticator, QR approve.
+- **Two themes** — Neon (cyan/glow) and Pixel (retro) — switchable in settings.
+- **i18n** (English + 简体/繁體 Chinese) with more locales planned.
+- Fully **offline**: fonts and assets are bundled, nothing is downloaded at runtime.
 
-## Detailed setup instructions
-- Download & Install [.NET 8](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
-- Visit [the releases page](https://github.com/Jessecar96/SteamDesktopAuthenticator/releases) and download the latest .zip (not the source code one).
-- Extract the files somewhere very safe on your computer. If you lose the files you can lose access to your Steam account.
-- Run `Steam Desktop Authenticator.exe` and click the button to set up a new account.
-- Login to Steam and follow the instructions to set it up. **Note: you still need a mobile phone that can receive SMS.**
-- You may be asked to set up encryption, this is to make sure if someone gains access to your computer they can't steal your Steam account from this program. This is optional but highly recommended.
-- Select your account from the list to view the current login code, and click `Trade Confirmations` to see pending trade confirmations.
-- For your safety, remember to get Steam Guard backup codes! Follow [this link](https://store.steampowered.com/twofactor/manage) and click "Get Backup Codes," then print out that page and save it in a safe place. You can use these codes if you lose access to your authenticator.
+## Project layout
 
-[How to update SDA.](https://github.com/Jessecar96/SteamDesktopAuthenticator/wiki/Updating)
-
-[How to use SDA on multiple computers.](https://github.com/Jessecar96/SteamDesktopAuthenticator/wiki/Using-SDA-on-multiple-computers)
-
-
-## Command line options
 ```
--k [encryption key]
-  Set your encryption key when opened
--s
-  Auto-minimize to tray when opened
+app/      Flutter application (see app/README.md)
+docs/     design spec (docs/superpowers/specs/)
 ```
 
-## Troubleshooting
-- **Trade confirmation list is just white or a blank screen**
- - First open the "Selected Account" menu, then click "Force session refresh". If it still doesn't work after that, open the "Selected Account" menu again, then click "Login again" and login to your Steam account.
+The original .NET WinForms implementation is preserved on the **`legacy`** branch.
 
-If your problem doesn't appear on the list or none of the solutions worked, submit an issue on the issue tracker. When posting logs in an issue, please upload it to some site like [Pastebin](http://www.pastebin.com).
+## Build
+
+Requires the Flutter SDK (3.44.x). See `app/README.md` for details.
+
+```sh
+cd app
+flutter pub get
+flutter test                       # analyze + 34 tests
+flutter run -d linux               # or windows / macos
+flutter build apk --release --split-per-abi
+```
+
+Releases are built automatically by GitHub Actions on every `v*` tag
+(Android APKs + Linux + Windows), see `.github/workflows/release.yml`.
+
+## Fonts
+
+All fonts are **bundled** (no runtime download) and declared in
+`app/pubspec.yaml`; see `app/assets/fonts/README.md` for details.
+
+| Family | Theme | Role | Source / License |
+|---|---|---|---|
+| [Chakra Petch](https://fonts.google.com/specimen/Chakra+Petch) | Neon | display | OFL 1.1 |
+| [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) | Neon | code | OFL 1.1 |
+| [Noto Sans SC](https://fonts.google.com/noto/specimen/Noto+Sans+SC) | Neon | Chinese (CJK) fallback | OFL 1.1 |
+| [Fusion Pixel](https://github.com/TakWolf/fusion-pixel-font) | Pixel | display + code (Latin + full CJK incl. 簡/繁, kana, hangul) | OFL 1.1 |
+
+The Pixel theme uses the **full** Fusion Pixel font for complete CJK coverage
+(including rare characters in usernames). Noto Sans SC is subset to the CJK
+ideograph blocks (simplified + traditional). Latin-only fonts cover ASCII.
+
+## Credits
+
+Original Steam Desktop Authenticator by Jessecar96 and contributors. Steam auth
+protocol references: [SteamAuth](https://github.com/geel9/SteamAuth),
+[node-steam-session](https://github.com/DoctorMcKay/node-steam-session).
+
+## License
+
+See [LICENSE](LICENSE). Bundled fonts retain their own OFL 1.1 licenses.

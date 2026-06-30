@@ -1,7 +1,7 @@
 name: sda
 description: "Steam Desktop Authenticator (Flutter rewrite)"
 publish_to: 'none'
-version: 0.50.0+1
+version: 0.51.0+1
 
 environment:
   sdk: ^3.12.2
@@ -54,10 +54,11 @@ flutter:
   uses-material-design: true
   generate: true
 
-  # Fonts bundled into the build (no runtime download). Neon theme uses
-  # Chakra Petch (display) + JetBrains Mono (code) with Noto Sans SC as the
-  # Chinese fallback; Pixel theme uses Fusion Pixel (Latin + CJK pixel glyphs).
-  # CJK fonts are subset to a common charset (GB2312) to keep the build small.
+  # Fonts bundled into the build (no runtime download).
+  # - Neon theme: Chakra Petch (display) + JetBrains Mono (code, Latin) with
+  #   Noto Sans SC (full CJK incl. simplified + traditional) as the CJK fallback.
+  # - Pixel theme: Fusion Pixel — full font (Latin + simplified/traditional
+  #   Chinese + Japanese kana + Korean), forward-compatible with future locales.
   fonts:
     - family: ChakraPetch
       fonts:
