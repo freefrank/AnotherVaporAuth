@@ -26,6 +26,15 @@
 - AccountStore 端到端（加密/解锁/改密/导入/移除/排序）
 - App 冒烟渲染
 
+## 0.99 — 全屏按设计稿精修
+- [x] 主屏 = 设计 01 变体 A（侧栏列表 + 主面板，响应式）
+- [x] 确认列表 = 设计 06（批量条 + 类型 chip 卡 + 错位滑入）
+- [x] 登录 = 设计 04（三步进度条 + 轮询旋转环）
+- [x] 添加验证器 = 设计 05（三步条 + 撤销码警示卡 + 横滑）
+- [x] 欢迎屏 = 设计 02（浮动 logo + 双 CTA，无账户时显示）
+- [x] 双主题 NEON/PIXEL + 动效组件；版本 0.99.0
+- 共享组件：SdaPanel/SdaChip/Stepper3/SpinnerRing/CountdownRing/FlipCode/ScanlineOverlay/Shake/Float/PulsingDot
+
 ## 待真机联调（无法在无凭据/无网环境验证）
 - Steam 新登录协议（密码/扫码A）、会话刷新
 - mobileconf 确认（getlist/ajaxop/multiajaxop）
