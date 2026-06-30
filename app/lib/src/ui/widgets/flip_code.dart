@@ -10,12 +10,15 @@ import '../../app/theme.dart';
 class FlipCode extends StatelessWidget {
   final String code;
   final double fontSize;
-  final double letterSpacing;
+
+  /// Letter spacing. Defaults to the design's relative `0.16em`
+  /// (`fontSize * 0.16`) so it stays proportional when the code is scaled.
+  final double? letterSpacing;
   const FlipCode({
     super.key,
     required this.code,
     this.fontSize = 44,
-    this.letterSpacing = 8,
+    this.letterSpacing,
   });
 
   @override
@@ -25,7 +28,7 @@ class FlipCode extends StatelessWidget {
       fontFamily: DefaultTextStyle.of(context).style.fontFamily,
       fontSize: fontSize,
       fontWeight: FontWeight.w700,
-      letterSpacing: letterSpacing,
+      letterSpacing: letterSpacing ?? fontSize * 0.16,
       color: t.accent,
       shadows: t.glow
           ? [Shadow(color: t.accent.withValues(alpha: 0.6), blurRadius: 22)]

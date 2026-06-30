@@ -398,7 +398,18 @@ class _MainPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 22),
-          FlipCode(code: code, fontSize: t.codeSize, letterSpacing: 8),
+          // Relative scaling: the code occupies ~66% of the panel width (design
+          // proportion ≈ 58–65% of the phone), capped on wide screens. FittedBox
+          // scales the glyphs + glow, letter-spacing stays at 0.16em.
+          LayoutBuilder(
+            builder: (context, c) => SizedBox(
+              width: (c.maxWidth * 0.66).clamp(140.0, 280.0),
+              child: FittedBox(
+                fit: BoxFit.fitWidth,
+                child: FlipCode(code: code, fontSize: 56),
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
