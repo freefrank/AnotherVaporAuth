@@ -327,6 +327,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionExport => 'Export maFile';
 
   @override
+  String get actionLoginRequests => 'Sign-in requests';
+
+  @override
+  String get loginRequestTitle => 'Approve sign-in?';
+
+  @override
+  String loginRequestBody(String device, String location) {
+    return '$device is signing in to your Steam account from $location.';
+  }
+
+  @override
+  String get loginRequestApprove => 'Allow';
+
+  @override
+  String get loginRequestDeny => 'Deny';
+
+  @override
+  String get loginNoPending => 'No pending sign-in requests.';
+
+  @override
+  String get loginNeedSession =>
+      'Sign in to refresh this account\'s session first.';
+
+  @override
+  String get loginApproved => 'Sign-in allowed.';
+
+  @override
+  String get loginDenied => 'Sign-in denied.';
+
+  @override
   String exportFailed(String error) {
     return 'Failed to export: $error';
   }

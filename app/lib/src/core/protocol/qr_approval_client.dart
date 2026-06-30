@@ -33,36 +33,117 @@ class QrChallenge {
   }
 }
 
-/// Direction B: this app acts as the approver for a login started elsewhere.
-/// Scans / pastes the login QR, then approves it via the account's session.
+/// Details of a pending login session (GetAuthSessionInfo) shown to the user
+/// before they approve or deny it.
+class AuthSessionInfo {
+  final int clientId;
+  final int version;
+  final String ip;
+  final String city;
+  final String country;
+  final String deviceName;
+  const AuthSessionInfo({
+    required this.clientId,
+    required this.version,
+    required this.ip,
+    required this.city,
+    required this.country,
+    required this.deviceName,
+  });
+
+  String get location => [city, country].where((s) => s.isNotEmpty).join(', ');
+}
+
+/// Direction B: this app acts as the approver for a login started elsewhere —
+/// either by scanning the login QR, or by polling the account's own pending
+/// login sessions (GetAuthSessionsForAccount) so they can be approved like the
+/// official app's pop-up, without a push.
 class QrApprovalClient {
   final SteamApiClient api;
   QrApprovalClient(this.api);
 
+  /// Lists client ids of pending login sessions awaiting approval for [account].
+  Future<List<int>> pendingLoginClientIds(SteamGuardAccount account) async {
+    final fields = (await api.callProtobuf(
+      'IAuthenticationService',
+      'GetAuthSessionsForAccount',
+      request: ProtoWriter(),
+      accessToken: account.session.accessToken ?? '',
+    ))
+        .parseAll();
+    final ids = <int>[];
+    for (final f in fields) {
+      if (f.number != 1) continue;
+      if (f.varint != null) {
+        ids.add(f.varint!); // unpacked repeated uint64
+      } else if (f.bytes != null) {
+        // packed repeated varint
+        final b = f.bytes!;
+        var i = 0;
+        while (i < b.length) {
+          var shift = 0;
+          var val = BigInt.zero;
+          while (i < b.length) {
+            final byte = b[i++];
+            val |= BigInt.from(byte & 0x7f) << shift;
+            if (byte & 0x80 == 0) break;
+            shift += 7;
+          }
+          ids.add(val.toSigned(64).toInt());
+        }
+      }
+    }
+    return ids;
+  }
+
+  /// Fetches details (IP / location / device / version) for a pending login.
+  Future<AuthSessionInfo?> sessionInfo(
+      SteamGuardAccount account, int clientId) async {
+    final req = ProtoWriter()..writeUint64(1, clientId);
+    final f = (await api.callProtobuf(
+      'IAuthenticationService',
+      'GetAuthSessionInfo',
+      request: req,
+      accessToken: account.session.accessToken ?? '',
+    ))
+        .parse();
+    return AuthSessionInfo(
+      clientId: clientId,
+      version: f[8]?.asInt ?? 0,
+      ip: f[1]?.asString ?? '',
+      city: f[3]?.asString ?? '',
+      country: f[5]?.asString ?? '',
+      deviceName: f[7]?.asString ?? '',
+    );
+  }
+
   /// Approves (or rejects) a scanned login challenge using [account]'s session.
-  ///
-  /// Signs the (version, client_id, steamid) tuple with the account's shared
-  /// secret (HMAC-SHA1), then calls UpdateAuthSessionWithMobileConfirmation.
-  ///
-  /// Message fields follow the SteamKit protobufs (steamid is fixed64);
-  /// the signature is HMAC-SHA256 of (version|client_id|steamid). Direction B is
-  /// less common — worth a final live-capture check.
   Future<bool> respond(
     SteamGuardAccount account,
     QrChallenge challenge, {
     required bool approve,
+  }) =>
+      respondToSession(account,
+          version: challenge.version,
+          clientId: challenge.clientId,
+          approve: approve);
+
+  /// Approves/denies a specific auth session (by client id + version). Signs the
+  /// (version, client_id, steamid) tuple with the account's shared secret
+  /// (HMAC-SHA256) and calls UpdateAuthSessionWithMobileConfirmation.
+  Future<bool> respondToSession(
+    SteamGuardAccount account, {
+    required int version,
+    required int clientId,
+    required bool approve,
   }) async {
     final accessToken = account.session.accessToken ?? '';
-    final signature = _signature(
-      account,
-      version: challenge.version,
-      clientId: challenge.clientId,
-      steamId: account.steamId,
-    );
+    final signature = _signature(account,
+        version: version, clientId: clientId, steamId: account.steamId);
 
     final req = ProtoWriter()
-      ..writeVarint(1, challenge.version) // version (int32)
-      ..writeUint64(2, challenge.clientId) // client_id (uint64 varint)
+      ..writeVarint(1, version) // version (int32)
+      ..writeUint64(2, clientId) // client_id (uint64 varint)
       ..writeFixed64(3, account.steamId) // steamid (fixed64!)
       ..writeBytes(4, signature) // signature
       ..writeBool(5, approve) // confirm

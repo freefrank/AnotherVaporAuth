@@ -118,6 +118,18 @@
     "placeholders": { "error": { "type": "String" } }
   },
   "actionExport": "Export maFile",
+  "actionLoginRequests": "Sign-in requests",
+  "loginRequestTitle": "Approve sign-in?",
+  "loginRequestBody": "{device} is signing in to your Steam account from {location}.",
+  "@loginRequestBody": {
+    "placeholders": { "device": { "type": "String" }, "location": { "type": "String" } }
+  },
+  "loginRequestApprove": "Allow",
+  "loginRequestDeny": "Deny",
+  "loginNoPending": "No pending sign-in requests.",
+  "loginNeedSession": "Sign in to refresh this account's session first.",
+  "loginApproved": "Sign-in allowed.",
+  "loginDenied": "Sign-in denied.",
   "exportFailed": "Failed to export: {error}",
   "@exportFailed": {
     "placeholders": { "error": { "type": "String" } }

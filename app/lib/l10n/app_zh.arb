@@ -118,6 +118,18 @@
     "placeholders": { "error": { "type": "String" } }
   },
   "actionExport": "导出 maFile",
+  "actionLoginRequests": "登录请求",
+  "loginRequestTitle": "批准登录？",
+  "loginRequestBody": "{device} 正在从 {location} 登录你的 Steam 账户。",
+  "@loginRequestBody": {
+    "placeholders": { "device": { "type": "String" }, "location": { "type": "String" } }
+  },
+  "loginRequestApprove": "允许",
+  "loginRequestDeny": "拒绝",
+  "loginNoPending": "没有待批准的登录请求。",
+  "loginNeedSession": "请先登录刷新该账户的会话。",
+  "loginApproved": "已允许登录。",
+  "loginDenied": "已拒绝登录。",
   "exportFailed": "导出失败：{error}",
   "@exportFailed": {
     "placeholders": { "error": { "type": "String" } }

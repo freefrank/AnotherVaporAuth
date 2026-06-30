@@ -316,6 +316,35 @@ class AppLocalizationsZh extends AppLocalizations {
   String get actionExport => '导出 maFile';
 
   @override
+  String get actionLoginRequests => '登录请求';
+
+  @override
+  String get loginRequestTitle => '批准登录？';
+
+  @override
+  String loginRequestBody(String device, String location) {
+    return '$device 正在从 $location 登录你的 Steam 账户。';
+  }
+
+  @override
+  String get loginRequestApprove => '允许';
+
+  @override
+  String get loginRequestDeny => '拒绝';
+
+  @override
+  String get loginNoPending => '没有待批准的登录请求。';
+
+  @override
+  String get loginNeedSession => '请先登录刷新该账户的会话。';
+
+  @override
+  String get loginApproved => '已允许登录。';
+
+  @override
+  String get loginDenied => '已拒绝登录。';
+
+  @override
   String exportFailed(String error) {
     return '导出失败：$error';
   }

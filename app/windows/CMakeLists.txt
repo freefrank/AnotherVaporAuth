@@ -2,6 +2,10 @@
 cmake_minimum_required(VERSION 3.14)
 project(sda LANGUAGES CXX)
 
+# Newer MSVC errors on <experimental/coroutine> used by local_auth_windows.
+# Silence it globally so the plugin compiles.
+add_compile_definitions(_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
+
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 set(BINARY_NAME "ava")

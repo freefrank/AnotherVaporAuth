@@ -16,6 +16,7 @@ import 'widgets/scanline_overlay.dart';
 import 'approve_login_screen.dart';
 import 'confirmations_screen.dart';
 import 'import_helper.dart';
+import 'pending_login.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
 
@@ -57,6 +58,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selected = 0;
+  bool _checkedLogins = false;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +71,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (_selected >= accounts.length) _selected = 0;
     final hasAccounts = accounts.isNotEmpty;
 
+    // Auto-check the selected account for pending sign-in requests once on open.
+    if (hasAccounts && !_checkedLogins) {
+      _checkedLogins = true;
+      final acc = accounts[_selected];
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) checkPendingLogins(context, ref, acc, silent: true);
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l.appTitle),
@@ -80,6 +91,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               itemBuilder: (context) => [
                 PopupMenuItem(
                     value: 'confirm', child: Text(l.actionConfirmations)),
+                PopupMenuItem(
+                    value: 'logins', child: Text(l.actionLoginRequests)),
                 PopupMenuItem(value: 'login', child: Text(l.actionLogin)),
                 PopupMenuItem(value: 'export', child: Text(l.actionExport)),
                 PopupMenuItem(value: 'remove', child: Text(l.actionRemove)),
@@ -194,6 +207,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         break;
       case 'export':
         await exportMaFileFlow(context, account);
+        break;
+      case 'logins':
+        await checkPendingLogins(context, ref, account);
         break;
       case 'remove':
         final ok = await showDialog<bool>(

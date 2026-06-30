@@ -686,6 +686,60 @@ abstract class AppLocalizations {
   /// **'Export maFile'**
   String get actionExport;
 
+  /// No description provided for @actionLoginRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in requests'**
+  String get actionLoginRequests;
+
+  /// No description provided for @loginRequestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve sign-in?'**
+  String get loginRequestTitle;
+
+  /// No description provided for @loginRequestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{device} is signing in to your Steam account from {location}.'**
+  String loginRequestBody(String device, String location);
+
+  /// No description provided for @loginRequestApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get loginRequestApprove;
+
+  /// No description provided for @loginRequestDeny.
+  ///
+  /// In en, this message translates to:
+  /// **'Deny'**
+  String get loginRequestDeny;
+
+  /// No description provided for @loginNoPending.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending sign-in requests.'**
+  String get loginNoPending;
+
+  /// No description provided for @loginNeedSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to refresh this account\'s session first.'**
+  String get loginNeedSession;
+
+  /// No description provided for @loginApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in allowed.'**
+  String get loginApproved;
+
+  /// No description provided for @loginDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in denied.'**
+  String get loginDenied;
+
   /// No description provided for @exportFailed.
   ///
   /// In en, this message translates to:
