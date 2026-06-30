@@ -160,11 +160,11 @@ following the SteamKit/SteamDatabase protobufs.
   TOTP、交易确认（原生 JSON、批量）、登录（密码 + 扫码）、添加验证器、双主题
   （霓虹 + 像素）、多语言。
 
-[v0.56]: https://github.com/freefrank/SteamDesktopAuthenticator/releases/tag/v0.56
-[v0.55]: https://github.com/freefrank/SteamDesktopAuthenticator/releases/tag/v0.55
-[v0.54]: https://github.com/freefrank/SteamDesktopAuthenticator/releases/tag/v0.54
-[v0.53]: https://github.com/freefrank/SteamDesktopAuthenticator/releases/tag/v0.53
-[v0.52]: https://github.com/freefrank/SteamDesktopAuthenticator/releases/tag/v0.52
-[v0.51]: https://github.com/freefrank/SteamDesktopAuthenticator/releases/tag/v0.51
-[v0.50]: https://github.com/freefrank/SteamDesktopAuthenticator/releases/tag/v0.50
-[v0.49]: https://github.com/freefrank/SteamDesktopAuthenticator/releases/tag/v0.49
+[v0.56]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.56
+[v0.55]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.55
+[v0.54]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.54
+[v0.53]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.53
+[v0.52]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.52
+[v0.51]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.51
+[v0.50]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.50
+[v0.49]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.49
