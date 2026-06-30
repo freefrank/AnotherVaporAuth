@@ -240,8 +240,11 @@ class SteamAuthSession {
     }
   }
 
+  // device_details: matches the Steam mobile app (os_type AndroidUnknown,
+  // gaming_device_type 528) so logins look like the official app.
   ProtoWriter _deviceDetails() => ProtoWriter()
-    ..writeString(1, 'AVA')
-    ..writeVarint(2, _platformMobileApp)
-    ..writeVarint(3, -500); // EOSType Android
+    ..writeString(1, 'AVA') // device_friendly_name
+    ..writeVarint(2, _platformMobileApp) // platform_type
+    ..writeVarint(3, -500) // os_type = EOSType.AndroidUnknown
+    ..writeVarint(4, 528); // gaming_device_type
 }

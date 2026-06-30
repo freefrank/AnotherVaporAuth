@@ -18,6 +18,18 @@ class SteamApiClient {
 
   final Dio _dio;
 
+  /// Headers that make AVA's requests look like the official Steam mobile app
+  /// (it uses an okhttp client + these API headers). Combined with the
+  /// MobileApp platform type and device details, this keeps legitimate logins
+  /// from tripping Steam's "unknown device" anti-fraud heuristics.
+  static const Map<String, String> steamMobileHeaders = {
+    'User-Agent': 'okhttp/4.9.2',
+    'Accept': 'application/json, text/plain, */*',
+    'Sec-Fetch-Site': 'cross-site',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Dest': 'empty',
+  };
+
   SteamApiClient({Dio? dio})
       : _dio = dio ??
             Dio(BaseOptions(
@@ -25,6 +37,7 @@ class SteamApiClient {
               receiveTimeout: const Duration(seconds: 30),
               followRedirects: false,
               validateStatus: (s) => s != null && s < 500,
+              headers: Map<String, String>.from(steamMobileHeaders),
             ));
 
   /// Calls a protobuf service method and returns the decoded response reader.
