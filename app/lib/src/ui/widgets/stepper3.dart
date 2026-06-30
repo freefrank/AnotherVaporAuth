@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/responsive.dart';
 import '../../app/theme.dart';
 
 /// A horizontal step indicator (design screens 04/05). [current] is the active
@@ -35,7 +36,7 @@ class _Stepper3State extends State<Stepper3>
       final done = i < widget.current;
       final active = i == widget.current;
       children.add(_badge(t, i, done, active));
-      children.add(const SizedBox(width: 7));
+      children.add(SizedBox(width: context.r(7)));
       children.add(Flexible(
         child: Text(
           widget.labels[i],
@@ -43,15 +44,15 @@ class _Stepper3State extends State<Stepper3>
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: (done || active) ? t.text : t.muted,
-            fontSize: 12,
+            fontSize: context.r(12),
           ),
         ),
       ));
       if (i < widget.labels.length - 1) {
         children.add(Expanded(
           child: Container(
-            height: 2,
-            margin: const EdgeInsets.symmetric(horizontal: 8),
+            height: context.r(2),
+            margin: context.rInsets(h: 8),
             color: i < widget.current ? t.accent : t.line,
           ),
         ));
@@ -64,11 +65,11 @@ class _Stepper3State extends State<Stepper3>
     return AnimatedBuilder(
       animation: _c,
       builder: (context, _) {
-        final glow = active ? t.glowShadow(blur: 4 + _c.value * 10) : const <BoxShadow>[];
+        final glow = active ? t.glowShadow(blur: context.r(4 + _c.value * 10)) : const <BoxShadow>[];
         final bg = done ? t.good : (active ? t.accent : t.panel2);
         return Container(
-          width: 22,
-          height: 22,
+          width: context.r(22),
+          height: context.r(22),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: bg,
@@ -77,12 +78,12 @@ class _Stepper3State extends State<Stepper3>
             boxShadow: glow,
           ),
           child: done
-              ? const Icon(Icons.check, size: 13, color: Color(0xFF06060F))
+              ? Icon(Icons.check, size: context.r(13), color: const Color(0xFF06060F))
               : Text(
                   '${i + 1}',
                   style: TextStyle(
                     color: active ? const Color(0xFF06060F) : t.muted,
-                    fontSize: 11,
+                    fontSize: context.r(11),
                     fontWeight: FontWeight.bold,
                   ),
                 ),

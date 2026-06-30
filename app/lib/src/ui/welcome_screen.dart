@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../app/responsive.dart';
 import '../app/theme.dart';
 import 'widgets/app_logo.dart';
 import 'widgets/motion.dart';
@@ -23,26 +24,27 @@ class WelcomeScreen extends ConsumerWidget {
       body: ScanlineOverlay(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(28),
+            padding: context.rInsets(all: 28),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 460),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const FloatingLogo(child: AppLogo(size: 96)),
-                  const SizedBox(height: 24),
+                  FloatingLogo(child: AppLogo(size: context.r(96))),
+                  SizedBox(height: context.r(24)),
                   Text(
                     l.welcomeTitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: t.text, fontSize: 20),
+                    style: TextStyle(color: t.text, fontSize: context.r(20)),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: context.r(10)),
                   Text(
                     l.welcomeSubtitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: t.muted, fontSize: 14, height: 1.6),
+                    style: TextStyle(
+                        color: t.muted, fontSize: context.r(14), height: 1.6),
                   ),
-                  const SizedBox(height: 28),
+                  SizedBox(height: context.r(28)),
                   _Cta(
                     title: l.welcomeLoginCta,
                     subtitle: l.welcomeLoginSub,
@@ -51,7 +53,7 @@ class WelcomeScreen extends ConsumerWidget {
                         builder: (_) =>
                             const LoginScreen(reason: LoginReason.add))),
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: context.r(14)),
                   _Cta(
                     title: l.welcomeImportCta,
                     subtitle: l.welcomeImportSub,
@@ -93,7 +95,7 @@ class _Cta extends StatelessWidget {
       borderRadius: BorderRadius.circular(t.radius),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+        padding: context.rInsets(h: 22, v: 18),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(t.radius),
@@ -105,9 +107,12 @@ class _Cta extends StatelessWidget {
           children: [
             Text(title,
                 style: TextStyle(
-                    color: titleColor, fontSize: 15, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(subtitle, style: TextStyle(color: subColor, fontSize: 13)),
+                    color: titleColor,
+                    fontSize: context.r(15),
+                    fontWeight: FontWeight.w600)),
+            SizedBox(height: context.r(4)),
+            Text(subtitle,
+                style: TextStyle(color: subColor, fontSize: context.r(13))),
           ],
         ),
       ),

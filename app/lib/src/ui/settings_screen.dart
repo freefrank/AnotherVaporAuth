@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/responsive.dart';
 import '../app/theme.dart';
 import 'debug_log_screen.dart';
 import 'widgets/scanline_overlay.dart';
@@ -41,7 +42,7 @@ class SettingsScreen extends ConsumerWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: context.rInsets(all: 16),
               children: [
                 // Encryption
                 _Card(
@@ -57,22 +58,22 @@ class SettingsScreen extends ConsumerWidget {
                   title: l.confirmationsTitle,
                   child: Column(
                     children: [
-                      _switchRow(t, l.settingsPeriodicChecking,
+                      _switchRow(context, t, l.settingsPeriodicChecking,
                           manifest.periodicChecking, (v) {
                         manifest.periodicChecking = v;
                         save();
                       }),
-                      _switchRow(t, l.settingsCheckAll,
+                      _switchRow(context, t, l.settingsCheckAll,
                           manifest.checkAllAccounts, (v) {
                         manifest.checkAllAccounts = v;
                         save();
                       }),
-                      _switchRow(t, l.settingsAutoConfirmMarket,
+                      _switchRow(context, t, l.settingsAutoConfirmMarket,
                           manifest.autoConfirmMarketTransactions, (v) {
                         manifest.autoConfirmMarketTransactions = v;
                         save();
                       }),
-                      _switchRow(t, l.settingsAutoConfirmTrades,
+                      _switchRow(context, t, l.settingsAutoConfirmTrades,
                           manifest.autoConfirmTrades, (v) {
                         manifest.autoConfirmTrades = v;
                         save();
@@ -85,13 +86,15 @@ class SettingsScreen extends ConsumerWidget {
                   title: l.settingsTheme,
                   description: l.settingsThemeDesc,
                   child: Wrap(
-                    spacing: 8,
+                    spacing: context.r(8),
                     children: [
-                      _choice(t, l.themeNeon, variant == SdaThemeVariant.neon,
+                      _choice(context, t, l.themeNeon,
+                          variant == SdaThemeVariant.neon,
                           () => ref
                               .read(themeVariantProvider.notifier)
                               .setVariant(SdaThemeVariant.neon)),
-                      _choice(t, l.themePixel, variant == SdaThemeVariant.pixel,
+                      _choice(context, t, l.themePixel,
+                          variant == SdaThemeVariant.pixel,
                           () => ref
                               .read(themeVariantProvider.notifier)
                               .setVariant(SdaThemeVariant.pixel)),
@@ -102,17 +105,20 @@ class SettingsScreen extends ConsumerWidget {
                 _Card(
                   title: l.settingsLanguage,
                   child: Wrap(
-                    spacing: 8,
+                    spacing: context.r(8),
                     children: [
-                      _choice(t, l.settingsLanguageSystem, locale == null,
+                      _choice(context, t, l.settingsLanguageSystem,
+                          locale == null,
                           () => ref
                               .read(localeProvider.notifier)
                               .setLocale(null)),
-                      _choice(t, 'English', locale?.languageCode == 'en',
+                      _choice(context, t, 'English',
+                          locale?.languageCode == 'en',
                           () => ref
                               .read(localeProvider.notifier)
                               .setLocale(const Locale('en'))),
-                      _choice(t, '简体中文', locale?.languageCode == 'zh',
+                      _choice(context, t, '简体中文',
+                          locale?.languageCode == 'zh',
                           () => ref
                               .read(localeProvider.notifier)
                               .setLocale(const Locale('zh'))),
@@ -138,34 +144,37 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _switchRow(
-      SdaTokens t, String label, bool value, ValueChanged<bool> onChanged) {
+  Widget _switchRow(BuildContext context, SdaTokens t, String label,
+      bool value, ValueChanged<bool> onChanged) {
     return Row(
       children: [
-        Expanded(child: Text(label, style: TextStyle(color: t.text, fontSize: 14))),
+        Expanded(
+            child: Text(label,
+                style: TextStyle(color: t.text, fontSize: context.r(14)))),
         Switch(value: value, onChanged: onChanged),
       ],
     );
   }
 
-  Widget _choice(SdaTokens t, String label, bool selected, VoidCallback onTap) {
+  Widget _choice(BuildContext context, SdaTokens t, String label, bool selected,
+      VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(t.radiusSm),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        padding: context.rInsets(h: 16, v: 9),
         decoration: BoxDecoration(
           color: selected ? t.accent : t.panel2,
           borderRadius: BorderRadius.circular(t.radiusSm),
           border: Border.all(
               color: selected ? t.accent : t.borderColor, width: t.borderWidth),
-          boxShadow: selected ? t.glowShadow(blur: 10) : null,
+          boxShadow: selected ? t.glowShadow(blur: context.r(10)) : null,
         ),
         child: Text(
           label,
           style: TextStyle(
             color: selected ? const Color(0xFF06060F) : t.text,
-            fontSize: 13,
+            fontSize: context.r(13),
           ),
         ),
       ),
@@ -243,9 +252,9 @@ class _Card extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).extension<SdaTokens>()!;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: context.rInsets(bottom: 12),
       child: SdaPanel(
-        padding: const EdgeInsets.all(16),
+        padding: context.rInsets(all: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -256,11 +265,13 @@ class _Card extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(title,
-                          style: TextStyle(color: t.text, fontSize: 15)),
+                          style:
+                              TextStyle(color: t.text, fontSize: context.r(15))),
                       if (description != null) ...[
-                        const SizedBox(height: 4),
+                        SizedBox(height: context.r(4)),
                         Text(description!,
-                            style: TextStyle(color: t.muted, fontSize: 12.5)),
+                            style: TextStyle(
+                                color: t.muted, fontSize: context.r(12.5))),
                       ],
                     ],
                   ),
@@ -269,7 +280,7 @@ class _Card extends StatelessWidget {
               ],
             ),
             if (child != null) ...[
-              const SizedBox(height: 14),
+              SizedBox(height: context.r(14)),
               child!,
             ],
           ],

@@ -7,6 +7,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/responsive.dart';
 import '../app/theme.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/steam_auth_session.dart';
@@ -199,15 +200,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final hasCodeEntry = _needGuard != null && _needGuard != GuardType.none;
     final Widget content;
     if (_qrMode) {
-      content = _buildQr(l);
+      content = _buildQr(context, l);
     } else if (hasCodeEntry) {
       // Keep the manual code form available even while we poll for an in-app
       // approval in the background — the user can do whichever is convenient.
-      content = _buildForm(l);
+      content = _buildForm(context, l);
     } else if (_waiting) {
-      content = _buildWaiting(l);
+      content = _buildWaiting(context, l);
     } else {
-      content = _buildForm(l);
+      content = _buildForm(context, l);
     }
     return Scaffold(
       appBar: AppBar(title: Text(l.loginTitle)),
@@ -216,7 +217,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: context.rInsets(all: 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -228,7 +229,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       l.loginStepDone,
                     ],
                   ),
-                  const SizedBox(height: 28),
+                  SizedBox(height: context.r(28)),
                   content,
                 ],
               ),
@@ -239,31 +240,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildWaiting(AppLocalizations l) {
+  Widget _buildWaiting(BuildContext context, AppLocalizations l) {
     final t = Theme.of(context).extension<SdaTokens>()!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         SpinnerRing(
-          size: 96,
-          child: Icon(Icons.phone_android, color: t.accent, size: 34),
+          size: context.r(96),
+          child: Icon(Icons.phone_android, color: t.accent, size: context.r(34)),
         ),
-        const SizedBox(height: 22),
+        SizedBox(height: context.r(22)),
         Text(l.loginWaiting,
-            style: TextStyle(color: t.text, fontSize: 15),
+            style: TextStyle(color: t.text, fontSize: context.r(15)),
             textAlign: TextAlign.center),
-        const SizedBox(height: 8),
+        SizedBox(height: context.r(8)),
         Text(l.loginWaitingDesc,
-            style: TextStyle(color: t.muted, fontSize: 13, height: 1.5),
+            style: TextStyle(color: t.muted, fontSize: context.r(13), height: 1.5),
             textAlign: TextAlign.center),
-        const SizedBox(height: 18),
+        SizedBox(height: context.r(18)),
         if (_error != null)
           Text(_error!, style: TextStyle(color: t.bad)),
       ],
     );
   }
 
-  Widget _buildForm(AppLocalizations l) {
+  Widget _buildForm(BuildContext context, AppLocalizations l) {
     if (_needGuard != null && _needGuard != GuardType.none) {
       final isEmail = _needGuard == GuardType.emailCode;
       return Column(
@@ -271,16 +272,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         children: [
           Text(isEmail ? l.loginNeedEmailCode : l.loginNeedGuardCode),
           if (_canConfirm) ...[
-            const SizedBox(height: 6),
+            SizedBox(height: context.r(6)),
             Text(l.loginOrApprove,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: context.r(12.5),
                     color: Theme.of(context)
                         .extension<SdaTokens>()
                         ?.muted)),
           ],
-          const SizedBox(height: 12),
+          SizedBox(height: context.r(12)),
           TextField(
             controller: _code,
             autofocus: true,
@@ -289,13 +290,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             decoration: const InputDecoration(border: OutlineInputBorder()),
             onSubmitted: (_) => _submitCode(),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: context.r(12)),
           CooldownButton(
             onPressed: _busy ? null : _submitCode,
             child: Text(l.loginSubmitCode),
           ),
           if (_status != null) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: context.r(12)),
             Text(_status!),
           ],
         ],
@@ -319,7 +320,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   border: const OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: context.r(12)),
               TextField(
                 controller: _password,
                 obscureText: true,
@@ -334,48 +335,48 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: context.r(16)),
         SizedBox(
           width: double.infinity,
           child: FilledButton(
             onPressed: _busy ? null : _startPassword,
             child: _busy
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2))
+                ? SizedBox(
+                    height: context.r(18),
+                    width: context.r(18),
+                    child: CircularProgressIndicator(strokeWidth: context.r(2)))
                 : Text(l.loginButton),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: context.r(8)),
         TextButton.icon(
           onPressed: _busy ? null : _startQr,
           icon: const Icon(Icons.qr_code),
           label: Text(l.loginViaQr),
         ),
         if (_error != null) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: context.r(12)),
           Text(_error!, style: const TextStyle(color: Colors.redAccent)),
         ],
       ],
     );
   }
 
-  Widget _buildQr(AppLocalizations l) {
+  Widget _buildQr(BuildContext context, AppLocalizations l) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(l.loginScanWithApp, textAlign: TextAlign.center),
-        const SizedBox(height: 16),
+        SizedBox(height: context.r(16)),
         if (_qrUrl != null && _qrUrl!.isNotEmpty)
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.all(12),
-            child: QrImageView(data: _qrUrl!, size: 220),
+            padding: context.rInsets(all: 12),
+            child: QrImageView(data: _qrUrl!, size: context.r(220)),
           )
         else
           const CircularProgressIndicator(),
-        const SizedBox(height: 16),
+        SizedBox(height: context.r(16)),
         if (_status != null) Text(_status!),
         TextButton(
           onPressed: () => setState(() {
@@ -385,7 +386,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Text(l.loginViaCredentials),
         ),
         if (_error != null) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: context.r(12)),
           Text(_error!, style: const TextStyle(color: Colors.redAccent)),
         ],
       ],

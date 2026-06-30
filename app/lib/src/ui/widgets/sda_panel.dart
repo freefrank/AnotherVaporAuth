@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/responsive.dart';
 import '../../app/theme.dart';
 
 /// A bordered panel/card in the design's style (neon glow halo or pixel hard
@@ -30,7 +31,7 @@ class SdaPanel extends StatelessWidget {
           width: t.borderWidth,
         ),
         boxShadow: emphasized
-            ? t.glowShadow(blur: 16, opacity: 0.25)
+            ? t.glowShadow(blur: context.r(16), opacity: 0.25)
             : (t.isPixel ? t.cardShadow() : const []),
       ),
       child: child,
@@ -48,7 +49,7 @@ class SdaChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).extension<SdaTokens>()!;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: context.rInsets(h: 9, v: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(t.radiusSm),
@@ -56,7 +57,8 @@ class SdaChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 11, letterSpacing: 0.5),
+        style: TextStyle(
+            color: color, fontSize: context.r(11), letterSpacing: context.r(0.5)),
       ),
     );
   }

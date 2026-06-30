@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/responsive.dart';
 import '../app/theme.dart';
 import '../core/models/confirmation.dart';
 import '../core/models/steam_guard_account.dart';
@@ -122,12 +123,12 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
     if (_error != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: context.rInsets(all: 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.cloud_off, color: t.muted, size: 40),
-              const SizedBox(height: 12),
+              Icon(Icons.cloud_off, color: t.muted, size: context.r(40)),
+              SizedBox(height: context.r(12)),
               Text('${l.commonError}: $_error', textAlign: TextAlign.center),
             ],
           ),
@@ -139,8 +140,8 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle_outline, color: t.good, size: 44),
-            const SizedBox(height: 12),
+            Icon(Icons.check_circle_outline, color: t.good, size: context.r(44)),
+            SizedBox(height: context.r(12)),
             Text(l.confirmationsEmpty),
           ],
         ),
@@ -151,24 +152,24 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
       children: [
         // Batch bar
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+          padding: context.rInsets(left: 16, top: 14, right: 16, bottom: 8),
           child: Row(
             children: [
               Expanded(
                 child: Text(
                   l.confPending(confs.length),
-                  style: TextStyle(color: t.text, fontSize: 14),
+                  style: TextStyle(color: t.text, fontSize: context.r(14)),
                 ),
               ),
               OutlinedButton.icon(
                 onPressed: _busy ? null : () => _respond(confs, false),
-                icon: const Icon(Icons.close, size: 16),
+                icon: Icon(Icons.close, size: context.r(16)),
                 label: Text(l.confRejectAll),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: context.r(8)),
               FilledButton.icon(
                 onPressed: _busy ? null : () => _respond(confs, true),
-                icon: const Icon(Icons.check, size: 16),
+                icon: Icon(Icons.check, size: context.r(16)),
                 label: Text(l.confAcceptAll),
               ),
             ],
@@ -176,7 +177,7 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
         ),
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+            padding: context.rInsets(left: 16, top: 4, right: 16, bottom: 16),
             itemCount: confs.length,
             itemBuilder: (context, i) => _ConfCard(
               key: ValueKey(confs[i].id),
@@ -264,9 +265,9 @@ class _ConfCardState extends State<_ConfCard>
         );
       },
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
+        padding: context.rInsets(bottom: 10),
         child: SdaPanel(
-          padding: const EdgeInsets.all(14),
+          padding: context.rInsets(all: 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -278,40 +279,40 @@ class _ConfCardState extends State<_ConfCard>
                       children: [
                         SdaChip(label: _typeLabel(l), color: chipColor),
                         if (c.typeName.isNotEmpty) ...[
-                          const SizedBox(width: 8),
+                          SizedBox(width: context.r(8)),
                           Flexible(
                             child: Text(
                               c.typeName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: t.muted, fontSize: 12),
+                              style: TextStyle(color: t.muted, fontSize: context.r(12)),
                             ),
                           ),
                         ],
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: context.r(8)),
                     Text(
                       c.headline.isEmpty ? _typeLabel(l) : c.headline,
-                      style: TextStyle(color: t.text, fontSize: 14),
+                      style: TextStyle(color: t.text, fontSize: context.r(14)),
                     ),
                     if (c.summary.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                      SizedBox(height: context.r(4)),
                       Text(
                         c.summary.join(' · '),
-                        style: TextStyle(color: t.muted, fontSize: 12),
+                        style: TextStyle(color: t.muted, fontSize: context.r(12)),
                       ),
                     ],
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: context.r(12)),
               _RoundAction(
                 icon: Icons.close,
                 color: t.bad,
                 onTap: widget.busy ? null : widget.onReject,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: context.r(8)),
               _RoundAction(
                 icon: Icons.check,
                 color: t.good,
@@ -338,15 +339,15 @@ class _RoundAction extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(t.radiusSm),
       child: Container(
-        width: 38,
-        height: 38,
+        width: context.r(38),
+        height: context.r(38),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.14),
           borderRadius: BorderRadius.circular(t.radiusSm),
           border: Border.all(color: color.withValues(alpha: 0.55)),
         ),
-        child: Icon(icon, color: color, size: 18),
+        child: Icon(icon, color: color, size: context.r(18)),
       ),
     );
   }

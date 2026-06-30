@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/responsive.dart';
 import 'widgets/app_logo.dart';
 import 'widgets/motion.dart';
 import 'widgets/scanline_overlay.dart';
@@ -56,14 +57,14 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
           child: ShakeWidget(
           trigger: _shake,
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: context.rInsets(all: 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const FloatingLogo(child: AppLogo(size: 84)),
-                const SizedBox(height: 16),
+                FloatingLogo(child: AppLogo(size: context.r(84))),
+                SizedBox(height: context.r(16)),
                 Text(l.unlockPrompt, textAlign: TextAlign.center),
-                const SizedBox(height: 16),
+                SizedBox(height: context.r(16)),
                 TextField(
                   controller: _controller,
                   obscureText: true,
@@ -75,16 +76,17 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
                     errorText: _error,
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: context.r(16)),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: _busy ? null : _submit,
                     child: _busy
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                        ? SizedBox(
+                            height: context.r(18),
+                            width: context.r(18),
+                            child: CircularProgressIndicator(
+                                strokeWidth: context.r(2)),
                           )
                         : Text(l.unlockButton),
                   ),

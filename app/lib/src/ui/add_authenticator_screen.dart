@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/responsive.dart';
 import '../app/theme.dart';
 import '../core/models/session_data.dart';
 import '../core/protocol/authenticator_linker.dart';
@@ -168,7 +169,7 @@ class _AddAuthenticatorScreenState
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: context.rInsets(all: 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -181,7 +182,7 @@ class _AddAuthenticatorScreenState
                         l.addAuthStepRevocation,
                       ],
                     ),
-                    const SizedBox(height: 28),
+                    SizedBox(height: context.r(28)),
                   ],
                   // Animated horizontal slide between steps.
                   AnimatedSwitcher(
@@ -216,7 +217,7 @@ class _AddAuthenticatorScreenState
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(l.addAuthPhonePrompt),
-            const SizedBox(height: 12),
+            SizedBox(height: context.r(12)),
             TextField(
               controller: _phone,
               keyboardType: TextInputType.phone,
@@ -225,7 +226,7 @@ class _AddAuthenticatorScreenState
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: context.r(12)),
             FilledButton(
               onPressed: _busy ? null : _submitPhone,
               child: Text(l.commonConfirm),
@@ -239,7 +240,7 @@ class _AddAuthenticatorScreenState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: context.rInsets(all: 14),
               decoration: BoxDecoration(
                 color: t.warn.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(t.radius),
@@ -248,8 +249,9 @@ class _AddAuthenticatorScreenState
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: t.warn, size: 20),
-                  const SizedBox(width: 10),
+                  Icon(Icons.warning_amber_rounded,
+                      color: t.warn, size: context.r(20)),
+                  SizedBox(width: context.r(10)),
                   Expanded(
                     child: Text(l.addAuthRevocationWarn(_message ?? ''),
                         style: TextStyle(color: t.text)),
@@ -257,23 +259,23 @@ class _AddAuthenticatorScreenState
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: context.r(16)),
             Text(_linker.activatesByEmail
                 ? l.addAuthEmailPrompt
                 : l.addAuthSmsPrompt),
-            const SizedBox(height: 8),
+            SizedBox(height: context.r(8)),
             TextField(
               controller: _sms,
               decoration: const InputDecoration(border: OutlineInputBorder()),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: context.r(12)),
             Text(l.addAuthConfirmRevocation),
-            const SizedBox(height: 8),
+            SizedBox(height: context.r(8)),
             TextField(
               controller: _revocation,
               decoration: const InputDecoration(border: OutlineInputBorder()),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: context.r(16)),
             FilledButton(
               onPressed: _busy ? null : _finalize,
               child: Text(l.commonConfirm),
@@ -284,11 +286,11 @@ class _AddAuthenticatorScreenState
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.check_circle_outline,
-                size: 48, color: Colors.green),
-            const SizedBox(height: 12),
+            Icon(Icons.check_circle_outline,
+                size: context.r(48), color: Colors.green),
+            SizedBox(height: context.r(12)),
             Text(l.addAuthLinked, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
+            SizedBox(height: context.r(16)),
             FilledButton(
               onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
               child: Text(l.commonOk),
@@ -299,11 +301,12 @@ class _AddAuthenticatorScreenState
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
-            const SizedBox(height: 12),
+            Icon(Icons.error_outline,
+                size: context.r(48), color: Colors.redAccent),
+            SizedBox(height: context.r(12)),
             Text('${l.commonError}: ${_message ?? ''}',
                 textAlign: TextAlign.center),
-            const SizedBox(height: 16),
+            SizedBox(height: context.r(16)),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(l.commonClose),

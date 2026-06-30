@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/responsive.dart';
 import '../app/theme.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/steam_totp.dart';
@@ -113,7 +114,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        SizedBox(width: 240, child: sidebar),
+                        SizedBox(width: context.r(240), child: sidebar),
                         Expanded(child: panel),
                       ],
                     );
@@ -121,7 +122,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   return Column(
                     children: [
                       panel,
-                      const Divider(height: 1),
+                      Divider(height: context.r(1)),
                       Expanded(child: sidebar),
                     ],
                   );
@@ -247,27 +248,29 @@ class _Sidebar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 10, 6),
+            padding: context.rInsets(left: 14, top: 12, right: 10, bottom: 6),
             child: Row(
               children: [
                 Expanded(
                   child: Text(
                     l.navAccounts,
                     style: TextStyle(
-                        color: t.muted, fontSize: 11, letterSpacing: 1),
+                        color: t.muted,
+                        fontSize: context.r(11),
+                        letterSpacing: context.r(1)),
                   ),
                 ),
                 InkWell(
                   onTap: onAdd,
                   child: Container(
-                    width: 24,
-                    height: 24,
+                    width: context.r(24),
+                    height: context.r(24),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       border: t.border,
                       borderRadius: BorderRadius.circular(t.radiusSm),
                     ),
-                    child: Icon(Icons.add, size: 16, color: t.accent),
+                    child: Icon(Icons.add, size: context.r(16), color: t.accent),
                   ),
                 ),
               ],
@@ -275,7 +278,7 @@ class _Sidebar extends StatelessWidget {
           ),
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: context.rInsets(h: 8, v: 4),
               itemCount: accounts.length,
               itemBuilder: (context, i) => _SidebarRow(
                 account: accounts[i],
@@ -310,22 +313,22 @@ class _SidebarRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(t.radiusSm),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.all(8),
+        margin: context.rInsets(bottom: 6),
+        padding: context.rInsets(all: 8),
         decoration: BoxDecoration(
           color: selected ? t.panel2 : Colors.transparent,
           borderRadius: BorderRadius.circular(t.radiusSm),
           border: Border(
             left: BorderSide(
               color: selected ? t.accent : Colors.transparent,
-              width: 2,
+              width: context.r(2),
             ),
           ),
         ),
         child: Row(
           children: [
-            _Avatar(account: account, size: 30),
-            const SizedBox(width: 8),
+            _Avatar(account: account, size: context.r(30)),
+            SizedBox(width: context.r(8)),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,14 +337,14 @@ class _SidebarRow extends StatelessWidget {
                     account.accountName ?? '${account.steamId}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: t.text, fontSize: 13.5),
+                    style: TextStyle(color: t.text, fontSize: context.r(13.5)),
                   ),
                   Text(
                     code,
                     style: TextStyle(
                       color: t.accent,
-                      fontSize: 13,
-                      letterSpacing: 3,
+                      fontSize: context.r(13),
+                      letterSpacing: context.r(3),
                     ),
                   ),
                 ],
@@ -370,34 +373,35 @@ class _MainPanel extends StatelessWidget {
     final remaining = SteamTotp.secondsRemaining(tick);
 
     return Padding(
-      padding: const EdgeInsets.all(26),
+      padding: context.rInsets(all: 26),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _Avatar(account: account, size: 34),
-              const SizedBox(width: 10),
+              _Avatar(account: account, size: context.r(34)),
+              SizedBox(width: context.r(10)),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(account.accountName ?? '${account.steamId}',
-                      style: TextStyle(color: t.text, fontSize: 14)),
+                      style: TextStyle(color: t.text, fontSize: context.r(14))),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      PulsingDot(color: t.good, size: 7),
-                      const SizedBox(width: 6),
+                      PulsingDot(color: t.good, size: context.r(7)),
+                      SizedBox(width: context.r(6)),
                       Text(l.accountReady,
-                          style: TextStyle(color: t.muted, fontSize: 12)),
+                          style:
+                              TextStyle(color: t.muted, fontSize: context.r(12))),
                     ],
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 22),
+          SizedBox(height: context.r(22)),
           // Relative scaling: the code occupies ~66% of the panel width (design
           // proportion ≈ 58–65% of the phone), capped on wide screens. FittedBox
           // scales the glyphs + glow, letter-spacing stays at 0.16em.
@@ -410,19 +414,21 @@ class _MainPanel extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: context.r(24)),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CountdownRing(remaining: remaining, size: 74, stroke: 6),
-              const SizedBox(width: 20),
+              CountdownRing(
+                  remaining: remaining,
+                  size: context.r(74),
+                  stroke: context.r(6)),
+              SizedBox(width: context.r(20)),
               FilledButton.icon(
                 onPressed: () => onCopy(code),
-                icon: const Icon(Icons.copy, size: 16),
+                icon: Icon(Icons.copy, size: context.r(16)),
                 label: Text(l.copyCode),
                 style: FilledButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                  padding: context.rInsets(h: 22, v: 14),
                 ),
               ),
             ],
@@ -470,12 +476,12 @@ class _EmptyState extends StatelessWidget {
     final l = AppLocalizations.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: context.rInsets(all: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(l.accountsEmpty, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
+            SizedBox(height: context.r(16)),
             FilledButton.icon(
               onPressed: onAdd,
               icon: const Icon(Icons.add),

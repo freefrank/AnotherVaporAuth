@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../app/responsive.dart';
 import '../app/theme.dart';
 import '../services/debug_log.dart';
 
@@ -46,18 +47,18 @@ class DebugLogScreen extends StatelessWidget {
           }
           return ListView.builder(
             reverse: true,
-            padding: const EdgeInsets.all(12),
+            padding: context.rInsets(all: 12),
             itemCount: lines.length,
             itemBuilder: (context, i) {
               final line = lines[lines.length - 1 - i];
               final isErr = line.contains('✗') || line.contains('error');
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 1),
+                padding: context.rInsets(v: 1),
                 child: SelectableText(
                   line,
                   style: TextStyle(
                     fontFamily: 'JetBrainsMono',
-                    fontSize: 12,
+                    fontSize: context.r(12),
                     color: isErr ? t.bad : t.text,
                   ),
                 ),

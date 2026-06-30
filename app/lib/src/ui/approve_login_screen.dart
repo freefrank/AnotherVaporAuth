@@ -6,6 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/responsive.dart';
 import '../app/theme.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/qr_approval_client.dart';
@@ -87,14 +88,14 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: context.rInsets(all: 24),
             child: SdaPanel(
-              padding: const EdgeInsets.all(20),
+              padding: context.rInsets(all: 20),
               child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(Icons.qr_code_2, size: 40, color: t.accent),
-                const SizedBox(height: 14),
+                Icon(Icons.qr_code_2, size: context.r(40), color: t.accent),
+                SizedBox(height: context.r(14)),
                 if (accounts.isEmpty)
                   Text(l.sessionExpired)
                 else
@@ -108,16 +109,16 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
                         .toList(),
                     onChanged: (v) => setState(() => _account = v),
                   ),
-                const SizedBox(height: 16),
+                SizedBox(height: context.r(16)),
                 Text(l.approveScanPrompt),
-                const SizedBox(height: 8),
+                SizedBox(height: context.r(8)),
                 if (_canScan)
                   OutlinedButton.icon(
                     onPressed: _scan,
                     icon: const Icon(Icons.qr_code_scanner),
                     label: Text(l.approveTitle),
                   ),
-                const SizedBox(height: 8),
+                SizedBox(height: context.r(8)),
                 TextField(
                   controller: _link,
                   decoration: InputDecoration(
@@ -125,7 +126,7 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
                     border: const OutlineInputBorder(),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: context.r(16)),
                 Row(
                   children: [
                     Expanded(
@@ -135,7 +136,7 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
                         child: Text(l.approveReject),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: context.r(8)),
                     Expanded(
                       child: FilledButton(
                         onPressed:
@@ -146,7 +147,7 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
                   ],
                 ),
                 if (_message != null) ...[
-                  const SizedBox(height: 16),
+                  SizedBox(height: context.r(16)),
                   Text(_message!, textAlign: TextAlign.center),
                 ],
               ],
