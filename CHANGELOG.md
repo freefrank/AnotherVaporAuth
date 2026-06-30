@@ -1,14 +1,9 @@
 # Changelog · 更新日志
 
-All notable changes to **AVA (AnotherVaporAuth)**. The format follows
+All notable changes to **AVA (AnotherVaporAuth)**. Each version has an English
+block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
-
-**[English](#english)** · **[简体中文](#简体中文)**
-
----
-
-# English
 
 ## [v0.55] — 2026-06-30
 
@@ -42,55 +37,7 @@ verified end-to-end.
 - Bilingual `CHANGELOG.md`; GitHub Releases now show only the current version's
   changelog section.
 
-## [v0.54] — 2026-06-30
-
-Turned the remaining placeholder protocol code into real implementations,
-following the SteamKit/SteamDatabase protobufs.
-
-### Added
-- **In-app Debug log** (Settings → Debug log): a copyable, scrollable trace of
-  every Steam request/response (method, EResult, size) for diagnostics.
-
-### Fixed
-- **QR login** (`request_id` was read only on the credentials path) — scan-to
-  -login no longer fails with `InvalidParam`.
-- **`steamid` is `fixed64`** in several messages — added `fixed64` to the
-  protobuf codec and corrected AddAuthenticator, FinalizeAddAuthenticator,
-  UpdateAuthSessionWithSteamGuardCode, GenerateAccessTokenForApp and the
-  mobile-confirmation message.
-- **QR-login steamid** is taken from the JWT `sub` claim (it isn't in begin/poll).
-- **AuthenticatorLinker** is now status-driven (no placeholder phone pre-check).
-
-## [v0.53]
-- Refined the remaining screens to the design language; added the in-app DebugLog
-  infrastructure (network request/response logging).
-
-## [v0.52]
-- Renamed the project to **AVA (AnotherVaporAuth)**; new app icon — Neon + Pixel
-  variants, switchable in-app with the theme.
-
-## [v0.51]
-- Bundled full CJK fonts (simplified + traditional, incl. rare username glyphs);
-  removed the legacy C# implementation (kept on the `legacy` branch); bilingual README.
-
-## [v0.50]
-- Updated all dependencies to latest stable; bundled fonts (no runtime download);
-  switched to `file_selector`; CI Linux build uses Node 24.
-
-## [v0.49]
-- GitHub Actions: analyze/test on push, tag-driven releases (Android + Linux + Windows).
-
-## [0.1 – 0.48] — Flutter rewrite
-- Complete rewrite from the legacy .NET WinForms app to **Flutter** (Windows /
-  macOS / Linux / Android from one codebase). Byte-compatible `.maFile` crypto
-  (PBKDF2 50k/SHA1 + AES-256-CBC), TOTP, confirmations (native JSON, batch),
-  login (password + QR), add authenticator, two themes (Neon + Pixel), i18n.
-
----
-
-# 简体中文
-
-## [v0.55] — 2026-06-30
+—
 
 在真实 Steam 账户上对联网流程做真机验证，并完善登录体验与全量本地化 —— 登录、
 会话刷新、交易确认端到端跑通。
@@ -117,6 +64,25 @@ following the SteamKit/SteamDatabase protobufs.
 
 ## [v0.54] — 2026-06-30
 
+Turned the remaining placeholder protocol code into real implementations,
+following the SteamKit/SteamDatabase protobufs.
+
+### Added
+- **In-app Debug log** (Settings → Debug log): a copyable, scrollable trace of
+  every Steam request/response (method, EResult, size) for diagnostics.
+
+### Fixed
+- **QR login** (`request_id` was read only on the credentials path) — scan-to
+  -login no longer fails with `InvalidParam`.
+- **`steamid` is `fixed64`** in several messages — added `fixed64` to the
+  protobuf codec and corrected AddAuthenticator, FinalizeAddAuthenticator,
+  UpdateAuthSessionWithSteamGuardCode, GenerateAccessTokenForApp and the
+  mobile-confirmation message.
+- **QR-login steamid** is taken from the JWT `sub` claim (it isn't in begin/poll).
+- **AuthenticatorLinker** is now status-driven (no placeholder phone pre-check).
+
+—
+
 按 SteamKit/SteamDatabase protobuf 把剩余的占位协议代码全部转为正式实现。
 
 ### 新增
@@ -131,23 +97,42 @@ following the SteamKit/SteamDatabase protobufs.
 - **添加验证器**改为 status 驱动（去掉占位的手机预检）。
 
 ## [v0.53]
+
+- Refined the remaining screens to the design language; added the in-app DebugLog
+  infrastructure (network request/response logging).
 - 将其余界面精修至设计语言；加入应用内 DebugLog 基础设施（网络请求/响应日志）。
 
 ## [v0.52]
+
+- Renamed the project to **AVA (AnotherVaporAuth)**; new app icon — Neon + Pixel
+  variants, switchable in-app with the theme.
 - 项目更名为 **AVA (AnotherVaporAuth)**；新应用图标 —— 霓虹 + 像素双变体，随主题切换。
 
 ## [v0.51]
+
+- Bundled full CJK fonts (simplified + traditional, incl. rare username glyphs);
+  removed the legacy C# implementation (kept on the `legacy` branch); bilingual README.
 - 打包完整 CJK 字体（简体 + 繁体，含昵称生僻字）；移除旧版 C# 实现（保留在 `legacy`
   分支）；双语 README。
 
 ## [v0.50]
+
+- Updated all dependencies to latest stable; bundled fonts (no runtime download);
+  switched to `file_selector`; CI Linux build uses Node 24.
 - 所有依赖更新至最新稳定版；字体打包（运行时不下载）；改用 `file_selector`；
   CI Linux 构建使用 Node 24。
 
 ## [v0.49]
+
+- GitHub Actions: analyze/test on push, tag-driven releases (Android + Linux + Windows).
 - GitHub Actions：推送即 analyze/test，标签触发发布（Android + Linux + Windows）。
 
-## [0.1 – 0.48] — Flutter 重写
+## [0.1 – 0.48] — Flutter rewrite · Flutter 重写
+
+- Complete rewrite from the legacy .NET WinForms app to **Flutter** (Windows /
+  macOS / Linux / Android from one codebase). Byte-compatible `.maFile` crypto
+  (PBKDF2 50k/SHA1 + AES-256-CBC), TOTP, confirmations (native JSON, batch),
+  login (password + QR), add authenticator, two themes (Neon + Pixel), i18n.
 - 从旧版 .NET WinForms 完整重写为 **Flutter**（一套代码覆盖 Windows / macOS /
   Linux / Android）。字节级兼容的 `.maFile` 加密（PBKDF2 50k/SHA1 + AES-256-CBC）、
   TOTP、交易确认（原生 JSON、批量）、登录（密码 + 扫码）、添加验证器、双主题
