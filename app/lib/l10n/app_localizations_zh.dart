@@ -313,6 +313,14 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get actionExport => '导出 maFile';
+
+  @override
+  String exportFailed(String error) {
+    return '导出失败：$error';
+  }
+
+  @override
   String get addAuthTitle => '添加验证器';
 
   @override

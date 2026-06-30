@@ -81,6 +81,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 PopupMenuItem(
                     value: 'confirm', child: Text(l.actionConfirmations)),
                 PopupMenuItem(value: 'login', child: Text(l.actionLogin)),
+                PopupMenuItem(value: 'export', child: Text(l.actionExport)),
                 PopupMenuItem(value: 'remove', child: Text(l.actionRemove)),
               ],
             ),
@@ -190,6 +191,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Navigator.of(context).push(MaterialPageRoute(
             builder: (_) =>
                 LoginScreen(reason: LoginReason.refresh, account: account)));
+        break;
+      case 'export':
+        await exportMaFileFlow(context, account);
         break;
       case 'remove':
         final ok = await showDialog<bool>(

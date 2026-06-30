@@ -324,6 +324,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get actionExport => 'Export maFile';
+
+  @override
+  String exportFailed(String error) {
+    return 'Failed to export: $error';
+  }
+
+  @override
   String get addAuthTitle => 'Add authenticator';
 
   @override

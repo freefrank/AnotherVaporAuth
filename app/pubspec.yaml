@@ -36,6 +36,7 @@ dependencies:
   # ships a built-in-Kotlin Android plugin that fails GeneratedPluginRegistrant
   # compilation in this project. file_selector builds cleanly via Pigeon.
   file_selector: ^1.0.3
+  share_plus: ^10.1.4
   path_provider: ^2.1.5
   path: ^1.9.0
 

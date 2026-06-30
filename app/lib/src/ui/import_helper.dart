@@ -1,11 +1,15 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../core/models/steam_guard_account.dart';
 
 /// Lets the user pick an existing unencrypted `*.maFile` and imports it into the
 /// current store (re-encrypting under the store's passkey if it is encrypted).
@@ -30,6 +34,28 @@ Future<void> importMaFileFlow(BuildContext context, WidgetRef ref) async {
     if (context.mounted) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.importFailed('$e'))));
+    }
+  }
+}
+
+/// Exports an account as an **unencrypted** `*.maFile` (plain JSON), named after
+/// the account's username, via the system share sheet (save to Files, Drive…).
+Future<void> exportMaFileFlow(
+    BuildContext context, SteamGuardAccount account) async {
+  final l = AppLocalizations.of(context);
+  try {
+    final raw = (account.accountName ?? '').trim();
+    final base = raw.isEmpty ? '${account.steamId}' : raw;
+    final safe = base.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    final json = const JsonEncoder.withIndent('  ').convert(account.toJson());
+    final dir = await getTemporaryDirectory();
+    final path = '${dir.path}/$safe.maFile';
+    await File(path).writeAsString(json);
+    await Share.shareXFiles([XFile(path)], subject: '$safe.maFile');
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.exportFailed('$e'))));
     }
   }
 }

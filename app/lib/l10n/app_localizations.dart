@@ -680,6 +680,18 @@ abstract class AppLocalizations {
   /// **'Failed to import: {error}'**
   String importFailed(String error);
 
+  /// No description provided for @actionExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export maFile'**
+  String get actionExport;
+
+  /// No description provided for @exportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to export: {error}'**
+  String exportFailed(String error);
+
   /// No description provided for @addAuthTitle.
   ///
   /// In en, this message translates to:
