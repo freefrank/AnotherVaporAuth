@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -60,14 +61,15 @@ class MaFileCrypto {
     String password,
     String saltB64,
     String ivB64,
-    String encryptedB64,
-  ) {
+    String encryptedB64, {
+    int iterations = pbkdf2Iterations,
+  }) {
     if (password.isEmpty || saltB64.isEmpty || ivB64.isEmpty ||
         encryptedB64.isEmpty) {
       throw ArgumentError('Empty argument to decrypt');
     }
     try {
-      final key = deriveKey(password, saltB64);
+      final key = deriveKey(password, saltB64, iterations: iterations);
       final iv = base64.decode(ivB64);
       final cipherText = base64.decode(encryptedB64);
       final cipher = PaddedBlockCipherImpl(
@@ -92,13 +94,14 @@ class MaFileCrypto {
     String password,
     String saltB64,
     String ivB64,
-    String plaintext,
-  ) {
+    String plaintext, {
+    int iterations = pbkdf2Iterations,
+  }) {
     if (password.isEmpty || saltB64.isEmpty || ivB64.isEmpty ||
         plaintext.isEmpty) {
       throw ArgumentError('Empty argument to encrypt');
     }
-    final key = deriveKey(password, saltB64);
+    final key = deriveKey(password, saltB64, iterations: iterations);
     final iv = base64.decode(ivB64);
     final cipher = PaddedBlockCipherImpl(
       PKCS7Padding(),
@@ -114,5 +117,22 @@ class MaFileCrypto {
       Uint8List.fromList(utf8.encode(plaintext)),
     );
     return base64.encode(cipherText);
+  }
+
+  /// Decrypts several payloads in a background isolate so the expensive PBKDF2
+  /// derivations don't block the UI thread. Each item is `(salt, iv, ciphertext)`
+  /// and maps to its plaintext (or null on a wrong key).
+  static Future<List<String?>> decryptBatch(
+    String password,
+    List<(String, String, String)> items, {
+    int iterations = pbkdf2Iterations,
+  }) {
+    if (items.isEmpty) return Future.value(const []);
+    return Isolate.run(() => [
+          for (final (salt, iv, ct) in items)
+            (salt.isEmpty || iv.isEmpty || ct.isEmpty)
+                ? null
+                : decrypt(password, salt, iv, ct, iterations: iterations),
+        ]);
   }
 }

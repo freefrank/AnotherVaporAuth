@@ -70,23 +70,33 @@ class AccountStore {
   Future<List<SteamGuardAccount>> getAllAccounts(
       {String? passKey, int limit = -1}) async {
     if (passKey == null && manifest.encrypted) return const [];
+    final entries =
+        limit == -1 ? manifest.entries : manifest.entries.take(limit).toList();
+    // Read raw payloads (IO), then decrypt them all in one background isolate.
+    final raws = <String>[];
+    for (final e in entries) {
+      raws.add(await storage.readFile(e.filename));
+    }
+    List<String?> texts;
+    if (manifest.encrypted) {
+      final items = [
+        for (var i = 0; i < entries.length; i++)
+          (entries[i].salt!, entries[i].iv!, raws[i])
+      ];
+      texts = await MaFileCrypto.decryptBatch(passKey!, items,
+          iterations: manifest.kdfIterations);
+    } else {
+      texts = raws;
+    }
     final accounts = <SteamGuardAccount>[];
-    for (final entry in manifest.entries) {
-      var fileText = await storage.readFile(entry.filename);
-      if (manifest.encrypted) {
-        final decrypted = MaFileCrypto.decrypt(
-            passKey!, entry.salt!, entry.iv!, fileText);
-        if (decrypted == null) return const [];
-        fileText = decrypted;
-      }
+    for (final text in texts) {
+      if (text == null) return const []; // wrong key
       try {
-        final account = SteamGuardAccount.fromJson(
-            jsonDecode(fileText) as Map<String, dynamic>);
-        accounts.add(account);
+        accounts.add(SteamGuardAccount.fromJson(
+            jsonDecode(text) as Map<String, dynamic>));
       } catch (_) {
         continue;
       }
-      if (limit != -1 && limit <= accounts.length) break;
     }
     return accounts;
   }
@@ -98,7 +108,12 @@ class AccountStore {
     if (check != null) {
       final parts = check.split('|');
       if (parts.length == 3) {
-        final dec = MaFileCrypto.decrypt(passkey, parts[0], parts[1], parts[2]);
+        final dec = (await MaFileCrypto.decryptBatch(
+          passkey,
+          [(parts[0], parts[1], parts[2])],
+          iterations: manifest.kdfIterations,
+        ))
+            .first;
         return dec == _checkPlaintext;
       }
     }
@@ -120,7 +135,8 @@ class AccountStore {
     if (encrypt) {
       salt = MaFileCrypto.getRandomSalt();
       iv = MaFileCrypto.getInitializationVector();
-      jsonAccount = MaFileCrypto.encrypt(passKey!, salt, iv, jsonAccount);
+      jsonAccount = MaFileCrypto.encrypt(passKey!, salt, iv, jsonAccount,
+          iterations: manifest.kdfIterations);
     }
 
     final filename = '${account.steamId}.maFile';
@@ -176,13 +192,15 @@ class AccountStore {
     if (manifest.encrypted) {
       if (oldKey == null || !await verifyPasskey(oldKey)) return false;
     }
+    final oldIterations = manifest.kdfIterations;
     final toEncrypt = newKey != null;
+    final newIterations = toEncrypt ? _avaIterations : oldIterations;
     for (final entry in manifest.entries) {
       if (!await storage.fileExists(entry.filename)) continue;
       var contents = await storage.readFile(entry.filename);
       if (manifest.encrypted) {
-        final dec =
-            MaFileCrypto.decrypt(oldKey!, entry.salt!, entry.iv!, contents);
+        final dec = MaFileCrypto.decrypt(oldKey!, entry.salt!, entry.iv!,
+            contents, iterations: oldIterations);
         if (dec == null) return false;
         contents = dec;
       }
@@ -192,19 +210,22 @@ class AccountStore {
       if (toEncrypt) {
         newSalt = MaFileCrypto.getRandomSalt();
         newIv = MaFileCrypto.getInitializationVector();
-        toWrite = MaFileCrypto.encrypt(newKey, newSalt, newIv, contents);
+        toWrite = MaFileCrypto.encrypt(newKey, newSalt, newIv, contents,
+            iterations: newIterations);
       }
       await storage.writeFile(entry.filename, toWrite);
       entry.iv = newIv;
       entry.salt = newSalt;
     }
     manifest.encrypted = toEncrypt;
+    manifest.kdfIterations = newIterations;
     if (toEncrypt) {
       // Store a passkey-verification token so the PIN can be checked even with
       // no accounts.
       final salt = MaFileCrypto.getRandomSalt();
       final iv = MaFileCrypto.getInitializationVector();
-      final ct = MaFileCrypto.encrypt(newKey, salt, iv, _checkPlaintext);
+      final ct = MaFileCrypto.encrypt(newKey, salt, iv, _checkPlaintext,
+          iterations: newIterations);
       manifest.passkeyCheck = '$salt|$iv|$ct';
     } else {
       manifest.passkeyCheck = null;
@@ -214,6 +235,11 @@ class AccountStore {
   }
 
   static const String _checkPlaintext = 'AVA-PASSKEY-CHECK';
+
+  /// PBKDF2 rounds for AVA's own PIN encryption. Far fewer than the maFile's
+  /// 50000 — a 6-digit PIN's tiny keyspace (and on-device storage) means high
+  /// rounds add little, while keeping unlock snappy.
+  static const int _avaIterations = 10000;
 
   void moveEntry(int from, int to) {
     if (from < 0 || to < 0 || from >= manifest.entries.length) return;

@@ -16,6 +16,11 @@ class Manifest {
   /// when there are no accounts (lets a PIN be set on an empty store).
   String? passkeyCheck;
 
+  /// PBKDF2 rounds used for this store's own encryption. Imported maFiles use
+  /// the 50000-round maFile default; AVA's own PIN encryption can use fewer
+  /// (a 6-digit PIN's small keyspace dominates, so high rounds add little).
+  int kdfIterations;
+
   Manifest({
     this.encrypted = false,
     this.firstRun = true,
@@ -26,12 +31,14 @@ class Manifest {
     this.autoConfirmMarketTransactions = false,
     this.autoConfirmTrades = false,
     this.passkeyCheck,
+    this.kdfIterations = 50000,
   }) : entries = entries ?? <ManifestEntry>[];
 
   factory Manifest.fromJson(Map<String, dynamic> json) => Manifest(
         encrypted: json['encrypted'] == true,
         firstRun: json['first_run'] ?? true,
         passkeyCheck: json['passkey_check'] as String?,
+        kdfIterations: _asInt(json['kdf_iterations'], 50000),
         entries: (json['entries'] as List?)
                 ?.map((e) =>
                     ManifestEntry.fromJson(e as Map<String, dynamic>))
@@ -55,6 +62,7 @@ class Manifest {
         'auto_confirm_market_transactions': autoConfirmMarketTransactions,
         'auto_confirm_trades': autoConfirmTrades,
         if (passkeyCheck != null) 'passkey_check': passkeyCheck,
+        'kdf_iterations': kdfIterations,
       };
 
   static int _asInt(dynamic v, int fallback) {
