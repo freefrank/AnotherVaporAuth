@@ -73,6 +73,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confDeclineSelected => 'Decline selected';
 
   @override
+  String get confAcceptAll => 'Accept all';
+
+  @override
+  String get confRejectAll => 'Reject all';
+
+  @override
+  String confPending(int count) {
+    return '$count pending';
+  }
+
+  @override
+  String get confAllProcessed => 'All processed';
+
+  @override
   String get confTypeTrade => 'Trade';
 
   @override
@@ -123,6 +137,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginWaiting => 'Waiting for confirmation…';
+
+  @override
+  String get loginStepCredentials => 'Credentials';
+
+  @override
+  String get loginStepConfirm => 'Confirm';
+
+  @override
+  String get loginStepDone => 'Done';
+
+  @override
+  String get loginWaitingDesc =>
+      'Approve this sign in on the Steam mobile app. You can also use an email code or QR sign-in.';
 
   @override
   String loginFailed(String error) {

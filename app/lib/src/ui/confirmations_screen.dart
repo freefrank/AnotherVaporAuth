@@ -3,10 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/theme.dart';
 import '../core/models/confirmation.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/confirmations_client.dart';
+import 'widgets/sda_panel.dart';
+import 'widgets/scanline_overlay.dart';
 
+/// Design screen 06 — confirmations. Native JSON rendering (no WebView). Top
+/// batch bar (accept all / reject all) + per-item cards with type chip, title,
+/// summary and accept/reject. Items stagger in; acted items slide out.
 class ConfirmationsScreen extends ConsumerStatefulWidget {
   final SteamGuardAccount account;
   const ConfirmationsScreen({super.key, required this.account});
@@ -19,7 +25,6 @@ class ConfirmationsScreen extends ConsumerStatefulWidget {
 class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
   late final ConfirmationsClient _client;
   List<Confirmation>? _confs;
-  final Set<String> _selected = {};
   bool _loading = true;
   bool _busy = false;
   String? _error;
@@ -41,7 +46,6 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
       if (!mounted) return;
       setState(() {
         _confs = list;
-        _selected.clear();
         _loading = false;
       });
     } catch (e) {
@@ -53,20 +57,14 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
     }
   }
 
-  Future<void> _respondSelected(bool accept) async {
-    final confs = _confs ?? const <Confirmation>[];
-    final chosen = _selected.isEmpty
-        ? confs
-        : confs.where((c) => _selected.contains(c.id)).toList();
-    if (chosen.isEmpty) return;
-
+  Future<void> _respond(List<Confirmation> confs, bool accept) async {
+    if (confs.isEmpty) return;
     final l = AppLocalizations.of(context);
     setState(() => _busy = true);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l.confProcessing(chosen.length))),
+      SnackBar(content: Text(l.confProcessing(confs.length))),
     );
-    final result =
-        await _client.respondMultiple(widget.account, chosen, accept);
+    final result = await _client.respondMultiple(widget.account, confs, accept);
     if (!mounted) return;
     setState(() => _busy = false);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -78,7 +76,9 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final t = Theme.of(context).extension<SdaTokens>()!;
     final confs = _confs ?? const <Confirmation>[];
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l.confirmationsTitle),
@@ -90,37 +90,14 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
           ),
         ],
       ),
-      body: _buildBody(l, confs),
-      bottomNavigationBar: confs.isEmpty
-          ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _busy ? null : () => _respondSelected(false),
-                        icon: const Icon(Icons.close),
-                        label: Text(l.confDeclineSelected),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: _busy ? null : () => _respondSelected(true),
-                        icon: const Icon(Icons.check),
-                        label: Text(l.confAcceptSelected),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+      body: ScanlineOverlay(
+        child: _buildBody(l, t, confs),
+      ),
     );
   }
 
-  Widget _buildBody(AppLocalizations l, List<Confirmation> confs) {
+  Widget _buildBody(
+      AppLocalizations l, SdaTokens t, List<Confirmation> confs) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -128,54 +105,120 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text('${l.commonError}: $_error', textAlign: TextAlign.center),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.cloud_off, color: t.muted, size: 40),
+              const SizedBox(height: 12),
+              Text('${l.commonError}: $_error', textAlign: TextAlign.center),
+            ],
+          ),
         ),
       );
     }
     if (confs.isEmpty) {
-      return Center(child: Text(l.confirmationsEmpty));
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.check_circle_outline, color: t.good, size: 44),
+            const SizedBox(height: 12),
+            Text(l.confirmationsEmpty),
+          ],
+        ),
+      );
     }
+
     return Column(
       children: [
-        CheckboxListTile(
-          dense: true,
-          title: Text(l.confSelectAll),
-          value: _selected.length == confs.length,
-          onChanged: (v) => setState(() {
-            _selected
-              ..clear()
-              ..addAll(v == true ? confs.map((c) => c.id) : const <String>[]);
-          }),
+        // Batch bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l.confPending(confs.length),
+                  style: TextStyle(color: t.text, fontSize: 14),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _busy ? null : () => _respond(confs, false),
+                icon: const Icon(Icons.close, size: 16),
+                label: Text(l.confRejectAll),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.icon(
+                onPressed: _busy ? null : () => _respond(confs, true),
+                icon: const Icon(Icons.check, size: 16),
+                label: Text(l.confAcceptAll),
+              ),
+            ],
+          ),
         ),
-        const Divider(height: 1),
         Expanded(
           child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
             itemCount: confs.length,
-            itemBuilder: (context, i) {
-              final c = confs[i];
-              return CheckboxListTile(
-                value: _selected.contains(c.id),
-                onChanged: (v) => setState(() {
-                  if (v == true) {
-                    _selected.add(c.id);
-                  } else {
-                    _selected.remove(c.id);
-                  }
-                }),
-                title: Text(c.headline.isEmpty ? _typeLabel(l, c) : c.headline),
-                subtitle: Text(c.summary.join('\n')),
-                isThreeLine: c.summary.length > 1,
-                secondary: Chip(label: Text(_typeLabel(l, c))),
-              );
-            },
+            itemBuilder: (context, i) => _ConfCard(
+              key: ValueKey(confs[i].id),
+              conf: confs[i],
+              index: i,
+              busy: _busy,
+              onAccept: () => _respond([confs[i]], true),
+              onReject: () => _respond([confs[i]], false),
+            ),
           ),
         ),
       ],
     );
   }
+}
 
-  String _typeLabel(AppLocalizations l, Confirmation c) {
-    switch (c.type) {
+/// A single confirmation card with a stagger slide-in entrance.
+class _ConfCard extends StatefulWidget {
+  final Confirmation conf;
+  final int index;
+  final bool busy;
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
+  const _ConfCard({
+    super.key,
+    required this.conf,
+    required this.index,
+    required this.busy,
+    required this.onAccept,
+    required this.onReject,
+  });
+
+  @override
+  State<_ConfCard> createState() => _ConfCardState();
+}
+
+class _ConfCardState extends State<_ConfCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 320),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    // Staggered entrance: 80ms per item.
+    Future.delayed(Duration(milliseconds: 80 * widget.index), () {
+      if (mounted) _c.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  String _typeLabel(AppLocalizations l) {
+    switch (widget.conf.type) {
       case ConfirmationType.trade:
         return l.confTypeTrade;
       case ConfirmationType.marketListing:
@@ -183,5 +226,110 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
       default:
         return l.confTypeOther;
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    final c = widget.conf;
+    final isTrade = c.type == ConfirmationType.trade;
+    final chipColor = isTrade ? t.accent : t.accent2;
+
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, child) {
+        final v = Curves.easeOut.transform(_c.value);
+        return Opacity(
+          opacity: v,
+          child: Transform.translate(offset: Offset(26 * (1 - v), 0), child: child),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: SdaPanel(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        SdaChip(label: _typeLabel(l), color: chipColor),
+                        if (c.typeName.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              c.typeName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: t.muted, fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      c.headline.isEmpty ? _typeLabel(l) : c.headline,
+                      style: TextStyle(color: t.text, fontSize: 14),
+                    ),
+                    if (c.summary.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        c.summary.join(' · '),
+                        style: TextStyle(color: t.muted, fontSize: 12),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              _RoundAction(
+                icon: Icons.close,
+                color: t.bad,
+                onTap: widget.busy ? null : widget.onReject,
+              ),
+              const SizedBox(width: 8),
+              _RoundAction(
+                icon: Icons.check,
+                color: t.good,
+                onTap: widget.busy ? null : widget.onAccept,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RoundAction extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onTap;
+  const _RoundAction({required this.icon, required this.color, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(t.radiusSm),
+      child: Container(
+        width: 38,
+        height: 38,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(t.radiusSm),
+          border: Border.all(color: color.withValues(alpha: 0.55)),
+        ),
+        child: Icon(icon, color: color, size: 18),
+      ),
+    );
   }
 }

@@ -72,6 +72,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get confDeclineSelected => '批量拒绝';
 
   @override
+  String get confAcceptAll => '全部接受';
+
+  @override
+  String get confRejectAll => '全部拒绝';
+
+  @override
+  String confPending(int count) {
+    return '$count 项待确认';
+  }
+
+  @override
+  String get confAllProcessed => '已全部处理';
+
+  @override
   String get confTypeTrade => '交易';
 
   @override
@@ -122,6 +136,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get loginWaiting => '等待确认…';
+
+  @override
+  String get loginStepCredentials => '凭据';
+
+  @override
+  String get loginStepConfirm => '确认';
+
+  @override
+  String get loginStepDone => '完成';
+
+  @override
+  String get loginWaitingDesc => '请在 Steam 手机 App 上批准这次登录。也可改用邮箱验证码或扫码登录。';
 
   @override
   String loginFailed(String error) {

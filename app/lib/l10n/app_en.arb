@@ -24,6 +24,11 @@
   "confSelectAll": "Select all",
   "confAcceptSelected": "Accept selected",
   "confDeclineSelected": "Decline selected",
+  "confAcceptAll": "Accept all",
+  "confRejectAll": "Reject all",
+  "confPending": "{count} pending",
+  "@confPending": { "placeholders": { "count": { "type": "int" } } },
+  "confAllProcessed": "All processed",
   "confTypeTrade": "Trade",
   "confTypeMarket": "Market listing",
   "confTypeOther": "Confirmation",
@@ -47,6 +52,10 @@
   "loginNeedEmailCode": "Enter the code sent to your email",
   "loginSubmitCode": "Submit",
   "loginWaiting": "Waiting for confirmation…",
+  "loginStepCredentials": "Credentials",
+  "loginStepConfirm": "Confirm",
+  "loginStepDone": "Done",
+  "loginWaitingDesc": "Approve this sign in on the Steam mobile app. You can also use an email code or QR sign-in.",
   "loginFailed": "Login failed: {error}",
   "@loginFailed": {
     "placeholders": { "error": { "type": "String" } }

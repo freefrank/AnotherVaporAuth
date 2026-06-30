@@ -24,6 +24,11 @@
   "confSelectAll": "全选",
   "confAcceptSelected": "批量接受",
   "confDeclineSelected": "批量拒绝",
+  "confAcceptAll": "全部接受",
+  "confRejectAll": "全部拒绝",
+  "confPending": "{count} 项待确认",
+  "@confPending": { "placeholders": { "count": { "type": "int" } } },
+  "confAllProcessed": "已全部处理",
   "confTypeTrade": "交易",
   "confTypeMarket": "市场上架",
   "confTypeOther": "确认",
@@ -47,6 +52,10 @@
   "loginNeedEmailCode": "请输入邮箱收到的验证码",
   "loginSubmitCode": "提交",
   "loginWaiting": "等待确认…",
+  "loginStepCredentials": "凭据",
+  "loginStepConfirm": "确认",
+  "loginStepDone": "完成",
+  "loginWaitingDesc": "请在 Steam 手机 App 上批准这次登录。也可改用邮箱验证码或扫码登录。",
   "loginFailed": "登录失败：{error}",
   "@loginFailed": {
     "placeholders": { "error": { "type": "String" } }

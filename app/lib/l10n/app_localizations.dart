@@ -224,6 +224,30 @@ abstract class AppLocalizations {
   /// **'Decline selected'**
   String get confDeclineSelected;
 
+  /// No description provided for @confAcceptAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept all'**
+  String get confAcceptAll;
+
+  /// No description provided for @confRejectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject all'**
+  String get confRejectAll;
+
+  /// No description provided for @confPending.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pending'**
+  String confPending(int count);
+
+  /// No description provided for @confAllProcessed.
+  ///
+  /// In en, this message translates to:
+  /// **'All processed'**
+  String get confAllProcessed;
+
   /// No description provided for @confTypeTrade.
   ///
   /// In en, this message translates to:
@@ -319,6 +343,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waiting for confirmation…'**
   String get loginWaiting;
+
+  /// No description provided for @loginStepCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Credentials'**
+  String get loginStepCredentials;
+
+  /// No description provided for @loginStepConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get loginStepConfirm;
+
+  /// No description provided for @loginStepDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get loginStepDone;
+
+  /// No description provided for @loginWaitingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve this sign in on the Steam mobile app. You can also use an email code or QR sign-in.'**
+  String get loginWaitingDesc;
 
   /// No description provided for @loginFailed.
   ///

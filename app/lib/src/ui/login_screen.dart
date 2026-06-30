@@ -6,8 +6,11 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/theme.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/steam_auth_session.dart';
+import 'widgets/scanline_overlay.dart';
+import 'widgets/stepper3.dart';
 import 'add_authenticator_screen.dart';
 
 enum LoginReason { add, refresh }
@@ -30,10 +33,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _qrMode = false;
   String? _qrUrl;
   bool _busy = false;
+  bool _waiting = false; // polling for mobile/email confirmation
   String? _status;
   String? _error;
   GuardType? _needGuard;
   Timer? _pollTimer;
+
+  /// Stepper position: 0 credentials, 1 confirm, 2 done.
+  int get _step => (_waiting || _needGuard != null || _qrMode) ? 1 : 0;
 
   @override
   void initState() {
@@ -116,7 +123,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _beginPolling() {
     final l = AppLocalizations.of(context);
-    setState(() => _status = l.loginWaiting);
+    setState(() {
+      _status = l.loginWaiting;
+      _waiting = !_qrMode;
+    });
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
       try {
@@ -174,17 +184,60 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final Widget content = _waiting
+        ? _buildWaiting(l)
+        : (_qrMode ? _buildQr(l) : _buildForm(l));
     return Scaffold(
       appBar: AppBar(title: Text(l.loginTitle)),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 380),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: _qrMode ? _buildQr(l) : _buildForm(l),
+      body: ScanlineOverlay(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stepper3(
+                    current: _step,
+                    labels: [
+                      l.loginStepCredentials,
+                      l.loginStepConfirm,
+                      l.loginStepDone,
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  content,
+                ],
+              ),
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildWaiting(AppLocalizations l) {
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SpinnerRing(
+          size: 96,
+          child: Icon(Icons.phone_android, color: t.accent, size: 34),
+        ),
+        const SizedBox(height: 22),
+        Text(l.loginWaiting,
+            style: TextStyle(color: t.text, fontSize: 15),
+            textAlign: TextAlign.center),
+        const SizedBox(height: 8),
+        Text(l.loginWaitingDesc,
+            style: TextStyle(color: t.muted, fontSize: 13, height: 1.5),
+            textAlign: TextAlign.center),
+        const SizedBox(height: 18),
+        if (_error != null)
+          Text(_error!, style: TextStyle(color: t.bad)),
+      ],
     );
   }
 
