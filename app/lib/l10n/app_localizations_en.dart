@@ -122,6 +122,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get codeCopied => 'Login code copied to clipboard';
 
   @override
+  String get copied => 'Copied to clipboard';
+
+  @override
   String get copySteamId => 'Copy SteamID';
 
   @override

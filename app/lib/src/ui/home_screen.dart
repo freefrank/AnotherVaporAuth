@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +11,9 @@ import '../app/theme.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/steam_totp.dart';
 import '../services/steam_time.dart';
+import 'widgets/animated_steam_image.dart';
 import 'widgets/countdown_ring.dart';
+import 'widgets/cyber_ambient.dart';
 import 'widgets/flip_code.dart';
 import 'widgets/motion.dart';
 import 'widgets/scanline_overlay.dart';
@@ -45,6 +49,71 @@ String _codeFor(SteamGuardAccount a, int tick) {
   }
 }
 
+/// How an account's primary label is shown — tapping the panel name cycles it.
+enum _NameMode { username, persona, id }
+
+String _displayName(SteamGuardAccount a, _NameMode mode) {
+  switch (mode) {
+    case _NameMode.username:
+      return a.accountName ?? '${a.steamId}';
+    case _NameMode.persona:
+      final p = a.personaName;
+      return (p != null && p.isNotEmpty) ? p : (a.accountName ?? '${a.steamId}');
+    case _NameMode.id:
+      return '${a.steamId}';
+  }
+}
+
+/// Fade + scale + full-height vertical slide used when an account label changes
+/// (mode toggle or switching the selected account) — deliberately pronounced.
+Widget _nameTransition(Widget child, Animation<double> anim) {
+  final slide = Tween(begin: const Offset(0, 1.0), end: Offset.zero)
+      .animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic));
+  return FadeTransition(
+    opacity: anim,
+    child: SlideTransition(
+      position: slide,
+      child: ScaleTransition(
+        scale: Tween(begin: 0.7, end: 1.0).animate(anim),
+        alignment: Alignment.centerLeft,
+        child: child,
+      ),
+    ),
+  );
+}
+
+/// An account label that animates whenever its text changes.
+class _AnimatedName extends StatelessWidget {
+  final SteamGuardAccount account;
+  final _NameMode mode;
+  final TextStyle style;
+  const _AnimatedName(
+      {required this.account, required this.mode, required this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 420),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: _nameTransition,
+      // Clip so the full-height slide doesn't bleed into neighbours.
+      layoutBuilder: (current, previous) => Stack(
+        alignment: Alignment.centerLeft,
+        clipBehavior: Clip.hardEdge,
+        children: [...previous, ?current],
+      ),
+      child: Text(
+        _displayName(account, mode),
+        key: ValueKey('${account.steamId}-${mode.index}'),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: style,
+      ),
+    );
+  }
+}
+
 /// Main screen — design screen 01, Variant A: a sidebar account list (each row
 /// shows its own live code) + a main panel for the selected account (avatar,
 /// big code, countdown ring + copy). Responsive: side-by-side on wide screens,
@@ -59,10 +128,69 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selected = 0;
   bool _checkedLogins = false;
+  _NameMode _nameMode = _NameMode.username;
+
+  // Custom neon pull-to-refresh state.
+  double _pull = 0; // px pulled beyond the top
+  bool _refreshing = false;
+  static const double _pullThreshold = 130;
+
+  void _cycleNameMode() => setState(() {
+        _nameMode =
+            _NameMode.values[(_nameMode.index + 1) % _NameMode.values.length];
+      });
+
+  void _onPullPixels(double overscroll) {
+    if (_refreshing) return;
+    final p = overscroll.clamp(0.0, _pullThreshold * 1.5);
+    if (p == _pull) return;
+    // Haptic "click" the moment the pull charges past the trigger threshold.
+    if (_pull < _pullThreshold && p >= _pullThreshold) {
+      HapticFeedback.mediumImpact();
+    }
+    setState(() => _pull = p);
+  }
+
+  void _onPullEnd() {
+    if (_refreshing) return;
+    if (_pull >= _pullThreshold) {
+      _startRefresh();
+    } else if (_pull != 0) {
+      setState(() => _pull = 0);
+    }
+  }
+
+  /// Refreshes avatars/frames and polls the selected account's sign-ins. Shared
+  /// by the neon pull overlay and the pixel-theme RefreshIndicator.
+  Future<void> _runRefresh() async {
+    final accounts =
+        ref.read(appControllerProvider).value?.accounts ?? const [];
+    await ref.read(appControllerProvider.notifier).refreshAvatars();
+    if (mounted && accounts.isNotEmpty) {
+      await checkPendingLogins(context, ref, accounts[_selected],
+          silent: false);
+    }
+  }
+
+  Future<void> _startRefresh() async {
+    setState(() => _refreshing = true);
+    try {
+      await _runRefresh();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _refreshing = false;
+          _pull = 0;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    // The cyberpunk ambience / neon pull / glow borders are neon-theme only.
+    final neon = !(Theme.of(context).extension<SdaTokens>()?.isPixel ?? false);
     final accounts =
         ref.watch(appControllerProvider).value?.accounts ??
             const <SteamGuardAccount>[];
@@ -123,31 +251,61 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           silent: true);
                     },
                     onAdd: () => _addMenu(context),
-                    // Pull-to-refresh polls the selected account's sign-ins.
-                    onRefresh: () => checkPendingLogins(
-                        context, ref, accounts[_selected],
-                        silent: false),
+                    nameMode: _nameMode,
+                    neon: neon,
+                    // Neon: custom pull drives the full-screen overlay below.
+                    // Pixel: a standard RefreshIndicator.
+                    onPullPixels: _onPullPixels,
+                    onPullEnd: _onPullEnd,
+                    onRefresh: _runRefresh,
                   );
                   final panel = _MainPanel(
                     account: accounts[_selected],
                     tick: tick,
                     onCopy: _copy,
                     wide: c.maxWidth >= 640,
+                    nameMode: _nameMode,
+                    onTapName: _cycleNameMode,
                   );
-                  if (c.maxWidth >= 640) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        SizedBox(width: context.r(240), child: sidebar),
-                        Expanded(child: panel),
-                      ],
-                    );
-                  }
-                  return Column(
+                  final Widget content = c.maxWidth >= 640
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SizedBox(width: context.r(240), child: sidebar),
+                            Expanded(child: panel),
+                          ],
+                        )
+                      : Column(
+                          children: [
+                            panel,
+                            Divider(height: context.r(1)),
+                            Expanded(child: sidebar),
+                          ],
+                        );
+                  final pull01 = _refreshing
+                      ? 1.0
+                      : (_pull / _pullThreshold).clamp(0.0, 1.0);
+                  return Stack(
                     children: [
-                      panel,
-                      Divider(height: context.r(1)),
-                      Expanded(child: sidebar),
+                      // Cyberpunk ambience / HUD / neon pull — neon theme only.
+                      if (neon) ...[
+                        const Positioned.fill(child: CyberAmbient()),
+                        content,
+                        const Positioned.fill(child: CyberHud()),
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: TweenAnimationBuilder<double>(
+                              tween: Tween(end: pull01),
+                              duration: const Duration(milliseconds: 150),
+                              curve: Curves.easeOut,
+                              builder: (_, v, _) => v <= 0.001
+                                  ? const SizedBox.shrink()
+                                  : _NeonPull(progress: v),
+                            ),
+                          ),
+                        ),
+                      ] else
+                        content,
                     ],
                   );
                 },
@@ -257,15 +415,39 @@ class _Sidebar extends StatelessWidget {
   final int tick;
   final void Function(int index) onSelect;
   final VoidCallback onAdd;
-  final Future<void> Function()? onRefresh;
+  final void Function(double overscroll) onPullPixels;
+  final VoidCallback onPullEnd;
+  final Future<void> Function() onRefresh;
+  final _NameMode nameMode;
+  final bool neon;
   const _Sidebar({
     required this.accounts,
     required this.selected,
     required this.tick,
     required this.onSelect,
     required this.onAdd,
-    this.onRefresh,
+    required this.nameMode,
+    required this.neon,
+    required this.onPullPixels,
+    required this.onPullEnd,
+    required this.onRefresh,
   });
+
+  Widget _list(BuildContext context) => ListView.builder(
+        physics: neon
+            ? const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics())
+            : const AlwaysScrollableScrollPhysics(),
+        padding: context.rInsets(h: 8, v: 4),
+        itemCount: accounts.length,
+        itemBuilder: (context, i) => _SidebarRow(
+          account: accounts[i],
+          code: _codeFor(accounts[i], tick),
+          selected: i == selected,
+          nameMode: nameMode,
+          neon: neon,
+          onTap: () => onSelect(i),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -309,20 +491,22 @@ class _Sidebar extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: onRefresh ?? () async {},
-              child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: context.rInsets(h: 8, v: 4),
-                itemCount: accounts.length,
-                itemBuilder: (context, i) => _SidebarRow(
-                  account: accounts[i],
-                  code: _codeFor(accounts[i], tick),
-                  selected: i == selected,
-                  onTap: () => onSelect(i),
-                ),
-              ),
-            ),
+            child: neon
+                ? Listener(
+                    onPointerUp: (_) => onPullEnd(),
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: (n) {
+                        final px = n.metrics.pixels;
+                        onPullPixels(px < 0 ? -px : 0);
+                        return false;
+                      },
+                      child: _list(context),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: onRefresh,
+                    child: _list(context),
+                  ),
           ),
         ],
       ),
@@ -334,11 +518,15 @@ class _SidebarRow extends StatelessWidget {
   final SteamGuardAccount account;
   final String code;
   final bool selected;
+  final _NameMode nameMode;
+  final bool neon;
   final VoidCallback onTap;
   const _SidebarRow({
     required this.account,
     required this.code,
     required this.selected,
+    required this.nameMode,
+    required this.neon,
     required this.onTap,
   });
 
@@ -349,37 +537,61 @@ class _SidebarRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(t.radiusSm),
       child: Container(
-        margin: context.rInsets(bottom: 6),
+        margin: context.rInsets(bottom: 8),
         padding: context.rInsets(all: 8),
-        decoration: BoxDecoration(
-          color: selected ? t.panel2 : Colors.transparent,
-          borderRadius: BorderRadius.circular(t.radiusSm),
-          border: Border(
-            left: BorderSide(
-              color: selected ? t.accent : Colors.transparent,
-              width: context.r(2),
-            ),
-          ),
-        ),
+        decoration: neon
+            ? BoxDecoration(
+                color:
+                    selected ? t.panel2 : t.panel2.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(t.radiusSm),
+                // Every account gets a neon frame; the selected one glows.
+                border: Border.all(
+                  color: selected ? t.accent : t.accent.withValues(alpha: 0.28),
+                  width: selected ? context.r(1.6) : context.r(1),
+                ),
+                boxShadow: selected
+                    ? [
+                        BoxShadow(
+                          color: t.accent.withValues(alpha: 0.35),
+                          blurRadius: context.r(10),
+                          spreadRadius: context.r(0.5),
+                        ),
+                      ]
+                    : null,
+              )
+            : BoxDecoration(
+                // Pixel theme keeps its original left-accent-bar style.
+                color: selected ? t.panel2 : Colors.transparent,
+                borderRadius: BorderRadius.circular(t.radiusSm),
+                border: Border(
+                  left: BorderSide(
+                    color: selected ? t.accent : Colors.transparent,
+                    width: context.r(2),
+                  ),
+                ),
+              ),
         child: Row(
           children: [
-            _Avatar(account: account, size: context.r(30)),
-            SizedBox(width: context.r(8)),
+            _Avatar(account: account, size: context.r(70)),
+            SizedBox(width: context.r(15)),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    account.accountName ?? '${account.steamId}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: t.text, fontSize: context.r(13.5)),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: _AnimatedName(
+                      account: account,
+                      mode: nameMode,
+                      style:
+                          TextStyle(color: t.text, fontSize: context.r(19.5)),
+                    ),
                   ),
                   Text(
                     code,
                     style: TextStyle(
                       color: t.accent,
-                      fontSize: context.r(13),
+                      fontSize: context.r(18),
                       letterSpacing: context.r(3),
                     ),
                   ),
@@ -399,10 +611,14 @@ class _MainPanel extends StatelessWidget {
   final int tick;
   final void Function(String code) onCopy;
   final bool wide; // two-pane (tablet/desktop) layout
+  final _NameMode nameMode;
+  final VoidCallback onTapName;
   const _MainPanel(
       {required this.account,
       required this.tick,
       required this.onCopy,
+      required this.nameMode,
+      required this.onTapName,
       this.wide = false});
 
   @override
@@ -420,13 +636,43 @@ class _MainPanel extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _Avatar(account: account, size: context.r(34)),
-              SizedBox(width: context.r(10)),
+              _Avatar(account: account, size: context.r(104)),
+              SizedBox(width: context.r(18)),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(account.accountName ?? '${account.steamId}',
-                      style: TextStyle(color: t.text, fontSize: context.r(14))),
+                  // Tap to cycle username / persona / id; long-press to copy.
+                  GestureDetector(
+                    onTap: onTapName,
+                    onLongPress: () {
+                      final text = _displayName(account, nameMode);
+                      Clipboard.setData(ClipboardData(text: text));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l.copied)),
+                      );
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                          maxWidth: MediaQuery.sizeOf(context).width * 0.6),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: _AnimatedName(
+                              account: account,
+                              mode: nameMode,
+                              style: TextStyle(
+                                  color: t.text, fontSize: context.r(23)),
+                            ),
+                          ),
+                          SizedBox(width: context.r(6)),
+                          Icon(Icons.swap_horiz,
+                              size: context.r(16), color: t.muted),
+                        ],
+                      ),
+                    ),
+                  ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -441,48 +687,186 @@ class _MainPanel extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: context.r(22)),
-          // Phone: scale the code to ~66% of the panel width (relative). Tablet /
-          // two-pane: keep the v0.56 fixed code size so the wide layout matches
-          // the design the user signed off on.
-          if (wide)
-            FlipCode(code: code, fontSize: t.codeSize)
-          else
-            LayoutBuilder(
-              builder: (context, c) => SizedBox(
-                width: (c.maxWidth * 0.66).clamp(140.0, 280.0),
-                child: FittedBox(
-                  fit: BoxFit.fitWidth,
-                  child: FlipCode(code: code, fontSize: 56),
-                ),
-              ),
-            ),
-          SizedBox(height: context.r(24)),
+          SizedBox(height: context.r(26)),
+          // Code + countdown ring on one row. Tap the code to copy it (the
+          // explicit copy button is gone). Phone: scale the code relative to the
+          // viewport; tablet / two-pane: keep the fixed design size.
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              CountdownRing(
-                  remaining: remaining,
-                  size: context.r(74),
-                  stroke: context.r(6)),
-              SizedBox(width: context.r(20)),
               Flexible(
-                child: FilledButton.icon(
-                  onPressed: () => onCopy(code),
-                  icon: Icon(Icons.copy, size: context.r(16)),
-                  label: Text(l.copyCode, overflow: TextOverflow.ellipsis),
-                  style: FilledButton.styleFrom(
-                    padding: context.rInsets(h: 22, v: 14),
-                  ),
+                child: GestureDetector(
+                  onTap: () => onCopy(code),
+                  behavior: HitTestBehavior.opaque,
+                  child: wide
+                      ? FlipCode(code: code, fontSize: t.codeSize)
+                      : SizedBox(
+                          width: (MediaQuery.sizeOf(context).width * 0.46)
+                              .clamp(120.0, 260.0),
+                          child: FittedBox(
+                            fit: BoxFit.fitWidth,
+                            child: FlipCode(code: code, fontSize: 56),
+                          ),
+                        ),
                 ),
               ),
+              SizedBox(width: context.r(18)),
+              CountdownRing(
+                  remaining: remaining,
+                  size: context.r(wide ? 64 : 70),
+                  stroke: context.r(6)),
             ],
           ),
         ],
       ),
     );
   }
+}
+
+/// Full-screen animated red/blue neon fill that grows from the top as the user
+/// pulls down — moving scanlines, a cyber grid and a pulsing glowing edge, with
+/// a white-hot "charged" state once the trigger threshold is reached.
+class _NeonPull extends StatefulWidget {
+  final double progress; // 0..1
+  const _NeonPull({required this.progress});
+
+  @override
+  State<_NeonPull> createState() => _NeonPullState();
+}
+
+class _NeonPullState extends State<_NeonPull>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ac = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _ac.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: FractionallySizedBox(
+        widthFactor: 1,
+        heightFactor: widget.progress.clamp(0.0, 1.0),
+        child: AnimatedBuilder(
+          animation: _ac,
+          builder: (_, _) => CustomPaint(
+            size: Size.infinite,
+            painter: _NeonPainter(
+              progress: widget.progress,
+              t: _ac.value,
+              charged: widget.progress >= 0.97,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NeonPainter extends CustomPainter {
+  final double progress;
+  final double t; // 0..1 animation phase
+  final bool charged;
+  _NeonPainter(
+      {required this.progress, required this.t, required this.charged});
+
+  static const _red = Color(0xFFFF1B6B);
+  static const _blue = Color(0xFF18E0FF);
+  static const _cyan = Color(0xFF00FFFF);
+  static const _magenta = Color(0xFFFF2BD6);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width, h = size.height;
+    final rect = Offset.zero & size;
+    final pulse = 0.5 + 0.5 * math.sin(t * 2 * math.pi);
+
+    // Base red↔blue wash, intensifying with the pull.
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _blue.withValues(alpha: 0.05 + 0.32 * progress),
+            _red.withValues(alpha: 0.06 + 0.40 * progress),
+          ],
+        ).createShader(rect),
+    );
+
+    // Faint vertical cyber grid.
+    final grid = Paint()
+      ..color = _cyan.withValues(alpha: 0.07 * progress)
+      ..strokeWidth = 1;
+    for (var x = 0.0; x < w; x += 26) {
+      canvas.drawLine(Offset(x, 0), Offset(x, h), grid);
+    }
+
+    // Moving neon scanlines sweeping downward.
+    const n = 5;
+    for (var i = 0; i < n; i++) {
+      final y = ((t + i / n) % 1.0) * h;
+      final c = i.isEven ? _cyan : _magenta;
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(w, y),
+        Paint()
+          ..color = c.withValues(alpha: 0.45 * progress)
+          ..strokeWidth = 3
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+      );
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(w, y),
+        Paint()
+          ..color = c.withValues(alpha: 0.85 * progress)
+          ..strokeWidth = 1.4,
+      );
+    }
+
+    // Pulsing glowing leading edge at the bottom of the fill.
+    final edgeY = h - 2;
+    final edgeRect = Rect.fromLTWH(0, edgeY - 3, w, 6);
+    final edgeShader =
+        const LinearGradient(colors: [_red, _magenta, _blue]).createShader(edgeRect);
+    canvas.drawLine(
+      Offset(0, edgeY),
+      Offset(w, edgeY),
+      Paint()
+        ..shader = edgeShader
+        ..strokeWidth = charged ? 7 : 5
+        ..maskFilter = MaskFilter.blur(
+            BlurStyle.normal, (charged ? 22 : 14) * (0.6 + 0.4 * pulse)),
+    );
+    canvas.drawLine(
+      Offset(0, edgeY),
+      Offset(w, edgeY),
+      Paint()
+        ..shader = edgeShader
+        ..strokeWidth = charged ? 4 : 2.5,
+    );
+
+    // Charged: white-hot flash pulse across the whole fill.
+    if (charged) {
+      canvas.drawRect(
+        rect,
+        Paint()..color = Colors.white.withValues(alpha: 0.05 + 0.10 * pulse),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_NeonPainter old) =>
+      old.t != t || old.progress != progress || old.charged != charged;
 }
 
 class _Avatar extends StatelessWidget {
@@ -494,36 +878,65 @@ class _Avatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context).extension<SdaTokens>()!;
     final radius = BorderRadius.circular(t.radiusSm);
-    final fallback = Container(
+    Widget fallback(double d) => Container(
+          width: d,
+          height: d,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: _avatarColor(account),
+            borderRadius: radius,
+          ),
+          child: Text(
+            _initial(account),
+            style: TextStyle(
+              color: const Color(0xFF06060F),
+              fontSize: d * 0.36,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
+    final url = account.avatarUrl;
+    final animUrl = account.animatedAvatarUrl;
+    final frameUrl = account.avatarFrameUrl;
+    final hasFrame = frameUrl != null && frameUrl.isNotEmpty;
+    // With a frame, inset the avatar so the frame's border sits around it.
+    final avatarSize = hasFrame ? size * 0.78 : size;
+    // Prefer the animated avatar (a GIF, which Image.network animates natively)
+    // and fall back to the static avatar.
+    final displayUrl =
+        (animUrl != null && animUrl.isNotEmpty) ? animUrl : url;
+    final Widget avatar = (displayUrl == null || displayUrl.isEmpty)
+        ? fallback(avatarSize)
+        : ClipRRect(
+            borderRadius: radius,
+            child: Image.network(
+              displayUrl,
+              width: avatarSize,
+              height: avatarSize,
+              fit: BoxFit.cover,
+              gaplessPlayback: true,
+              errorBuilder: (_, _, _) => fallback(avatarSize),
+              loadingBuilder: (ctx, child, progress) =>
+                  progress == null ? child : fallback(avatarSize),
+            ),
+          );
+    if (!hasFrame) return avatar;
+    return SizedBox(
       width: size,
       height: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: _avatarColor(account),
-        borderRadius: radius,
-      ),
-      child: Text(
-        _initial(account),
-        style: TextStyle(
-          color: const Color(0xFF06060F),
-          fontSize: size * 0.36,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-    final url = account.avatarUrl;
-    if (url == null || url.isEmpty) return fallback;
-    return ClipRRect(
-      borderRadius: radius,
-      child: Image.network(
-        url,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        gaplessPlayback: true,
-        errorBuilder: (_, _, _) => fallback,
-        loadingBuilder: (ctx, child, progress) =>
-            progress == null ? child : fallback,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          avatar,
+          // The frame may itself be animated (APNG); contain to fit the box.
+          IgnorePointer(
+            child: AnimatedSteamImage(
+              url: frameUrl,
+              size: size,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ],
       ),
     );
   }

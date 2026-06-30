@@ -49,6 +49,7 @@ dependencies:
 
   # utils
   collection: ^1.19.0
+  image: ^4.9.1
 
 dev_dependencies:
   flutter_test:

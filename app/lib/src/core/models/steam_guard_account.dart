@@ -20,6 +20,9 @@ class SteamGuardAccount {
   String? deviceId; // device_id
   bool fullyEnrolled; // fully_enrolled
   String? avatarUrl; // avatar_url — cached Steam profile avatar (full)
+  String? avatarFrameUrl; // avatar_frame_url — equipped profile avatar frame
+  String? animatedAvatarUrl; // animated_avatar_url — equipped animated avatar
+  String? personaName; // persona_name — Steam display name / nickname
   SessionData session; // Session
 
   final Map<String, dynamic> extra;
@@ -38,6 +41,9 @@ class SteamGuardAccount {
     this.deviceId,
     this.fullyEnrolled = false,
     this.avatarUrl,
+    this.avatarFrameUrl,
+    this.animatedAvatarUrl,
+    this.personaName,
     SessionData? session,
     Map<String, dynamic>? extra,
   })  : session = session ?? SessionData(),
@@ -57,6 +63,9 @@ class SteamGuardAccount {
     'device_id',
     'fully_enrolled',
     'avatar_url',
+    'avatar_frame_url',
+    'animated_avatar_url',
+    'persona_name',
     'Session',
   };
 
@@ -80,6 +89,9 @@ class SteamGuardAccount {
       deviceId: json['device_id'] as String?,
       fullyEnrolled: json['fully_enrolled'] == true,
       avatarUrl: json['avatar_url'] as String?,
+      avatarFrameUrl: json['avatar_frame_url'] as String?,
+      animatedAvatarUrl: json['animated_avatar_url'] as String?,
+      personaName: json['persona_name'] as String?,
       session: sessionJson is Map<String, dynamic>
           ? SessionData.fromJson(sessionJson)
           : SessionData(),
@@ -102,6 +114,9 @@ class SteamGuardAccount {
         'device_id': deviceId,
         'fully_enrolled': fullyEnrolled,
         'avatar_url': avatarUrl,
+        'avatar_frame_url': avatarFrameUrl,
+        'animated_avatar_url': animatedAvatarUrl,
+        'persona_name': personaName,
         'Session': session.toJson(),
       };
 

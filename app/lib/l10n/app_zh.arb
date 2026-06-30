@@ -38,6 +38,7 @@
   "welcomeImportSub": "迁移已有账户",
   "copyCode": "复制验证码",
   "codeCopied": "验证码已复制到剪贴板",
+  "copied": "已复制到剪贴板",
   "copySteamId": "复制 SteamID",
 
   "confirmationsTitle": "确认",

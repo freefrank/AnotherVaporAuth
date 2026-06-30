@@ -117,6 +117,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get codeCopied => '验证码已复制到剪贴板';
 
   @override
+  String get copied => '已复制到剪贴板';
+
+  @override
   String get copySteamId => '复制 SteamID';
 
   @override

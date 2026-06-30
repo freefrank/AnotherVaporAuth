@@ -9,6 +9,7 @@ import '../services/avatar_service.dart';
 import '../services/biometric_unlock.dart';
 import '../services/credential_store.dart';
 import '../services/debug_log.dart';
+import '../services/session_manager.dart';
 import '../services/steam_api_client.dart';
 import '../services/steam_time.dart';
 import '../services/storage_provider.dart';
@@ -135,32 +136,82 @@ class AppController extends AsyncNotifier<AppData> {
       return AppData(store: store, accounts: const [], locked: true);
     }
     final accounts = await store.getAllAccounts();
-    Future.microtask(_fetchMissingAvatars);
+    Future.microtask(refreshAvatars);
     return AppData(store: store, accounts: accounts, locked: false);
   }
 
-  /// Lazily resolves + caches each account's Steam avatar (for accounts that
-  /// don't have one yet), then refreshes state so the UI shows it.
-  Future<void> _fetchMissingAvatars() async {
+  bool _refreshingAvatars = false;
+
+  /// Re-resolves each account's Steam avatar and equipped avatar frame, then
+  /// refreshes state so the UI shows them. Called on app open, unlock,
+  /// pull-to-refresh and after adding an account. Pass [steamIds] to refresh
+  /// only specific accounts (e.g. a just-added one).
+  Future<void> refreshAvatars({Iterable<int>? steamIds}) async {
+    if (_refreshingAvatars) return;
     final data = state.value;
     if (data == null || data.locked) return;
-    final svc = ref.read(avatarServiceProvider);
-    var changed = false;
-    for (final acc in data.accounts) {
-      if (acc.steamId == 0) continue;
-      if (acc.avatarUrl != null && acc.avatarUrl!.isNotEmpty) continue;
-      final url = await svc.fetchAvatarUrl(acc.steamId);
-      if (url != null) {
-        acc.avatarUrl = url;
-        await data.store
-            .saveAccount(acc, data.store.encrypted, passKey: data.passKey);
-        changed = true;
+    _refreshingAvatars = true;
+    try {
+      final svc = ref.read(avatarServiceProvider);
+      final only = steamIds?.toSet();
+      var changed = false;
+      for (final acc in data.accounts) {
+        if (acc.steamId == 0) continue;
+        if (only != null && !only.contains(acc.steamId)) continue;
+        var accChanged = false;
+        final profile = await svc.fetchProfile(acc.steamId);
+        if (profile.avatarUrl != null && profile.avatarUrl != acc.avatarUrl) {
+          acc.avatarUrl = profile.avatarUrl;
+          accChanged = true;
+        }
+        if (profile.personaName != null &&
+            profile.personaName != acc.personaName) {
+          acc.personaName = profile.personaName;
+          accChanged = true;
+        }
+        // The frame/animated avatar need a valid access token; on 401 refresh
+        // once and retry.
+        EquippedItems items;
+        try {
+          items =
+              await svc.fetchEquippedItems(acc.steamId, acc.session.accessToken);
+        } on FrameUnauthorized {
+          items = const EquippedItems();
+          final refreshed =
+              await SessionManager(ref.read(apiClientProvider))
+                  .refresh(acc.session);
+          if (refreshed) {
+            accChanged = true; // persist the new token
+            try {
+              items = await svc.fetchEquippedItems(
+                  acc.steamId, acc.session.accessToken);
+            } catch (_) {/* leave items unchanged */}
+          }
+        }
+        // A null value means "not equipped / unresolved" — keep the cached one
+        // rather than dropping a good value on a transient failure.
+        if (items.frameUrl != null && items.frameUrl != acc.avatarFrameUrl) {
+          acc.avatarFrameUrl = items.frameUrl;
+          accChanged = true;
+        }
+        if (items.animatedAvatarUrl != null &&
+            items.animatedAvatarUrl != acc.animatedAvatarUrl) {
+          acc.animatedAvatarUrl = items.animatedAvatarUrl;
+          accChanged = true;
+        }
+        if (accChanged) {
+          await data.store
+              .saveAccount(acc, data.store.encrypted, passKey: data.passKey);
+          changed = true;
+        }
       }
-    }
-    if (changed && state.value != null) {
-      final accounts =
-          await state.value!.store.getAllAccounts(passKey: state.value!.passKey);
-      state = AsyncData(state.value!.copyWith(accounts: accounts));
+      if (changed && state.value != null) {
+        final accounts = await state.value!.store
+            .getAllAccounts(passKey: state.value!.passKey);
+        state = AsyncData(state.value!.copyWith(accounts: accounts));
+      }
+    } finally {
+      _refreshingAvatars = false;
     }
   }
 
@@ -185,7 +236,7 @@ class AppController extends AsyncNotifier<AppData> {
     state = AsyncData(
       data.copyWith(accounts: accounts, locked: false, passKey: passKey),
     );
-    Future.microtask(_fetchMissingAvatars);
+    Future.microtask(refreshAvatars);
     // One-time migration of an old high-rounds store to the fast PIN scheme.
     if (store.manifest.kdfIterations > AccountStore.avaIterations) {
       unawaited(_migrateKdf(passKey, accounts));
@@ -219,6 +270,7 @@ class AppController extends AsyncNotifier<AppData> {
     if (data == null) return;
     await data.store.importMaFileContents(contents, data.passKey);
     await reload();
+    unawaited(refreshAvatars());
   }
 
   Future<void> removeAccount(SteamGuardAccount account) async {
@@ -245,6 +297,7 @@ class AppController extends AsyncNotifier<AppData> {
     await data.store
         .saveAccount(account, data.store.encrypted, passKey: data.passKey);
     await reload();
+    unawaited(refreshAvatars(steamIds: [account.steamId]));
   }
 
   /// Changes (or sets/removes) the encryption passkey.

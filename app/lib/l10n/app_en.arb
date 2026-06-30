@@ -38,6 +38,7 @@
   "welcomeImportSub": "Migrate an existing account",
   "copyCode": "Copy code",
   "codeCopied": "Login code copied to clipboard",
+  "copied": "Copied to clipboard",
   "copySteamId": "Copy SteamID",
 
   "confirmationsTitle": "Confirmations",

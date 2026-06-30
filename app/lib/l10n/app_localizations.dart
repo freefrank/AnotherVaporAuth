@@ -314,6 +314,12 @@ abstract class AppLocalizations {
   /// **'Login code copied to clipboard'**
   String get codeCopied;
 
+  /// No description provided for @copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to clipboard'**
+  String get copied;
+
   /// No description provided for @copySteamId.
   ///
   /// In en, this message translates to:
