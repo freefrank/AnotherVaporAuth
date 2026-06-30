@@ -320,6 +320,12 @@ abstract class AppLocalizations {
   /// **'Session expired — sign in again to refresh this account.'**
   String get confNeedsLogin;
 
+  /// No description provided for @loginOrApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'…or just tap “Allow” in your Steam mobile app.'**
+  String get loginOrApprove;
+
   /// No description provided for @loginTitle.
   ///
   /// In en, this message translates to:

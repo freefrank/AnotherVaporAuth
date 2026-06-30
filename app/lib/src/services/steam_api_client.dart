@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
+import '../core/protocol/eresult.dart';
 import '../core/proto/protobuf_wire.dart';
 import 'debug_log.dart';
 
@@ -80,11 +81,12 @@ class SteamApiClient {
 
       final eresult = int.tryParse(resp.headers.value('x-eresult') ?? '') ?? 1;
       final bytes = resp.data?.length ?? 0;
-      dlog('← $method  HTTP ${resp.statusCode}  eresult=$eresult  ${bytes}B');
+      dlog('← $method  HTTP ${resp.statusCode}  '
+          'eresult=${eresultLabel(eresult)}  ${bytes}B');
       if (eresult != 1) {
         final msg = resp.headers.value('x-error_message');
-        dlog('  ✗ $method error: ${msg ?? 'eresult $eresult'}');
-        throw SteamApiException(eresult, msg ?? 'EResult $eresult', method);
+        dlog('  ✗ $method error: ${msg ?? eresultLabel(eresult)}');
+        throw SteamApiException(eresult, msg ?? eresultLabel(eresult), method);
       }
       return ProtoReader(Uint8List.fromList(resp.data ?? const []));
     } on DioException catch (e) {

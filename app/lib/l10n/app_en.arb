@@ -47,6 +47,7 @@
     "placeholders": { "ok": { "type": "int" }, "fail": { "type": "int" } }
   },
   "confNeedsLogin": "Session expired — sign in again to refresh this account.",
+  "loginOrApprove": "…or just tap “Allow” in your Steam mobile app.",
 
   "loginTitle": "Log in to Steam",
   "loginUsername": "Username",

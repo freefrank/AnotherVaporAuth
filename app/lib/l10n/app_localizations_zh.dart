@@ -126,6 +126,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get confNeedsLogin => '会话已失效 —— 请重新登录该账户以刷新。';
 
   @override
+  String get loginOrApprove => '…或直接在 Steam 手机 App 点「允许」。';
+
+  @override
   String get loginTitle => '登录 Steam';
 
   @override

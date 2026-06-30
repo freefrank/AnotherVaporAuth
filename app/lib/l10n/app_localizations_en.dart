@@ -129,6 +129,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Session expired — sign in again to refresh this account.';
 
   @override
+  String get loginOrApprove => '…or just tap “Allow” in your Steam mobile app.';
+
+  @override
   String get loginTitle => 'Log in to Steam';
 
   @override

@@ -47,6 +47,7 @@
     "placeholders": { "ok": { "type": "int" }, "fail": { "type": "int" } }
   },
   "confNeedsLogin": "会话已失效 —— 请重新登录该账户以刷新。",
+  "loginOrApprove": "…或直接在 Steam 手机 App 点「允许」。",
 
   "loginTitle": "登录 Steam",
   "loginUsername": "用户名",

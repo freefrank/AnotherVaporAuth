@@ -39,6 +39,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _status;
   String? _error;
   GuardType? _needGuard;
+  bool _canConfirm = false; // approval via the Steam app popup is available
   Timer? _pollTimer;
 
   /// Stepper position: 0 credentials, 1 confirm, 2 done.
@@ -95,16 +96,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _afterBegin() {
-    final needsCode = _session.allowedConfirmations.any((g) =>
-        g == GuardType.deviceCode || g == GuardType.emailCode);
+    final codeType = _session.allowedConfirmations.firstWhere(
+      (g) => g == GuardType.deviceCode || g == GuardType.emailCode,
+      orElse: () => GuardType.none,
+    );
+    // The account can also be approved by tapping "allow" in the Steam mobile
+    // app (device/email confirmation) — no code required.
+    final canConfirm = _session.allowedConfirmations.any((g) =>
+        g == GuardType.deviceConfirmation || g == GuardType.emailConfirmation);
     setState(() {
       _busy = false;
-      _needGuard = _session.allowedConfirmations.firstWhere(
-        (g) => g == GuardType.deviceCode || g == GuardType.emailCode,
-        orElse: () => GuardType.none,
-      );
+      _needGuard = codeType;
+      _canConfirm = canConfirm;
     });
-    if (!needsCode) _beginPolling();
+    // Poll whenever approval is possible (so the app popup completes login) or
+    // when no code is required at all. The code field, if shown, stays as an
+    // alternative.
+    if (canConfirm || codeType == GuardType.none) _beginPolling();
   }
 
   Future<void> _submitCode() async {
@@ -252,6 +260,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(isEmail ? l.loginNeedEmailCode : l.loginNeedGuardCode),
+          if (_canConfirm) ...[
+            const SizedBox(height: 6),
+            Text(l.loginOrApprove,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 12.5,
+                    color: Theme.of(context)
+                        .extension<SdaTokens>()
+                        ?.muted)),
+          ],
           const SizedBox(height: 12),
           TextField(
             controller: _code,
