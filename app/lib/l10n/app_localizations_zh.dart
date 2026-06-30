@@ -129,6 +129,51 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loginOrApprove => '…或直接在 Steam 手机 App 点「允许」。';
 
   @override
+  String get addErrPresent => '该账户已有验证器。';
+
+  @override
+  String get addErrConfirmEmail => '请先确认 Steam 发送的邮件，然后重试。';
+
+  @override
+  String get addErrLocked =>
+      '该账户已被 Steam 锁定/限制 —— 请先到 help.steampowered.com 恢复后再添加验证器。';
+
+  @override
+  String get addErrRateLimited => '尝试次数过多，请稍后再试。';
+
+  @override
+  String get addErrFailed => '添加验证器失败。';
+
+  @override
+  String get addErrBadSms => '短信验证码错误，请重试。';
+
+  @override
+  String get debugLog => '调试日志';
+
+  @override
+  String get debugLogDesc => '用于诊断登录 / 确认的网络追踪';
+
+  @override
+  String get debugCopyAll => '全部复制';
+
+  @override
+  String get debugCopied => '日志已复制';
+
+  @override
+  String get debugEmpty => '暂无日志。';
+
+  @override
+  String get commonOpen => '打开';
+
+  @override
+  String get commonClear => '清空';
+
+  @override
+  String addErrFinalize(String detail) {
+    return '完成失败：$detail';
+  }
+
+  @override
   String get loginTitle => '登录 Steam';
 
   @override

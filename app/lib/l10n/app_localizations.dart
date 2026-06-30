@@ -326,6 +326,90 @@ abstract class AppLocalizations {
   /// **'…or just tap “Allow” in your Steam mobile app.'**
   String get loginOrApprove;
 
+  /// No description provided for @addErrPresent.
+  ///
+  /// In en, this message translates to:
+  /// **'This account already has an authenticator.'**
+  String get addErrPresent;
+
+  /// No description provided for @addErrConfirmEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm the email Steam sent, then retry.'**
+  String get addErrConfirmEmail;
+
+  /// No description provided for @addErrLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This account is locked/restricted by Steam — recover it at help.steampowered.com before adding an authenticator.'**
+  String get addErrLocked;
+
+  /// No description provided for @addErrRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Please wait a while and try again.'**
+  String get addErrRateLimited;
+
+  /// No description provided for @addErrFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to add authenticator.'**
+  String get addErrFailed;
+
+  /// No description provided for @addErrBadSms.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong SMS code, please try again.'**
+  String get addErrBadSms;
+
+  /// No description provided for @debugLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Debug log'**
+  String get debugLog;
+
+  /// No description provided for @debugLogDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Network trace for diagnosing login / confirmations'**
+  String get debugLogDesc;
+
+  /// No description provided for @debugCopyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy all'**
+  String get debugCopyAll;
+
+  /// No description provided for @debugCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Log copied'**
+  String get debugCopied;
+
+  /// No description provided for @debugEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No log yet.'**
+  String get debugEmpty;
+
+  /// No description provided for @commonOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get commonOpen;
+
+  /// No description provided for @commonClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get commonClear;
+
+  /// No description provided for @addErrFinalize.
+  ///
+  /// In en, this message translates to:
+  /// **'Finalize failed: {detail}'**
+  String addErrFinalize(String detail);
+
   /// No description provided for @loginTitle.
   ///
   /// In en, this message translates to:

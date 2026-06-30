@@ -196,9 +196,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final Widget content = _waiting
-        ? _buildWaiting(l)
-        : (_qrMode ? _buildQr(l) : _buildForm(l));
+    final hasCodeEntry = _needGuard != null && _needGuard != GuardType.none;
+    final Widget content;
+    if (_qrMode) {
+      content = _buildQr(l);
+    } else if (hasCodeEntry) {
+      // Keep the manual code form available even while we poll for an in-app
+      // approval in the background — the user can do whichever is convenient.
+      content = _buildForm(l);
+    } else if (_waiting) {
+      content = _buildWaiting(l);
+    } else {
+      content = _buildForm(l);
+    }
     return Scaffold(
       appBar: AppBar(title: Text(l.loginTitle)),
       body: ScanlineOverlay(

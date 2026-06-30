@@ -121,13 +121,13 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 // Debug log (network trace for diagnosing the Steam flows)
                 _Card(
-                  title: 'Debug log',
-                  description: 'Network trace for diagnosing login / confirmations',
+                  title: l.debugLog,
+                  description: l.debugLogDesc,
                   trailing: OutlinedButton(
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const DebugLogScreen()),
                     ),
-                    child: const Text('Open'),
+                    child: Text(l.commonOpen),
                   ),
                 ),
               ],

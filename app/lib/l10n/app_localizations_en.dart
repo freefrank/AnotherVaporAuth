@@ -132,6 +132,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginOrApprove => '…or just tap “Allow” in your Steam mobile app.';
 
   @override
+  String get addErrPresent => 'This account already has an authenticator.';
+
+  @override
+  String get addErrConfirmEmail =>
+      'Please confirm the email Steam sent, then retry.';
+
+  @override
+  String get addErrLocked =>
+      'This account is locked/restricted by Steam — recover it at help.steampowered.com before adding an authenticator.';
+
+  @override
+  String get addErrRateLimited =>
+      'Too many attempts. Please wait a while and try again.';
+
+  @override
+  String get addErrFailed => 'Failed to add authenticator.';
+
+  @override
+  String get addErrBadSms => 'Wrong SMS code, please try again.';
+
+  @override
+  String get debugLog => 'Debug log';
+
+  @override
+  String get debugLogDesc =>
+      'Network trace for diagnosing login / confirmations';
+
+  @override
+  String get debugCopyAll => 'Copy all';
+
+  @override
+  String get debugCopied => 'Log copied';
+
+  @override
+  String get debugEmpty => 'No log yet.';
+
+  @override
+  String get commonOpen => 'Open';
+
+  @override
+  String get commonClear => 'Clear';
+
+  @override
+  String addErrFinalize(String detail) {
+    return 'Finalize failed: $detail';
+  }
+
+  @override
   String get loginTitle => 'Log in to Steam';
 
   @override

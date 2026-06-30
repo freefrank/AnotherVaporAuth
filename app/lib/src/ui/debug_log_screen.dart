@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../app/theme.dart';
 import '../services/debug_log.dart';
 
@@ -12,22 +13,23 @@ class DebugLogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).extension<SdaTokens>()!;
+    final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Debug log'),
+        title: Text(l.debugLog),
         actions: [
           IconButton(
-            tooltip: 'Copy all',
+            tooltip: l.debugCopyAll,
             icon: const Icon(Icons.copy_all),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: DebugLog.instance.dump()));
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Log copied')),
+                SnackBar(content: Text(l.debugCopied)),
               );
             },
           ),
           IconButton(
-            tooltip: 'Clear',
+            tooltip: l.commonClear,
             icon: const Icon(Icons.delete_outline),
             onPressed: () => DebugLog.instance.clear(),
           ),
@@ -39,7 +41,7 @@ class DebugLogScreen extends StatelessWidget {
           final lines = DebugLog.instance.lines;
           if (lines.isEmpty) {
             return Center(
-              child: Text('No log yet.', style: TextStyle(color: t.muted)),
+              child: Text(l.debugEmpty, style: TextStyle(color: t.muted)),
             );
           }
           return ListView.builder(

@@ -47,6 +47,7 @@ class _AddAuthenticatorScreenState
   }
 
   Future<void> _add() async {
+    final l = AppLocalizations.of(context);
     setState(() {
       _busy = true;
       _step = _Step.working;
@@ -72,20 +73,19 @@ class _AddAuthenticatorScreenState
           });
           break;
         case LinkResult.authenticatorPresent:
-          _failWith('This account already has an authenticator.');
+          _failWith(l.addErrPresent);
           break;
         case LinkResult.mustConfirmEmail:
-          _failWith('Please confirm the email Steam sent, then retry.');
+          _failWith(l.addErrConfirmEmail);
           break;
         case LinkResult.accountLocked:
-          _failWith('This account is locked/restricted by Steam — recover it '
-              'at help.steampowered.com before adding an authenticator.');
+          _failWith(l.addErrLocked);
           break;
         case LinkResult.rateLimited:
-          _failWith('Too many attempts. Please wait a while and try again.');
+          _failWith(l.addErrRateLimited);
           break;
         case LinkResult.generalFailure:
-          _failWith('Failed to add authenticator.');
+          _failWith(l.addErrFailed);
           break;
       }
     } catch (e) {
@@ -121,10 +121,10 @@ class _AddAuthenticatorScreenState
       } else if (result == FinalizeResult.badSmsCode) {
         setState(() {
           _busy = false;
-          _message = 'Bad SMS code, try again.';
+          _message = l.addErrBadSms;
         });
       } else {
-        _failWith('Finalize failed: $result');
+        _failWith(l.addErrFinalize('$result'));
       }
     } catch (e) {
       _failWith('$e');
