@@ -6,8 +6,11 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/theme.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/qr_approval_client.dart';
+import 'widgets/sda_panel.dart';
+import 'widgets/scanline_overlay.dart';
 
 class ApproveLoginScreen extends ConsumerStatefulWidget {
   const ApproveLoginScreen({super.key});
@@ -76,16 +79,22 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
         .toList();
     _account ??= accounts.isNotEmpty ? accounts.first : null;
 
+    final t = Theme.of(context).extension<SdaTokens>()!;
     return Scaffold(
       appBar: AppBar(title: Text(l.approveTitle)),
-      body: Center(
+      body: ScanlineOverlay(
+        child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: Column(
+            child: SdaPanel(
+              padding: const EdgeInsets.all(20),
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Icon(Icons.qr_code_2, size: 40, color: t.accent),
+                const SizedBox(height: 14),
                 if (accounts.isEmpty)
                   Text(l.sessionExpired)
                 else
@@ -142,7 +151,9 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
                 ],
               ],
             ),
+            ),
           ),
+        ),
         ),
       ),
     );

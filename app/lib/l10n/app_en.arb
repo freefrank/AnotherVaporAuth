@@ -97,6 +97,9 @@
   "addAuthStepRevocation": "Revocation",
 
   "settingsEncryption": "Encryption",
+  "settingsEncryptionDesc": "PBKDF2 50k + AES-256-CBC — protects your local maFiles.",
+  "settingsThemeDesc": "Switch the whole UI between Neon and Pixel.",
+  "settingsChange": "Change",
   "settingsSetPasskey": "Set / change encryption passkey",
   "settingsPeriodicChecking": "Periodically check for confirmations",
   "settingsCheckInterval": "Check interval (seconds)",

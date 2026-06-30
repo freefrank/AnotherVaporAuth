@@ -536,6 +536,24 @@ abstract class AppLocalizations {
   /// **'Encryption'**
   String get settingsEncryption;
 
+  /// No description provided for @settingsEncryptionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'PBKDF2 50k + AES-256-CBC — protects your local maFiles.'**
+  String get settingsEncryptionDesc;
+
+  /// No description provided for @settingsThemeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch the whole UI between Neon and Pixel.'**
+  String get settingsThemeDesc;
+
+  /// No description provided for @settingsChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get settingsChange;
+
   /// No description provided for @settingsSetPasskey.
   ///
   /// In en, this message translates to:

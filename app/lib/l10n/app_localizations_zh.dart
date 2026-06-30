@@ -240,6 +240,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsEncryption => '加密';
 
   @override
+  String get settingsEncryptionDesc =>
+      'PBKDF2 50k + AES-256-CBC —— 保护本机 maFiles。';
+
+  @override
+  String get settingsThemeDesc => '在霓虹与像素之间切换整体界面。';
+
+  @override
+  String get settingsChange => '修改';
+
+  @override
   String get settingsSetPasskey => '设置 / 修改加密口令';
 
   @override

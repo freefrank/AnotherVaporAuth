@@ -97,6 +97,9 @@
   "addAuthStepRevocation": "撤销码",
 
   "settingsEncryption": "加密",
+  "settingsEncryptionDesc": "PBKDF2 50k + AES-256-CBC —— 保护本机 maFiles。",
+  "settingsThemeDesc": "在霓虹与像素之间切换整体界面。",
+  "settingsChange": "修改",
   "settingsSetPasskey": "设置 / 修改加密口令",
   "settingsPeriodicChecking": "周期检查确认",
   "settingsCheckInterval": "检查间隔（秒）",

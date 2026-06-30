@@ -246,6 +246,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsEncryption => 'Encryption';
 
   @override
+  String get settingsEncryptionDesc =>
+      'PBKDF2 50k + AES-256-CBC — protects your local maFiles.';
+
+  @override
+  String get settingsThemeDesc => 'Switch the whole UI between Neon and Pixel.';
+
+  @override
+  String get settingsChange => 'Change';
+
+  @override
   String get settingsSetPasskey => 'Set / change encryption passkey';
 
   @override

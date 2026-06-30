@@ -4,15 +4,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
 import '../app/theme.dart';
+import 'widgets/scanline_overlay.dart';
+import 'widgets/sda_panel.dart';
 
+/// Design screen 08 — settings. Each option is a panel card with a title, a
+/// short description and its control. Theme + language are selectable chips.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
+    final t = Theme.of(context).extension<SdaTokens>()!;
     final data = ref.watch(appControllerProvider).value;
     final manifest = data?.store.manifest;
+    final variant = ref.watch(themeVariantProvider);
     final locale = ref.watch(localeProvider);
 
     if (manifest == null) {
@@ -22,132 +28,137 @@ class SettingsScreen extends ConsumerWidget {
       );
     }
 
-    Future<void> saveManifest() async {
+    Future<void> save() async {
       await data!.store.save();
       ref.invalidate(appControllerProvider);
     }
 
     return Scaffold(
       appBar: AppBar(title: Text(l.navSettings)),
-      body: ListView(
-        children: [
-          _section(context, l.settingsEncryption),
-          ListTile(
-            leading: const Icon(Icons.password),
-            title: Text(l.settingsSetPasskey),
-            onTap: () => _changePasskey(context, ref),
-          ),
-          const Divider(),
-          _section(context, l.confirmationsTitle),
-          SwitchListTile(
-            title: Text(l.settingsPeriodicChecking),
-            value: manifest.periodicChecking,
-            onChanged: (v) {
-              manifest.periodicChecking = v;
-              saveManifest();
-            },
-          ),
-          ListTile(
-            title: Text(l.settingsCheckInterval),
-            trailing: SizedBox(
-              width: 80,
-              child: TextFormField(
-                initialValue: '${manifest.periodicCheckingInterval}',
-                keyboardType: TextInputType.number,
-                textAlign: TextAlign.end,
-                onFieldSubmitted: (v) {
-                  manifest.periodicCheckingInterval =
-                      int.tryParse(v) ?? manifest.periodicCheckingInterval;
-                  saveManifest();
-                },
-              ),
-            ),
-          ),
-          SwitchListTile(
-            title: Text(l.settingsCheckAll),
-            value: manifest.checkAllAccounts,
-            onChanged: (v) {
-              manifest.checkAllAccounts = v;
-              saveManifest();
-            },
-          ),
-          SwitchListTile(
-            title: Text(l.settingsAutoConfirmMarket),
-            value: manifest.autoConfirmMarketTransactions,
-            onChanged: (v) {
-              manifest.autoConfirmMarketTransactions = v;
-              saveManifest();
-            },
-          ),
-          SwitchListTile(
-            title: Text(l.settingsAutoConfirmTrades),
-            value: manifest.autoConfirmTrades,
-            onChanged: (v) {
-              manifest.autoConfirmTrades = v;
-              saveManifest();
-            },
-          ),
-          const Divider(),
-          _section(context, l.settingsTheme),
-          RadioGroup<SdaThemeVariant>(
-            groupValue: ref.watch(themeVariantProvider),
-            onChanged: (v) {
-              if (v != null) {
-                ref.read(themeVariantProvider.notifier).setVariant(v);
-              }
-            },
-            child: Column(
+      body: ScanlineOverlay(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: ListView(
+              padding: const EdgeInsets.all(16),
               children: [
-                RadioListTile<SdaThemeVariant>(
-                  value: SdaThemeVariant.neon,
-                  title: Text(l.themeNeon),
+                // Encryption
+                _Card(
+                  title: l.settingsEncryption,
+                  description: l.settingsEncryptionDesc,
+                  trailing: OutlinedButton(
+                    onPressed: () => _changePasskey(context, ref),
+                    child: Text(l.settingsChange),
+                  ),
                 ),
-                RadioListTile<SdaThemeVariant>(
-                  value: SdaThemeVariant.pixel,
-                  title: Text(l.themePixel),
+                // Periodic checking + auto-confirm
+                _Card(
+                  title: l.confirmationsTitle,
+                  child: Column(
+                    children: [
+                      _switchRow(t, l.settingsPeriodicChecking,
+                          manifest.periodicChecking, (v) {
+                        manifest.periodicChecking = v;
+                        save();
+                      }),
+                      _switchRow(t, l.settingsCheckAll,
+                          manifest.checkAllAccounts, (v) {
+                        manifest.checkAllAccounts = v;
+                        save();
+                      }),
+                      _switchRow(t, l.settingsAutoConfirmMarket,
+                          manifest.autoConfirmMarketTransactions, (v) {
+                        manifest.autoConfirmMarketTransactions = v;
+                        save();
+                      }),
+                      _switchRow(t, l.settingsAutoConfirmTrades,
+                          manifest.autoConfirmTrades, (v) {
+                        manifest.autoConfirmTrades = v;
+                        save();
+                      }),
+                    ],
+                  ),
+                ),
+                // Theme
+                _Card(
+                  title: l.settingsTheme,
+                  description: l.settingsThemeDesc,
+                  child: Wrap(
+                    spacing: 8,
+                    children: [
+                      _choice(t, l.themeNeon, variant == SdaThemeVariant.neon,
+                          () => ref
+                              .read(themeVariantProvider.notifier)
+                              .setVariant(SdaThemeVariant.neon)),
+                      _choice(t, l.themePixel, variant == SdaThemeVariant.pixel,
+                          () => ref
+                              .read(themeVariantProvider.notifier)
+                              .setVariant(SdaThemeVariant.pixel)),
+                    ],
+                  ),
+                ),
+                // Language
+                _Card(
+                  title: l.settingsLanguage,
+                  child: Wrap(
+                    spacing: 8,
+                    children: [
+                      _choice(t, l.settingsLanguageSystem, locale == null,
+                          () => ref
+                              .read(localeProvider.notifier)
+                              .setLocale(null)),
+                      _choice(t, 'English', locale?.languageCode == 'en',
+                          () => ref
+                              .read(localeProvider.notifier)
+                              .setLocale(const Locale('en'))),
+                      _choice(t, '简体中文', locale?.languageCode == 'zh',
+                          () => ref
+                              .read(localeProvider.notifier)
+                              .setLocale(const Locale('zh'))),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-          const Divider(),
-          _section(context, l.settingsLanguage),
-          RadioGroup<String?>(
-            groupValue: locale?.languageCode,
-            onChanged: (v) => ref
-                .read(localeProvider.notifier)
-                .setLocale(v == null ? null : Locale(v)),
-            child: Column(
-              children: [
-                RadioListTile<String?>(
-                  value: null,
-                  title: Text(l.settingsLanguageSystem),
-                ),
-                const RadioListTile<String?>(
-                  value: 'en',
-                  title: Text('English'),
-                ),
-                const RadioListTile<String?>(
-                  value: 'zh',
-                  title: Text('简体中文'),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _section(BuildContext context, String title) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-        child: Text(
-          title,
-          style: Theme.of(context)
-              .textTheme
-              .labelLarge
-              ?.copyWith(color: Theme.of(context).colorScheme.primary),
+  Widget _switchRow(
+      SdaTokens t, String label, bool value, ValueChanged<bool> onChanged) {
+    return Row(
+      children: [
+        Expanded(child: Text(label, style: TextStyle(color: t.text, fontSize: 14))),
+        Switch(value: value, onChanged: onChanged),
+      ],
+    );
+  }
+
+  Widget _choice(SdaTokens t, String label, bool selected, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(t.radiusSm),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? t.accent : t.panel2,
+          borderRadius: BorderRadius.circular(t.radiusSm),
+          border: Border.all(
+              color: selected ? t.accent : t.borderColor, width: t.borderWidth),
+          boxShadow: selected ? t.glowShadow(blur: 10) : null,
         ),
-      );
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? const Color(0xFF06060F) : t.text,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
 
   Future<void> _changePasskey(BuildContext context, WidgetRef ref) async {
     final l = AppLocalizations.of(context);
@@ -199,5 +210,59 @@ class SettingsScreen extends ConsumerWidget {
         SnackBar(content: Text(success ? l.commonOk : l.unlockInvalid)),
       );
     }
+  }
+}
+
+/// A settings card: title (+ optional description) and either a [trailing]
+/// control on the same row or a [child] block below.
+class _Card extends StatelessWidget {
+  final String title;
+  final String? description;
+  final Widget? trailing;
+  final Widget? child;
+  const _Card({
+    required this.title,
+    this.description,
+    this.trailing,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: SdaPanel(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: TextStyle(color: t.text, fontSize: 15)),
+                      if (description != null) ...[
+                        const SizedBox(height: 4),
+                        Text(description!,
+                            style: TextStyle(color: t.muted, fontSize: 12.5)),
+                      ],
+                    ],
+                  ),
+                ),
+                ?trailing,
+              ],
+            ),
+            if (child != null) ...[
+              const SizedBox(height: 14),
+              child!,
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
