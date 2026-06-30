@@ -51,5 +51,21 @@ void main() {
       final fields = ProtoReader(w.toBytes()).parse();
       expect(fields[1]!.bytes, [0xDE, 0xAD, 0xBE, 0xEF]);
     });
+
+    test('fixed64 round trip (steamid)', () {
+      const steamId = 76561198000000000; // < 2^63
+      final w = ProtoWriter()..writeFixed64(3, steamId);
+      final f = ProtoReader(w.toBytes()).parse()[3]!;
+      expect(f.wireType, 1);
+      expect(f.bytes!.length, 8);
+      expect(f.asFixed64, steamId);
+    });
+
+    test('fixed64 large uint64 (> 2^63) round trip', () {
+      // e.g. a client_id-like value above the signed range.
+      const v = -524256132778200960; // stored signed; bytes are unsigned 64-bit
+      final w = ProtoWriter()..writeFixed64(3, v);
+      expect(ProtoReader(w.toBytes()).parse()[3]!.asFixed64, v);
+    });
   });
 }

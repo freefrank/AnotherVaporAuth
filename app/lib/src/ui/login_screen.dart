@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -148,6 +149,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _onLoggedIn(PollResult result) async {
+    // Let the platform password manager offer to save the credentials.
+    TextInput.finishAutofillContext();
     final session = _session.toSessionData(result);
     if (!mounted) return;
 
@@ -252,6 +255,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           TextField(
             controller: _code,
             autofocus: true,
+            keyboardType: TextInputType.number,
+            autofillHints: const [AutofillHints.oneTimeCode],
             decoration: const InputDecoration(border: OutlineInputBorder()),
             onSubmitted: (_) => _submitCode(),
           ),
@@ -271,23 +276,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        TextField(
-          controller: _username,
-          enabled: widget.reason == LoginReason.add,
-          decoration: InputDecoration(
-            labelText: l.loginUsername,
-            border: const OutlineInputBorder(),
+        AutofillGroup(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _username,
+                enabled: widget.reason == LoginReason.add,
+                autofillHints: const [AutofillHints.username],
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  labelText: l.loginUsername,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _password,
+                obscureText: true,
+                autofillHints: const [AutofillHints.password],
+                textInputAction: TextInputAction.done,
+                decoration: InputDecoration(
+                  labelText: l.loginPassword,
+                  border: const OutlineInputBorder(),
+                ),
+                onSubmitted: (_) => _startPassword(),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _password,
-          obscureText: true,
-          decoration: InputDecoration(
-            labelText: l.loginPassword,
-            border: const OutlineInputBorder(),
-          ),
-          onSubmitted: (_) => _startPassword(),
         ),
         const SizedBox(height: 16),
         SizedBox(

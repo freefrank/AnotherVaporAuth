@@ -44,8 +44,9 @@ class QrApprovalClient {
   /// Signs the (version, client_id, steamid) tuple with the account's shared
   /// secret (HMAC-SHA1), then calls UpdateAuthSessionWithMobileConfirmation.
   ///
-  /// NOTE: the exact signature scheme is reconstructed from community sources;
-  /// verify against a live capture before relying on it in production.
+  /// Message fields follow the SteamKit protobufs (steamid is fixed64);
+  /// the signature is HMAC-SHA256 of (version|client_id|steamid). Direction B is
+  /// less common — worth a final live-capture check.
   Future<bool> respond(
     SteamGuardAccount account,
     QrChallenge challenge, {
@@ -60,12 +61,12 @@ class QrApprovalClient {
     );
 
     final req = ProtoWriter()
-      ..writeUint64(1, challenge.version)
-      ..writeUint64(2, challenge.clientId)
-      ..writeUint64(3, account.steamId)
-      ..writeBytes(4, signature)
-      ..writeBool(5, approve)
-      ..writeBool(6, true); // persistence
+      ..writeVarint(1, challenge.version) // version (int32)
+      ..writeUint64(2, challenge.clientId) // client_id (uint64 varint)
+      ..writeFixed64(3, account.steamId) // steamid (fixed64!)
+      ..writeBytes(4, signature) // signature
+      ..writeBool(5, approve) // confirm
+      ..writeVarint(6, 1); // persistence = Persistent
 
     final fields = (await api.callProtobuf(
       'IAuthenticationService',
@@ -78,8 +79,9 @@ class QrApprovalClient {
     return fields.isEmpty || (fields[1]?.asBool ?? true);
   }
 
-  /// HMAC-SHA1 over the little-endian (version|client_id|steamid) using the
-  /// account's shared secret.
+  /// HMAC-SHA256 over the little-endian (version|client_id|steamid) tuple,
+  /// keyed with the account's base64 shared secret. This is the signature Steam
+  /// expects for UpdateAuthSessionWithMobileConfirmation.
   Uint8List _signature(
     SteamGuardAccount account, {
     required int version,
@@ -91,7 +93,7 @@ class QrApprovalClient {
     buf.add(_le16(version));
     buf.add(_le64(clientId));
     buf.add(_le64(steamId));
-    return Uint8List.fromList(Hmac(sha1, key).convert(buf.toBytes()).bytes);
+    return Uint8List.fromList(Hmac(sha256, key).convert(buf.toBytes()).bytes);
   }
 
   List<int> _le16(int v) => [v & 0xFF, (v >> 8) & 0xFF];

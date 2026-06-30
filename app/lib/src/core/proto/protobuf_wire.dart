@@ -50,6 +50,19 @@ class ProtoWriter {
 
   void writeMessage(int field, ProtoWriter message) =>
       writeBytes(field, message.toBytes());
+
+  /// 64-bit fixed (wire type 1), 8 bytes little-endian. Steam uses this for
+  /// `steamid` in several messages (AddAuthenticator, mobile confirmation…).
+  void writeFixed64(int field, int value) {
+    _tag(field, 1);
+    var big = BigInt.from(value);
+    if (big.isNegative) big = big.toUnsigned(64);
+    final mask = BigInt.from(0xff);
+    for (var i = 0; i < 8; i++) {
+      _b.addByte((big & mask).toInt());
+      big = big >> 8;
+    }
+  }
 }
 
 class ProtoField {
@@ -62,6 +75,18 @@ class ProtoField {
   String get asString => utf8.decode(bytes ?? const []);
   int get asInt => varint ?? 0;
   bool get asBool => (varint ?? 0) != 0;
+
+  /// Reads a wire-type-1 (fixed64) field's 8 little-endian bytes as an int.
+  int get asFixed64 {
+    final b = bytes;
+    if (b == null || b.length < 8) return 0;
+    var big = BigInt.zero;
+    for (var i = 7; i >= 0; i--) {
+      big = (big << 8) | BigInt.from(b[i]);
+    }
+    if (big > BigInt.from(0x7fffffffffffffff)) return big.toSigned(64).toInt();
+    return big.toInt();
+  }
 }
 
 class ProtoReader {

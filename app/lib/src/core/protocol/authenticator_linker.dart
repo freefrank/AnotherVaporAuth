@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart' as crypto;
 
+import '../../services/debug_log.dart';
 import '../../services/steam_api_client.dart';
 import '../../services/steam_time.dart';
 import '../models/session_data.dart';
@@ -16,41 +17,46 @@ enum LinkResult {
   authenticatorPresent,
 }
 
-enum FinalizeResult { badSmsCode, unableToGenerateCorrectCodes, success, generalFailure }
+enum FinalizeResult {
+  badSmsCode,
+  unableToGenerateCorrectCodes,
+  success,
+  generalFailure,
+}
 
 /// Links a new Steam Guard mobile authenticator to an account (requires a
-/// logged-in [SessionData]). Port of the C# `AuthenticatorLinker` flow over the
-/// `ITwoFactorService` / `IPhoneService` protobuf endpoints.
+/// logged-in [SessionData]). Port of the modern `ITwoFactorService` /
+/// `IPhoneService` flow used by geel9/SteamAuth.
+///
+/// Field numbers/types follow the SteamKit/SteamDatabase protobufs:
+/// `steamid` is **fixed64** in both AddAuthenticator and FinalizeAddAuthenticator.
 class AuthenticatorLinker {
   final SteamApiClient api;
   final SessionData session;
 
   String? phoneNumber; // E.164, e.g. +1234567890
+  String phoneCountryCode = '';
   SteamGuardAccount? linkedAccount;
 
   AuthenticatorLinker(this.api, this.session);
 
   String get _accessToken => session.accessToken ?? '';
 
-  /// Attempts to add the authenticator. May require a phone number first.
+  /// Drives AddAuthenticator. The response `status` decides the next step,
+  /// matching Steam's flow:
+  ///   1  -> secrets returned (awaitingFinalization)
+  ///   2  -> the account needs a phone first
+  ///   29 -> an authenticator is already present
   Future<LinkResult> addAuthenticator() async {
-    final hasPhone = await _hasPhoneAttached();
-    if (!hasPhone) {
-      if (phoneNumber == null || phoneNumber!.isEmpty) {
-        return LinkResult.mustProvidePhoneNumber;
-      }
-      if (!await _addPhoneNumber(phoneNumber!)) {
-        return LinkResult.mustConfirmEmail;
-      }
-    }
+    final deviceId = linkedAccount?.deviceId ?? _generateDeviceId(session.steamId);
 
-    final deviceId = _generateDeviceId(session.steamId);
     final req = ProtoWriter()
-      ..writeUint64(1, session.steamId)
-      ..writeUint64(2, SteamTime.currentSteamTime)
+      ..writeFixed64(1, session.steamId) // steamid (fixed64!)
+      ..writeUint64(2, SteamTime.currentSteamTime) // authenticator_time
       ..writeVarint(4, 1) // authenticator_type
-      ..writeString(5, deviceId)
-      ..writeString(6, '1'); // sms_phone_id
+      ..writeString(5, deviceId) // device_identifier
+      ..writeString(6, '1') // sms_phone_id
+      ..writeVarint(8, 2); // version
 
     final fields = (await api.callProtobuf(
       'ITwoFactorService',
@@ -62,14 +68,25 @@ class AuthenticatorLinker {
 
     final status = fields[10]?.asInt ?? 0;
     final sharedSecret = fields[1]?.bytes;
-    if (sharedSecret == null || sharedSecret.isEmpty) {
-      if (status == 29) return LinkResult.authenticatorPresent;
-      return LinkResult.generalFailure;
+    dlog('AddAuthenticator: status=$status '
+        'sharedSecret=${sharedSecret?.length ?? 0}B');
+
+    if (status == 29) return LinkResult.authenticatorPresent;
+
+    if (status == 2 || sharedSecret == null || sharedSecret.isEmpty) {
+      // Account needs a phone number first.
+      if (phoneNumber == null || phoneNumber!.isEmpty) {
+        return LinkResult.mustProvidePhoneNumber;
+      }
+      final added = await _addPhoneNumber(phoneNumber!, phoneCountryCode);
+      // Steam emails the user to confirm the new phone; they must click it,
+      // then we retry AddAuthenticator.
+      return added ? LinkResult.mustConfirmEmail : LinkResult.generalFailure;
     }
 
     linkedAccount = SteamGuardAccount(
       sharedSecret: base64.encode(sharedSecret),
-      serialNumber: '${fields[2]?.asInt ?? 0}',
+      serialNumber: '${fields[2]?.asFixed64 ?? 0}',
       revocationCode: fields[3]?.asString,
       uri: fields[4]?.asString,
       serverTime: fields[5]?.asInt ?? 0,
@@ -87,7 +104,8 @@ class AuthenticatorLinker {
     return LinkResult.awaitingFinalization;
   }
 
-  /// Finalizes the link with the SMS [smsCode] sent to the phone.
+  /// Finalizes the link with the SMS [smsCode] sent to the phone. Steam wants a
+  /// run of correct TOTP codes; it asks for more via `want_more` until aligned.
   Future<FinalizeResult> finalize(String smsCode) async {
     final account = linkedAccount;
     if (account == null) return FinalizeResult.generalFailure;
@@ -97,10 +115,11 @@ class AuthenticatorLinker {
       final time = SteamTime.currentSteamTime;
       final code = account.generateCode(time);
       final req = ProtoWriter()
-        ..writeUint64(1, session.steamId)
-        ..writeString(2, code)
-        ..writeUint64(3, time)
-        ..writeString(4, smsCode);
+        ..writeFixed64(1, session.steamId) // steamid (fixed64!)
+        ..writeString(2, code) // authenticator_code
+        ..writeUint64(3, time) // authenticator_time
+        ..writeString(4, smsCode) // activation_code
+        ..writeBool(6, true); // validate_sms_code
 
       final fields = (await api.callProtobuf(
         'ITwoFactorService',
@@ -110,19 +129,17 @@ class AuthenticatorLinker {
       ))
           .parse();
 
-      final status = fields[4]?.asInt ?? 0;
       final success = fields[1]?.asBool ?? false;
       final wantMore = fields[2]?.asBool ?? false;
+      final status = fields[4]?.asInt ?? 0;
+      dlog('Finalize: success=$success wantMore=$wantMore status=$status try=$tries');
 
       if (status == 89) return FinalizeResult.badSmsCode;
-      if (status == 88 && tries >= 30) {
-        return FinalizeResult.unableToGenerateCorrectCodes;
-      }
       if (success) {
         account.fullyEnrolled = true;
         return FinalizeResult.success;
       }
-      if (wantMore) {
+      if (wantMore || status == 88) {
         tries++;
         continue;
       }
@@ -131,7 +148,29 @@ class AuthenticatorLinker {
     return FinalizeResult.unableToGenerateCorrectCodes;
   }
 
-  Future<bool> _hasPhoneAttached() async {
+  /// Adds a phone number to the account (CPhoneService/SetAccountPhoneNumber).
+  /// Steam then sends a confirmation email; the caller surfaces
+  /// [LinkResult.mustConfirmEmail] so the user can click it before retrying.
+  Future<bool> _addPhoneNumber(String number, String countryCode) async {
+    try {
+      final req = ProtoWriter()..writeString(1, number); // phone_number
+      if (countryCode.isNotEmpty) req.writeString(2, countryCode);
+      await api.callProtobuf(
+        'IPhoneService',
+        'SetAccountPhoneNumber',
+        request: req,
+        accessToken: _accessToken,
+      );
+      return true;
+    } catch (e) {
+      dlog('SetAccountPhoneNumber failed: $e');
+      return false;
+    }
+  }
+
+  /// Whether the account is still waiting for the user to click the phone
+  /// confirmation email. Poll this before retrying [addAuthenticator].
+  Future<bool> isAwaitingEmailConfirmation() async {
     try {
       final fields = (await api.callProtobuf(
         'IPhoneService',
@@ -140,25 +179,7 @@ class AuthenticatorLinker {
         accessToken: _accessToken,
       ))
           .parse();
-      // best-effort; if endpoint unavailable, assume phone status via account.
-      return fields.isNotEmpty ? false : false;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<bool> _addPhoneNumber(String number) async {
-    try {
-      final req = ProtoWriter()
-        ..writeString(1, number)
-        ..writeString(2, ''); // country code optional
-      await api.callProtobuf(
-        'IPhoneService',
-        'SetAccountPhoneNumber',
-        request: req,
-        accessToken: _accessToken,
-      );
-      return true;
+      return fields[1]?.asBool ?? false; // awaiting_email_confirmation
     } catch (_) {
       return false;
     }

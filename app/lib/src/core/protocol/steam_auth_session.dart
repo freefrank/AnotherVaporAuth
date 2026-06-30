@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
+import '../../services/debug_log.dart';
 import '../../services/steam_api_client.dart';
 import '../crypto/steam_rsa.dart';
 import '../models/session_data.dart';
@@ -119,51 +121,42 @@ class SteamAuthSession {
       request: req,
     ))
         .parseAll();
-    _consumeBeginResponse(fields, challengeField: 2);
+    _consumeBeginResponse(fields, isQr: true);
     return qrChallengeUrl ?? '';
   }
 
-  void _consumeBeginResponse(List<ProtoField> fields, {int? challengeField}) {
+  /// Parses a BeginAuthSession response.
+  ///
+  /// Credentials: 1=client_id, 2=request_id(bytes), 4=allowed_confirmations[],
+  ///   5=steamid.
+  /// QR:          1=client_id, 2=challenge_url(string), 3=request_id(bytes),
+  ///   5=allowed_confirmations[], 7=version.
+  void _consumeBeginResponse(List<ProtoField> fields, {bool isQr = false}) {
     final confs = <GuardType>[];
+    final confField = isQr ? 5 : 4;
     for (final f in fields) {
-      switch (f.number) {
-        case 1:
-          clientId = f.asInt;
-          break;
-        case 3:
-          if (challengeField == null) {
-            requestId = f.bytes ?? Uint8List(0);
-          }
-          break;
-        case 2:
-          if (challengeField == 2) {
-            qrChallengeUrl = f.asString;
-          } else {
-            requestId = f.bytes ?? Uint8List(0);
-          }
-          break;
-        case 4:
-        case 5:
-          // allowed_confirmations (repeated message): field varies QR vs creds.
-          if (f.bytes != null && f.wireType == 2) {
-            final inner = ProtoReader(f.bytes!).parse();
-            final t = inner[1]?.asInt ?? 0;
-            confs.add(_guardFromInt(t));
-          } else if (f.number == 5) {
-            steamId = f.asInt;
-          }
-          break;
-        case 7:
-          if (challengeField == 2) qrChallengeUrl ??= f.asString;
-          break;
+      if (f.number == 1) {
+        clientId = f.asInt;
+      } else if (f.number == 2) {
+        if (isQr) {
+          qrChallengeUrl = f.asString;
+        } else {
+          requestId = f.bytes ?? Uint8List(0);
+        }
+      } else if (f.number == 3 && isQr) {
+        requestId = f.bytes ?? Uint8List(0);
+      } else if (f.number == confField && f.wireType == 2 && f.bytes != null) {
+        // allowed_confirmations (repeated message): inner field 1 = type.
+        final inner = ProtoReader(f.bytes!).parse();
+        confs.add(_guardFromInt(inner[1]?.asInt ?? 0));
+      } else if (f.number == 5 && !isQr && f.wireType == 0) {
+        steamId = f.asInt; // credentials steamid
       }
     }
-    // For credentials response, steamid is field 5 (uint64), handled above only
-    // when not a message; ensure we captured it.
-    for (final f in fields) {
-      if (f.number == 5 && f.wireType == 0) steamId = f.asInt;
-    }
     if (confs.isNotEmpty) allowedConfirmations = confs;
+    dlog('begin(${isQr ? 'qr' : 'creds'}): clientId=$clientId '
+        'requestId=${requestId.length}B steamId=$steamId '
+        'confs=${allowedConfirmations.map((e) => e.name).join(',')}');
   }
 
   /// Submits a Steam Guard code (email or device code).
@@ -212,12 +205,40 @@ class SteamAuthSession {
     );
   }
 
-  /// Builds a [SessionData] once polling has produced tokens.
-  SessionData toSessionData(PollResult result) => SessionData(
-        steamId: steamId,
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
-      );
+  /// Builds a [SessionData] once polling has produced tokens. For QR logins the
+  /// steamid isn't in the begin/poll messages — it's the `sub` claim of the
+  /// returned JWT, so fall back to decoding it from the token.
+  SessionData toSessionData(PollResult result) {
+    var sid = steamId;
+    if (sid == 0) {
+      sid = steamIdFromJwt(result.refreshToken) ??
+          steamIdFromJwt(result.accessToken) ??
+          0;
+    }
+    return SessionData(
+      steamId: sid,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+    );
+  }
+
+  /// Extracts the steamid (`sub`) from a Steam JWT access/refresh token.
+  static int? steamIdFromJwt(String? jwt) {
+    if (jwt == null || jwt.isEmpty) return null;
+    final parts = jwt.split('.');
+    if (parts.length < 2) return null;
+    try {
+      var p = parts[1].replaceAll('-', '+').replaceAll('_', '/');
+      while (p.length % 4 != 0) {
+        p += '=';
+      }
+      final payload =
+          jsonDecode(utf8.decode(base64.decode(p))) as Map<String, dynamic>;
+      return int.tryParse('${payload['sub']}');
+    } catch (_) {
+      return null;
+    }
+  }
 
   ProtoWriter _deviceDetails() => ProtoWriter()
     ..writeString(1, 'SDA Flutter')
