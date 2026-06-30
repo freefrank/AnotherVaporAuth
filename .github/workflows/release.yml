@@ -1,0 +1,132 @@
+name: Release
+
+# Push a tag like v0.49 to build the apps and publish a GitHub Release with the
+# Android APKs, a Linux desktop bundle and a Windows desktop build attached.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: '3.44.4'
+  APP_DIR: app
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: Resolve version
+        id: ver
+        run: echo "name=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build APKs
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          flutter pub get
+          flutter build apk --release --split-per-abi \
+            --build-name=${{ steps.ver.outputs.name }} \
+            --build-number=${{ github.run_number }}
+          flutter build apk --release \
+            --build-name=${{ steps.ver.outputs.name }} \
+            --build-number=${{ github.run_number }}
+
+      - name: Rename artifacts
+        working-directory: ${{ env.APP_DIR }}/build/app/outputs/flutter-apk
+        run: |
+          v=${{ steps.ver.outputs.name }}
+          mv app-arm64-v8a-release.apk     "SDA-$v-arm64-v8a.apk"
+          mv app-armeabi-v7a-release.apk   "SDA-$v-armeabi-v7a.apk"
+          mv app-x86_64-release.apk        "SDA-$v-x86_64.apk"
+          mv app-release.apk               "SDA-$v-universal.apk"
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.APP_DIR }}/build/app/outputs/flutter-apk/SDA-*.apk
+          draft: false
+          generate_release_notes: true
+
+  linux:
+    name: Linux desktop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgtk-3-dev clang cmake pkg-config
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: Resolve version
+        id: ver
+        run: echo "name=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Linux
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          flutter pub get
+          flutter build linux --release \
+            --build-name=${{ steps.ver.outputs.name }} \
+            --build-number=${{ github.run_number }}
+
+      - name: Package bundle
+        working-directory: ${{ env.APP_DIR }}/build/linux/x64/release/bundle
+        run: tar -czf "${{ github.workspace }}/SDA-${{ steps.ver.outputs.name }}-linux-x64.tar.gz" .
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: SDA-*-linux-x64.tar.gz
+
+  windows:
+    name: Windows desktop
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: echo "name=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Windows
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          flutter pub get
+          flutter build windows --release --build-name=${{ steps.ver.outputs.name }} --build-number=${{ github.run_number }}
+
+      - name: Package bundle
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "${{ env.APP_DIR }}/build/windows/x64/runner/Release/*" -DestinationPath "SDA-${{ steps.ver.outputs.name }}-windows-x64.zip"
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: SDA-*-windows-x64.zip
