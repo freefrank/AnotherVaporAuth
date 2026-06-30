@@ -5,6 +5,31 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.57] — 2026-06-30
+
+### Added
+- **Per-account Steam avatars**: each account's profile picture is fetched
+  (public community XML, no API key), cached, and shown with the coloured
+  initial as the fallback.
+
+### Changed
+- **Viewport-relative sizing** on phones — fonts, spacing, paddings and icons
+  scale with the screen instead of fixed pixels (capped so large screens keep
+  base sizes). The TOTP code scales to a proportion of the panel.
+- **Tablet / foldable**: the two-pane layout keeps the v0.56 proportions
+  (no upscaling, 240px account column).
+
+—
+
+### 新增
+- **每个账户的 Steam 头像**：自动拉取账户资料头像（公开社区 XML，无需 API key）、
+  缓存，并以彩色首字母作为回退。
+
+### 变更
+- 手机上**按视口相对缩放** —— 字号、间距、内边距、图标随屏幕缩放而非写死像素
+  （大屏封顶、保持基准尺寸）；验证码按面板宽度的比例缩放。
+- **平板 / 折叠屏**：两栏布局保持 v0.56 的比例（不放大、账户列 240px）。
+
 ## [v0.56] — 2026-06-30
 
 Real-device validation of the full add-authenticator flow, including accounts
@@ -160,6 +185,7 @@ following the SteamKit/SteamDatabase protobufs.
   TOTP、交易确认（原生 JSON、批量）、登录（密码 + 扫码）、添加验证器、双主题
   （霓虹 + 像素）、多语言。
 
+[v0.57]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.57
 [v0.56]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.56
 [v0.55]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.55
 [v0.54]: https://github.com/freefrank/AnotherVaporAuth/releases/tag/v0.54
