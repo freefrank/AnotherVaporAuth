@@ -8,6 +8,13 @@
   "unlockPrompt": "请输入加密口令",
   "unlockButton": "解锁",
   "unlockInvalid": "口令无效。",
+  "unlockWithBiometric": "用指纹 / 设备密码解锁",
+  "unlockBiometricReason": "解锁 AVA",
+  "settingsBiometric": "指纹解锁",
+  "settingsBiometricDesc": "用指纹或设备密码解锁；口令保存在设备 Keystore 中。",
+  "settingsBiometricNeedPasskey": "请先设置加密口令。",
+  "settingsBiometricUnavailable": "此设备未设置生物识别或屏幕锁。",
+  "settingsBiometricEnabled": "已启用指纹解锁。",
   "passkeyLabel": "口令",
 
   "accountsEmpty": "暂无账户。导入 maFile 或登录以添加。",

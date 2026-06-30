@@ -53,6 +53,8 @@ class SettingsScreen extends ConsumerWidget {
                     child: Text(l.settingsChange),
                   ),
                 ),
+                // Biometric / device-credential unlock
+                const _BiometricCard(),
                 // Periodic checking + auto-confirm
                 _Card(
                   title: l.confirmationsTitle,
@@ -226,11 +228,83 @@ class SettingsScreen extends ConsumerWidget {
     final success = await ref
         .read(appControllerProvider.notifier)
         .changePasskey(data.encrypted ? oldKey : null, newKey);
+    if (success) {
+      // The stored biometric passkey is now stale — clear it so the user
+      // re-enables with the new passkey.
+      await ref.read(biometricUnlockProvider).disable();
+    }
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(success ? l.commonOk : l.unlockInvalid)),
       );
     }
+  }
+}
+
+/// Toggle for system-credential (biometric / device PIN) unlock. Hidden when the
+/// device has no biometrics/lock set up. Enabling stores the current encryption
+/// passkey in the keystore (the store must be encrypted + unlocked first).
+class _BiometricCard extends ConsumerStatefulWidget {
+  const _BiometricCard();
+
+  @override
+  ConsumerState<_BiometricCard> createState() => _BiometricCardState();
+}
+
+class _BiometricCardState extends ConsumerState<_BiometricCard> {
+  bool _supported = false;
+  bool _enabled = false;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final bio = ref.read(biometricUnlockProvider);
+    final supported = await bio.isSupported;
+    final enabled = await bio.isEnabled;
+    if (!mounted) return;
+    setState(() {
+      _supported = supported;
+      _enabled = enabled;
+      _loading = false;
+    });
+  }
+
+  Future<void> _toggle(bool value) async {
+    final l = AppLocalizations.of(context);
+    final bio = ref.read(biometricUnlockProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    if (!value) {
+      await bio.disable();
+      if (mounted) setState(() => _enabled = false);
+      return;
+    }
+    final passKey = ref.read(appControllerProvider).value?.passKey;
+    if (passKey == null || passKey.isEmpty) {
+      messenger.showSnackBar(
+          SnackBar(content: Text(l.settingsBiometricNeedPasskey)));
+      return;
+    }
+    final ok = await bio.enable(passKey, l.unlockBiometricReason);
+    if (!mounted || !ok) return;
+    setState(() => _enabled = true);
+    messenger
+        .showSnackBar(SnackBar(content: Text(l.settingsBiometricEnabled)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading || !_supported) return const SizedBox.shrink();
+    final l = AppLocalizations.of(context);
+    return _Card(
+      title: l.settingsBiometric,
+      description: l.settingsBiometricDesc,
+      trailing: Switch(value: _enabled, onChanged: _toggle),
+    );
   }
 }
 

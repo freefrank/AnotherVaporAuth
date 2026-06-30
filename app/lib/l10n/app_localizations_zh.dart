@@ -30,6 +30,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unlockInvalid => '口令无效。';
 
   @override
+  String get unlockWithBiometric => '用指纹 / 设备密码解锁';
+
+  @override
+  String get unlockBiometricReason => '解锁 AVA';
+
+  @override
+  String get settingsBiometric => '指纹解锁';
+
+  @override
+  String get settingsBiometricDesc => '用指纹或设备密码解锁；口令保存在设备 Keystore 中。';
+
+  @override
+  String get settingsBiometricNeedPasskey => '请先设置加密口令。';
+
+  @override
+  String get settingsBiometricUnavailable => '此设备未设置生物识别或屏幕锁。';
+
+  @override
+  String get settingsBiometricEnabled => '已启用指纹解锁。';
+
+  @override
   String get passkeyLabel => '口令';
 
   @override

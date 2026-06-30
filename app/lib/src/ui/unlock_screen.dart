@@ -20,11 +20,41 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   bool _busy = false;
   String? _error;
   int _shake = 0;
+  bool _canBio = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _maybeBiometric();
+    });
+  }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _maybeBiometric() async {
+    final bio = ref.read(biometricUnlockProvider);
+    final enabled = (await bio.isEnabled) && (await bio.isSupported);
+    if (!mounted) return;
+    setState(() => _canBio = enabled);
+    if (enabled) _biometricUnlock();
+  }
+
+  Future<void> _biometricUnlock() async {
+    final l = AppLocalizations.of(context);
+    final passKey =
+        await ref.read(biometricUnlockProvider).unlock(l.unlockBiometricReason);
+    if (!mounted || passKey == null) return;
+    final ok = await ref.read(appControllerProvider.notifier).unlock(passKey);
+    if (!mounted || ok) return;
+    setState(() {
+      _error = l.unlockInvalid;
+      _shake++;
+    });
   }
 
   Future<void> _submit() async {
@@ -91,6 +121,14 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
                         : Text(l.unlockButton),
                   ),
                 ),
+                if (_canBio) ...[
+                  SizedBox(height: context.r(12)),
+                  OutlinedButton.icon(
+                    onPressed: _busy ? null : _biometricUnlock,
+                    icon: const Icon(Icons.fingerprint),
+                    label: Text(l.unlockWithBiometric),
+                  ),
+                ],
               ],
             ),
           ),

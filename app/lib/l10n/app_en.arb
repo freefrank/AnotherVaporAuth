@@ -8,6 +8,13 @@
   "unlockPrompt": "Enter your encryption passkey",
   "unlockButton": "Unlock",
   "unlockInvalid": "That passkey is invalid.",
+  "unlockWithBiometric": "Unlock with biometrics / device PIN",
+  "unlockBiometricReason": "Unlock AVA",
+  "settingsBiometric": "Biometric unlock",
+  "settingsBiometricDesc": "Unlock with your fingerprint or device PIN; the passkey is stored in the device keystore.",
+  "settingsBiometricNeedPasskey": "Set an encryption passkey first.",
+  "settingsBiometricUnavailable": "No biometrics or device lock set up on this device.",
+  "settingsBiometricEnabled": "Biometric unlock enabled.",
   "passkeyLabel": "Passkey",
 
   "accountsEmpty": "No accounts yet. Import a maFile or log in to add one.",

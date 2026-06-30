@@ -140,6 +140,48 @@ abstract class AppLocalizations {
   /// **'That passkey is invalid.'**
   String get unlockInvalid;
 
+  /// No description provided for @unlockWithBiometric.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock with biometrics / device PIN'**
+  String get unlockWithBiometric;
+
+  /// No description provided for @unlockBiometricReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock AVA'**
+  String get unlockBiometricReason;
+
+  /// No description provided for @settingsBiometric.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric unlock'**
+  String get settingsBiometric;
+
+  /// No description provided for @settingsBiometricDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock with your fingerprint or device PIN; the passkey is stored in the device keystore.'**
+  String get settingsBiometricDesc;
+
+  /// No description provided for @settingsBiometricNeedPasskey.
+  ///
+  /// In en, this message translates to:
+  /// **'Set an encryption passkey first.'**
+  String get settingsBiometricNeedPasskey;
+
+  /// No description provided for @settingsBiometricUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No biometrics or device lock set up on this device.'**
+  String get settingsBiometricUnavailable;
+
+  /// No description provided for @settingsBiometricEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric unlock enabled.'**
+  String get settingsBiometricEnabled;
+
   /// No description provided for @passkeyLabel.
   ///
   /// In en, this message translates to:

@@ -1,5 +1,7 @@
 package com.sdacommunity.sda
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// FlutterFragmentActivity is required by local_auth for the biometric /
+// device-credential prompt.
+class MainActivity : FlutterFragmentActivity()

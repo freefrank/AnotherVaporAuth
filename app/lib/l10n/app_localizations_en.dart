@@ -30,6 +30,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unlockInvalid => 'That passkey is invalid.';
 
   @override
+  String get unlockWithBiometric => 'Unlock with biometrics / device PIN';
+
+  @override
+  String get unlockBiometricReason => 'Unlock AVA';
+
+  @override
+  String get settingsBiometric => 'Biometric unlock';
+
+  @override
+  String get settingsBiometricDesc =>
+      'Unlock with your fingerprint or device PIN; the passkey is stored in the device keystore.';
+
+  @override
+  String get settingsBiometricNeedPasskey => 'Set an encryption passkey first.';
+
+  @override
+  String get settingsBiometricUnavailable =>
+      'No biometrics or device lock set up on this device.';
+
+  @override
+  String get settingsBiometricEnabled => 'Biometric unlock enabled.';
+
+  @override
   String get passkeyLabel => 'Passkey';
 
   @override

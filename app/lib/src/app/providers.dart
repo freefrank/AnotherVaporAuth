@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/models/steam_guard_account.dart';
 import '../services/account_store.dart';
 import '../services/avatar_service.dart';
+import '../services/biometric_unlock.dart';
 import '../services/steam_api_client.dart';
 import '../services/steam_time.dart';
 import '../services/storage_provider.dart';
@@ -21,6 +22,10 @@ final apiClientProvider = Provider<SteamApiClient>((ref) => SteamApiClient());
 
 /// Resolves Steam profile avatars (public community XML, no API key).
 final avatarServiceProvider = Provider<AvatarService>((ref) => AvatarService());
+
+/// System-credential (biometric / device PIN) app unlock.
+final biometricUnlockProvider =
+    Provider<BiometricUnlock>((ref) => BiometricUnlock());
 
 /// Time alignment hook (overridable in tests to avoid network).
 final timeAlignerProvider =
