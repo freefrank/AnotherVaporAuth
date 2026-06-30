@@ -158,6 +158,42 @@ abstract class AppLocalizations {
   /// **'Ready'**
   String get accountReady;
 
+  /// No description provided for @welcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to Steam Authenticator'**
+  String get welcomeTitle;
+
+  /// No description provided for @welcomeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your authenticator is stored encrypted on this device. Choose how to begin.'**
+  String get welcomeSubtitle;
+
+  /// No description provided for @welcomeLoginCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in to Steam'**
+  String get welcomeLoginCta;
+
+  /// No description provided for @welcomeLoginSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up a new authenticator'**
+  String get welcomeLoginSub;
+
+  /// No description provided for @welcomeImportCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Import .maFile'**
+  String get welcomeImportCta;
+
+  /// No description provided for @welcomeImportSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Migrate an existing account'**
+  String get welcomeImportSub;
+
   /// No description provided for @copyCode.
   ///
   /// In en, this message translates to:
@@ -475,6 +511,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Authenticator linked successfully.'**
   String get addAuthLinked;
+
+  /// No description provided for @addAuthStepPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get addAuthStepPhone;
+
+  /// No description provided for @addAuthStepSms.
+  ///
+  /// In en, this message translates to:
+  /// **'SMS'**
+  String get addAuthStepSms;
+
+  /// No description provided for @addAuthStepRevocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Revocation'**
+  String get addAuthStepRevocation;
 
   /// No description provided for @settingsEncryption.
   ///

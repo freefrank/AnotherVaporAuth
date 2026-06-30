@@ -40,6 +40,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountReady => 'Ready';
 
   @override
+  String get welcomeTitle => 'Welcome to Steam Authenticator';
+
+  @override
+  String get welcomeSubtitle =>
+      'Your authenticator is stored encrypted on this device. Choose how to begin.';
+
+  @override
+  String get welcomeLoginCta => 'Log in to Steam';
+
+  @override
+  String get welcomeLoginSub => 'Set up a new authenticator';
+
+  @override
+  String get welcomeImportCta => 'Import .maFile';
+
+  @override
+  String get welcomeImportSub => 'Migrate an existing account';
+
+  @override
   String get copyCode => 'Copy code';
 
   @override
@@ -213,6 +232,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addAuthLinked => 'Authenticator linked successfully.';
+
+  @override
+  String get addAuthStepPhone => 'Phone';
+
+  @override
+  String get addAuthStepSms => 'SMS';
+
+  @override
+  String get addAuthStepRevocation => 'Revocation';
 
   @override
   String get settingsEncryption => 'Encryption';

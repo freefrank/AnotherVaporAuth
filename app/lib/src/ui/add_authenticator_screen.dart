@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/theme.dart';
 import '../core/models/session_data.dart';
 import '../core/protocol/authenticator_linker.dart';
+import 'widgets/scanline_overlay.dart';
+import 'widgets/stepper3.dart';
 
 class AddAuthenticatorScreen extends ConsumerStatefulWidget {
   final SessionData session;
@@ -130,17 +133,63 @@ class _AddAuthenticatorScreenState
     });
   }
 
+  int get _stepIndex {
+    switch (_step) {
+      case _Step.needPhone:
+        return 0;
+      case _Step.finalize:
+        return 1;
+      case _Step.done:
+        return 2;
+      default:
+        return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final showStepper = _step != _Step.working && _step != _Step.failed;
     return Scaffold(
       appBar: AppBar(title: Text(l.addAuthTitle)),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 380),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: _buildStep(l),
+      body: ScanlineOverlay(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (showStepper) ...[
+                    Stepper3(
+                      current: _stepIndex,
+                      labels: [
+                        l.addAuthStepPhone,
+                        l.addAuthStepSms,
+                        l.addAuthStepRevocation,
+                      ],
+                    ),
+                    const SizedBox(height: 28),
+                  ],
+                  // Animated horizontal slide between steps.
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, anim) => SlideTransition(
+                      position: Tween(
+                        begin: const Offset(0.12, 0),
+                        end: Offset.zero,
+                      ).animate(anim),
+                      child: FadeTransition(opacity: anim, child: child),
+                    ),
+                    child: KeyedSubtree(
+                      key: ValueKey(_step),
+                      child: _buildStep(l),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -173,15 +222,28 @@ class _AddAuthenticatorScreenState
           ],
         );
       case _Step.finalize:
+        final t = Theme.of(context).extension<SdaTokens>()!;
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Card(
-              color: Colors.amber.withValues(alpha: 0.2),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(l.addAuthRevocationWarn(_message ?? '')),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: t.warn.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(t.radius),
+                border: Border.all(color: t.warn.withValues(alpha: 0.6)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: t.warn, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(l.addAuthRevocationWarn(_message ?? ''),
+                        style: TextStyle(color: t.text)),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),

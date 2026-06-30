@@ -39,6 +39,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountReady => '已就绪';
 
   @override
+  String get welcomeTitle => '欢迎使用 Steam Authenticator';
+
+  @override
+  String get welcomeSubtitle => '本机加密保存你的验证器。开始前请选择一种方式。';
+
+  @override
+  String get welcomeLoginCta => '登录 Steam 账户';
+
+  @override
+  String get welcomeLoginSub => '新建一个验证器';
+
+  @override
+  String get welcomeImportCta => '导入 .maFile';
+
+  @override
+  String get welcomeImportSub => '迁移已有账户';
+
+  @override
   String get copyCode => '复制验证码';
 
   @override
@@ -208,6 +226,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get addAuthLinked => '验证器绑定成功。';
+
+  @override
+  String get addAuthStepPhone => '手机';
+
+  @override
+  String get addAuthStepSms => '短信';
+
+  @override
+  String get addAuthStepRevocation => '撤销码';
 
   @override
   String get settingsEncryption => '加密';

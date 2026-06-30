@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../ui/home_screen.dart';
 import '../ui/unlock_screen.dart';
+import '../ui/welcome_screen.dart';
 import 'providers.dart';
 import 'theme.dart';
 
@@ -53,8 +54,11 @@ class _Root extends ConsumerWidget {
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(body: Center(child: Text('$e'))),
-      data: (data) =>
-          data.locked ? const UnlockScreen() : const HomeScreen(),
+      data: (data) {
+        if (data.locked) return const UnlockScreen();
+        if (data.accounts.isEmpty) return const WelcomeScreen();
+        return const HomeScreen();
+      },
     );
   }
 }

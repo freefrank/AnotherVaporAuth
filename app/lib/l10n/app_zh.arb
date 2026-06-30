@@ -12,6 +12,12 @@
 
   "accountsEmpty": "暂无账户。导入 maFile 或登录以添加。",
   "accountReady": "已就绪",
+  "welcomeTitle": "欢迎使用 Steam Authenticator",
+  "welcomeSubtitle": "本机加密保存你的验证器。开始前请选择一种方式。",
+  "welcomeLoginCta": "登录 Steam 账户",
+  "welcomeLoginSub": "新建一个验证器",
+  "welcomeImportCta": "导入 .maFile",
+  "welcomeImportSub": "迁移已有账户",
   "copyCode": "复制验证码",
   "codeCopied": "验证码已复制到剪贴板",
   "copySteamId": "复制 SteamID",
@@ -86,6 +92,9 @@
   },
   "addAuthConfirmRevocation": "请再次输入撤销码以确认你已保存",
   "addAuthLinked": "验证器绑定成功。",
+  "addAuthStepPhone": "手机",
+  "addAuthStepSms": "短信",
+  "addAuthStepRevocation": "撤销码",
 
   "settingsEncryption": "加密",
   "settingsSetPasskey": "设置 / 修改加密口令",

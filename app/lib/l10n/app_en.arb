@@ -12,6 +12,12 @@
 
   "accountsEmpty": "No accounts yet. Import a maFile or log in to add one.",
   "accountReady": "Ready",
+  "welcomeTitle": "Welcome to Steam Authenticator",
+  "welcomeSubtitle": "Your authenticator is stored encrypted on this device. Choose how to begin.",
+  "welcomeLoginCta": "Log in to Steam",
+  "welcomeLoginSub": "Set up a new authenticator",
+  "welcomeImportCta": "Import .maFile",
+  "welcomeImportSub": "Migrate an existing account",
   "copyCode": "Copy code",
   "codeCopied": "Login code copied to clipboard",
   "copySteamId": "Copy SteamID",
@@ -86,6 +92,9 @@
   },
   "addAuthConfirmRevocation": "Re-enter your revocation code to confirm you saved it",
   "addAuthLinked": "Authenticator linked successfully.",
+  "addAuthStepPhone": "Phone",
+  "addAuthStepSms": "SMS",
+  "addAuthStepRevocation": "Revocation",
 
   "settingsEncryption": "Encryption",
   "settingsSetPasskey": "Set / change encryption passkey",
