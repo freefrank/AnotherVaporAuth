@@ -24,6 +24,7 @@ import 'confirmations_screen.dart';
 import 'import_helper.dart';
 import 'pending_login.dart';
 import 'login_screen.dart';
+import 'password_dialog.dart';
 import 'settings_screen.dart';
 
 const _palette = [
@@ -384,6 +385,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 'logins':
         await checkPendingLogins(context, ref, account);
         break;
+      case 'password':
+        await promptSavePassword(context, ref, account);
+        break;
+      case 'clearpwd':
+        account.password = null;
+        await ref.read(appControllerProvider.notifier).persistAccount(account);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(l.pwdCleared)));
+        }
+        break;
       case 'remove':
         final ok = await showDialog<bool>(
           context: context,
@@ -552,6 +564,37 @@ class _SidebarRow extends StatelessWidget {
     required this.onAction,
   });
 
+  /// Long-press menu: manage the stored auto-login password.
+  Future<void> _rowMenu(BuildContext context) async {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    final hasPwd = (account.password ?? '').isNotEmpty;
+    final value = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: t.panel2,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.password_outlined),
+              title: Text(l.pwdSave),
+              subtitle: hasPwd ? Text(l.pwdHasSaved) : null,
+              onTap: () => Navigator.pop(ctx, 'password'),
+            ),
+            if (hasPwd)
+              ListTile(
+                leading: const Icon(Icons.key_off_outlined),
+                title: Text(l.pwdClear),
+                onTap: () => Navigator.pop(ctx, 'clearpwd'),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (value != null) onAction(account, value);
+  }
+
   Widget _action(
     BuildContext context, {
     required IconData icon,
@@ -669,6 +712,7 @@ class _SidebarRow extends StatelessWidget {
         ),
         child: InkWell(
           onTap: onTap,
+          onLongPress: () => _rowMenu(context),
           borderRadius: BorderRadius.circular(t.radiusSm),
           child: Container(
             padding: context.rInsets(all: 8),

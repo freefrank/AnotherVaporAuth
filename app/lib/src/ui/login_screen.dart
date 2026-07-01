@@ -62,7 +62,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _maybeAutoLogin(SteamGuardAccount acc) async {
-    final pwd = await ref.read(credentialStoreProvider).password(acc.steamId);
+    // Password now lives on the account (maFile); fall back to the legacy
+    // keystore for accounts saved by older builds.
+    var pwd = acc.password;
+    if (pwd == null || pwd.isEmpty) {
+      pwd = await ref.read(credentialStoreProvider).password(acc.steamId);
+    }
     if (!mounted || pwd == null || pwd.isEmpty || _busy) return;
     _password.text = pwd;
     _startPassword();
@@ -207,13 +212,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Let the platform password manager offer to save the credentials.
     TextInput.finishAutofillContext();
     final session = _session.toSessionData(result);
-    // Remember the password (keystore) so the session can be refreshed
-    // automatically next time. QR logins have no password to save.
-    if (_password.text.isNotEmpty && session.steamId != 0) {
-      await ref
-          .read(credentialStoreProvider)
-          .savePassword(session.steamId, _password.text);
-    }
     if (!mounted) return;
 
     if (widget.reason == LoginReason.refresh && widget.account != null) {
@@ -222,6 +220,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ..steamId = session.steamId
         ..accessToken = session.accessToken
         ..refreshToken = session.refreshToken;
+      // Remember the password in the maFile so the session can be refreshed
+      // automatically next time. QR logins have no password to save.
+      if (_password.text.isNotEmpty) account.password = _password.text;
       account.fullyEnrolled = true;
       await ref.read(appControllerProvider.notifier).persistAccount(account);
       if (mounted) Navigator.of(context).pop();

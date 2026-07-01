@@ -5,8 +5,8 @@ import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/qr_approval_client.dart';
+import '../services/auto_login.dart';
 import '../services/debug_log.dart';
-import '../services/session_manager.dart';
 
 /// Polls [account]'s pending login sessions (GetAuthSessionsForAccount) and, for
 /// each, shows an approve/deny dialog like the official app — no push needed.
@@ -39,10 +39,10 @@ Future<void> checkPendingLogins(
     try {
       return await client.pendingLoginClientIds(account);
     } catch (_) {
-      // Stale session — refresh once and retry.
-      final refreshed = await SessionManager(ref.read(apiClientProvider))
-          .refresh(account.session);
-      if (!refreshed) return null;
+      // Stale session — refresh once (refresh token, or a headless password
+      // re-login) and retry.
+      final outcome = await ref.read(autoLoginProvider).ensureSession(account);
+      if (outcome != AutoLoginOutcome.ok) return null;
       try {
         return await client.pendingLoginClientIds(account);
       } catch (_) {

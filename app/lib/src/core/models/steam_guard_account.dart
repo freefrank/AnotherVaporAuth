@@ -23,6 +23,7 @@ class SteamGuardAccount {
   String? avatarFrameUrl; // avatar_frame_url — equipped profile avatar frame
   String? animatedAvatarUrl; // animated_avatar_url — equipped animated avatar
   String? personaName; // persona_name — Steam display name / nickname
+  String? password; // password — for automatic headless session re-login
   SessionData session; // Session
 
   final Map<String, dynamic> extra;
@@ -44,6 +45,7 @@ class SteamGuardAccount {
     this.avatarFrameUrl,
     this.animatedAvatarUrl,
     this.personaName,
+    this.password,
     SessionData? session,
     Map<String, dynamic>? extra,
   })  : session = session ?? SessionData(),
@@ -66,6 +68,7 @@ class SteamGuardAccount {
     'avatar_frame_url',
     'animated_avatar_url',
     'persona_name',
+    'password',
     'Session',
   };
 
@@ -92,6 +95,7 @@ class SteamGuardAccount {
       avatarFrameUrl: json['avatar_frame_url'] as String?,
       animatedAvatarUrl: json['animated_avatar_url'] as String?,
       personaName: json['persona_name'] as String?,
+      password: json['password'] as String?,
       session: sessionJson is Map<String, dynamic>
           ? SessionData.fromJson(sessionJson)
           : SessionData(),
@@ -117,6 +121,7 @@ class SteamGuardAccount {
         'avatar_frame_url': avatarFrameUrl,
         'animated_avatar_url': animatedAvatarUrl,
         'persona_name': personaName,
+        'password': password,
         'Session': session.toJson(),
       };
 

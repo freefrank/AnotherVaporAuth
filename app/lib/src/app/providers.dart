@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/models/steam_guard_account.dart';
 import '../services/account_store.dart';
+import '../services/auto_login.dart';
 import '../services/avatar_service.dart';
 import '../services/biometric_unlock.dart';
 import '../services/credential_store.dart';
@@ -33,6 +34,11 @@ final biometricUnlockProvider =
 /// Stores account passwords (keystore) for automatic session re-establishment.
 final credentialStoreProvider =
     Provider<CredentialStore>((ref) => CredentialStore());
+
+/// Headless session maintenance (refresh token → access token, or a full
+/// re-login with the stored password + the account's own TOTP).
+final autoLoginProvider =
+    Provider<AutoLogin>((ref) => AutoLogin(ref.read(apiClientProvider)));
 
 /// Time alignment hook (overridable in tests to avoid network).
 final timeAlignerProvider =
@@ -136,8 +142,61 @@ class AppController extends AsyncNotifier<AppData> {
       return AppData(store: store, accounts: const [], locked: true);
     }
     final accounts = await store.getAllAccounts();
+    Future.microtask(refreshSessions);
     Future.microtask(refreshAvatars);
     return AppData(store: store, accounts: accounts, locked: false);
+  }
+
+  bool _refreshingSessions = false;
+
+  /// Proactively keeps each account's Steam session fresh: for accounts whose
+  /// access token is stale/expiring, refresh it from the refresh token, or (when
+  /// that is dead and a password is stored) do a full headless re-login. Runs on
+  /// app open and unlock; on-demand refreshes happen where a 401 is hit.
+  Future<void> refreshSessions() async {
+    if (_refreshingSessions) return;
+    final data = state.value;
+    if (data == null || data.locked) return;
+    _refreshingSessions = true;
+    try {
+      final auto = ref.read(autoLoginProvider);
+      final creds = ref.read(credentialStoreProvider);
+      var changed = false;
+      for (final acc in data.accounts) {
+        if (acc.steamId == 0) continue;
+        var accChanged = false;
+        // One-time migration: earlier builds stored the password in the keystore;
+        // move it into the maFile so it travels with the account.
+        if ((acc.password ?? '').isEmpty) {
+          final legacy = await creds.password(acc.steamId);
+          if (legacy != null && legacy.isNotEmpty) {
+            acc.password = legacy;
+            accChanged = true;
+          }
+        }
+        // Refresh the token only when it's stale/expiring.
+        if (AutoLogin.accessTokenStale(acc.session.accessToken)) {
+          final before = acc.session.accessToken;
+          final outcome = await auto.ensureSession(acc);
+          if (outcome == AutoLoginOutcome.ok &&
+              acc.session.accessToken != before) {
+            accChanged = true;
+          }
+        }
+        if (accChanged) {
+          await data.store
+              .saveAccount(acc, data.store.encrypted, passKey: data.passKey);
+          changed = true;
+        }
+      }
+      if (changed && state.value != null) {
+        final accounts = await state.value!.store
+            .getAllAccounts(passKey: state.value!.passKey);
+        state = AsyncData(state.value!.copyWith(accounts: accounts));
+      }
+    } finally {
+      _refreshingSessions = false;
+    }
   }
 
   bool _refreshingAvatars = false;
@@ -236,6 +295,7 @@ class AppController extends AsyncNotifier<AppData> {
     state = AsyncData(
       data.copyWith(accounts: accounts, locked: false, passKey: passKey),
     );
+    Future.microtask(refreshSessions);
     Future.microtask(refreshAvatars);
     // One-time migration of an old high-rounds store to the fast PIN scheme.
     if (store.manifest.kdfIterations > AccountStore.avaIterations) {
