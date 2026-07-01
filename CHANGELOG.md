@@ -5,6 +5,30 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.64] — 2026-07-01
+
+### Changed
+- **Stronger at-rest encryption.** Local maFiles are now encrypted with a random
+  256-bit key (AES-256-GCM) held in Android Keystore-backed storage and wrapped
+  by your PIN, instead of a key derived directly from the 6-digit PIN. Copied
+  maFiles can no longer be brute-forced off-device. Existing accounts migrate
+  automatically and safely on your next unlock; the unlock PIN and biometric
+  unlock are unchanged. Exported maFiles stay in the standard SDA format.
+
+### Added
+- Android release signing wired from `key.properties` (Play App Signing ready).
+
+—
+
+### 变更
+- **更强的本地加密。** 本机 maFile 现在用一个随机 256 位密钥(AES-256-GCM)加密,
+  该密钥存放在 Android Keystore 支持的安全存储中、由你的 PIN 包裹,不再由 6 位 PIN
+  直接派生。拷走的 maFile 离开本机无法再被暴力破解。存量账户会在下次解锁时自动、
+  安全地迁移;解锁 PIN 与生物识别解锁体验不变。导出的 maFile 仍为标准 SDA 格式。
+
+### 新增
+- Android 正式签名改为从 `key.properties` 读取(已就绪 Play App Signing)。
+
 ## [v0.63] — 2026-07-01
 
 ### Added

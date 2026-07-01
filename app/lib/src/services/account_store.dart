@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import '../core/crypto/ma_file_crypto.dart';
+import '../core/crypto/vault_crypto.dart';
 import '../core/models/manifest.dart';
 import '../core/models/steam_guard_account.dart';
 import 'storage_provider.dart';
@@ -12,11 +14,19 @@ class AccountStore {
   final StorageProvider storage;
   Manifest manifest;
 
+  /// The in-memory Data Encryption Key for the vault scheme, set at unlock via
+  /// [setDek]. Null until unlocked (or in legacy stores).
+  Uint8List? _dek;
+
   AccountStore(this.storage, [Manifest? manifest])
       : manifest = manifest ?? Manifest();
 
   bool get encrypted => manifest.encrypted;
+  bool get isVault => manifest.vault;
   List<ManifestEntry> get entries => manifest.entries;
+
+  /// Provides (or clears) the vault DEK for the current unlocked session.
+  void setDek(Uint8List? dek) => _dek = dek;
 
   /// Loads the manifest from disk, creating a fresh one if none exists.
   /// Drops entries whose maFile is missing (RecomputeExistingEntries).
@@ -36,6 +46,7 @@ class AccountStore {
           Manifest.fromJson(jsonDecode(contents) as Map<String, dynamic>);
       final store = AccountStore(storage, manifest);
       if (manifest.encrypted &&
+          !manifest.vault &&
           manifest.entries.isEmpty &&
           manifest.passkeyCheck == null) {
         manifest.encrypted = false;
@@ -55,7 +66,9 @@ class AccountStore {
       if (await storage.fileExists(entry.filename)) kept.add(entry);
     }
     manifest.entries = kept;
-    if (manifest.entries.isEmpty && manifest.passkeyCheck == null) {
+    if (!manifest.vault &&
+        manifest.entries.isEmpty &&
+        manifest.passkeyCheck == null) {
       manifest.encrypted = false;
     }
   }
@@ -69,7 +82,10 @@ class AccountStore {
   /// the C# contract used by [verifyPasskey].
   Future<List<SteamGuardAccount>> getAllAccounts(
       {String? passKey, int limit = -1}) async {
-    if (passKey == null && manifest.encrypted) return const [];
+    if (manifest.vault && _dek == null) return const [];
+    if (passKey == null && manifest.encrypted && !manifest.vault) {
+      return const [];
+    }
     final entries =
         limit == -1 ? manifest.entries : manifest.entries.take(limit).toList();
     // Read raw payloads (IO), then decrypt them all in one background isolate.
@@ -78,7 +94,9 @@ class AccountStore {
       raws.add(await storage.readFile(e.filename));
     }
     List<String?> texts;
-    if (manifest.encrypted) {
+    if (manifest.vault) {
+      texts = [for (final raw in raws) VaultCrypto.decryptPayload(_dek!, raw)];
+    } else if (manifest.encrypted) {
       final items = [
         for (var i = 0; i < entries.length; i++)
           (entries[i].salt!, entries[i].iv!, raws[i])
@@ -125,6 +143,12 @@ class AccountStore {
   /// Saves (or updates) an account, optionally encrypting with [passKey].
   Future<bool> saveAccount(SteamGuardAccount account, bool encrypt,
       {String? passKey}) async {
+    // Vault mode: always encrypt with the in-memory DEK; the encrypt/passKey
+    // args are legacy no-ops here.
+    if (manifest.vault) {
+      if (_dek == null) return false;
+      return _saveVault(account);
+    }
     if (encrypt && (passKey == null || passKey.isEmpty)) return false;
     if (!encrypt && manifest.encrypted) return false;
 
@@ -173,7 +197,9 @@ class AccountStore {
         manifest.entries.indexWhere((e) => e.steamId == account.steamId);
     if (idx < 0) return true;
     final entry = manifest.entries.removeAt(idx);
-    if (manifest.entries.isEmpty && manifest.passkeyCheck == null) {
+    if (!manifest.vault &&
+        manifest.entries.isEmpty &&
+        manifest.passkeyCheck == null) {
       manifest.encrypted = false;
     }
     await save();
@@ -236,29 +262,75 @@ class AccountStore {
 
   static const String _checkPlaintext = 'AVA-PASSKEY-CHECK';
 
-  /// Re-encrypts already-decrypted [accounts] at [avaIterations]. Migrates an
-  /// old high-rounds store to the fast PIN scheme without re-deriving the slow
-  /// key (the accounts are already in memory after unlock).
-  Future<void> reencrypt(
-      String passKey, List<SteamGuardAccount> accounts) async {
-    if (!manifest.encrypted) return;
-    manifest.kdfIterations = avaIterations;
-    for (final acc in accounts) {
-      await saveAccount(acc, true, passKey: passKey);
+  /// Writes one account as a vault (AES-GCM) blob under the in-memory DEK,
+  /// reusing its existing filename so migrated `.v2.maFile` names stay stable.
+  Future<bool> _saveVault(SteamGuardAccount account) async {
+    final blob =
+        VaultCrypto.encryptPayload(_dek!, jsonEncode(account.toJson()));
+    final idx =
+        manifest.entries.indexWhere((e) => e.steamId == account.steamId);
+    final filename =
+        idx >= 0 ? manifest.entries[idx].filename : '${account.steamId}.maFile';
+    final entry = ManifestEntry(steamId: account.steamId, filename: filename);
+    if (idx >= 0) {
+      manifest.entries[idx] = entry;
+    } else {
+      manifest.entries.add(entry);
     }
-    final salt = MaFileCrypto.getRandomSalt();
-    final iv = MaFileCrypto.getInitializationVector();
-    final ct = MaFileCrypto.encrypt(passKey, salt, iv, _checkPlaintext,
-        iterations: avaIterations);
-    manifest.passkeyCheck = '$salt|$iv|$ct';
-    await save();
+    try {
+      await save();
+      await storage.writeFile(filename, blob);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
-  /// PBKDF2 rounds for AVA's own PIN encryption. Deliberately tiny: a 6-digit
-  /// PIN has only ~1e6 combinations, so anyone with the files brute-forces it
-  /// regardless of rounds — the real protection is on-device storage + the
-  /// keystore-backed biometric. High rounds (pointycastle does ~10k/sec) would
-  /// only make unlock slow for no real gain, so we keep them minimal.
+  /// Migrates a legacy (PIN/CBC) store to the vault scheme in place, using the
+  /// caller-supplied random [dek] and the already-decrypted [accounts] from the
+  /// just-completed legacy unlock.
+  ///
+  /// Crash-safe: vault blobs are written to fresh `<steamId>.v2.maFile` files
+  /// while the legacy `<steamId>.maFile` files stay intact, and the manifest —
+  /// the single source of truth for which scheme/filenames to read — is written
+  /// last in one atomic [save]. A crash before that leaves a fully readable
+  /// legacy store (the `.v2` files are harmless orphans); a crash after leaves a
+  /// fully readable vault store. Old files are deleted best-effort afterwards.
+  Future<void> migrateToVault(
+      Uint8List dek, List<SteamGuardAccount> accounts) async {
+    if (manifest.vault) return;
+    final oldFilenames = <String>[];
+    final newEntries = <ManifestEntry>[];
+    for (final acc in accounts) {
+      final blob = VaultCrypto.encryptPayload(dek, jsonEncode(acc.toJson()));
+      final newName = '${acc.steamId}.v2.maFile';
+      await storage.writeFile(newName, blob);
+      final oldIdx =
+          manifest.entries.indexWhere((e) => e.steamId == acc.steamId);
+      if (oldIdx >= 0) oldFilenames.add(manifest.entries[oldIdx].filename);
+      newEntries.add(ManifestEntry(steamId: acc.steamId, filename: newName));
+    }
+    // Atomic commit: swap the manifest to the vault scheme + new filenames.
+    manifest.entries = newEntries;
+    manifest.vault = true;
+    manifest.encrypted = true;
+    manifest.schemaVersion = 2;
+    manifest.passkeyCheck = null;
+    _dek = dek;
+    await save();
+    // Post-commit cleanup of the old CBC files (best-effort).
+    for (final f in oldFilenames) {
+      if (f.endsWith('.v2.maFile')) continue;
+      try {
+        await storage.deleteFile(f);
+      } catch (_) {}
+    }
+  }
+
+  /// PBKDF2 rounds for the legacy PIN-derived CBC scheme. Only reached now when
+  /// rotating the key on an un-migrated legacy store; such stores upgrade to the
+  /// Keystore-held DEK vault ([migrateToVault]) on their next unlock, after
+  /// which the PIN no longer derives any file key.
   static const int avaIterations = 100;
 
   void moveEntry(int from, int to) {

@@ -19,7 +19,17 @@ class Manifest {
   /// PBKDF2 rounds used for this store's own encryption. Imported maFiles use
   /// the 50000-round maFile default; AVA's own PIN encryption can use fewer
   /// (a 6-digit PIN's small keyspace dominates, so high rounds add little).
+  /// Legacy — unused once [vault] is true.
   int kdfIterations;
+
+  /// True once the store has migrated to the vault scheme (random DEK +
+  /// AES-256-GCM, DEK held in Android Keystore-backed storage). When true the
+  /// PIN no longer derives the file key and [kdfIterations]/[passkeyCheck] are
+  /// unused. AVA-internal only; never written into an exported maFile.
+  bool vault;
+
+  /// Internal manifest schema version. 1 = legacy PIN/CBC, 2 = vault/GCM.
+  int schemaVersion;
 
   Manifest({
     this.encrypted = false,
@@ -32,6 +42,8 @@ class Manifest {
     this.autoConfirmTrades = false,
     this.passkeyCheck,
     this.kdfIterations = 50000,
+    this.vault = false,
+    this.schemaVersion = 1,
   }) : entries = entries ?? <ManifestEntry>[];
 
   factory Manifest.fromJson(Map<String, dynamic> json) => Manifest(
@@ -39,6 +51,8 @@ class Manifest {
         firstRun: json['first_run'] ?? true,
         passkeyCheck: json['passkey_check'] as String?,
         kdfIterations: _asInt(json['kdf_iterations'], 50000),
+        vault: json['vault'] == true,
+        schemaVersion: _asInt(json['schema_version'], 1),
         entries: (json['entries'] as List?)
                 ?.map((e) =>
                     ManifestEntry.fromJson(e as Map<String, dynamic>))
@@ -63,6 +77,8 @@ class Manifest {
         'auto_confirm_trades': autoConfirmTrades,
         if (passkeyCheck != null) 'passkey_check': passkeyCheck,
         'kdf_iterations': kdfIterations,
+        'vault': vault,
+        'schema_version': schemaVersion,
       };
 
   static int _asInt(dynamic v, int fallback) {

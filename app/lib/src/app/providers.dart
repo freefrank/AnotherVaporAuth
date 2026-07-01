@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/crypto/vault_crypto.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/confirmations_client.dart';
 import '../core/protocol/inventory_client.dart';
@@ -17,6 +18,7 @@ import '../services/session_manager.dart';
 import '../services/steam_api_client.dart';
 import '../services/steam_time.dart';
 import '../services/storage_provider.dart';
+import '../services/vault_key_store.dart';
 import 'settings_store.dart';
 import 'theme.dart';
 
@@ -33,6 +35,10 @@ final avatarServiceProvider = Provider<AvatarService>((ref) => AvatarService());
 /// System-credential (biometric / device PIN) app unlock.
 final biometricUnlockProvider =
     Provider<BiometricUnlock>((ref) => BiometricUnlock());
+
+/// Keystore-backed holder for the vault DEK (PIN-wrapped).
+final vaultKeyStoreProvider =
+    Provider<VaultKeyStore>((ref) => VaultKeyStore());
 
 /// Stores account passwords (keystore) for automatic session re-establishment.
 final credentialStoreProvider =
@@ -321,47 +327,81 @@ class AppController extends AsyncNotifier<AppData> {
     }
   }
 
-  /// Attempts to unlock an encrypted store with [passKey].
-  Future<bool> unlock(String passKey) async {
+  /// Attempts to unlock an encrypted store with the 6-digit [pin].
+  ///
+  /// Vault store: the PIN unwraps the Keystore-held DEK. Legacy store: the PIN
+  /// decrypts the CBC maFiles as before, and the store is then migrated to the
+  /// vault scheme in the background.
+  Future<bool> unlock(String pin) async {
     final data = state.value;
     if (data == null) return false;
     final store = data.store;
     final sw = Stopwatch()..start();
+
+    if (store.isVault) {
+      final dek = await ref.read(vaultKeyStoreProvider).unwrapWithPin(pin);
+      if (dek == null) return false; // wrong PIN (GCM tag fails)
+      store.setDek(dek);
+      final accounts = store.entries.isEmpty
+          ? const <SteamGuardAccount>[]
+          : await store.getAllAccounts();
+      if (store.entries.isNotEmpty && accounts.isEmpty) {
+        dlog('unlock(vault): DEK ok but 0/${store.entries.length} decoded');
+      }
+      dlog('unlock(vault): ${sw.elapsedMilliseconds}ms, '
+          '${accounts.length} accounts');
+      state = AsyncData(
+        data.copyWith(accounts: accounts, locked: false, passKey: pin),
+      );
+      Future.microtask(refreshSessions);
+      Future.microtask(refreshAvatars);
+      return true;
+    }
+
+    // Legacy (PIN-derived CBC) store.
     List<SteamGuardAccount> accounts;
     if (store.entries.isEmpty) {
-      if (!await store.verifyPasskey(passKey)) return false;
+      if (!await store.verifyPasskey(pin)) return false;
       accounts = const [];
     } else {
-      // getAllAccounts validates the key (empty == wrong key), so no separate
-      // verifyPasskey derivation is needed.
-      accounts = await store.getAllAccounts(passKey: passKey);
+      // getAllAccounts validates the key (empty == wrong key).
+      accounts = await store.getAllAccounts(passKey: pin);
       if (accounts.isEmpty) return false;
     }
-    dlog('unlock: decrypt ${sw.elapsedMilliseconds}ms '
-        '(kdf=${store.manifest.kdfIterations}, ${accounts.length} accounts)');
+    dlog('unlock(legacy): ${sw.elapsedMilliseconds}ms, '
+        '${accounts.length} accounts');
     state = AsyncData(
-      data.copyWith(accounts: accounts, locked: false, passKey: passKey),
+      data.copyWith(accounts: accounts, locked: false, passKey: pin),
     );
     Future.microtask(refreshSessions);
     Future.microtask(refreshAvatars);
-    // One-time migration of an old high-rounds store to the fast PIN scheme.
-    if (store.manifest.kdfIterations > AccountStore.avaIterations) {
-      unawaited(_migrateKdf(passKey, accounts));
-    }
+    // One-time upgrade of the weak PIN-derived scheme to the Keystore DEK vault.
+    unawaited(_migrateToVault(pin, accounts));
     return true;
   }
 
-  Future<void> _migrateKdf(
-      String passKey, List<SteamGuardAccount> accounts) async {
+  /// Establishes the vault (random DEK, PIN-wrapped in the Keystore) and
+  /// re-encrypts every maFile under it. Used both to upgrade a legacy store and
+  /// to set up a brand-new store's first PIN.
+  Future<bool> _establishVault(
+      String pin, List<SteamGuardAccount> accounts) async {
     final store = state.value?.store;
-    if (store == null) return;
+    if (store == null || store.isVault) return false;
+    final dek = VaultCrypto.generateDek();
+    await ref.read(vaultKeyStoreProvider).storePinWrap(pin, dek);
+    await store.migrateToVault(dek, accounts);
+    return true;
+  }
+
+  Future<void> _migrateToVault(
+      String pin, List<SteamGuardAccount> accounts) async {
     try {
       final sw = Stopwatch()..start();
-      await store.reencrypt(passKey, accounts);
-      dlog('kdf migrated to ${store.manifest.kdfIterations} '
-          'in ${sw.elapsedMilliseconds}ms');
+      if (await _establishVault(pin, accounts)) {
+        dlog('migrated store to vault (DEK/GCM) in ${sw.elapsedMilliseconds}ms');
+      }
     } catch (e) {
-      dlog('kdf migrate failed: $e');
+      dlog('vault migrate failed: $e');
     }
   }
 
@@ -407,14 +447,35 @@ class AppController extends AsyncNotifier<AppData> {
     unawaited(refreshAvatars(steamIds: [account.steamId]));
   }
 
-  /// Changes (or sets/removes) the encryption passkey.
+  /// Changes (or sets) the unlock PIN.
+  ///
+  /// - Setting the first PIN on a fresh store establishes the vault directly.
+  /// - Changing the PIN on a vault store re-wraps the DEK under the new PIN.
+  /// - Legacy encrypted stores rotate the CBC key (and migrate to vault on the
+  ///   next unlock).
   Future<bool> changePasskey(String? oldKey, String? newKey) async {
     final data = state.value;
-    if (data == null) return false;
-    final ok = await data.store.changeEncryptionKey(oldKey, newKey);
-    if (ok) {
-      state = AsyncData(data.copyWith(passKey: newKey));
+    if (data == null || newKey == null) return false;
+    final store = data.store;
+
+    if (store.isVault) {
+      final ok = await ref
+          .read(vaultKeyStoreProvider)
+          .rewrapPin(oldKey ?? '', newKey);
+      if (ok) state = AsyncData(data.copyWith(passKey: newKey));
+      return ok;
     }
+
+    // First PIN on a brand-new store → go straight to the vault scheme.
+    if (oldKey == null && !store.encrypted) {
+      final ok = await _establishVault(newKey, data.accounts);
+      if (ok) state = AsyncData(data.copyWith(passKey: newKey));
+      return ok;
+    }
+
+    // Legacy rotate (migrates to vault on next unlock).
+    final ok = await store.changeEncryptionKey(oldKey, newKey);
+    if (ok) state = AsyncData(data.copyWith(passKey: newKey));
     return ok;
   }
 }

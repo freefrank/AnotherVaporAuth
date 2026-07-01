@@ -74,7 +74,17 @@ Suggested acceptance criteria:
 - `flutter build appbundle --release` produces an AAB signed with the intended upload key.
 - Google Play Console accepts the artifact on an internal testing track.
 
-### 2. Local Secret Encryption Is Too Weak for Play-Store Security Claims
+### 2. Local Secret Encryption Is Too Weak for Play-Store Security Claims — RESOLVED (2026-07-01)
+
+> Update: fixed. The at-rest scheme now uses a random 256-bit DEK with
+> AES-256-GCM; the DEK is held in Android Keystore-backed storage, PIN-wrapped
+> (`VaultCrypto`/`VaultKeyStore`, spec:
+> `docs/superpowers/specs/2026-07-01-at-rest-encryption-dek-design.md`). The PIN
+> no longer derives the file key, so copied maFiles are useless off-device and
+> the 1e6 PIN space no longer bounds at-rest strength. Legacy stores migrate
+> automatically on first unlock (crash-safe: new `.v2.maFile` files + atomic
+> manifest flip). Verified on-device: migration, vault unlock, biometric, PIN
+> change. The original finding is retained below for history.
 
 File: `app/lib/src/services/account_store.dart`
 
@@ -257,8 +267,8 @@ Before submitting to Google Play:
 
 ## Recommended Remediation Order
 
-1. Add production release signing. (Blocker §1.)
-2. Rework local secret encryption: Keystore-wrapped random DEK, PIN/biometric as unlock gate. (Blocker §2 — this is the real security fix; do not just bump PBKDF2 iterations.)
+1. Add production release signing. (Blocker §1 — DONE: wired from key.properties.)
+2. ~~Rework local secret encryption: Keystore-wrapped random DEK.~~ (Blocker §2 — DONE 2026-07-01; verified on-device.)
 3. Housekeeping: fix the stale `CredentialStore` comment and retire the legacy keystore→maFile migration path when no longer needed. (§3 — low priority; password-storage model is already settled as maFile.)
 4. Inspect the merged release manifest (§4) and align Play Console permission declarations + privacy-policy permission wording (add ACCESS_NETWORK_STATE, USE_FINGERPRINT). Password-storage wording already matches the maFile model.
 5. Add/confirm an explicit export warning, called out specifically when a saved password is present.
