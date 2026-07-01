@@ -43,6 +43,29 @@ Future<void> importMaFileFlow(BuildContext context, WidgetRef ref) async {
 Future<void> exportMaFileFlow(
     BuildContext context, SteamGuardAccount account) async {
   final l = AppLocalizations.of(context);
+  // The export is a plaintext maFile — warn before it leaves the app, and call
+  // out a saved password specifically since it travels with the file.
+  final hasPassword = (account.password ?? '').isNotEmpty;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l.exportWarnTitle),
+      content: Text(
+        hasPassword
+            ? '${l.exportWarnBody}\n\n${l.exportWarnPassword}'
+            : l.exportWarnBody,
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.commonCancel)),
+        FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.commonExport)),
+      ],
+    ),
+  );
+  if (confirmed != true) return;
   try {
     final raw = (account.accountName ?? '').trim();
     final base = raw.isEmpty ? '${account.steamId}' : raw;

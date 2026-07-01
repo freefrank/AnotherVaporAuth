@@ -27,9 +27,11 @@ The app stores the following **locally, on your device only**:
 - **A short debug log** (Settings → Debug log), kept in memory only and cleared
   when the app closes.
 
-At rest this data is encrypted with **AES-256** using a key derived from your
-6-digit unlock PIN (and, if enabled, gated behind your device biometrics /
-device credential). We never receive any of it.
+At rest this data is encrypted with **AES-256-GCM** using a random key held in
+your device's hardware-backed **Android Keystore** and unwrapped by your 6-digit
+unlock PIN (and, if enabled, your device biometrics / device credential). Because
+the key is bound to your device's keystore, copies of the data files are useless
+on any other device. We never receive any of it.
 
 ## 2. Data we collect
 
@@ -54,9 +56,11 @@ none exists.
 
 ## 4. Permissions
 
-- **Internet** — to reach Steam's servers.
+- **Internet** and **network state** — to reach Steam's servers and detect
+  whether the device is online.
 - **Camera** (optional) — only when you scan a login QR code.
-- **Biometric / device credential** (optional) — only to unlock the app.
+- **Biometric / fingerprint / device credential** (optional) — only to unlock
+  the app.
 
 The app requests no location, contacts, or other sensitive permissions beyond
 these.

@@ -1,9 +1,13 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Stores Steam account passwords in the platform secure storage (Android
-/// Keystore) keyed by steamid, so a session can be re-established automatically
-/// without retyping the password. Kept OUT of the maFile so exporting an account
-/// never leaks the password.
+/// Legacy, read-only migration source for Steam account passwords.
+///
+/// Older builds stored the optional Steam password in platform secure storage
+/// (Android Keystore) keyed by steamid. The current model keeps the password in
+/// the account's maFile (see [SteamGuardAccount.password]); on unlock,
+/// `refreshSessions` migrates any leftover keystore password into the maFile and
+/// this store is only read (and cleared on account removal), never written to by
+/// current flows. It can be retired once no legacy accounts remain.
 class CredentialStore {
   final FlutterSecureStorage _store;
   CredentialStore({FlutterSecureStorage? store})

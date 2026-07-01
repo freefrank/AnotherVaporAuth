@@ -18,6 +18,8 @@ automated releases.
 ### Added
 - A themed full-screen unlock animation (Neon / Pixel) shown while the vault is
   decrypted, instead of a frozen screen.
+- A confirmation warning before exporting an (unencrypted) maFile, with an extra
+  note when the account has a saved Steam password.
 - Android release signing wired from `key.properties` (Play App Signing ready).
 
 —
@@ -30,6 +32,7 @@ automated releases.
 
 ### 新增
 - 解锁时显示符合主题的全屏动画(Neon / Pixel),不再干等卡屏。
+- 导出(未加密)maFile 前弹出确认警告;账户存有 Steam 密码时额外提示。
 - Android 正式签名改为从 `key.properties` 读取(已就绪 Play App Signing)。
 
 ## [v0.63] — 2026-07-01

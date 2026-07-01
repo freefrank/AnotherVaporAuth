@@ -114,7 +114,11 @@ Suggested acceptance criteria:
 - Extracted `maFiles/` alone are not practically decryptable with a quick offline 6-digit PIN brute force.
 - The privacy policy and in-app security text accurately describe what protects the data at rest.
 
-### 3. Legacy Password-Storage Code and a Stale Comment (downgraded — not a policy conflict)
+### 3. Legacy Password-Storage Code and a Stale Comment (downgraded — not a policy conflict) — comment fixed 2026-07-01
+
+> Update: the misleading `CredentialStore` doc comment now describes its real
+> role (legacy read-only migration source). The legacy keystore→maFile migration
+> path remains until no old-format accounts exist. No policy change was needed.
 
 Files:
 
@@ -143,7 +147,12 @@ Required action:
 - Keep the maFile as the single documented password-storage model across code comments, in-app text, privacy policy, and Play data-safety answers (already consistent).
 - Note: the residual risk of a plaintext password inside an *exported* maFile is real, but it is an accepted, disclosed trade-off — tracked under Security Findings below, not here.
 
-### 4. Final Release Manifest Has More Permissions Than Main Manifest Shows
+### 4. Final Release Manifest Has More Permissions Than Main Manifest Shows — privacy wording updated 2026-07-01
+
+> Update: PRIVACY.md / PRIVACY_ZH.md now list network-state and
+> fingerprint/biometric alongside Internet and Camera, and describe the new
+> Keystore-DEK at-rest encryption. Play Console permission declarations should
+> still be filled from the merged release manifest at submission time.
 
 Source manifest: `app/android/app/src/main/AndroidManifest.xml`
 
@@ -194,7 +203,12 @@ Play Console answers should be prepared carefully. Even when the app does not co
 
 ## Security Findings
 
-### High: Account-Takeover Secrets Are Exportable as Plain maFile
+### High: Account-Takeover Secrets Are Exportable as Plain maFile — export warning added 2026-07-01
+
+> Update: the export flow now shows an explicit confirmation dialog before a
+> plaintext maFile leaves the app, with an extra line called out when the account
+> has a saved Steam password. Encrypted export is still not offered (kept for SDA
+> compatibility); the warning is the mitigation.
 
 The app supports exporting unencrypted maFiles. This is an expected feature for SDA compatibility, but it is high risk.
 

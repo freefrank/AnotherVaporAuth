@@ -770,6 +770,24 @@ abstract class AppLocalizations {
   /// **'Failed to export: {error}'**
   String exportFailed(String error);
 
+  /// No description provided for @exportWarnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export unencrypted maFile?'**
+  String get exportWarnTitle;
+
+  /// No description provided for @exportWarnBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The exported .maFile is NOT encrypted. It holds this account’s Steam Guard secrets and revocation code — anyone with the file can take over your authenticator. Store it somewhere safe and delete it when done.'**
+  String get exportWarnBody;
+
+  /// No description provided for @exportWarnPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'It also contains your saved Steam password.'**
+  String get exportWarnPassword;
+
   /// No description provided for @addAuthTitle.
   ///
   /// In en, this message translates to:
