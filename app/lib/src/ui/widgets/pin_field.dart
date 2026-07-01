@@ -11,6 +11,9 @@ class PinField extends StatelessWidget {
   final String? errorText;
   final ValueChanged<String>? onSubmitted;
 
+  /// Fires as soon as all 6 digits are entered (for auto-submit).
+  final ValueChanged<String>? onCompleted;
+
   const PinField({
     super.key,
     required this.controller,
@@ -18,6 +21,7 @@ class PinField extends StatelessWidget {
     this.autofocus = false,
     this.errorText,
     this.onSubmitted,
+    this.onCompleted,
   });
 
   @override
@@ -30,6 +34,9 @@ class PinField extends StatelessWidget {
       maxLength: 6,
       textAlign: TextAlign.center,
       onSubmitted: onSubmitted,
+      onChanged: (v) {
+        if (v.length == 6) onCompleted?.call(v);
+      },
       style: TextStyle(fontSize: context.r(20), letterSpacing: context.r(8)),
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       decoration: InputDecoration(

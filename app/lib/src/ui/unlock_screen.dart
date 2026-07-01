@@ -59,6 +59,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   }
 
   Future<void> _submit() async {
+    if (_busy || _controller.text.length < 6) return;
     setState(() {
       _busy = true;
       _error = null;
@@ -68,6 +69,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
         );
     if (!mounted) return;
     if (!ok) {
+      _controller.clear(); // let the user retype (and re-trigger auto-submit)
       setState(() {
         _busy = false;
         _error = AppLocalizations.of(context).unlockInvalid;
@@ -101,6 +103,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
                   label: l.pinLabel,
                   autofocus: true,
                   onSubmitted: (_) => _submit(),
+                  onCompleted: (_) => _submit(), // auto-unlock at 6 digits
                   errorText: _error,
                 ),
                 SizedBox(height: context.r(16)),

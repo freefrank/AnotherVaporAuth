@@ -34,6 +34,7 @@ class _SetupPinScreenState extends ConsumerState<SetupPinScreen> {
   }
 
   Future<void> _submit() async {
+    if (_busy) return;
     final l = AppLocalizations.of(context);
     final pin = _pin.text;
     if (pin.length != 6) {
@@ -95,6 +96,7 @@ class _SetupPinScreenState extends ConsumerState<SetupPinScreen> {
                       controller: _confirm,
                       label: l.pinConfirmLabel,
                       onSubmitted: (_) => _submit(),
+                      onCompleted: (_) => _submit(),
                       errorText: _error,
                     ),
                     SizedBox(height: context.r(16)),
