@@ -25,11 +25,15 @@
 
 ## 功能亮点
 
-- **maFile 兼容** —— 读写旧版 `.maFile` 格式（PBKDF2 50k/SHA1 + AES-256-CBC），老账户零成本迁移。
-- Steam Guard 验证码 + 实时倒计时环，一键复制。
-- 交易 / 市场**确认**，支持批量接受/拒绝（原生 JSON 渲染，不用内嵌 WebView）。
-- 登录（密码 + **扫码**）、会话刷新、添加验证器、扫码批准。
-- **双主题** —— 霓虹（Neon）与 像素（Pixel），设置内可切换。
+- **maFile 兼容** —— 读写旧版 `.maFile` 格式（PBKDF2/SHA1 + AES-256-CBC），老账户零成本迁移，随时可导出。
+- **Steam Guard 验证码** —— 每账户列表 + 实时倒计时环、点按复制；点名称在 用户名 / 昵称 / ID 间切换。
+- **应用内批准登录** —— 在 AVA 内弹窗批准/拒绝 Steam 登录（显示设备 + 位置），与官方 App 一致，基于轮询、无需推送。
+- **交易 / 市场确认** —— 支持批量接受/拒绝（原生 JSON 渲染，不用内嵌 WebView）。
+- **自动刷新登录** —— access token 按需用 refresh_token 刷新；refresh_token 失效时可用保存的密码 + 账户自身 TOTP 无界面全量重登。
+- **登录方式** —— 密码 + **扫码**、会话刷新、添加验证器、扫描他人二维码批准其登录。
+- **应用锁** —— 强制 6 位 PIN 加密本地存储（AES-256），支持指纹 / 设备密码解锁；输满 PIN 即自动登录。
+- **动态头像** —— 拉取每个账户的 Steam 头像与头像框并播放（GIF 原生、APNG 逐帧解码）。
+- **两套完整主题** —— 霓虹（赛博朋克氛围 + 辉光）与 像素（复古星场），设置内切换，各有专属下拉刷新。
 - **多语言**（English + 简体/繁體中文），更多语言规划中。
 - 完全**离线**：字体与资源全部打包，运行时不下载任何内容。
 - **应用内调试日志**（设置 → 调试日志）—— 可复制的 Steam 流程网络追踪，便于诊断。
@@ -50,7 +54,7 @@ docs/     设计文档（docs/superpowers/specs/）
 ```sh
 cd app
 flutter pub get
-flutter test                       # analyze + 38 项测试
+flutter test                       # analyze + 39 项测试
 flutter run -d linux               # 或 windows / macos
 flutter build apk --release --split-per-abi
 ```
