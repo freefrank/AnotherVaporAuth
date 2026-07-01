@@ -130,11 +130,11 @@ class SdaTokens extends ThemeExtension<SdaTokens> {
 
   static const _pixel = SdaTokens(
     variant: SdaThemeVariant.pixel,
-    bg: Color(0xFF211D36),
-    panel: Color(0xFF2C2747),
-    panel2: Color(0xFF37305A),
-    chrome: Color(0xFF1A1729),
-    line: Color(0xFF4A4270),
+    bg: Color(0xFF2B2547),
+    panel: Color(0xFF39335C),
+    panel2: Color(0xFF463D72),
+    chrome: Color(0xFF221E38),
+    line: Color(0xFF5A5288),
     text: Color(0xFFFBF3DF),
     muted: Color(0xFF9A90C0),
     accent: Color(0xFFFF8A3D),

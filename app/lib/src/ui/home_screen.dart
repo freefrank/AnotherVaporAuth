@@ -17,6 +17,7 @@ import 'widgets/countdown_ring.dart';
 import 'widgets/cyber_ambient.dart';
 import 'widgets/flip_code.dart';
 import 'widgets/motion.dart';
+import 'widgets/pixel_ambient.dart';
 import 'widgets/scanline_overlay.dart';
 import 'approve_login_screen.dart';
 import 'confirmations_screen.dart';
@@ -246,11 +247,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     neon: neon,
                     // Per-account swipe actions (the old overflow menu).
                     onAction: (acc, action) => _onAction(context, acc, action),
-                    // Neon: custom pull drives the full-screen overlay below.
-                    // Pixel: a standard RefreshIndicator.
+                    // Custom pull drives the full-screen overlay below (neon fill
+                    // or pixel blocks).
                     onPullPixels: _onPullPixels,
                     onPullEnd: _onPullEnd,
-                    onRefresh: _runRefresh,
                   );
                   final panel = _MainPanel(
                     account: accounts[_selected],
@@ -297,8 +297,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                           ),
                         ),
-                      ] else
+                      ] else ...[
+                        // Pixel theme: retro backdrop + blocky pull indicator.
+                        const Positioned.fill(child: PixelAmbient()),
                         content,
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: TweenAnimationBuilder<double>(
+                              tween: Tween(end: pull01),
+                              duration: const Duration(milliseconds: 150),
+                              curve: Curves.easeOut,
+                              builder: (_, v, _) => v <= 0.001
+                                  ? const SizedBox.shrink()
+                                  : _PixelPull(progress: v),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   );
                 },
@@ -410,7 +425,6 @@ class _Sidebar extends StatelessWidget {
   final VoidCallback onAdd;
   final void Function(double overscroll) onPullPixels;
   final VoidCallback onPullEnd;
-  final Future<void> Function() onRefresh;
   final void Function(SteamGuardAccount account, String action) onAction;
   final _NameMode nameMode;
   final bool neon;
@@ -425,15 +439,14 @@ class _Sidebar extends StatelessWidget {
     required this.onAction,
     required this.onPullPixels,
     required this.onPullEnd,
-    required this.onRefresh,
   });
 
   Widget _list(BuildContext context) => SlidableAutoCloseBehavior(
         child: ListView.builder(
-          physics: neon
-              ? const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics())
-              : const AlwaysScrollableScrollPhysics(),
+          // Bouncing so the custom pull-to-refresh reads overscroll on both
+          // themes (neon fill / pixel blocks).
+          physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics()),
           padding: context.rInsets(h: 8, v: 4),
           itemCount: accounts.length,
           itemBuilder: (context, i) => _SidebarRow(
@@ -501,22 +514,17 @@ class _Sidebar extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: neon
-                ? Listener(
-                    onPointerUp: (_) => onPullEnd(),
-                    child: NotificationListener<ScrollNotification>(
-                      onNotification: (n) {
-                        final px = n.metrics.pixels;
-                        onPullPixels(px < 0 ? -px : 0);
-                        return false;
-                      },
-                      child: _list(context),
-                    ),
-                  )
-                : RefreshIndicator(
-                    onRefresh: onRefresh,
-                    child: _list(context),
-                  ),
+            child: Listener(
+              onPointerUp: (_) => onPullEnd(),
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (n) {
+                  final px = n.metrics.pixels;
+                  onPullPixels(px < 0 ? -px : 0);
+                  return false;
+                },
+                child: _list(context),
+              ),
+            ),
           ),
         ],
       ),
@@ -552,10 +560,12 @@ class _SidebarRow extends StatelessWidget {
     final r = context.r(1);
     final t = Theme.of(context).extension<SdaTokens>()!;
     final neon = t.glow;
-    // Neon theme: dark glassy pill + neon border/glow, matching the HUD look.
-    // Pixel theme: keep the solid fill (fits the retro aesthetic).
+    // Neon theme: dark glassy pill + neon border/inset glow (HUD look).
+    // Pixel theme: chunky retro button — bright fill, hard 2px border, hard
+    // offset shadow, dark text (no blur, radius 0).
+    const ink = Color(0xFF15111F);
     final fill = neon ? color.withValues(alpha: 0.16) : color;
-    final fg = neon ? color : Colors.white;
+    final fg = neon ? color : ink;
     return CustomSlidableAction(
       backgroundColor: Colors.transparent,
       padding: EdgeInsets.zero,
@@ -566,17 +576,15 @@ class _SidebarRow extends StatelessWidget {
       child: Container(
         alignment: Alignment.center,
         // Extra vertical margin insets the pill so it isn't as tall as the row.
-        margin: EdgeInsets.symmetric(horizontal: 3 * r, vertical: 12 * r),
+        margin: EdgeInsets.symmetric(
+            horizontal: neon ? 3 * r : 4 * r, vertical: 12 * r),
         decoration: BoxDecoration(
           color: fill,
-          borderRadius: BorderRadius.circular(neon ? t.radiusSm : 10 * r),
-          // Crisp neon outline defines the shape; a tight inset glow keeps the
-          // neon feel without the outer halo that made hues read as different
-          // heights against the cyan-tinted backdrop.
+          borderRadius: BorderRadius.circular(neon ? t.radiusSm : 0),
           border: neon
               ? Border.all(
                   color: color.withValues(alpha: 0.9), width: t.borderWidth)
-              : null,
+              : Border.all(color: ink, width: 2),
           boxShadow: neon
               ? [
                   BoxShadow(
@@ -584,7 +592,7 @@ class _SidebarRow extends StatelessWidget {
                       blurRadius: 5,
                       blurStyle: BlurStyle.inner),
                 ]
-              : null,
+              : [BoxShadow(color: ink, offset: Offset(3 * r, 3 * r))],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -683,15 +691,22 @@ class _SidebarRow extends StatelessWidget {
                     : null,
               )
             : BoxDecoration(
-                // Pixel theme keeps its original left-accent-bar style.
-                color: selected ? t.panel2 : Colors.transparent,
+                // Pixel theme: retro "sticker" — chunky 2px border + a hard
+                // offset shadow on the selected row (no blur, radius 0).
+                color: selected ? t.panel2 : t.panel.withValues(alpha: 0.55),
                 borderRadius: BorderRadius.circular(t.radiusSm),
-                border: Border(
-                  left: BorderSide(
-                    color: selected ? t.accent : Colors.transparent,
-                    width: context.r(2),
-                  ),
+                border: Border.all(
+                  color: selected ? t.accent : t.line,
+                  width: t.borderWidth,
                 ),
+                boxShadow: selected
+                    ? [
+                        BoxShadow(
+                          color: t.borderColor,
+                          offset: Offset(context.r(4), context.r(4)),
+                        ),
+                      ]
+                    : null,
               ),
         child: Row(
           children: [
@@ -1030,6 +1045,126 @@ class _NeonPainter extends CustomPainter {
   @override
   bool shouldRepaint(_NeonPainter old) =>
       old.t != t || old.progress != progress || old.charged != charged;
+}
+
+/// Pixel-theme pull-to-refresh: a blocky retro fill that grows from the top with
+/// a chunky pixel leading bar and a blinking "LOADING" once charged.
+class _PixelPull extends StatefulWidget {
+  final double progress; // 0..1
+  const _PixelPull({required this.progress});
+
+  @override
+  State<_PixelPull> createState() => _PixelPullState();
+}
+
+class _PixelPullState extends State<_PixelPull>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 640),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    final reduce = MediaQuery.disableAnimationsOf(context);
+    if (reduce) {
+      if (_c.isAnimating) _c.stop();
+    } else if (!_c.isAnimating) {
+      _c.repeat();
+    }
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, _) {
+        final blinkOn = reduce ? true : _c.value < 0.5;
+        final charged = widget.progress >= 0.97;
+        return Align(
+          alignment: Alignment.topCenter,
+          child: FractionallySizedBox(
+            widthFactor: 1,
+            heightFactor: widget.progress.clamp(0.0, 1.0),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CustomPaint(
+                  painter: _PixelPullPainter(
+                    color: t.accent,
+                    progress: widget.progress,
+                    blinkOn: blinkOn,
+                  ),
+                ),
+                if (charged)
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Opacity(
+                        opacity: blinkOn ? 1 : 0.2,
+                        child: Text(
+                          '▼ LOADING ▼',
+                          style: TextStyle(
+                            color: t.accent,
+                            fontSize: 13,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PixelPullPainter extends CustomPainter {
+  final Color color;
+  final double progress;
+  final bool blinkOn;
+  _PixelPullPainter(
+      {required this.color, required this.progress, required this.blinkOn});
+
+  static const double _cell = 12;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width, h = size.height;
+    // Flat blocky wash.
+    canvas.drawRect(Offset.zero & size,
+        Paint()..color = color.withValues(alpha: 0.08 + 0.12 * progress));
+    // Checkerboard pixel texture.
+    final tex = Paint()..color = color.withValues(alpha: 0.07);
+    for (var y = 0.0, ry = 0; y < h; y += _cell, ry++) {
+      for (var x = 0.0, rx = 0; x < w; x += _cell, rx++) {
+        if ((rx + ry).isEven) {
+          canvas.drawRect(Rect.fromLTWH(x, y, _cell, _cell), tex);
+        }
+      }
+    }
+    // Chunky leading bar: two rows of hard pixel blocks at the bottom.
+    for (var x = 0.0, rx = 0; x < w; x += _cell, rx++) {
+      final lit = blinkOn ? true : rx.isEven; // marching blocks
+      canvas.drawRect(
+          Rect.fromLTWH(x + 1, h - _cell + 1, _cell - 2, _cell - 2),
+          Paint()..color = color.withValues(alpha: lit ? 0.9 : 0.5));
+      canvas.drawRect(
+          Rect.fromLTWH(x + 1, h - _cell * 2 + 1, _cell - 2, _cell - 2),
+          Paint()..color = color.withValues(alpha: 0.35));
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PixelPullPainter old) =>
+      old.progress != progress || old.blinkOn != blinkOn;
 }
 
 class _Avatar extends StatelessWidget {
