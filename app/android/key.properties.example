@@ -1,0 +1,16 @@
+# Release signing for AVA — Google Play (Play App Signing / upload key).
+#
+# Copy this file to `key.properties` (same dir) and fill in real values.
+# `key.properties` and the *.jks keystore are git-ignored — NEVER commit them.
+#
+# Generate the upload keystore (once), keeping it somewhere safe and backed up:
+#
+#   keytool -genkey -v -keystore ~/ava-upload.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# Then point storeFile at that .jks (absolute path recommended).
+
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=upload
+storeFile=/absolute/path/to/ava-upload.jks
