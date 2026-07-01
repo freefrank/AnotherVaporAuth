@@ -129,12 +129,38 @@ class SteamApiClient {
     }
   }
 
+  /// GETs a community URL and returns the raw response body (HTML/text). Used to
+  /// scrape page globals like `g_rgAppContextData` / `g_rgWalletInfo`.
+  Future<String> communityGetText(
+    String path, {
+    Map<String, dynamic>? query,
+    Map<String, String>? cookies,
+  }) async {
+    dlog('→ GET(text) $path');
+    final resp = await _dio.get<String>(
+      path.startsWith('http') ? path : '$communityBase$path',
+      queryParameters: query,
+      options: Options(
+        responseType: ResponseType.plain,
+        headers: {
+          if (cookies != null) 'Cookie': _cookieHeader(cookies),
+          'X-Requested-With': 'com.valvesoftware.android.steam.community',
+        },
+      ),
+    );
+    final body = resp.data ?? '';
+    dlog('← $path  HTTP ${resp.statusCode}  ${body.length}B');
+    return body;
+  }
+
   /// Like [communityGetJson] but POSTs the params as a form body — the modern
-  /// (react) `/mobileconf/ajaxop` and `multiajaxop` endpoints expect POST.
+  /// (react) `/mobileconf/ajaxop` and `multiajaxop`, and `/market/*` write
+  /// endpoints expect POST. [referer] is required by `/market/sellitem/`.
   Future<Map<String, dynamic>> communityPostJson(
     String path,
     Map<String, dynamic> form, {
     Map<String, String>? cookies,
+    String? referer,
   }) async {
     dlog('→ POST $path  ${form['tag'] ?? ''}${form['op'] != null ? ' op=${form['op']}' : ''}');
     try {
@@ -147,6 +173,7 @@ class SteamApiClient {
           listFormat: ListFormat.multi,
           headers: {
             if (cookies != null) 'Cookie': _cookieHeader(cookies),
+            'Referer': ?referer,
             'X-Requested-With': 'com.valvesoftware.android.steam.community',
           },
         ),

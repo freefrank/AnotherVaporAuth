@@ -17,6 +17,14 @@ plus a "My listings" view to see/cancel active listings.
 Out of scope: buy orders, price history charts, multi-currency conversion beyond
 the account's wallet currency.
 
+**Planned enhancement (post-MVP): batch / commodity sell.** Steam exposes a
+`market/multisell?appid=&contextid=&items[]=<hash>` page for listing many
+identical/stackable items at once. Under the hood it is just repeated `sellitem`
+calls; the resulting confirmations batch neatly into our existing `multiajaxop`
+"confirm all" path. Build MVP on single-item `sellitem`, then layer batch
+listing (pick quantity for a stackable item → N sellitem calls → one batch
+confirm) on top.
+
 ## Verified protocol (checked live in a logged-in browser, 2026-07-01)
 
 All community requests carry cookies `steamLoginSecure=<steamid>||<accessToken>`,
