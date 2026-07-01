@@ -9,6 +9,7 @@
   "unlockButton": "Unlock",
   "unlockInvalid": "That passkey is invalid.",
   "unlockWithBiometric": "Unlock with biometrics / device PIN",
+  "unlockLoading": "Decrypting\u2026",
   "pinSetupTitle": "Set unlock PIN",
   "pinSetupPrompt": "Protect AVA with a 6-digit PIN. You'll enter it (or your fingerprint) to unlock.",
   "pinLabel": "6-digit PIN",

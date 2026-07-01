@@ -9,6 +9,7 @@
   "unlockButton": "解锁",
   "unlockInvalid": "口令无效。",
   "unlockWithBiometric": "用指纹 / 设备密码解锁",
+  "unlockLoading": "正在解锁\u2026",
   "pinSetupTitle": "设置解锁 PIN",
   "pinSetupPrompt": "用 6 位 PIN 保护 AVA。解锁时输入它（或用指纹）。",
   "pinLabel": "6 位 PIN",

@@ -16,6 +16,8 @@ automated releases.
   unlock are unchanged. Exported maFiles stay in the standard SDA format.
 
 ### Added
+- A themed full-screen unlock animation (Neon / Pixel) shown while the vault is
+  decrypted, instead of a frozen screen.
 - Android release signing wired from `key.properties` (Play App Signing ready).
 
 —
@@ -27,6 +29,7 @@ automated releases.
   安全地迁移;解锁 PIN 与生物识别解锁体验不变。导出的 maFile 仍为标准 SDA 格式。
 
 ### 新增
+- 解锁时显示符合主题的全屏动画(Neon / Pixel),不再干等卡屏。
 - Android 正式签名改为从 `key.properties` 读取(已就绪 Play App Signing)。
 
 ## [v0.63] — 2026-07-01

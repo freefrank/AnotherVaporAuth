@@ -146,6 +146,12 @@ abstract class AppLocalizations {
   /// **'Unlock with biometrics / device PIN'**
   String get unlockWithBiometric;
 
+  /// No description provided for @unlockLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrypting…'**
+  String get unlockLoading;
+
   /// No description provided for @pinSetupTitle.
   ///
   /// In en, this message translates to:

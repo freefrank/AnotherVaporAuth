@@ -33,6 +33,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unlockWithBiometric => '用指纹 / 设备密码解锁';
 
   @override
+  String get unlockLoading => '正在解锁…';
+
+  @override
   String get pinSetupTitle => '设置解锁 PIN';
 
   @override

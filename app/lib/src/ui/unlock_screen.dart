@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
 import '../app/responsive.dart';
+import '../app/theme.dart';
 import 'widgets/app_logo.dart';
+import 'widgets/cyber_ambient.dart';
 import 'widgets/motion.dart';
 import 'widgets/pin_field.dart';
+import 'widgets/pixel_ambient.dart';
 import 'widgets/scanline_overlay.dart';
 
 class UnlockScreen extends ConsumerStatefulWidget {
@@ -50,9 +53,15 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
     final passKey =
         await ref.read(biometricUnlockProvider).unlock(l.unlockBiometricReason);
     if (!mounted || passKey == null) return;
+    // Show the themed loading state while the DEK is unwrapped + accounts decrypt.
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
     final ok = await ref.read(appControllerProvider.notifier).unlock(passKey);
     if (!mounted || ok) return;
     setState(() {
+      _busy = false;
       _error = l.unlockInvalid;
       _shake++;
     });
@@ -82,58 +91,133 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l.unlockTitle)),
-      body: ScanlineOverlay(
-        child: Center(
+      // Hide the chrome during the full-screen themed loading state.
+      appBar: _busy ? null : AppBar(title: Text(l.unlockTitle)),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 260),
+        child: _busy ? const _UnlockLoading() : _buildForm(context, l),
+      ),
+    );
+  }
+
+  Widget _buildForm(BuildContext context, AppLocalizations l) {
+    return ScanlineOverlay(
+      key: const ValueKey('form'),
+      child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 360),
           child: ShakeWidget(
-          trigger: _shake,
-          child: Padding(
-            padding: context.rInsets(all: 24),
+            trigger: _shake,
+            child: Padding(
+              padding: context.rInsets(all: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FloatingLogo(child: AppLogo(size: context.r(84))),
+                  SizedBox(height: context.r(16)),
+                  Text(l.unlockPrompt, textAlign: TextAlign.center),
+                  SizedBox(height: context.r(16)),
+                  PinField(
+                    controller: _controller,
+                    label: l.pinLabel,
+                    autofocus: true,
+                    onSubmitted: (_) => _submit(),
+                    onCompleted: (_) => _submit(), // auto-unlock at 6 digits
+                    errorText: _error,
+                  ),
+                  SizedBox(height: context.r(16)),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _busy ? null : _submit,
+                      child: Text(l.unlockButton),
+                    ),
+                  ),
+                  if (_canBio) ...[
+                    SizedBox(height: context.r(12)),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _biometricUnlock,
+                      icon: const Icon(Icons.fingerprint),
+                      label: Text(l.unlockWithBiometric),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Full-screen themed loading shown while the vault DEK is unwrapped and the
+/// accounts are decrypted. Neon and Pixel each get their own ambient backdrop.
+class _UnlockLoading extends ConsumerWidget {
+  const _UnlockLoading();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    final l = AppLocalizations.of(context);
+    final pixel = t.isPixel;
+    return Container(
+      key: const ValueKey('loading'),
+      decoration: BoxDecoration(color: t.bg, gradient: t.bgGradient),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+              child: pixel ? const PixelAmbient() : const CyberAmbient()),
+          Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                FloatingLogo(child: AppLogo(size: context.r(84))),
-                SizedBox(height: context.r(16)),
-                Text(l.unlockPrompt, textAlign: TextAlign.center),
-                SizedBox(height: context.r(16)),
-                PinField(
-                  controller: _controller,
-                  label: l.pinLabel,
-                  autofocus: true,
-                  onSubmitted: (_) => _submit(),
-                  onCompleted: (_) => _submit(), // auto-unlock at 6 digits
-                  errorText: _error,
-                ),
-                SizedBox(height: context.r(16)),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _busy ? null : _submit,
-                    child: _busy
-                        ? SizedBox(
-                            height: context.r(18),
-                            width: context.r(18),
-                            child: CircularProgressIndicator(
-                                strokeWidth: context.r(2)),
-                          )
-                        : Text(l.unlockButton),
+                FloatingLogo(child: AppLogo(size: context.r(96))),
+                SizedBox(height: context.r(30)),
+                _ScanBar(tokens: t),
+                SizedBox(height: context.r(18)),
+                Text(
+                  l.unlockLoading,
+                  style: TextStyle(
+                    color: t.muted,
+                    letterSpacing: pixel ? 1 : 3,
+                    fontSize: context.r(13),
                   ),
                 ),
-                if (_canBio) ...[
-                  SizedBox(height: context.r(12)),
-                  OutlinedButton.icon(
-                    onPressed: _busy ? null : _biometricUnlock,
-                    icon: const Icon(Icons.fingerprint),
-                    label: Text(l.unlockWithBiometric),
-                  ),
-                ],
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A theme-aware indeterminate progress bar: a glowing sweep on Neon, a hard
+/// blocky sweep on Pixel.
+class _ScanBar extends StatelessWidget {
+  final SdaTokens tokens;
+  const _ScanBar({required this.tokens});
+
+  @override
+  Widget build(BuildContext context) {
+    final pixel = tokens.isPixel;
+    return Container(
+      width: context.r(180),
+      decoration: BoxDecoration(
+        boxShadow: tokens.glowShadow(blur: 14, opacity: 0.5),
+        borderRadius: BorderRadius.circular(pixel ? 0 : 4),
+        border: pixel ? Border.all(color: tokens.line, width: 2) : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(pixel ? 0 : 4),
+        child: SizedBox(
+          height: context.r(pixel ? 10 : 5),
+          child: LinearProgressIndicator(
+            backgroundColor: pixel ? tokens.bg : tokens.line,
+            valueColor: AlwaysStoppedAnimation(tokens.accent),
           ),
-        ),
         ),
       ),
     );

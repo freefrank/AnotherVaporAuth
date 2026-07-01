@@ -33,6 +33,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unlockWithBiometric => 'Unlock with biometrics / device PIN';
 
   @override
+  String get unlockLoading => 'Decrypting…';
+
+  @override
   String get pinSetupTitle => 'Set unlock PIN';
 
   @override
