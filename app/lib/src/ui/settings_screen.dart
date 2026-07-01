@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
@@ -9,6 +10,12 @@ import 'debug_log_screen.dart';
 import 'widgets/pin_field.dart';
 import 'widgets/scanline_overlay.dart';
 import 'widgets/sda_panel.dart';
+
+const _appVersion = '0.59';
+const _repoUrl = 'https://github.com/freefrank/AnotherVaporAuth';
+const _authorUrl = 'https://github.com/freefrank';
+const _licenseUrl =
+    'https://github.com/freefrank/AnotherVaporAuth/blob/main/LICENSE';
 
 /// Design screen 08 — settings. Each option is a panel card with a title, a
 /// short description and its control. Theme + language are selectable chips.
@@ -141,9 +148,95 @@ class SettingsScreen extends ConsumerWidget {
                     child: Text(l.commonOpen),
                   ),
                 ),
+                // About
+                _Card(
+                  title: l.settingsAbout,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('AVA · AnotherVaporAuth  v$_appVersion',
+                          style:
+                              TextStyle(color: t.text, fontSize: context.r(14))),
+                      SizedBox(height: context.r(4)),
+                      Text(l.aboutTagline,
+                          style: TextStyle(
+                              color: t.muted, fontSize: context.r(12.5))),
+                      SizedBox(height: context.r(10)),
+                      _aboutRow(context, t, Icons.code, l.aboutSourceCode,
+                          'github.com/freefrank/AnotherVaporAuth',
+                          () => _openUrl(_repoUrl), external: true),
+                      _aboutRow(context, t, Icons.person_outline, l.aboutAuthor,
+                          'github.com/freefrank', () => _openUrl(_authorUrl),
+                          external: true),
+                      _aboutRow(context, t, Icons.gavel_outlined,
+                          l.aboutLicense, 'MIT', () => _openUrl(_licenseUrl),
+                          external: true),
+                      _aboutRow(
+                        context,
+                        t,
+                        Icons.inventory_2_outlined,
+                        l.aboutLicenses,
+                        null,
+                        () => showLicensePage(
+                          context: context,
+                          applicationName: 'AVA · AnotherVaporAuth',
+                          applicationVersion: 'v$_appVersion',
+                          applicationLegalese: '© 2026 freefrank · MIT',
+                        ),
+                      ),
+                      SizedBox(height: context.r(10)),
+                      Text(l.aboutCredits,
+                          style: TextStyle(
+                              color: t.text, fontSize: context.r(13.5))),
+                      SizedBox(height: context.r(4)),
+                      Text(l.aboutCreditsBody,
+                          style: TextStyle(
+                              color: t.muted, fontSize: context.r(12.5))),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openUrl(String url) async {
+    try {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } catch (_) {/* no browser / launch failed — ignore */}
+  }
+
+  Widget _aboutRow(BuildContext context, SdaTokens t, IconData icon,
+      String label, String? value, VoidCallback onTap,
+      {bool external = false}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(t.radiusSm),
+      child: Padding(
+        padding: context.rInsets(v: 9),
+        child: Row(
+          children: [
+            Icon(icon, size: context.r(18), color: t.accent),
+            SizedBox(width: context.r(12)),
+            Expanded(
+              child: Text(label,
+                  style: TextStyle(color: t.text, fontSize: context.r(14))),
+            ),
+            if (value != null)
+              Flexible(
+                child: Text(value,
+                    textAlign: TextAlign.right,
+                    overflow: TextOverflow.ellipsis,
+                    style:
+                        TextStyle(color: t.muted, fontSize: context.r(12.5))),
+              ),
+            SizedBox(width: context.r(6)),
+            Icon(external ? Icons.open_in_new : Icons.chevron_right,
+                size: context.r(16), color: t.muted),
+          ],
         ),
       ),
     );
