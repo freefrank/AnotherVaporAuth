@@ -28,6 +28,14 @@ class _ScanlineOverlayState extends State<ScanlineOverlay>
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).extension<SdaTokens>()!;
+    // Respect the OS "reduce motion" setting: freeze the scanline scroll.
+    final reduce = MediaQuery.disableAnimationsOf(context);
+    final animate = t.scanAnimated && !reduce;
+    if (animate) {
+      if (!_c.isAnimating) _c.repeat();
+    } else if (_c.isAnimating) {
+      _c.stop();
+    }
     return Stack(
       children: [
         widget.child,
@@ -38,7 +46,7 @@ class _ScanlineOverlayState extends State<ScanlineOverlay>
               builder: (context, _) => CustomPaint(
                 painter: _ScanPainter(
                   color: t.scanColor,
-                  offset: t.scanAnimated ? _c.value * 3 : 0,
+                  offset: animate ? _c.value * 3 : 0,
                   gap: t.isPixel ? 4 : 3,
                 ),
               ),

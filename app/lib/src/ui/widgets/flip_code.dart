@@ -34,10 +34,13 @@ class FlipCode extends StatelessWidget {
           ? [Shadow(color: t.accent.withValues(alpha: 0.6), blurRadius: 22)]
           : null,
     );
+    // Respect the OS "reduce motion" setting: swap the code with a plain fade.
+    final reduce = MediaQuery.disableAnimationsOf(context);
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 550),
+      duration: Duration(milliseconds: reduce ? 120 : 550),
       switchInCurve: const Cubic(0.2, 0.75, 0.25, 1),
       transitionBuilder: (child, anim) {
+        if (reduce) return FadeTransition(opacity: anim, child: child);
         return AnimatedBuilder(
           animation: anim,
           builder: (context, _) {

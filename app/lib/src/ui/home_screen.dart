@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
@@ -92,11 +93,15 @@ class _AnimatedName extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Respect "reduce motion": plain crossfade instead of slide + scale.
+    final reduce = MediaQuery.disableAnimationsOf(context);
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 420),
+      duration: Duration(milliseconds: reduce ? 150 : 420),
       switchInCurve: Curves.easeOut,
       switchOutCurve: Curves.easeIn,
-      transitionBuilder: _nameTransition,
+      transitionBuilder: reduce
+          ? (child, anim) => FadeTransition(opacity: anim, child: child)
+          : _nameTransition,
       // Clip so the full-height slide doesn't bleed into neighbours.
       layoutBuilder: (current, previous) => Stack(
         alignment: Alignment.centerLeft,
@@ -212,20 +217,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: Text(l.appTitle),
         actions: [
-          if (hasAccounts)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              onSelected: (v) => _onAction(context, accounts[_selected], v),
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                    value: 'confirm', child: Text(l.actionConfirmations)),
-                PopupMenuItem(
-                    value: 'logins', child: Text(l.actionLoginRequests)),
-                PopupMenuItem(value: 'login', child: Text(l.actionLogin)),
-                PopupMenuItem(value: 'export', child: Text(l.actionExport)),
-                PopupMenuItem(value: 'remove', child: Text(l.actionRemove)),
-              ],
-            ),
           IconButton(
             tooltip: l.navSettings,
             icon: const Icon(Icons.settings_outlined),
@@ -253,6 +244,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     onAdd: () => _addMenu(context),
                     nameMode: _nameMode,
                     neon: neon,
+                    // Per-account swipe actions (the old overflow menu).
+                    onAction: (acc, action) => _onAction(context, acc, action),
                     // Neon: custom pull drives the full-screen overlay below.
                     // Pixel: a standard RefreshIndicator.
                     onPullPixels: _onPullPixels,
@@ -418,6 +411,7 @@ class _Sidebar extends StatelessWidget {
   final void Function(double overscroll) onPullPixels;
   final VoidCallback onPullEnd;
   final Future<void> Function() onRefresh;
+  final void Function(SteamGuardAccount account, String action) onAction;
   final _NameMode nameMode;
   final bool neon;
   const _Sidebar({
@@ -428,24 +422,29 @@ class _Sidebar extends StatelessWidget {
     required this.onAdd,
     required this.nameMode,
     required this.neon,
+    required this.onAction,
     required this.onPullPixels,
     required this.onPullEnd,
     required this.onRefresh,
   });
 
-  Widget _list(BuildContext context) => ListView.builder(
-        physics: neon
-            ? const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics())
-            : const AlwaysScrollableScrollPhysics(),
-        padding: context.rInsets(h: 8, v: 4),
-        itemCount: accounts.length,
-        itemBuilder: (context, i) => _SidebarRow(
-          account: accounts[i],
-          code: _codeFor(accounts[i], tick),
-          selected: i == selected,
-          nameMode: nameMode,
-          neon: neon,
-          onTap: () => onSelect(i),
+  Widget _list(BuildContext context) => SlidableAutoCloseBehavior(
+        child: ListView.builder(
+          physics: neon
+              ? const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics())
+              : const AlwaysScrollableScrollPhysics(),
+          padding: context.rInsets(h: 8, v: 4),
+          itemCount: accounts.length,
+          itemBuilder: (context, i) => _SidebarRow(
+            account: accounts[i],
+            code: _codeFor(accounts[i], tick),
+            selected: i == selected,
+            nameMode: nameMode,
+            neon: neon,
+            onTap: () => onSelect(i),
+            onAction: onAction,
+          ),
         ),
       );
 
@@ -474,17 +473,28 @@ class _Sidebar extends StatelessWidget {
                         letterSpacing: context.r(1)),
                   ),
                 ),
+                // 24px visual (unchanged), but the tap zone widens to the right
+                // into otherwise-dead space — bigger target, same look.
                 InkWell(
                   onTap: onAdd,
-                  child: Container(
-                    width: context.r(24),
+                  borderRadius: BorderRadius.circular(t.radiusSm),
+                  child: SizedBox(
+                    width: context.r(52),
                     height: context.r(24),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      border: t.border,
-                      borderRadius: BorderRadius.circular(t.radiusSm),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        width: context.r(24),
+                        height: context.r(24),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          border: t.border,
+                          borderRadius: BorderRadius.circular(t.radiusSm),
+                        ),
+                        child:
+                            Icon(Icons.add, size: context.r(16), color: t.accent),
+                      ),
                     ),
-                    child: Icon(Icons.add, size: context.r(16), color: t.accent),
                   ),
                 ),
               ],
@@ -521,6 +531,7 @@ class _SidebarRow extends StatelessWidget {
   final _NameMode nameMode;
   final bool neon;
   final VoidCallback onTap;
+  final void Function(SteamGuardAccount account, String action) onAction;
   const _SidebarRow({
     required this.account,
     required this.code,
@@ -528,18 +539,130 @@ class _SidebarRow extends StatelessWidget {
     required this.nameMode,
     required this.neon,
     required this.onTap,
+    required this.onAction,
   });
+
+  Widget _action(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final r = context.r(1);
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    final neon = t.glow;
+    // Neon theme: dark glassy pill + neon border/glow, matching the HUD look.
+    // Pixel theme: keep the solid fill (fits the retro aesthetic).
+    final fill = neon ? color.withValues(alpha: 0.16) : color;
+    final fg = neon ? color : Colors.white;
+    return CustomSlidableAction(
+      backgroundColor: Colors.transparent,
+      padding: EdgeInsets.zero,
+      onPressed: (_) {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Container(
+        alignment: Alignment.center,
+        // Extra vertical margin insets the pill so it isn't as tall as the row.
+        margin: EdgeInsets.symmetric(horizontal: 3 * r, vertical: 12 * r),
+        decoration: BoxDecoration(
+          color: fill,
+          borderRadius: BorderRadius.circular(neon ? t.radiusSm : 10 * r),
+          // Crisp neon outline defines the shape; a tight inset glow keeps the
+          // neon feel without the outer halo that made hues read as different
+          // heights against the cyan-tinted backdrop.
+          border: neon
+              ? Border.all(
+                  color: color.withValues(alpha: 0.9), width: t.borderWidth)
+              : null,
+          boxShadow: neon
+              ? [
+                  BoxShadow(
+                      color: color.withValues(alpha: 0.28),
+                      blurRadius: 5,
+                      blurStyle: BlurStyle.inner),
+                ]
+              : null,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: fg, size: 19 * r),
+            SizedBox(height: 3 * r),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2 * r),
+              child: Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      color: fg,
+                      fontSize: 11.5 * r,
+                      fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).extension<SdaTokens>()!;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(t.radiusSm),
-      child: Container(
-        margin: context.rInsets(bottom: 8),
-        padding: context.rInsets(all: 8),
-        decoration: neon
+    final l = AppLocalizations.of(context);
+    return Padding(
+      padding: context.rInsets(bottom: 8),
+      child: Slidable(
+        key: ValueKey(account.steamId),
+        // Swipe RIGHT → enter trade confirmations (full swipe enters directly).
+        startActionPane: ActionPane(
+          motion: const BehindMotion(),
+          extentRatio: 0.34,
+          dismissible: DismissiblePane(
+            closeOnCancel: true,
+            confirmDismiss: () async {
+              onAction(account, 'confirm');
+              return false; // navigate, don't actually remove the row
+            },
+            onDismissed: () {},
+          ),
+          children: [
+            _action(context,
+                icon: Icons.verified_user_outlined,
+                label: l.actionConfirmations,
+                color: t.good,
+                onTap: () => onAction(account, 'confirm')),
+          ],
+        ),
+        // Swipe LEFT → the other per-account actions.
+        endActionPane: ActionPane(
+          motion: const BehindMotion(),
+          extentRatio: 0.66,
+          children: [
+            _action(context,
+                icon: Icons.refresh,
+                label: l.commonRefresh,
+                color: t.accent,
+                onTap: () => onAction(account, 'login')),
+            _action(context,
+                icon: Icons.ios_share,
+                label: l.commonExport,
+                color: t.accent2,
+                onTap: () => onAction(account, 'export')),
+            _action(context,
+                icon: Icons.delete_outline,
+                label: l.commonDelete,
+                color: t.bad,
+                onTap: () => onAction(account, 'remove')),
+          ],
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(t.radiusSm),
+          child: Container(
+            padding: context.rInsets(all: 8),
+            decoration: neon
             ? BoxDecoration(
                 color:
                     selected ? t.panel2 : t.panel2.withValues(alpha: 0.35),
@@ -599,6 +722,8 @@ class _SidebarRow extends StatelessWidget {
               ),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );
@@ -696,9 +821,8 @@ class _MainPanel extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Flexible(
-                child: GestureDetector(
+                child: _TapScale(
                   onTap: () => onCopy(code),
-                  behavior: HitTestBehavior.opaque,
                   child: wide
                       ? FlipCode(code: code, fontSize: t.codeSize)
                       : SizedBox(
@@ -719,6 +843,38 @@ class _MainPanel extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Wraps a tappable child with a subtle press-scale for tactile feedback.
+class _TapScale extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  const _TapScale({required this.child, required this.onTap});
+
+  @override
+  State<_TapScale> createState() => _TapScaleState();
+}
+
+class _TapScaleState extends State<_TapScale> {
+  bool _down = false;
+  void _set(bool v) => setState(() => _down = v);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      onTapDown: (_) => _set(true),
+      onTapUp: (_) => _set(false),
+      onTapCancel: () => _set(false),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedScale(
+        scale: _down ? 0.94 : 1.0,
+        duration: const Duration(milliseconds: 90),
+        curve: Curves.easeOut,
+        child: widget.child,
       ),
     );
   }
@@ -750,6 +906,13 @@ class _NeonPullState extends State<_NeonPull>
 
   @override
   Widget build(BuildContext context) {
+    // Respect "reduce motion": keep the neon fill but freeze the sweeps.
+    final reduce = MediaQuery.disableAnimationsOf(context);
+    if (reduce) {
+      if (_ac.isAnimating) _ac.stop();
+    } else if (!_ac.isAnimating) {
+      _ac.repeat();
+    }
     return Align(
       alignment: Alignment.topCenter,
       child: FractionallySizedBox(
@@ -761,7 +924,7 @@ class _NeonPullState extends State<_NeonPull>
             size: Size.infinite,
             painter: _NeonPainter(
               progress: widget.progress,
-              t: _ac.value,
+              t: reduce ? 0 : _ac.value,
               charged: widget.progress >= 0.97,
             ),
           ),
