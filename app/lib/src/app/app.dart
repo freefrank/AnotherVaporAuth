@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../ui/home_screen.dart';
+import '../ui/privacy_consent_screen.dart';
 import '../ui/setup_pin_screen.dart';
 import '../ui/unlock_screen.dart';
 import '../ui/welcome_screen.dart';
@@ -56,6 +57,8 @@ class _Root extends ConsumerWidget {
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(body: Center(child: Text('$e'))),
       data: (data) {
+        // First run: require accepting the Privacy Policy before anything else.
+        if (!data.privacyAccepted) return const PrivacyConsentScreen();
         if (data.locked) return const UnlockScreen();
         // A PIN is mandatory: if the store isn't protected yet, set one first.
         if (!data.encrypted) return const SetupPinScreen();

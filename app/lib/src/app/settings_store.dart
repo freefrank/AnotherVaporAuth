@@ -48,6 +48,16 @@ class SettingsStore {
     await _write(data);
   }
 
+  /// Whether the user has accepted the Privacy Policy (first-run gate).
+  Future<bool> loadPrivacyAccepted() async =>
+      (await _read())['privacy_accepted'] == true;
+
+  Future<void> savePrivacyAccepted(bool accepted) async {
+    final data = await _read();
+    data['privacy_accepted'] = accepted;
+    await _write(data);
+  }
+
   /// UI theme variant: 'neon' (default) or 'pixel'.
   Future<String?> loadTheme() async => (await _read())['theme'] as String?;
 

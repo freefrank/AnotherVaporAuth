@@ -1076,6 +1076,36 @@ abstract class AppLocalizations {
   /// **'Privacy policy'**
   String get aboutPrivacy;
 
+  /// No description provided for @privacyConsentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your privacy'**
+  String get privacyConsentTitle;
+
+  /// No description provided for @privacyConsentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'AVA keeps all of your data on this device. It has no backend of its own, connects only to Valve\'s Steam servers, and does no tracking or analytics. By continuing, you accept the Privacy Policy.'**
+  String get privacyConsentBody;
+
+  /// No description provided for @privacyConsentRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the full Privacy Policy'**
+  String get privacyConsentRead;
+
+  /// No description provided for @privacyConsentAgree.
+  ///
+  /// In en, this message translates to:
+  /// **'Agree & continue'**
+  String get privacyConsentAgree;
+
+  /// No description provided for @privacyConsentExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit'**
+  String get privacyConsentExit;
+
   /// No description provided for @aboutLicenses.
   ///
   /// In en, this message translates to:

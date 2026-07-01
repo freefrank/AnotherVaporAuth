@@ -518,6 +518,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aboutPrivacy => '隐私政策';
 
   @override
+  String get privacyConsentTitle => '你的隐私';
+
+  @override
+  String get privacyConsentBody =>
+      'AVA 把你的全部数据都保存在本机。它没有自己的后端，只连接 Valve 的 Steam 服务器，不做任何追踪或分析。继续即表示你接受隐私政策。';
+
+  @override
+  String get privacyConsentRead => '阅读完整隐私政策';
+
+  @override
+  String get privacyConsentAgree => '同意并继续';
+
+  @override
+  String get privacyConsentExit => '退出';
+
+  @override
   String get aboutLicenses => '开源许可证';
 
   @override

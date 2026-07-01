@@ -540,6 +540,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutPrivacy => 'Privacy policy';
 
   @override
+  String get privacyConsentTitle => 'Your privacy';
+
+  @override
+  String get privacyConsentBody =>
+      'AVA keeps all of your data on this device. It has no backend of its own, connects only to Valve\'s Steam servers, and does no tracking or analytics. By continuing, you accept the Privacy Policy.';
+
+  @override
+  String get privacyConsentRead => 'Read the full Privacy Policy';
+
+  @override
+  String get privacyConsentAgree => 'Agree & continue';
+
+  @override
+  String get privacyConsentExit => 'Exit';
+
+  @override
   String get aboutLicenses => 'Open-source licenses';
 
   @override

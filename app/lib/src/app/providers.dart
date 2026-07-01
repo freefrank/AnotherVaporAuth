@@ -103,12 +103,14 @@ class AppData {
   final List<SteamGuardAccount> accounts;
   final bool locked; // encrypted and not yet unlocked
   final String? passKey; // held in memory only while unlocked
+  final bool privacyAccepted; // first-run Privacy Policy gate
 
   const AppData({
     required this.store,
     required this.accounts,
     required this.locked,
     this.passKey,
+    this.privacyAccepted = true,
   });
 
   bool get encrypted => store.encrypted;
@@ -117,12 +119,14 @@ class AppData {
     List<SteamGuardAccount>? accounts,
     bool? locked,
     String? passKey,
+    bool? privacyAccepted,
   }) =>
       AppData(
         store: store,
         accounts: accounts ?? this.accounts,
         locked: locked ?? this.locked,
         passKey: passKey ?? this.passKey,
+        privacyAccepted: privacyAccepted ?? this.privacyAccepted,
       );
 }
 
@@ -133,18 +137,46 @@ final appControllerProvider =
 class AppController extends AsyncNotifier<AppData> {
   @override
   Future<AppData> build() async {
-    // Align Steam time in the background (does not block first paint long).
-    unawaited(ref.read(timeAlignerProvider)());
     final storage = ref.read(storageProvider);
     final store = await AccountStore.load(storage);
+    final privacyAccepted =
+        await ref.read(settingsStoreProvider).loadPrivacyAccepted();
+    // No network until the Privacy Policy is accepted.
+    if (privacyAccepted) {
+      unawaited(ref.read(timeAlignerProvider)());
+    }
 
     if (store.encrypted) {
-      return AppData(store: store, accounts: const [], locked: true);
+      return AppData(
+          store: store,
+          accounts: const [],
+          locked: true,
+          privacyAccepted: privacyAccepted);
     }
     final accounts = await store.getAllAccounts();
+    if (privacyAccepted) {
+      Future.microtask(refreshSessions);
+      Future.microtask(refreshAvatars);
+    }
+    return AppData(
+        store: store,
+        accounts: accounts,
+        locked: false,
+        privacyAccepted: privacyAccepted);
+  }
+
+  /// Records first-run acceptance of the Privacy Policy, then kicks off the
+  /// network work that was held back until consent. Updates state immediately
+  /// and persists in the background.
+  Future<void> acceptPrivacy() async {
+    final data = state.value;
+    if (data != null) {
+      state = AsyncData(data.copyWith(privacyAccepted: true));
+    }
+    unawaited(ref.read(settingsStoreProvider).savePrivacyAccepted(true));
+    unawaited(ref.read(timeAlignerProvider)());
     Future.microtask(refreshSessions);
     Future.microtask(refreshAvatars);
-    return AppData(store: store, accounts: accounts, locked: false);
   }
 
   bool _refreshingSessions = false;
