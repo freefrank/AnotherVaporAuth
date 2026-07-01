@@ -515,6 +515,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aboutLicense => '许可证';
 
   @override
+  String get aboutPrivacy => '隐私政策';
+
+  @override
   String get aboutLicenses => '开源许可证';
 
   @override

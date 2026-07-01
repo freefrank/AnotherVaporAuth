@@ -16,6 +16,8 @@ const _repoUrl = 'https://github.com/freefrank/AnotherVaporAuth';
 const _authorUrl = 'https://github.com/freefrank';
 const _licenseUrl =
     'https://github.com/freefrank/AnotherVaporAuth/blob/main/LICENSE';
+const _privacyUrl =
+    'https://github.com/freefrank/AnotherVaporAuth/blob/main/PRIVACY.md';
 
 /// Design screen 08 — settings. Each option is a panel card with a title, a
 /// short description and its control. Theme + language are selectable chips.
@@ -170,6 +172,14 @@ class SettingsScreen extends ConsumerWidget {
                           external: true),
                       _aboutRow(context, t, Icons.gavel_outlined,
                           l.aboutLicense, 'MIT', () => _openUrl(_licenseUrl),
+                          external: true),
+                      _aboutRow(
+                          context,
+                          t,
+                          Icons.privacy_tip_outlined,
+                          l.aboutPrivacy,
+                          null,
+                          () => _openUrl(_privacyUrl),
                           external: true),
                       _aboutRow(
                         context,

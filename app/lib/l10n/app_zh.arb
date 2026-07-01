@@ -195,6 +195,7 @@
   "aboutSourceCode": "源代码",
   "aboutAuthor": "作者",
   "aboutLicense": "许可证",
+  "aboutPrivacy": "隐私政策",
   "aboutLicenses": "开源许可证",
   "aboutCredits": "致谢",
   "aboutCreditsBody": "灵感来自 Steam Desktop Authenticator，兼容其 maFile 格式。基于 Flutter、Riverpod、Dio、PointyCastle、mobile_scanner、image 等开源库独立构建。",

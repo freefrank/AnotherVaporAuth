@@ -97,6 +97,12 @@ Original Steam Desktop Authenticator by Jessecar96 and contributors. Steam auth
 protocol references: [SteamAuth](https://github.com/geel9/SteamAuth),
 [node-steam-session](https://github.com/DoctorMcKay/node-steam-session).
 
+## Privacy
+
+The app has no backend: all data stays on your device and the only network
+connections are directly to Valve's Steam servers. See the full
+[Privacy Policy](PRIVACY.md) ([简体中文](PRIVACY_ZH.md)).
+
 ## License
 
 See [LICENSE](LICENSE). Bundled fonts retain their own OFL 1.1 licenses.

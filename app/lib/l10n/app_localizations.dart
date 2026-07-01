@@ -1070,6 +1070,12 @@ abstract class AppLocalizations {
   /// **'License'**
   String get aboutLicense;
 
+  /// No description provided for @aboutPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get aboutPrivacy;
+
   /// No description provided for @aboutLicenses.
   ///
   /// In en, this message translates to:

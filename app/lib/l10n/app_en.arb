@@ -195,6 +195,7 @@
   "aboutSourceCode": "Source code",
   "aboutAuthor": "Author",
   "aboutLicense": "License",
+  "aboutPrivacy": "Privacy policy",
   "aboutLicenses": "Open-source licenses",
   "aboutCredits": "Credits",
   "aboutCreditsBody": "Inspired by Steam Desktop Authenticator and compatible with its maFile format. Independently built with Flutter, Riverpod, Dio, PointyCastle, mobile_scanner, image and other open-source libraries.",
