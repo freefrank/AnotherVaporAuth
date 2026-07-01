@@ -4,6 +4,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/models/steam_guard_account.dart';
+import '../core/protocol/confirmations_client.dart';
+import '../core/protocol/inventory_client.dart';
+import '../core/protocol/market_client.dart';
 import '../services/account_store.dart';
 import '../services/auto_login.dart';
 import '../services/avatar_service.dart';
@@ -39,6 +42,18 @@ final credentialStoreProvider =
 /// re-login with the stored password + the account's own TOTP).
 final autoLoginProvider =
     Provider<AutoLogin>((ref) => AutoLogin(ref.read(apiClientProvider)));
+
+/// Steam inventory reader (games, wallet, items).
+final inventoryClientProvider =
+    Provider<InventoryClient>((ref) => InventoryClient(ref.read(apiClientProvider)));
+
+/// Steam Community Market operations (price, sell, listings).
+final marketClientProvider =
+    Provider<MarketClient>((ref) => MarketClient(ref.read(apiClientProvider)));
+
+/// Mobile confirmations (trade / market listing) client.
+final confirmationsClientProvider = Provider<ConfirmationsClient>(
+    (ref) => ConfirmationsClient(ref.read(apiClientProvider)));
 
 /// Time alignment hook (overridable in tests to avoid network).
 final timeAlignerProvider =

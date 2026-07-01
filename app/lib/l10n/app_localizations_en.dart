@@ -556,6 +556,84 @@ class AppLocalizationsEn extends AppLocalizations {
   String get privacyConsentExit => 'Exit';
 
   @override
+  String get actionMarket => 'Inventory / Market';
+
+  @override
+  String get marketTabInventory => 'Inventory';
+
+  @override
+  String get marketTabListings => 'My listings';
+
+  @override
+  String get marketSelectGame => 'Select a game';
+
+  @override
+  String get marketNoItems => 'No items in this inventory.';
+
+  @override
+  String get marketNotMarketable => 'Not marketable';
+
+  @override
+  String get marketSellTitle => 'List for sale';
+
+  @override
+  String get marketYouReceive => 'You receive';
+
+  @override
+  String get marketBuyerPays => 'Buyer pays';
+
+  @override
+  String get marketLowest => 'Lowest';
+
+  @override
+  String get marketMedian => 'Median';
+
+  @override
+  String get marketHigh => 'High';
+
+  @override
+  String get marketLow => 'Low';
+
+  @override
+  String get marketPriceUnavailable => 'Market price unavailable';
+
+  @override
+  String get marketListButton => 'List for sale';
+
+  @override
+  String get marketListed => 'Listed — confirm it to finish.';
+
+  @override
+  String get marketListedDone => 'Listed and confirmed.';
+
+  @override
+  String get marketAutoConfirm => 'Auto-confirm the listing';
+
+  @override
+  String get marketQuantity => 'Quantity';
+
+  @override
+  String get marketMax => 'Max';
+
+  @override
+  String marketListFailed(String error) {
+    return 'Listing failed: $error';
+  }
+
+  @override
+  String get marketCancel => 'Cancel listing';
+
+  @override
+  String get marketCancelled => 'Listing cancelled.';
+
+  @override
+  String get marketNoListings => 'No active listings.';
+
+  @override
+  String get marketFeeNote =>
+      'Steam + game fees are added on top of what you receive.';
+
+  @override
   String get aboutLicenses => 'Open-source licenses';
 
   @override

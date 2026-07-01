@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import '../../services/debug_log.dart';
 import '../../services/steam_api_client.dart';
@@ -27,8 +28,15 @@ class InventoryClient {
   final SteamApiClient api;
   InventoryClient(this.api);
 
+  final _rand = Random.secure();
+  String _sessionId() {
+    const hex = '0123456789abcdef';
+    return List.generate(24, (_) => hex[_rand.nextInt(16)]).join();
+  }
+
   Map<String, String> _cookies(SteamGuardAccount a) => {
         'steamLoginSecure': '${a.steamId}||${a.session.accessToken ?? ''}',
+        'sessionid': _sessionId(),
         'mobileClient': 'android',
       };
 
@@ -47,17 +55,20 @@ class InventoryClient {
     final games = <InventoryGame>[];
     if (apps != null) {
       apps.forEach((appid, raw) {
-        final app = raw as Map<String, dynamic>;
-        final contexts = (app['rgContexts'] as Map<String, dynamic>?) ?? {};
-        contexts.forEach((cid, craw) {
-          final ctx = craw as Map<String, dynamic>;
-          final count = _asInt(ctx['asset_count']);
+        if (raw is! Map) return;
+        // rgContexts is an object of {contextid: {...}}, but Steam encodes an
+        // empty one as a JSON array [] — skip those.
+        final ctxRaw = raw['rgContexts'];
+        if (ctxRaw is! Map) return;
+        ctxRaw.forEach((cid, craw) {
+          if (craw is! Map) return;
+          final count = _asInt(craw['asset_count']);
           if (count <= 0) return;
           games.add(InventoryGame(
             appid: int.tryParse(appid) ?? 0,
-            contextId: cid,
-            name: (app['name'] ?? '') as String,
-            iconUrl: (app['icon'] ?? '') as String,
+            contextId: '$cid',
+            name: (raw['name'] ?? '') as String,
+            iconUrl: (raw['icon'] ?? '') as String,
             itemCount: count,
           ));
         });

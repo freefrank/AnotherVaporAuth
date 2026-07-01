@@ -1106,6 +1106,156 @@ abstract class AppLocalizations {
   /// **'Exit'**
   String get privacyConsentExit;
 
+  /// No description provided for @actionMarket.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory / Market'**
+  String get actionMarket;
+
+  /// No description provided for @marketTabInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get marketTabInventory;
+
+  /// No description provided for @marketTabListings.
+  ///
+  /// In en, this message translates to:
+  /// **'My listings'**
+  String get marketTabListings;
+
+  /// No description provided for @marketSelectGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a game'**
+  String get marketSelectGame;
+
+  /// No description provided for @marketNoItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No items in this inventory.'**
+  String get marketNoItems;
+
+  /// No description provided for @marketNotMarketable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not marketable'**
+  String get marketNotMarketable;
+
+  /// No description provided for @marketSellTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'List for sale'**
+  String get marketSellTitle;
+
+  /// No description provided for @marketYouReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'You receive'**
+  String get marketYouReceive;
+
+  /// No description provided for @marketBuyerPays.
+  ///
+  /// In en, this message translates to:
+  /// **'Buyer pays'**
+  String get marketBuyerPays;
+
+  /// No description provided for @marketLowest.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowest'**
+  String get marketLowest;
+
+  /// No description provided for @marketMedian.
+  ///
+  /// In en, this message translates to:
+  /// **'Median'**
+  String get marketMedian;
+
+  /// No description provided for @marketHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get marketHigh;
+
+  /// No description provided for @marketLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get marketLow;
+
+  /// No description provided for @marketPriceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Market price unavailable'**
+  String get marketPriceUnavailable;
+
+  /// No description provided for @marketListButton.
+  ///
+  /// In en, this message translates to:
+  /// **'List for sale'**
+  String get marketListButton;
+
+  /// No description provided for @marketListed.
+  ///
+  /// In en, this message translates to:
+  /// **'Listed — confirm it to finish.'**
+  String get marketListed;
+
+  /// No description provided for @marketListedDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Listed and confirmed.'**
+  String get marketListedDone;
+
+  /// No description provided for @marketAutoConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-confirm the listing'**
+  String get marketAutoConfirm;
+
+  /// No description provided for @marketQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get marketQuantity;
+
+  /// No description provided for @marketMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Max'**
+  String get marketMax;
+
+  /// No description provided for @marketListFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Listing failed: {error}'**
+  String marketListFailed(String error);
+
+  /// No description provided for @marketCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel listing'**
+  String get marketCancel;
+
+  /// No description provided for @marketCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Listing cancelled.'**
+  String get marketCancelled;
+
+  /// No description provided for @marketNoListings.
+  ///
+  /// In en, this message translates to:
+  /// **'No active listings.'**
+  String get marketNoListings;
+
+  /// No description provided for @marketFeeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam + game fees are added on top of what you receive.'**
+  String get marketFeeNote;
+
   /// No description provided for @aboutLicenses.
   ///
   /// In en, this message translates to:

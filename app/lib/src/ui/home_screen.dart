@@ -24,6 +24,7 @@ import 'confirmations_screen.dart';
 import 'import_helper.dart';
 import 'pending_login.dart';
 import 'login_screen.dart';
+import 'market/market_screen.dart';
 import 'password_dialog.dart';
 import 'settings_screen.dart';
 
@@ -385,6 +386,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 'logins':
         await checkPendingLogins(context, ref, account);
         break;
+      case 'market':
+        await Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => MarketScreen(account: account)));
+        break;
       case 'password':
         await promptSavePassword(context, ref, account);
         break;
@@ -576,6 +581,11 @@ class _SidebarRow extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            ListTile(
+              leading: const Icon(Icons.storefront_outlined),
+              title: Text(l.actionMarket),
+              onTap: () => Navigator.pop(ctx, 'market'),
+            ),
             ListTile(
               leading: const Icon(Icons.password_outlined),
               title: Text(l.pwdSave),

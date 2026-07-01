@@ -40,6 +40,34 @@ class MarketClient {
   String _inventoryReferer(SteamGuardAccount a) =>
       '${SteamApiClient.communityBase}/profiles/${a.steamId}/inventory';
 
+  /// Historical sale prices for the item (for a trend sparkline). Returns the
+  /// most recent [points] price values, or empty on failure. Requires login.
+  Future<List<double>> priceHistory(
+      SteamGuardAccount account, int appid, String marketHashName,
+      {int points = 60}) async {
+    final sid = _newSessionId();
+    try {
+      final json = await api.communityGetJson(
+        '/market/pricehistory/',
+        {'appid': '$appid', 'market_hash_name': marketHashName},
+        cookies: _cookies(account, sid),
+      );
+      if (json['success'] != true) return const [];
+      final prices = (json['prices'] as List?) ?? const [];
+      final values = <double>[];
+      for (final p in prices) {
+        if (p is List && p.length >= 2 && p[1] is num) {
+          values.add((p[1] as num).toDouble());
+        }
+      }
+      return values.length > points
+          ? values.sublist(values.length - points)
+          : values;
+    } catch (_) {
+      return const [];
+    }
+  }
+
   /// Reference price for an item (localized strings). Null on failure/rate-limit.
   Future<MarketPrice?> priceOverview(
       int appid, String marketHashName, int currency) async {
@@ -60,7 +88,8 @@ class MarketClient {
   /// the wallet's minor units. On success Steam usually needs a mobile
   /// confirmation to finalize the listing.
   Future<SellResult> sell(
-      SteamGuardAccount account, InventoryItem item, int priceReceive) async {
+      SteamGuardAccount account, InventoryItem item, int priceReceive,
+      {String? assetId}) async {
     final sid = _newSessionId();
     final json = await api.communityPostJson(
       '/market/sellitem/',
@@ -68,7 +97,7 @@ class MarketClient {
         'sessionid': sid,
         'appid': '${item.appid}',
         'contextid': item.contextId,
-        'assetid': item.assetId,
+        'assetid': assetId ?? item.assetId,
         'amount': '1',
         'price': '$priceReceive',
       },

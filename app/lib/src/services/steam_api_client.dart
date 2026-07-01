@@ -117,12 +117,15 @@ class SteamApiClient {
       final body = resp.data ?? '';
       dlog('← $path  HTTP ${resp.statusCode}  ${body.length}B');
       if (body.isEmpty) return const {};
-      final json = jsonDecode(body) as Map<String, dynamic>;
-      if (json['success'] != true) {
-        dlog('  ⚠ $path success=${json['success']} '
-            '${json['message'] ?? json['needauth'] ?? ''}');
+      final decoded = jsonDecode(body);
+      // Some write endpoints (e.g. removelisting) reply 200 with a bare `[]` —
+      // treat a non-object body as a plain success.
+      if (decoded is! Map<String, dynamic>) return const {};
+      if (decoded['success'] != true) {
+        dlog('  ⚠ $path success=${decoded['success']} '
+            '${decoded['message'] ?? decoded['needauth'] ?? ''}');
       }
-      return json;
+      return decoded;
     } on DioException catch (e) {
       dlog('  ✗ $path network: ${e.type.name} ${e.response?.statusCode ?? ''}');
       rethrow;
@@ -136,18 +139,41 @@ class SteamApiClient {
     Map<String, dynamic>? query,
     Map<String, String>? cookies,
   }) async {
+    // Accumulate cookies across the redirect chain (we have no cookie jar).
+    // Steam's inventory page bounces through /market/eligibilitycheck, which
+    // Set-Cookies a "passed" flag and redirects back; without carrying that
+    // cookie the two pages ping-pong forever.
+    final jar = <String, String>{...?cookies};
+    Options opts() => Options(
+          responseType: ResponseType.plain,
+          headers: {
+            'Cookie': _cookieHeader(jar),
+            'X-Requested-With': 'com.valvesoftware.android.steam.community',
+          },
+        );
+    void absorb(Response resp) {
+      for (final sc in resp.headers['set-cookie'] ?? const <String>[]) {
+        final kv = sc.split(';').first.trim();
+        final i = kv.indexOf('=');
+        if (i > 0) jar[kv.substring(0, i)] = kv.substring(i + 1);
+      }
+    }
+
+    var url = path.startsWith('http') ? path : '$communityBase$path';
     dlog('→ GET(text) $path');
-    final resp = await _dio.get<String>(
-      path.startsWith('http') ? path : '$communityBase$path',
-      queryParameters: query,
-      options: Options(
-        responseType: ResponseType.plain,
-        headers: {
-          if (cookies != null) 'Cookie': _cookieHeader(cookies),
-          'X-Requested-With': 'com.valvesoftware.android.steam.community',
-        },
-      ),
-    );
+    var resp = await _dio.get<String>(url, queryParameters: query, options: opts());
+    absorb(resp);
+    var hops = 0;
+    while ((resp.statusCode ?? 0) >= 300 &&
+        (resp.statusCode ?? 0) < 400 &&
+        hops++ < 6) {
+      final loc = resp.headers.value('location');
+      if (loc == null || loc.isEmpty) break;
+      url = loc.startsWith('http') ? loc : '$communityBase$loc';
+      dlog('  ↪ redirect $url');
+      resp = await _dio.get<String>(url, options: opts());
+      absorb(resp);
+    }
     final body = resp.data ?? '';
     dlog('← $path  HTTP ${resp.statusCode}  ${body.length}B');
     return body;
@@ -181,12 +207,15 @@ class SteamApiClient {
       final body = resp.data ?? '';
       dlog('← $path  HTTP ${resp.statusCode}  ${body.length}B');
       if (body.isEmpty) return const {};
-      final json = jsonDecode(body) as Map<String, dynamic>;
-      if (json['success'] != true) {
-        dlog('  ⚠ $path success=${json['success']} '
-            '${json['message'] ?? json['needauth'] ?? ''}');
+      final decoded = jsonDecode(body);
+      // Some write endpoints (e.g. removelisting) reply 200 with a bare `[]` —
+      // treat a non-object body as a plain success.
+      if (decoded is! Map<String, dynamic>) return const {};
+      if (decoded['success'] != true) {
+        dlog('  ⚠ $path success=${decoded['success']} '
+            '${decoded['message'] ?? decoded['needauth'] ?? ''}');
       }
-      return json;
+      return decoded;
     } on DioException catch (e) {
       dlog('  ✗ $path network: ${e.type.name} ${e.response?.statusCode ?? ''}');
       rethrow;

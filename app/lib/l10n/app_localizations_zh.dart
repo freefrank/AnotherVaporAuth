@@ -534,6 +534,83 @@ class AppLocalizationsZh extends AppLocalizations {
   String get privacyConsentExit => '退出';
 
   @override
+  String get actionMarket => '库存 / 市场';
+
+  @override
+  String get marketTabInventory => '库存';
+
+  @override
+  String get marketTabListings => '我的在售';
+
+  @override
+  String get marketSelectGame => '选择游戏';
+
+  @override
+  String get marketNoItems => '该库存没有物品。';
+
+  @override
+  String get marketNotMarketable => '不可上架';
+
+  @override
+  String get marketSellTitle => '上架出售';
+
+  @override
+  String get marketYouReceive => '你到手';
+
+  @override
+  String get marketBuyerPays => '买家支付';
+
+  @override
+  String get marketLowest => '最低在售';
+
+  @override
+  String get marketMedian => '中位成交';
+
+  @override
+  String get marketHigh => '最高';
+
+  @override
+  String get marketLow => '最低';
+
+  @override
+  String get marketPriceUnavailable => '市场价暂不可用';
+
+  @override
+  String get marketListButton => '确认上架';
+
+  @override
+  String get marketListed => '已上架，去确认完成。';
+
+  @override
+  String get marketListedDone => '已上架并确认。';
+
+  @override
+  String get marketAutoConfirm => '上架后自动确认';
+
+  @override
+  String get marketQuantity => '数量';
+
+  @override
+  String get marketMax => '最大';
+
+  @override
+  String marketListFailed(String error) {
+    return '上架失败：$error';
+  }
+
+  @override
+  String get marketCancel => '撤销在售';
+
+  @override
+  String get marketCancelled => '已撤销在售。';
+
+  @override
+  String get marketNoListings => '暂无在售。';
+
+  @override
+  String get marketFeeNote => 'Steam + 游戏手续费会在你到手价基础上叠加给买家。';
+
+  @override
   String get aboutLicenses => '开源许可证';
 
   @override
