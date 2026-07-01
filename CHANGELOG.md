@@ -5,6 +5,40 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.61] — 2026-06-30
+
+### Added
+- **Automatic session refresh**: the access token is refreshed from the refresh
+  token as needed, and — when the refresh token is dead — AVA can do a full
+  headless re-login using a stored password plus the account's own TOTP. Runs on
+  app open / unlock (only for stale tokens) and on demand.
+- **Password storage**: long-press an account → Save password (verified by a
+  real headless login) or Clear it. The password is kept in the maFile so it
+  travels with the account. Note: the unencrypted export then contains it.
+- **Full pixel theme**: a retro backdrop (pixel grid, drifting starfield, corner
+  brackets), a blocky pull-to-refresh, sticker-style account rows and chunky
+  swipe buttons; the account list is translucent over the starfield.
+- **Floating settings button** in the bottom-right; the top header is gone.
+
+### Changed
+- The unlock screen now signs in automatically once the 6-digit PIN is entered —
+  no confirm tap needed.
+
+—
+
+### 新增
+- **自动刷新登录**：access token 按需用 refresh_token 刷新；当 refresh_token 也失效
+  时，可用保存的密码 + 账户自身 TOTP 无界面全量重登。开 app / 解锁（仅刷新快过期的）
+  及按需触发。
+- **密码存储**：长按账户 → 保存密码（经真实无界面登录验证）或清除。密码存于 maFile，
+  随账户走。注意：导出的未加密 maFile 会含明文密码。
+- **完整像素主题**：复古背景（像素网格、漂移星场、角框）、方块下拉刷新、贴纸式账户行、
+  复古滑动按钮；账户列表半透明透出星场。
+- **右下角浮动设置按钮**；顶部 header 已移除。
+
+### 变更
+- 解锁界面输满 6 位 PIN 即自动登录，无需点确认。
+
 ## [v0.60] — 2026-06-30
 
 ### Added
