@@ -215,21 +215,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l.appTitle),
-        actions: [
-          IconButton(
-            tooltip: l.navSettings,
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
-            ),
-          ),
-        ],
+      // Header removed — settings is a floating button in the bottom-right.
+      floatingActionButton: _SettingsFab(
+        label: l.navSettings,
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        ),
       ),
       body: ScanlineOverlay(
         child: !hasAccounts
-            ? _EmptyState(onAdd: () => _addMenu(context))
+            ? SafeArea(child: _EmptyState(onAdd: () => _addMenu(context)))
             : LayoutBuilder(
                 builder: (context, c) {
                   final sidebar = _Sidebar(
@@ -260,21 +255,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     nameMode: _nameMode,
                     onTapName: _cycleNameMode,
                   );
-                  final Widget content = c.maxWidth >= 640
-                      ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            SizedBox(width: context.r(240), child: sidebar),
-                            Expanded(child: panel),
-                          ],
-                        )
-                      : Column(
-                          children: [
-                            panel,
-                            Divider(height: context.r(1)),
-                            Expanded(child: sidebar),
-                          ],
-                        );
+                  final Widget content = SafeArea(
+                    bottom: false,
+                    child: c.maxWidth >= 640
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              SizedBox(width: context.r(240), child: sidebar),
+                              Expanded(child: panel),
+                            ],
+                          )
+                        : Column(
+                            children: [
+                              panel,
+                              Divider(height: context.r(1)),
+                              Expanded(child: sidebar),
+                            ],
+                          ),
+                  );
                   final pull01 = _refreshing
                       ? 1.0
                       : (_pull / _pullThreshold).clamp(0.0, 1.0);
@@ -447,7 +445,9 @@ class _Sidebar extends StatelessWidget {
           // themes (neon fill / pixel blocks).
           physics: const AlwaysScrollableScrollPhysics(
               parent: BouncingScrollPhysics()),
-          padding: context.rInsets(h: 8, v: 4),
+          // Bottom clearance so the floating settings button doesn't cover the
+          // last row.
+          padding: context.rInsets(left: 8, right: 8, top: 4, bottom: 78),
           itemCount: accounts.length,
           itemBuilder: (context, i) => _SidebarRow(
             account: accounts[i],
@@ -467,7 +467,9 @@ class _Sidebar extends StatelessWidget {
     final t = Theme.of(context).extension<SdaTokens>()!;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: t.panel,
+        // Neon panel is already translucent; make the pixel list translucent too
+        // so the starfield backdrop shows through.
+        color: neon ? t.panel : t.panel.withValues(alpha: 0.32),
         border: Border(right: BorderSide(color: t.line, width: t.borderWidth)),
       ),
       child: Column(
@@ -858,6 +860,60 @@ class _MainPanel extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Floating settings button (bottom-right), styled per theme: neon glass disc
+/// with an accent glow, or a chunky pixel square with a hard offset shadow.
+class _SettingsFab extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _SettingsFab({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    final neon = t.glow;
+    final size = context.r(54);
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius:
+              BorderRadius.circular(neon ? size / 2 : t.radiusSm),
+          child: Container(
+            width: size,
+            height: size,
+            alignment: Alignment.center,
+            decoration: neon
+                ? BoxDecoration(
+                    color: t.panel2,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: t.accent, width: context.r(1.4)),
+                    boxShadow: [
+                      BoxShadow(
+                          color: t.accent.withValues(alpha: 0.4),
+                          blurRadius: context.r(14)),
+                    ],
+                  )
+                : BoxDecoration(
+                    color: t.panel2,
+                    border: Border.all(color: t.accent, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                          color: t.borderColor,
+                          offset: Offset(context.r(3), context.r(3))),
+                    ],
+                  ),
+            child: Icon(Icons.settings_outlined,
+                color: t.accent, size: context.r(26)),
+          ),
+        ),
       ),
     );
   }
