@@ -13,7 +13,9 @@ import 'widgets/stepper3.dart';
 
 class AddAuthenticatorScreen extends ConsumerStatefulWidget {
   final SessionData session;
-  const AddAuthenticatorScreen({super.key, required this.session});
+  final String? password; // saved to the new account for auto-refresh, if given
+  const AddAuthenticatorScreen(
+      {super.key, required this.session, this.password});
 
   @override
   ConsumerState<AddAuthenticatorScreen> createState() =>
@@ -69,6 +71,9 @@ class _AddAuthenticatorScreenState
           break;
         case LinkResult.awaitingFinalization:
           // Save immediately — losing these secrets would be catastrophic.
+          if (widget.password != null && widget.password!.isNotEmpty) {
+            _linker.linkedAccount!.password = widget.password;
+          }
           await ref
               .read(appControllerProvider.notifier)
               .persistAccount(_linker.linkedAccount!);

@@ -249,6 +249,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginPassword => 'Password';
 
   @override
+  String get loginSavePassword => 'Save password';
+
+  @override
+  String get loginSavePasswordHint =>
+      'Kept in this account\'s maFile for automatic session refresh; an unencrypted export will contain it.';
+
+  @override
   String get loginButton => 'Log in';
 
   @override
@@ -429,41 +436,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonCopy => 'Copy link';
-
-  @override
-  String get pwdSave => 'Save password';
-
-  @override
-  String get pwdClear => 'Clear saved password';
-
-  @override
-  String get pwdCleared => 'Saved password cleared.';
-
-  @override
-  String get pwdSaveTitle => 'Save Steam password';
-
-  @override
-  String get pwdSaveBody =>
-      'Stored in the device keystore (never in the maFile) so AVA can refresh this account\'s sign-in automatically.';
-
-  @override
-  String get pwdField => 'Steam password';
-
-  @override
-  String get pwdVerify => 'Verify & save';
-
-  @override
-  String get pwdWrong => 'Wrong password or sign-in failed.';
-
-  @override
-  String get pwdNeedsEmail =>
-      'This account needs an email code — use the full sign-in instead.';
-
-  @override
-  String get pwdSaved => 'Password saved and session refreshed.';
-
-  @override
-  String get pwdHasSaved => 'A password is saved for this account.';
 
   @override
   String get commonRefresh => 'Refresh';

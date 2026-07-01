@@ -13,8 +13,14 @@ automated releases.
   Community Market. The sell sheet shows the market price and a high/low price
   trend, linked "you receive ⇄ buyer pays" fields with Steam's live fees, a
   quantity stepper (with Max) for batch listing, and an optional auto-confirm.
-  A "My listings" tab shows and cancels active listings. Reached from an
-  account's long-press menu. All native JSON — no WebView.
+  A "My listings" tab shows and cancels active listings. Reached by
+  long-pressing an account. All native JSON — no WebView.
+
+### Changed
+- **Save password** is now a checkbox in the sign-in screen (on by default),
+  covering both adding a new authenticator and refreshing an existing account's
+  session. The redundant long-press "Save password" action was removed; a
+  long-press now opens Inventory & Market directly.
 
 —
 
@@ -24,6 +30,10 @@ automated releases.
   「你到手 ⇄ 买家支付」联动（实时 Steam 费率）、数量步进器（含「最大」）批量上架，
   以及可选的上架后自动确认；「我的在售」页可查看/撤销。从账户长按菜单进入。全程原生
   JSON，无 WebView。
+
+### 变更
+- **保存密码** 改为登录界面里的一个勾选框（默认勾选），同时覆盖新增验证器和刷新已有
+  账户会话两条路径。移除了冗余的长按「保存密码」；长按现在直接进入库存与市场。
 
 ## [v0.62] — 2026-07-01
 

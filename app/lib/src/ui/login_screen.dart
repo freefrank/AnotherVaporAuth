@@ -37,6 +37,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _qrMode = false;
   String? _qrUrl;
   bool _busy = false;
+  bool _savePassword = true; // store the password in the maFile for auto-refresh
   bool _waiting = false; // polling for mobile/email confirmation
   String? _status;
   String? _error;
@@ -220,19 +221,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ..steamId = session.steamId
         ..accessToken = session.accessToken
         ..refreshToken = session.refreshToken;
-      // Remember the password in the maFile so the session can be refreshed
-      // automatically next time. QR logins have no password to save.
-      if (_password.text.isNotEmpty) account.password = _password.text;
+      // Remember the password in the maFile (opt-in) so the session can be
+      // refreshed automatically next time; unchecking clears any saved one.
+      // QR logins have no password.
+      if (_savePassword && _password.text.isNotEmpty) {
+        account.password = _password.text;
+      } else if (!_savePassword) {
+        account.password = null;
+      }
       account.fullyEnrolled = true;
       await ref.read(appControllerProvider.notifier).persistAccount(account);
       if (mounted) Navigator.of(context).pop();
       return;
     }
 
-    // reason == add: proceed to authenticator linking.
+    // reason == add: proceed to authenticator linking, carrying the password
+    // so the new account can save it if requested.
     if (mounted) {
       Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (_) => AddAuthenticatorScreen(session: session),
+        builder: (_) => AddAuthenticatorScreen(
+          session: session,
+          password: _savePassword && _password.text.isNotEmpty
+              ? _password.text
+              : null,
+        ),
       ));
     }
   }
@@ -384,6 +396,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   border: const OutlineInputBorder(),
                 ),
                 onSubmitted: (_) => _startPassword(),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                value: _savePassword,
+                onChanged: (v) => setState(() => _savePassword = v ?? false),
+                title: Text(l.loginSavePassword),
+                subtitle: Text(l.loginSavePasswordHint,
+                    style: TextStyle(fontSize: context.r(11))),
               ),
             ],
           ),

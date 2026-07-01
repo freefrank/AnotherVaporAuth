@@ -542,6 +542,18 @@ abstract class AppLocalizations {
   /// **'Password'**
   String get loginPassword;
 
+  /// No description provided for @loginSavePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Save password'**
+  String get loginSavePassword;
+
+  /// No description provided for @loginSavePasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept in this account\'s maFile for automatic session refresh; an unencrypted export will contain it.'**
+  String get loginSavePasswordHint;
+
   /// No description provided for @loginButton.
   ///
   /// In en, this message translates to:
@@ -865,72 +877,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copy link'**
   String get commonCopy;
-
-  /// No description provided for @pwdSave.
-  ///
-  /// In en, this message translates to:
-  /// **'Save password'**
-  String get pwdSave;
-
-  /// No description provided for @pwdClear.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear saved password'**
-  String get pwdClear;
-
-  /// No description provided for @pwdCleared.
-  ///
-  /// In en, this message translates to:
-  /// **'Saved password cleared.'**
-  String get pwdCleared;
-
-  /// No description provided for @pwdSaveTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Save Steam password'**
-  String get pwdSaveTitle;
-
-  /// No description provided for @pwdSaveBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Stored in the device keystore (never in the maFile) so AVA can refresh this account\'s sign-in automatically.'**
-  String get pwdSaveBody;
-
-  /// No description provided for @pwdField.
-  ///
-  /// In en, this message translates to:
-  /// **'Steam password'**
-  String get pwdField;
-
-  /// No description provided for @pwdVerify.
-  ///
-  /// In en, this message translates to:
-  /// **'Verify & save'**
-  String get pwdVerify;
-
-  /// No description provided for @pwdWrong.
-  ///
-  /// In en, this message translates to:
-  /// **'Wrong password or sign-in failed.'**
-  String get pwdWrong;
-
-  /// No description provided for @pwdNeedsEmail.
-  ///
-  /// In en, this message translates to:
-  /// **'This account needs an email code — use the full sign-in instead.'**
-  String get pwdNeedsEmail;
-
-  /// No description provided for @pwdSaved.
-  ///
-  /// In en, this message translates to:
-  /// **'Password saved and session refreshed.'**
-  String get pwdSaved;
-
-  /// No description provided for @pwdHasSaved.
-  ///
-  /// In en, this message translates to:
-  /// **'A password is saved for this account.'**
-  String get pwdHasSaved;
 
   /// No description provided for @commonRefresh.
   ///

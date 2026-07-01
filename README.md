@@ -35,6 +35,11 @@
 - **In-app sign-in approval** — approve or deny Steam logins from a dialog inside
   AVA (device + location shown), just like the official app — by polling, no push.
 - **Trade / market confirmations** — batch accept/reject (native JSON, no WebView).
+- **Inventory & Market** — browse an account's Steam inventory (Steam-style game
+  picker, identical items stacked) and list items on the Community Market with
+  live Steam fees, a high/low price trend, linked "you receive ⇄ buyer pays"
+  pricing, batch listing, and optional auto-confirm; a "My listings" tab cancels
+  active listings. Long-press an account to open it.
 - **Automatic session refresh** — refreshes the access token from the refresh
   token, and (optionally) does a full headless re-login with a stored password
   plus the account's own TOTP when the refresh token expires.
@@ -67,7 +72,7 @@ Requires the Flutter SDK (3.44.x). See `app/README.md` for details.
 ```sh
 cd app
 flutter pub get
-flutter test                       # analyze + 39 tests
+flutter test                       # analyze + 51 tests
 flutter run -d linux               # or windows / macos
 flutter build apk --release --split-per-abi
 ```

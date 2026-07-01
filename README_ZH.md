@@ -29,6 +29,9 @@
 - **Steam Guard 验证码** —— 每账户列表 + 实时倒计时环、点按复制；点名称在 用户名 / 昵称 / ID 间切换。
 - **应用内批准登录** —— 在 AVA 内弹窗批准/拒绝 Steam 登录（显示设备 + 位置），与官方 App 一致，基于轮询、无需推送。
 - **交易 / 市场确认** —— 支持批量接受/拒绝（原生 JSON 渲染，不用内嵌 WebView）。
+- **库存与市场** —— 浏览账户的 Steam 库存（像 Steam 一样按游戏选择，相同物品堆叠），
+  并把物品上架到社区市场：实时 Steam 费率、最高/最低成交走势、「你到手 ⇄ 买家支付」
+  联动定价、批量上架、可选自动确认；「我的在售」页可撤销在售。长按账户即可进入。
 - **自动刷新登录** —— access token 按需用 refresh_token 刷新；refresh_token 失效时可用保存的密码 + 账户自身 TOTP 无界面全量重登。
 - **登录方式** —— 密码 + **扫码**、会话刷新、添加验证器、扫描他人二维码批准其登录。
 - **应用锁** —— 强制 6 位 PIN 加密本地存储（AES-256），支持指纹 / 设备密码解锁；输满 PIN 即自动登录。
@@ -54,7 +57,7 @@ docs/     设计文档（docs/superpowers/specs/）
 ```sh
 cd app
 flutter pub get
-flutter test                       # analyze + 39 项测试
+flutter test                       # analyze + 51 项测试
 flutter run -d linux               # 或 windows / macos
 flutter build apk --release --split-per-abi
 ```

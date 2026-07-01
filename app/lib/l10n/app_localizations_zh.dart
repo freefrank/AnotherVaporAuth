@@ -240,6 +240,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loginPassword => '密码';
 
   @override
+  String get loginSavePassword => '保存密码';
+
+  @override
+  String get loginSavePasswordHint =>
+      '存在该账户的 maFile 中用于自动刷新登录；导出的未加密 maFile 会包含它。';
+
+  @override
   String get loginButton => '登录';
 
   @override
@@ -410,39 +417,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get commonCopy => '复制链接';
-
-  @override
-  String get pwdSave => '保存密码';
-
-  @override
-  String get pwdClear => '清除已存密码';
-
-  @override
-  String get pwdCleared => '已清除保存的密码。';
-
-  @override
-  String get pwdSaveTitle => '保存 Steam 密码';
-
-  @override
-  String get pwdSaveBody => '存于设备 keystore（绝不写入 maFile），用于自动刷新该账户的登录。';
-
-  @override
-  String get pwdField => 'Steam 密码';
-
-  @override
-  String get pwdVerify => '验证并保存';
-
-  @override
-  String get pwdWrong => '密码错误或登录失败。';
-
-  @override
-  String get pwdNeedsEmail => '该账户需要邮箱验证码，请改用完整登录。';
-
-  @override
-  String get pwdSaved => '密码已保存，登录已刷新。';
-
-  @override
-  String get pwdHasSaved => '该账户已保存密码。';
 
   @override
   String get commonRefresh => '刷新';
