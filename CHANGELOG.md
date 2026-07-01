@@ -5,6 +5,27 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.62] — 2026-07-01
+
+### Added
+- **Privacy Policy** (EN + 中文), linked from Settings → About, with a first-run
+  consent gate. No network request is made until you accept.
+
+### Fixed
+- **Trade / market confirmations**: accepting or rejecting now works again.
+  Steam's react `mobileconf` endpoint requires the accept/deny call to be a POST
+  form body (it was being sent as a GET query).
+
+—
+
+### 新增
+- **隐私政策**（中英双语），设置 → 关于 内可查看，并在首次启动时需要同意。接受前不发起
+  任何网络请求。
+
+### 修复
+- **交易 / 市场确认**：批准或拒绝恢复正常。Steam 的 react 版 `mobileconf` 端点要求
+  批准/拒绝以 POST 表单体发送（之前发成了 GET query）。
+
 ## [v0.61] — 2026-06-30
 
 ### Added
