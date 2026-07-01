@@ -159,6 +159,9 @@
   "addPresentCopiedUrl": "链接已复制",
   "commonRetry": "重试",
   "commonCopy": "复制链接",
+  "commonRefresh": "刷新",
+  "commonExport": "导出",
+  "commonDelete": "删除",
 
   "settingsEncryption": "加密",
   "settingsEncryptionDesc": "本机 maFiles 已用你的 6 位解锁 PIN 加密（AES-256-CBC）。",
@@ -175,6 +178,15 @@
   "settingsTheme": "主题",
   "themeNeon": "霓虹",
   "themePixel": "像素",
+
+  "settingsAbout": "关于",
+  "aboutTagline": "开源的 Steam 令牌验证器，用 Flutter 重写。",
+  "aboutSourceCode": "源代码",
+  "aboutAuthor": "作者",
+  "aboutLicense": "许可证",
+  "aboutLicenses": "开源许可证",
+  "aboutCredits": "致谢",
+  "aboutCreditsBody": "灵感来自 Steam Desktop Authenticator，兼容其 maFile 格式。基于 Flutter、Riverpod、Dio、PointyCastle、mobile_scanner、image 等开源库独立构建。",
 
   "actionLogin": "登录 / 刷新会话",
   "actionConfirmations": "交易确认",

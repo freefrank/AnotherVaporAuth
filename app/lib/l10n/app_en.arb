@@ -159,6 +159,9 @@
   "addPresentCopiedUrl": "Link copied",
   "commonRetry": "Retry",
   "commonCopy": "Copy link",
+  "commonRefresh": "Refresh",
+  "commonExport": "Export",
+  "commonDelete": "Delete",
 
   "settingsEncryption": "Encryption",
   "settingsEncryptionDesc": "Your local maFiles are encrypted (AES-256-CBC) with your 6-digit unlock PIN.",
@@ -175,6 +178,15 @@
   "settingsTheme": "Theme",
   "themeNeon": "Neon",
   "themePixel": "Pixel",
+
+  "settingsAbout": "About",
+  "aboutTagline": "An open-source Steam Guard authenticator, rewritten in Flutter.",
+  "aboutSourceCode": "Source code",
+  "aboutAuthor": "Author",
+  "aboutLicense": "License",
+  "aboutLicenses": "Open-source licenses",
+  "aboutCredits": "Credits",
+  "aboutCreditsBody": "Inspired by Steam Desktop Authenticator and compatible with its maFile format. Independently built with Flutter, Riverpod, Dio, PointyCastle, mobile_scanner, image and other open-source libraries.",
 
   "actionLogin": "Log in / refresh session",
   "actionConfirmations": "Trade confirmations",

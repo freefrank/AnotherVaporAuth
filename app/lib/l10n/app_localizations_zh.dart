@@ -412,6 +412,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonCopy => '复制链接';
 
   @override
+  String get commonRefresh => '刷新';
+
+  @override
+  String get commonExport => '导出';
+
+  @override
+  String get commonDelete => '删除';
+
+  @override
   String get settingsEncryption => '加密';
 
   @override
@@ -456,6 +465,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get themePixel => '像素';
+
+  @override
+  String get settingsAbout => '关于';
+
+  @override
+  String get aboutTagline => '开源的 Steam 令牌验证器，用 Flutter 重写。';
+
+  @override
+  String get aboutSourceCode => '源代码';
+
+  @override
+  String get aboutAuthor => '作者';
+
+  @override
+  String get aboutLicense => '许可证';
+
+  @override
+  String get aboutLicenses => '开源许可证';
+
+  @override
+  String get aboutCredits => '致谢';
+
+  @override
+  String get aboutCreditsBody =>
+      '灵感来自 Steam Desktop Authenticator，兼容其 maFile 格式。基于 Flutter、Riverpod、Dio、PointyCastle、mobile_scanner、image 等开源库独立构建。';
 
   @override
   String get actionLogin => '登录 / 刷新会话';

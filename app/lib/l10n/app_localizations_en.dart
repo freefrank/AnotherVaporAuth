@@ -431,6 +431,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonCopy => 'Copy link';
 
   @override
+  String get commonRefresh => 'Refresh';
+
+  @override
+  String get commonExport => 'Export';
+
+  @override
+  String get commonDelete => 'Delete';
+
+  @override
   String get settingsEncryption => 'Encryption';
 
   @override
@@ -475,6 +484,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themePixel => 'Pixel';
+
+  @override
+  String get settingsAbout => 'About';
+
+  @override
+  String get aboutTagline =>
+      'An open-source Steam Guard authenticator, rewritten in Flutter.';
+
+  @override
+  String get aboutSourceCode => 'Source code';
+
+  @override
+  String get aboutAuthor => 'Author';
+
+  @override
+  String get aboutLicense => 'License';
+
+  @override
+  String get aboutLicenses => 'Open-source licenses';
+
+  @override
+  String get aboutCredits => 'Credits';
+
+  @override
+  String get aboutCreditsBody =>
+      'Inspired by Steam Desktop Authenticator and compatible with its maFile format. Independently built with Flutter, Riverpod, Dio, PointyCastle, mobile_scanner, image and other open-source libraries.';
 
   @override
   String get actionLogin => 'Log in / refresh session';

@@ -50,6 +50,8 @@ dependencies:
   # utils
   collection: ^1.19.0
   image: ^4.9.1
+  url_launcher: ^6.3.2
+  flutter_slidable: ^4.0.3
 
 dev_dependencies:
   flutter_test:
