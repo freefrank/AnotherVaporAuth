@@ -1,7 +1,7 @@
 name: ava
 description: "AVA (AnotherVaporAuth) — a Steam authenticator"
 publish_to: 'none'
-version: 0.59.0+1
+version: 0.60.0+1
 
 environment:
   sdk: ^3.12.2

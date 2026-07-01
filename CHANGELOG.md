@@ -5,6 +5,35 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.60] — 2026-06-30
+
+### Added
+- **About section in Settings**: source code / author / license links, an
+  open-source licenses page, and a credits note.
+- **Reduce-motion support**: honours the OS "reduce motion" setting — freezes the
+  scanlines and the pull-to-refresh sweeps, and swaps the code flip and name
+  switch for a plain fade.
+
+### Changed
+- Account-row swipe actions restyled to the neon HUD look (glassy fill, neon
+  border, semantic per-action colours) and now render equal-height.
+- Removed the large Trade Confirm button from the main panel — trade
+  confirmations are still one right-swipe away on the account row.
+- Tapping the code now gives press feedback; the add-account button has a larger
+  touch target with the same 24px visual.
+
+—
+
+### 新增
+- **设置「关于」页**：源码 / 作者 / 许可证链接、开源许可证页、致谢说明。
+- **减弱动态效果支持**：跟随系统「减弱动态效果」设置——冻结扫描线与下拉扫光,验证码
+  翻牌和名称切换降级为纯淡入。
+
+### 变更
+- 账户行滑动操作改为霓虹 HUD 风格(玻璃底、霓虹边框、按语义分色),并统一为等高。
+- 移除主面板的大号「交易确认」按钮——右滑账户行仍可进入交易确认。
+- 点击验证码有按压反馈;「添加账户」按钮触摸区域更大(24px 视觉不变)。
+
 ## [v0.59] — 2026-06-30
 
 ### Added
