@@ -5,6 +5,26 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.63] — 2026-07-01
+
+### Added
+- **Inventory & Market**: browse an account's Steam inventory (Steam-style game
+  picker, identical items stacked with a ×count badge) and list items on the
+  Community Market. The sell sheet shows the market price and a high/low price
+  trend, linked "you receive ⇄ buyer pays" fields with Steam's live fees, a
+  quantity stepper (with Max) for batch listing, and an optional auto-confirm.
+  A "My listings" tab shows and cancels active listings. Reached from an
+  account's long-press menu. All native JSON — no WebView.
+
+—
+
+### 新增
+- **库存与市场**：浏览账户的 Steam 库存（像 Steam 一样按游戏选择，相同物品堆叠并带
+  ×数量角标），并把物品上架到社区市场。上架弹窗显示市场价与最高/最低成交走势、
+  「你到手 ⇄ 买家支付」联动（实时 Steam 费率）、数量步进器（含「最大」）批量上架，
+  以及可选的上架后自动确认；「我的在售」页可查看/撤销。从账户长按菜单进入。全程原生
+  JSON，无 WebView。
+
 ## [v0.62] — 2026-07-01
 
 ### Added
