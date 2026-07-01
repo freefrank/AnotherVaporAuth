@@ -129,6 +129,43 @@ class SteamApiClient {
     }
   }
 
+  /// Like [communityGetJson] but POSTs the params as a form body — the modern
+  /// (react) `/mobileconf/ajaxop` and `multiajaxop` endpoints expect POST.
+  Future<Map<String, dynamic>> communityPostJson(
+    String path,
+    Map<String, dynamic> form, {
+    Map<String, String>? cookies,
+  }) async {
+    dlog('→ POST $path  ${form['tag'] ?? ''}${form['op'] != null ? ' op=${form['op']}' : ''}');
+    try {
+      final resp = await _dio.post<String>(
+        '$communityBase$path',
+        data: form,
+        options: Options(
+          responseType: ResponseType.plain,
+          contentType: Headers.formUrlEncodedContentType,
+          listFormat: ListFormat.multi,
+          headers: {
+            if (cookies != null) 'Cookie': _cookieHeader(cookies),
+            'X-Requested-With': 'com.valvesoftware.android.steam.community',
+          },
+        ),
+      );
+      final body = resp.data ?? '';
+      dlog('← $path  HTTP ${resp.statusCode}  ${body.length}B');
+      if (body.isEmpty) return const {};
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      if (json['success'] != true) {
+        dlog('  ⚠ $path success=${json['success']} '
+            '${json['message'] ?? json['needauth'] ?? ''}');
+      }
+      return json;
+    } on DioException catch (e) {
+      dlog('  ✗ $path network: ${e.type.name} ${e.response?.statusCode ?? ''}');
+      rethrow;
+    }
+  }
+
   String _cookieHeader(Map<String, String> cookies) =>
       cookies.entries.map((e) => '${e.key}=${e.value}').join('; ');
 }

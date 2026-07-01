@@ -39,14 +39,16 @@ class ConfirmationsClient {
   Future<bool> respond(
       SteamGuardAccount account, Confirmation conf, bool accept) async {
     final time = SteamTime.currentSteamTime;
-    final tag = accept ? 'accept' : 'reject';
+    // Steam signs accept/deny with tag == op ('allow' / 'cancel'), not
+    // 'accept' / 'reject'.
     final op = accept ? 'allow' : 'cancel';
+    final tag = op;
     final query = _baseQuery(account, time, tag)
       ..['tag'] = tag
       ..['op'] = op
       ..['cid'] = conf.id
       ..['ck'] = conf.nonce;
-    final json = await api.communityGetJson(
+    final json = await api.communityPostJson(
       '/mobileconf/ajaxop',
       query,
       cookies: _cookies(account),
@@ -63,8 +65,9 @@ class ConfirmationsClient {
   ) async {
     if (confs.isEmpty) return const BatchResult(0, 0);
     final time = SteamTime.currentSteamTime;
-    final tag = accept ? 'accept' : 'reject';
+    // Steam signs accept/deny with tag == op ('allow' / 'cancel').
     final op = accept ? 'allow' : 'cancel';
+    final tag = op;
     final query = _baseQuery(account, time, tag)
       ..['tag'] = tag
       ..['op'] = op;
@@ -75,7 +78,7 @@ class ConfirmationsClient {
     query['ck[]'] = cks;
 
     try {
-      final json = await api.communityGetJson(
+      final json = await api.communityPostJson(
         '/mobileconf/multiajaxop',
         query,
         cookies: _cookies(account),
