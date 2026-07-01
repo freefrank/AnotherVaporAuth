@@ -353,3 +353,6 @@ MigrationBackup/
 .ionide/
 
 .idea/
+# Local design/dev skill tooling (not part of the app)
+.agents/
+skills-lock.json
