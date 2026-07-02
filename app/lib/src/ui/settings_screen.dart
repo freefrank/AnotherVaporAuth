@@ -12,7 +12,7 @@ import 'widgets/scanline_overlay.dart';
 import 'widgets/sda_panel.dart';
 
 const _repoUrl = 'https://github.com/freefrank/AnotherVaporAuth';
-const _authorUrl = 'https://github.com/freefrank';
+const _authorUrl = 'https://dotslash.pro';
 const _licenseUrl =
     'https://github.com/freefrank/AnotherVaporAuth/blob/main/LICENSE';
 const _privacyUrl =
@@ -192,7 +192,7 @@ class SettingsScreen extends ConsumerWidget {
                           'github.com/freefrank/AnotherVaporAuth',
                           () => _openUrl(_repoUrl), external: true),
                       _aboutRow(context, t, Icons.person_outline, l.aboutAuthor,
-                          'github.com/freefrank', () => _openUrl(_authorUrl),
+                          'dotslash.pro', () => _openUrl(_authorUrl),
                           external: true),
                       _aboutRow(context, t, Icons.gavel_outlined,
                           l.aboutLicense, 'MIT', () => _openUrl(_licenseUrl),

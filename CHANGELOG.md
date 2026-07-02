@@ -30,12 +30,18 @@ automated releases.
   stays inside the safe area — no more glyphs colliding with system icons.
 - Touch targets across the app raised to 48dp (visuals unchanged).
 - The unlock progress bar now fills up instead of looping endlessly.
+- The swipe-right action label reads "Confirmations" (was "Trade
+  confirmations" — Steam's own term, and it no longer truncates); the About
+  author link now points to dotslash.pro.
 
 ### Fixed
 - Toggling a settings switch no longer re-locks the app (the app state is now
   updated in place instead of being rebuilt through the encrypted bootstrap).
 - Settings "About" now shows the real installed version instead of a stale
   hardcoded one.
+- The Settings encryption card no longer describes the retired PIN-derived
+  AES-CBC scheme; it now states the real model (Keystore-held random key,
+  AES-256-GCM, PIN as the unlock gate).
 - The first-run tutorial spotlight now anchors to the code / account row with a
   LayerLink, so it frames the target correctly in every layout — phone, tablet
   two-pane and foldable unfolded — instead of drifting off to one side (it no
@@ -93,11 +99,15 @@ automated releases.
 - 动态背景在状态栏区域淡出、HUD 框架收进安全区——装饰元素不再与系统图标打架。
 - 全应用触控目标提升到 48dp(视觉不变)。
 - 解锁进度条改为填充式,不再无限循环。
+- 右滑动作标签改用 Steam 官方叫法 "Confirmations"(原 "Trade confirmations",
+  过长会被截断);「关于」页作者链接改为 dotslash.pro。
 
 ### 修复
 - 在设置页拨动开关不再导致应用重新上锁(应用状态改为原地更新,不再经过加密引导流程
   整体重建)。
 - 设置页「关于」显示真实安装版本,不再是过期的硬编码版本号。
+- 设置页加密卡片不再描述已废弃的「PIN 派生 AES-CBC」方案,改为如实说明现行模型
+  (Keystore 持有的随机密钥、AES-256-GCM、PIN 仅作解锁门)。
 - 首次教程的聚光框改用 LayerLink 锚定验证码 / 账户行,在手机、平板两栏、折叠屏展开
   等所有布局下都能正确框住目标,不再偏移(不再依赖跨路由坐标测量)。
 - 市场:「我的上架」会展示加载错误(可重试)、空列表也能下拉刷新、上架成功后自动

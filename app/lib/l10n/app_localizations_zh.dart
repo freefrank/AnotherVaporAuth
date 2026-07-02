@@ -512,7 +512,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsEncryptionDesc =>
-      '本机 maFiles 已用你的 6 位解锁 PIN 加密（AES-256-CBC）。';
+      '本机 maFiles 由存于设备 Keystore 的随机 256 位密钥加密（AES-256-GCM），6 位 PIN 用于解锁。';
 
   @override
   String get settingsThemeDesc => '在霓虹与像素之间切换整体界面。';

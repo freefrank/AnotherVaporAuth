@@ -540,7 +540,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsEncryptionDesc =>
-      'Your local maFiles are encrypted (AES-256-CBC) with your 6-digit unlock PIN.';
+      'Your local maFiles are encrypted with a random 256-bit key (AES-256-GCM) held in the device Keystore; your 6-digit PIN unlocks it.';
 
   @override
   String get settingsThemeDesc => 'Switch the whole UI between Neon and Pixel.';
@@ -708,7 +708,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionLogin => 'Log in / refresh session';
 
   @override
-  String get actionConfirmations => 'Trade confirmations';
+  String get actionConfirmations => 'Confirmations';
 
   @override
   String get actionRemove => 'Remove account';

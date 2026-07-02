@@ -194,7 +194,7 @@
   "commonDelete": "Delete",
 
   "settingsEncryption": "Encryption",
-  "settingsEncryptionDesc": "Your local maFiles are encrypted (AES-256-CBC) with your 6-digit unlock PIN.",
+  "settingsEncryptionDesc": "Your local maFiles are encrypted with a random 256-bit key (AES-256-GCM) held in the device Keystore; your 6-digit PIN unlocks it.",
   "settingsThemeDesc": "Switch the whole UI between Neon and Pixel.",
   "settingsChange": "Change",
   "settingsSetPasskey": "Set / change encryption passkey",
@@ -251,7 +251,7 @@
   "aboutCreditsBody": "Inspired by Steam Desktop Authenticator and compatible with its maFile format. Independently built with Flutter, Riverpod, Dio, PointyCastle, mobile_scanner, image and other open-source libraries.",
 
   "actionLogin": "Log in / refresh session",
-  "actionConfirmations": "Trade confirmations",
+  "actionConfirmations": "Confirmations",
   "actionRemove": "Remove account",
   "actionImport": "Import",
   "actionAddAuthenticator": "Add authenticator",

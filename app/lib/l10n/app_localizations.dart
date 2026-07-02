@@ -1055,7 +1055,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsEncryptionDesc.
   ///
   /// In en, this message translates to:
-  /// **'Your local maFiles are encrypted (AES-256-CBC) with your 6-digit unlock PIN.'**
+  /// **'Your local maFiles are encrypted with a random 256-bit key (AES-256-GCM) held in the device Keystore; your 6-digit PIN unlocks it.'**
   String get settingsEncryptionDesc;
 
   /// No description provided for @settingsThemeDesc.
@@ -1379,7 +1379,7 @@ abstract class AppLocalizations {
   /// No description provided for @actionConfirmations.
   ///
   /// In en, this message translates to:
-  /// **'Trade confirmations'**
+  /// **'Confirmations'**
   String get actionConfirmations;
 
   /// No description provided for @actionRemove.
