@@ -5,6 +5,22 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.66] — 2026-07-02
+
+### Changed
+- Privacy policy reworded: the local-only guarantees are now scoped to the
+  current version, and a broadened section covers planned optional online
+  features (cloud sync/backup, trade notifications) — strictly opt-in, policy
+  update before enablement, end-to-end encryption intent for synced secrets.
+  The Chinese policy was brought in sync with the English one (it was missing
+  the opt-in feedback-relay exception).
+
+### 变更
+- 隐私政策措辞更新:"纯本地"承诺限定为当前版本,并将"云同步"一节扩展为
+  「云同步与其他在线功能」(云同步/云备份、交易通知)——严格可选开启、启用前
+  先更新政策、同步密钥以端到端加密为设计目标。中文版补齐了英文版已有的
+  反馈中转例外说明(此前缺失)。
+
 ## [v0.65] — 2026-07-01
 
 ### Added
