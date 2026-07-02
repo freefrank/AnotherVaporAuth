@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
 import '../app/responsive.dart';
 import '../app/theme.dart';
+import '../services/feedback_service.dart';
 import 'debug_log_screen.dart';
 import 'widgets/pin_field.dart';
 import 'widgets/scanline_overlay.dart';
@@ -171,6 +172,18 @@ class SettingsScreen extends ConsumerWidget {
                       MaterialPageRoute(builder: (_) => const DebugLogScreen()),
                     ),
                     child: Text(l.commonOpen),
+                  ),
+                ),
+                // Feedback (user-initiated relay to the developer's mailbox)
+                _Card(
+                  title: l.feedbackTitle,
+                  description: l.feedbackDesc,
+                  trailing: OutlinedButton(
+                    onPressed: () => showDialog(
+                      context: context,
+                      builder: (_) => const _FeedbackDialog(),
+                    ),
+                    child: Text(l.feedbackSend),
                   ),
                 ),
                 // About
@@ -352,6 +365,122 @@ class SettingsScreen extends ConsumerWidget {
 
 /// PIN change dialog. Owns its text controllers so they are disposed with the
 /// route; pops the entered `(old, next)` pair on OK, null on cancel.
+/// Compose-and-send dialog for in-app feedback. Shows exactly what metadata
+/// travels with the message; nothing is sent until the user presses send.
+class _FeedbackDialog extends StatefulWidget {
+  const _FeedbackDialog();
+
+  @override
+  State<_FeedbackDialog> createState() => _FeedbackDialogState();
+}
+
+class _FeedbackDialogState extends State<_FeedbackDialog> {
+  final _message = TextEditingController();
+  final _contact = TextEditingController();
+  String _meta = '';
+  bool _sending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final code = Localizations.localeOf(context).languageCode;
+      final meta = await FeedbackService.meta(code);
+      if (mounted) setState(() => _meta = meta);
+    });
+  }
+
+  @override
+  void dispose() {
+    _message.dispose();
+    _contact.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    final l = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    setState(() => _sending = true);
+    try {
+      await FeedbackService.send(
+        message: _message.text.trim(),
+        contact: _contact.text.trim(),
+        meta: _meta,
+      );
+      navigator.pop();
+      messenger.showSnackBar(SnackBar(content: Text(l.feedbackSent)));
+    } catch (_) {
+      if (mounted) {
+        setState(() => _sending = false);
+        messenger.showSnackBar(SnackBar(content: Text(l.feedbackFailed)));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    return AlertDialog(
+      title: Text(l.feedbackTitle),
+      content: SizedBox(
+        width: 340,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _message,
+              autofocus: true,
+              minLines: 3,
+              maxLines: 6,
+              maxLength: 4000,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                labelText: l.feedbackMessageLabel,
+                hintText: l.feedbackMessageHint,
+                counterText: '',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _contact,
+              maxLength: 200,
+              decoration: InputDecoration(
+                labelText: l.feedbackContactLabel,
+                hintText: l.feedbackContactHint,
+                counterText: '',
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              l.feedbackAttachNote(_meta),
+              style: TextStyle(color: t.muted, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _sending ? null : () => Navigator.pop(context),
+          child: Text(l.commonCancel),
+        ),
+        FilledButton(
+          onPressed:
+              _sending || _message.text.trim().isEmpty ? null : _send,
+          child: _sending
+              ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2))
+              : Text(l.feedbackSend),
+        ),
+      ],
+    );
+  }
+}
+
 class _PasskeyDialog extends StatefulWidget {
   final bool askOld;
   const _PasskeyDialog({required this.askOld});

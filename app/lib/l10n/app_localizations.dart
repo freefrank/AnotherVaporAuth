@@ -620,6 +620,66 @@ abstract class AppLocalizations {
   /// **'Network trace for diagnosing login / confirmations'**
   String get debugLogDesc;
 
+  /// No description provided for @feedbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback'**
+  String get feedbackTitle;
+
+  /// No description provided for @feedbackDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Found a bug or have an idea? Send it straight to the developer, or open a GitHub issue for public discussion.'**
+  String get feedbackDesc;
+
+  /// No description provided for @feedbackSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send feedback'**
+  String get feedbackSend;
+
+  /// No description provided for @feedbackMessageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your feedback'**
+  String get feedbackMessageLabel;
+
+  /// No description provided for @feedbackMessageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What broke / what would you like?'**
+  String get feedbackMessageHint;
+
+  /// No description provided for @feedbackContactLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact (optional)'**
+  String get feedbackContactLabel;
+
+  /// No description provided for @feedbackContactHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Email or username — only if you want a reply'**
+  String get feedbackContactHint;
+
+  /// No description provided for @feedbackAttachNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent along with your message: {meta}'**
+  String feedbackAttachNote(String meta);
+
+  /// No description provided for @feedbackSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback sent — thank you!'**
+  String get feedbackSent;
+
+  /// No description provided for @feedbackFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t send. Check your network and try again.'**
+  String get feedbackFailed;
+
   /// No description provided for @debugCopyAll.
   ///
   /// In en, this message translates to:

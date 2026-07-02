@@ -298,6 +298,41 @@ class AppLocalizationsEn extends AppLocalizations {
       'Network trace for diagnosing login / confirmations';
 
   @override
+  String get feedbackTitle => 'Feedback';
+
+  @override
+  String get feedbackDesc =>
+      'Found a bug or have an idea? Send it straight to the developer, or open a GitHub issue for public discussion.';
+
+  @override
+  String get feedbackSend => 'Send feedback';
+
+  @override
+  String get feedbackMessageLabel => 'Your feedback';
+
+  @override
+  String get feedbackMessageHint => 'What broke / what would you like?';
+
+  @override
+  String get feedbackContactLabel => 'Contact (optional)';
+
+  @override
+  String get feedbackContactHint =>
+      'Email or username — only if you want a reply';
+
+  @override
+  String feedbackAttachNote(String meta) {
+    return 'Sent along with your message: $meta';
+  }
+
+  @override
+  String get feedbackSent => 'Feedback sent — thank you!';
+
+  @override
+  String get feedbackFailed =>
+      'Couldn\'t send. Check your network and try again.';
+
+  @override
   String get debugCopyAll => 'Copy all';
 
   @override

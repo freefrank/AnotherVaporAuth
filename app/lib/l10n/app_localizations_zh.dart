@@ -281,6 +281,38 @@ class AppLocalizationsZh extends AppLocalizations {
   String get debugLogDesc => '用于诊断登录 / 确认的网络追踪';
 
   @override
+  String get feedbackTitle => '反馈';
+
+  @override
+  String get feedbackDesc => '发现 bug 或有想法？直接发给开发者；想公开讨论也可以去 GitHub 提 issue。';
+
+  @override
+  String get feedbackSend => '发送反馈';
+
+  @override
+  String get feedbackMessageLabel => '反馈内容';
+
+  @override
+  String get feedbackMessageHint => '遇到了什么问题 / 想要什么功能？';
+
+  @override
+  String get feedbackContactLabel => '联系方式（选填）';
+
+  @override
+  String get feedbackContactHint => '邮箱或用户名，需要回复才填';
+
+  @override
+  String feedbackAttachNote(String meta) {
+    return '将随反馈一并发送：$meta';
+  }
+
+  @override
+  String get feedbackSent => '已发送，感谢反馈！';
+
+  @override
+  String get feedbackFailed => '发送失败，请检查网络后重试。';
+
+  @override
   String get debugCopyAll => '全部复制';
 
   @override

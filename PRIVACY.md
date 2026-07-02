@@ -35,9 +35,10 @@ on any other device. We never receive any of it.
 
 ## 2. Data we collect
 
-**None.** The app contains no analytics, telemetry, advertising, crash
-reporting, or tracking of any kind. There is no account with us, and no server
-that belongs to us.
+**Nothing automatically.** The app contains no analytics, telemetry,
+advertising, crash reporting, or tracking of any kind, and there is no account
+with us. The only data that ever reaches the developer is feedback you
+compose and send yourself (see section 3).
 
 ## 3. Network connections
 
@@ -50,9 +51,17 @@ including:
 
 These requests go straight from your device to Valve. Your use of Steam through
 the app is subject to Valve's own
-[Steam Privacy Policy](https://store.steampowered.com/privacy_agreement/). The
-app makes **no connection to any server operated by the AVA developers**, because
-none exists.
+[Steam Privacy Policy](https://store.steampowered.com/privacy_agreement/).
+
+The single exception is **Settings → Feedback**, which is entirely opt-in:
+nothing is transmitted unless you press send. When you do, your message, the
+optional contact field, and one metadata line shown verbatim in the form (app
+version, platform, language) are delivered to `ava-feedback.dotslash.pro` — a
+relay operated by the developer that forwards the report as an e-mail to the
+developer's mailbox and stores nothing else. Like any web request, the relay
+sees your IP address; it is included in the forwarded e-mail and kept nowhere
+else. Beyond this user-initiated feedback, the app makes **no connection to any
+server operated by the AVA developers**.
 
 ## 4. Permissions
 

@@ -100,6 +100,22 @@
   "addErrBadSms": "Wrong SMS code, please try again.",
   "debugLog": "Debug log",
   "debugLogDesc": "Network trace for diagnosing login / confirmations",
+
+  "feedbackTitle": "Feedback",
+  "feedbackDesc": "Found a bug or have an idea? Send it straight to the developer, or open a GitHub issue for public discussion.",
+  "feedbackSend": "Send feedback",
+  "feedbackMessageLabel": "Your feedback",
+  "feedbackMessageHint": "What broke / what would you like?",
+  "feedbackContactLabel": "Contact (optional)",
+  "feedbackContactHint": "Email or username — only if you want a reply",
+  "feedbackAttachNote": "Sent along with your message: {meta}",
+  "@feedbackAttachNote": {
+    "placeholders": {
+      "meta": {"type": "String"}
+    }
+  },
+  "feedbackSent": "Feedback sent — thank you!",
+  "feedbackFailed": "Couldn't send. Check your network and try again.",
   "debugCopyAll": "Copy all",
   "debugCopied": "Log copied",
   "debugEmpty": "No log yet.",

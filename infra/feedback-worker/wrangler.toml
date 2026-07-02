@@ -1,0 +1,22 @@
+# AVA in-app feedback relay: POST JSON -> email to the developer.
+#
+# Sends via the developer's own SMTP server (worker-mailer over TCP sockets);
+# Cloudflare Email Routing is not usable here because every zone on the
+# account already runs its own mail (MX would conflict).
+# One-time setup: npm i && npx wrangler secret put SMTP_PASS && npx wrangler deploy
+# NOTE: workers.dev serving is broken on this account (1101 for any worker,
+# even hello-world) — the custom domain route below is the real endpoint.
+
+name = "ava-feedback"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+routes = [{ pattern = "ava-feedback.dotslash.pro", custom_domain = true }]
+
+[vars]
+MAIL_TO = "freefrank21@gmail.com"
+SMTP_HOST = "mx.deployr.ca"
+SMTP_PORT = "587"
+# Stalwart authenticates with the short login name, not the full address.
+SMTP_USER = "hi@dotslash.pro"
+SMTP_FROM = "hi@dotslash.pro"
+# SMTP_PASS is a secret: npx wrangler secret put SMTP_PASS

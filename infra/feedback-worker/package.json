@@ -1,0 +1,7 @@
+{
+  "name": "ava-feedback-worker",
+  "private": true,
+  "dependencies": {
+    "worker-mailer": "^1.2.0"
+  }
+}

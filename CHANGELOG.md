@@ -20,6 +20,9 @@ automated releases.
 - Retry buttons on the confirmations and market error states; the market
   inventory shows a first-load spinner and a paging indicator.
 - Settings → "Gesture tutorial → Replay" to rewatch the walkthrough.
+- **Settings → Feedback**: send bug reports / ideas straight to the developer
+  from inside the app (message + optional contact + a version line shown in the
+  form; relayed by a Cloudflare Worker to the developer's mailbox, opt-in only).
 
 ### Changed
 - Themed the remaining stock-Material surfaces: dialogs, tabs and context menus
@@ -91,6 +94,8 @@ automated releases.
 - **「全部接受 / 全部拒绝」现在需要二次确认**(带数量与警告),不再一键批量生效。
 - 确认页与市场错误状态新增「重试」按钮;库存首次加载显示进度、分页加载有指示。
 - 设置新增「手势教程 → 重新播放」。
+- **设置 → 反馈**:在应用内直接把 bug / 想法发给开发者(内容 + 选填联系方式 +
+  表单中明示的版本信息;经 Cloudflare Worker 转发至开发者邮箱,完全由用户主动发起)。
 
 ### 变更
 - 补齐了剩余原生 Material 表面的主题化:对话框、标签页、右键菜单全部遵循
