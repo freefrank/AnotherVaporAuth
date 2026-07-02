@@ -64,6 +64,11 @@ automated releases.
   rebuild the widget tree every frame and pause completely while another screen
   covers them — same 60 fps visuals, much less CPU/battery.
 - Network images (avatars, inventory icons) now decode at display size.
+- Avatars and avatar frames are now cached on disk: every launch shows them
+  instantly (and offline) instead of waiting on the network, while the existing
+  background profile check still picks up avatar/frame changes and swaps the
+  new image in without flashing a placeholder. Entries unused for 60 days are
+  pruned automatically.
 
 —
 
@@ -107,6 +112,9 @@ automated releases.
 - 动态背景(数字雨、HUD、星空、扫描线)不再每帧重建 widget 树,且在被其他页面遮挡时
   完全暂停——视觉仍是 60 fps,CPU/电量占用大幅下降。
 - 网络图片(头像、库存图标)按显示尺寸解码。
+- 头像与头像框现在缓存到磁盘:每次启动即时显示(离线也能显示),不再等网络;原有的
+  后台资料检查仍会发现头像/头像框更新,新图就绪后无缝替换、不闪占位符。60 天未使用
+  的缓存条目自动清理。
 
 ## [v0.64] — 2026-07-01
 

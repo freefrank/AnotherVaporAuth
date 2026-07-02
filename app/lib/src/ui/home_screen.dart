@@ -20,6 +20,7 @@ import 'widgets/flip_code.dart';
 import 'widgets/motion.dart';
 import 'widgets/pixel_ambient.dart';
 import 'widgets/scanline_overlay.dart';
+import 'widgets/steam_image_provider.dart';
 import 'approve_login_screen.dart';
 import 'confirmations_screen.dart';
 import 'import_helper.dart';
@@ -1510,31 +1511,37 @@ class _Avatar extends StatelessWidget {
     final hasFrame = frameUrl != null && frameUrl.isNotEmpty;
     // With a frame, inset the avatar so the frame's border sits around it.
     final avatarSize = hasFrame ? size * 0.78 : size;
-    // Prefer the animated avatar (a GIF, which Image.network animates natively)
-    // and fall back to the static avatar.
+    // Prefer the animated avatar (a GIF, which the engine codec animates
+    // natively) and fall back to the static avatar. SteamImageProvider serves
+    // bytes from the disk cache, so a relaunch shows avatars instantly; the
+    // background profile refresh swaps the URL when the avatar changes.
     final displayUrl =
         (animUrl != null && animUrl.isNotEmpty) ? animUrl : url;
     final Widget avatar = (displayUrl == null || displayUrl.isEmpty)
         ? fallback(avatarSize)
         : ClipRRect(
             borderRadius: radius,
-            child: Image.network(
-              displayUrl,
-              width: avatarSize,
-              height: avatarSize,
+            child: Image(
               // Decode at display size (animated GIFs keep animating), in
               // 32px buckets so desktop window resizes don't re-decode.
-              cacheWidth: (((avatarSize *
-                                  MediaQuery.devicePixelRatioOf(context))
-                              .ceil() +
-                          31) ~/
-                      32) *
-                  32,
+              image: ResizeImage.resizeIfNeeded(
+                (((avatarSize * MediaQuery.devicePixelRatioOf(context))
+                                .ceil() +
+                            31) ~/
+                        32) *
+                    32,
+                null,
+                SteamImageProvider(displayUrl),
+              ),
+              width: avatarSize,
+              height: avatarSize,
               fit: BoxFit.cover,
               gaplessPlayback: true,
               errorBuilder: (_, _, _) => fallback(avatarSize),
-              loadingBuilder: (ctx, child, progress) =>
-                  progress == null ? child : fallback(avatarSize),
+              frameBuilder: (ctx, child, frame, syncLoaded) =>
+                  (frame == null && !syncLoaded)
+                      ? fallback(avatarSize)
+                      : child,
             ),
           );
     if (!hasFrame) return avatar;

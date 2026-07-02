@@ -3,12 +3,12 @@ import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:dio/dio.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image/image.dart' as img;
 
 import '../../services/debug_log.dart';
+import '../../services/image_disk_cache.dart';
 
 /// A decoded (possibly animated) image: one or more frames with per-frame delays.
 class SteamImageFrames {
@@ -29,19 +29,15 @@ class _RawFrame {
   _RawFrame(this.rgba, this.width, this.height, this.delayMs);
 }
 
-/// Downloads + decodes (with caching) Steam profile images, including animated
+/// Loads + decodes (with caching) Steam profile images, including animated
 /// APNG avatars / avatar frames that Flutter's built-in codec renders as a
-/// single static frame. Decoding runs in a background isolate; the resulting
-/// frames are shared across every widget that shows the same URL.
+/// single static frame. Bytes come from [DiskImageCache] (instant on a
+/// relaunch); decoding runs in a background isolate; the resulting frames are
+/// shared across every widget that shows the same URL.
 class SteamImageCache {
   SteamImageCache._();
   static final SteamImageCache instance = SteamImageCache._();
 
-  final _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 15),
-    receiveTimeout: const Duration(seconds: 20),
-    responseType: ResponseType.bytes,
-  ));
   final Map<String, Future<SteamImageFrames?>> _cache = {};
 
   Future<SteamImageFrames?> load(String url) {
@@ -50,11 +46,18 @@ class SteamImageCache {
 
   Future<SteamImageFrames?> _fetchAndDecode(String url) async {
     try {
-      final resp = await _dio.get<List<int>>(url);
-      final bytes = Uint8List.fromList(resp.data ?? const []);
-      if (bytes.isEmpty) return null;
+      final bytes = await DiskImageCache.instance.load(url);
+      if (bytes == null || bytes.isEmpty) {
+        _cache.remove(url); // allow a later retry
+        return null;
+      }
       final raw = await Isolate.run(() => _decode(bytes));
-      if (raw == null || raw.isEmpty) return null;
+      if (raw == null || raw.isEmpty) {
+        // Decoded nothing out of real bytes: likely a corrupt cache entry.
+        unawaited(DiskImageCache.instance.evict(url));
+        _cache.remove(url);
+        return null;
+      }
       final frames = <ui.Image>[];
       final delays = <int>[];
       for (final f in raw) {
@@ -142,15 +145,23 @@ class _AnimatedSteamImageState extends State<AnimatedSteamImage>
     if (old.url != widget.url) {
       _ticker?.dispose();
       _ticker = null;
-      _frames = null;
+      // Keep showing the old frames until the replacement is ready — an
+      // updated frame/avatar should swap in, not flash the fallback.
       _load();
     }
   }
 
   Future<void> _load() async {
-    final f = await SteamImageCache.instance.load(widget.url);
-    if (!mounted || f == null) return;
-    setState(() => _frames = f);
+    final url = widget.url;
+    final f = await SteamImageCache.instance.load(url);
+    // Drop stale completions if the URL changed again while loading.
+    if (!mounted || f == null || url != widget.url) return;
+    _ticker?.dispose();
+    _ticker = null;
+    setState(() {
+      _frames = f;
+      _frameIndex = 0;
+    });
     if (f.animated && f.totalMs > 0) {
       _ticker = createTicker((elapsed) {
         final idx = _indexAt(f, elapsed.inMilliseconds % f.totalMs);
