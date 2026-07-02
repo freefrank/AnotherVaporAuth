@@ -197,11 +197,12 @@ class _UnlockLoading extends ConsumerWidget {
 /// A theme-aware progress bar that FILLS instead of looping — an endless sweep
 /// reads as "who knows how long", a filling bar reads as "almost there".
 ///
-/// There is no real progress signal from the KDF, so the fill is a cubic
-/// ease-out sized to the typical unlock (~1s): it charges quickly to ~90%,
-/// then creeps asymptotically toward 98% on slower devices; the screen swaps
-/// away the moment the unlock completes. Pixel theme quantises the fill into
-/// hard blocks.
+/// There is no real progress signal from the unlock, so the fill is a cubic
+/// ease-out sized to the typical unlock (well under a second now that the KDF
+/// is a single round): it charges quickly to ~90%, then creeps asymptotically
+/// toward 98% on slower paths (e.g. the one-time 100k-round legacy re-wrap);
+/// the screen swaps away the moment the unlock completes. Pixel theme
+/// quantises the fill into hard blocks.
 class _ScanBar extends StatefulWidget {
   final SdaTokens tokens;
   const _ScanBar({required this.tokens});
@@ -216,7 +217,7 @@ class _ScanBarState extends State<_ScanBar>
   // saturates slowly after; never completes on its own.
   late final AnimationController _c = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 3200),
+    duration: const Duration(milliseconds: 2000),
   )..forward();
 
   @override
@@ -226,13 +227,13 @@ class _ScanBarState extends State<_ScanBar>
   }
 
   double _fill(double t) {
-    // Cubic ease-out to 0.9 over the first ~40% of the timeline (≈1.3s),
+    // Cubic ease-out to 0.9 over the first ~30% of the timeline (≈0.6s),
     // then a slow linear creep to 0.98.
-    if (t < 0.4) {
-      final k = t / 0.4;
+    if (t < 0.3) {
+      final k = t / 0.3;
       return 0.9 * (1 - (1 - k) * (1 - k) * (1 - k));
     }
-    return 0.9 + 0.08 * ((t - 0.4) / 0.6);
+    return 0.9 + 0.08 * ((t - 0.3) / 0.7);
   }
 
   @override

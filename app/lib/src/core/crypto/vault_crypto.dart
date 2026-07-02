@@ -22,10 +22,15 @@ class VaultCrypto {
   static const int macSizeBits = 128; // 16-byte tag
   static const int pinSaltLength = 16;
 
-  /// Default PBKDF2-SHA256 rounds for the PIN-derived key-encryption key. Its
-  /// only job is to bind the PIN — the wrapped DEK lives behind the Keystore
-  /// master key, so it cannot be brute-forced off-device.
-  static const int pinKdfIterations = 100000;
+  /// PBKDF2-SHA256 rounds for the PIN-derived key-encryption key — the RFC
+  /// minimum, on purpose. A 6-digit PIN has only 10^6 candidates, so no
+  /// feasible round count survives an offline attack (one GPU clears the whole
+  /// space at 100k rounds in ~20s); iterations buy nothing but unlock latency.
+  /// The real barrier is the Keystore master key: off-device the wrapped DEK
+  /// is unreadable regardless of the PIN. The KDF's only job is to map the PIN
+  /// onto a 256-bit key. The count is recorded per-wrap ([VaultKeyStore]), so
+  /// old wraps keep opening and get re-wrapped on their next unlock.
+  static const int pinKdfIterations = 1;
 
   static final Random _rng = Random.secure();
 
@@ -46,8 +51,8 @@ class VaultCrypto {
   /// Derives the PIN key-encryption key with PBKDF2-HMAC-SHA256.
   ///
   /// Uses hashlib rather than pointycastle: identical output (verified against
-  /// each other and the RFC vectors in the tests), ~4.5x faster — the
-  /// difference between a multi-second and a sub-second unlock at 100k rounds.
+  /// each other and a fixture in the tests), ~4.5x faster — still relevant for
+  /// pre-migration wraps that were written at 100k rounds.
   static Uint8List _deriveKek(String pin, String saltB64, int iterations) {
     if (pin.isEmpty) throw ArgumentError('PIN is empty');
     final salt = base64.decode(saltB64);

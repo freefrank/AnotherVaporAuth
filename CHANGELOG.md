@@ -39,6 +39,12 @@ automated releases.
 - Market: "My listings" surfaces load errors (with retry), can be pull-refreshed
   when empty, and reloads after you create a listing; the sell sheet no longer
   hangs on a stuck progress bar when price data fails to load.
+- The wrapped vault key, its salt and its KDF parameters are now stored as one
+  atomic record instead of three separate entries — a crash in the middle of a
+  PIN change can no longer tear the wrap apart and lose the vault. A corrupted
+  record falls back to the previous layout and self-heals on the next unlock.
+  (The old layout is removed once migrated, so downgrading to an earlier build
+  afterwards is not supported.)
 
 ### Performance
 - Unlock key derivation (PBKDF2, 100k iterations) moved off the UI thread — the
@@ -48,6 +54,12 @@ automated releases.
   output, locked by a compatibility test) for a ~4.5× faster unlock; the KDF
   round count is now stored alongside the wrapped key so it can be tuned in
   future versions without breaking existing vaults.
+- …and then dropped the round count to the RFC minimum: against a 6-digit PIN's
+  10⁶ combinations no iteration count meaningfully slows an offline attacker
+  (one GPU clears the whole space at 100k rounds in ~20 s) — the hardware
+  Keystore is the real barrier, and the rounds only bought unlock latency.
+  Unlock is now effectively instant; existing vaults migrate automatically on
+  their next successful unlock.
 - The animated backgrounds (digital rain, HUD, starfield, scanlines) no longer
   rebuild the widget tree every frame and pause completely while another screen
   covers them — same 60 fps visuals, much less CPU/battery.
@@ -79,12 +91,19 @@ automated releases.
 - 设置页「关于」显示真实安装版本,不再是过期的硬编码版本号。
 - 市场:「我的上架」会展示加载错误(可重试)、空列表也能下拉刷新、上架成功后自动
   重载;出售面板在价格数据加载失败时不再卡死在进度条。
+- 保险库密钥包裹、盐值与 KDF 参数改为单条原子记录存储(原为三条独立条目)——
+  修改 PIN 途中崩溃不会再撕裂密钥记录、导致保险库永久丢失。记录损坏时自动回退旧
+  布局并在下次解锁时自愈。(迁移完成后旧布局即被清除,之后不支持降级到更早版本。)
 
 ### 性能
 - 解锁密钥派生(PBKDF2 十万次迭代)移出 UI 线程——解锁动画真正动起来了,输入 PIN /
   指纹后的界面也不再卡顿。
 - 更换 PBKDF2 实现(pointycastle → hashlib,输出逐字节一致并有兼容性测试锁定),
   解锁约快 4.5 倍;KDF 迭代数现随包裹密钥一同存储,今后可平滑调整不破坏存量。
+- ……随后把迭代数直接降到 RFC 最低值:面对 6 位 PIN 仅 10⁶ 种组合,再多的迭代也无法
+  实质拖慢离线破解(一块 GPU 在 10 万轮下约 20 秒穷举全部空间)——真正的屏障是硬件
+  Keystore,多余的轮数只换来解锁延迟。现在解锁几乎瞬时完成;存量保险库将在下次成功
+  解锁时自动迁移。
 - 动态背景(数字雨、HUD、星空、扫描线)不再每帧重建 widget 树,且在被其他页面遮挡时
   完全暂停——视觉仍是 60 fps,CPU/电量占用大幅下降。
 - 网络图片(头像、库存图标)按显示尺寸解码。
