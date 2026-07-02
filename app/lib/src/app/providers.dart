@@ -461,11 +461,18 @@ class AppController extends AsyncNotifier<AppData> {
 
   Future<void> reorder(int oldIndex, int newIndex) async {
     final data = state.value;
-    if (data == null) return;
+    if (data == null || oldIndex < 0 || oldIndex >= data.accounts.length) {
+      return;
+    }
     // newIndex is already adjusted for the removed item (onReorderItem).
     data.store.moveEntry(oldIndex, newIndex);
+    // Mirror the move in memory instead of reloading — a full reload decrypts
+    // every account from disk and makes the dragged row visibly snap back.
+    final accounts = [...data.accounts];
+    final moved = accounts.removeAt(oldIndex);
+    accounts.insert(newIndex.clamp(0, accounts.length), moved);
+    state = AsyncData(data.copyWith(accounts: accounts));
     await data.store.save();
-    await reload();
   }
 
   /// Persists an account back to disk (e.g. after a session refresh / link).

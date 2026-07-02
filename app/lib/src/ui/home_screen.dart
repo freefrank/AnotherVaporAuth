@@ -155,6 +155,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   // Custom neon pull-to-refresh state.
   double _pull = 0; // px pulled beyond the top
   bool _refreshing = false;
+  // Account-list manual sort mode (toggled by the sidebar's sort button).
+  bool _sortMode = false;
   // Whether the running refresh should drive the full-screen pull overlay
   // (true for the pull gesture, false for the desktop refresh button).
   bool _pullVisual = false;
@@ -328,6 +330,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     refreshing: _refreshing,
                     firstRowLink: _firstRowLink,
                     demoSlidable: _demoSlidable,
+                    sorting: _sortMode,
+                    onToggleSort: () =>
+                        setState(() => _sortMode = !_sortMode),
+                    onReorder: (from, to) {
+                      // Keep the selection on the same account across the move.
+                      final selectedAccount = accounts[_selected];
+                      ref
+                          .read(appControllerProvider.notifier)
+                          .reorder(from, to);
+                      setState(() {
+                        final order = [...accounts];
+                        final moved = order.removeAt(from);
+                        order.insert(to, moved);
+                        _selected = order.indexOf(selectedAccount);
+                      });
+                    },
                   );
                   final panel = _MainPanel(
                     account: accounts[_selected],
@@ -586,6 +604,9 @@ class _Sidebar extends StatelessWidget {
   final bool refreshing;
   final LayerLink? firstRowLink;
   final SlidableController? demoSlidable;
+  final bool sorting;
+  final VoidCallback? onToggleSort;
+  final void Function(int from, int to)? onReorder;
   const _Sidebar({
     required this.accounts,
     required this.selected,
@@ -601,6 +622,9 @@ class _Sidebar extends StatelessWidget {
     this.refreshing = false,
     this.firstRowLink,
     this.demoSlidable,
+    this.sorting = false,
+    this.onToggleSort,
+    this.onReorder,
   });
 
   Widget _list(BuildContext context) => SlidableAutoCloseBehavior(
@@ -632,6 +656,57 @@ class _Sidebar extends StatelessWidget {
           },
         ),
       );
+
+  /// Sort mode: rows lose their tap/swipe gestures and gain a drag handle;
+  /// dragging the handle reorders, everything else still scrolls.
+  Widget _sortList(BuildContext context) {
+    final t = Theme.of(context).extension<AvaTokens>()!;
+    return ReorderableListView.builder(
+      buildDefaultDragHandles: false,
+      physics:
+          const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+      padding: context.rInsets(left: 8, right: 8, top: 4, bottom: 78),
+      itemCount: accounts.length,
+      // onReorderItem already adjusts the target index for the removed item.
+      onReorderItem: (from, to) {
+        if (to != from) onReorder?.call(from, to);
+      },
+      proxyDecorator: (child, _, _) =>
+          Material(color: Colors.transparent, child: child),
+      itemBuilder: (context, i) => Stack(
+        key: ValueKey(accounts[i].steamId),
+        alignment: Alignment.centerRight,
+        children: [
+          IgnorePointer(
+            child: _SidebarRow(
+              account: accounts[i],
+              code: _codeFor(accounts[i], tick),
+              selected: i == selected,
+              nameMode: nameMode,
+              neon: neon,
+              onTap: () {},
+              onAction: onAction,
+            ),
+          ),
+          Padding(
+            padding: context.rInsets(right: 10),
+            child: ReorderableDragStartListener(
+              index: i,
+              child: Container(
+                // Generous hit area for the handle; visual stays a small icon.
+                width: context.r(40),
+                height: context.r(48),
+                alignment: Alignment.center,
+                color: Colors.transparent,
+                child: Icon(Icons.drag_indicator,
+                    size: context.r(18), color: t.accent),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -702,6 +777,34 @@ class _Sidebar extends StatelessWidget {
                         ),
                       ),
                     ),
+                  // Manual reorder toggle — only meaningful with 2+ accounts.
+                  if (onToggleSort != null && accounts.length > 1)
+                    InkWell(
+                      onTap: onToggleSort,
+                      borderRadius: BorderRadius.circular(t.radiusSm),
+                      child: SizedBox(
+                        width: context.r(40),
+                        height: context.r(48),
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Container(
+                            width: context.r(24),
+                            height: context.r(24),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              border: t.border,
+                              borderRadius: BorderRadius.circular(t.radiusSm),
+                              color: sorting
+                                  ? t.accent.withValues(alpha: 0.18)
+                                  : null,
+                            ),
+                            child: Icon(
+                                sorting ? Icons.check : Icons.swap_vert,
+                                size: context.r(15), color: t.accent),
+                          ),
+                        ),
+                      ),
+                    ),
                   InkWell(
                     onTap: onAdd,
                     borderRadius: BorderRadius.circular(t.radiusSm),
@@ -739,7 +842,7 @@ class _Sidebar extends StatelessWidget {
                   onPullPixels(px < 0 ? -px : 0);
                   return false;
                 },
-                child: _list(context),
+                child: sorting ? _sortList(context) : _list(context),
               ),
             ),
           ),
