@@ -13,6 +13,7 @@ import '../core/models/steam_guard_account.dart';
 import '../core/steam_totp.dart';
 import '../services/steam_time.dart';
 import 'widgets/animated_steam_image.dart';
+import 'widgets/app_logo.dart';
 import 'widgets/countdown_ring.dart';
 import 'widgets/cyber_ambient.dart';
 import 'widgets/flip_code.dart';
@@ -26,6 +27,7 @@ import 'pending_login.dart';
 import 'login_screen.dart';
 import 'market/market_screen.dart';
 import 'settings_screen.dart';
+import 'tutorial.dart';
 
 const _palette = [
   Color(0xFF00F0FF),
@@ -132,15 +134,64 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with TickerProviderStateMixin {
   int _selected = 0;
   bool _checkedLogins = false;
+  bool _checkedTutorial = false;
+  int _lastTutorialReplay = 0;
   _NameMode _nameMode = _NameMode.username;
+
+  // First-run gesture tutorial hooks: spotlight targets + a controller that
+  // lets the tutorial physically open the first row's swipe panes.
+  final _codeKey = GlobalKey();
+  final _firstRowKey = GlobalKey();
+  late final _demoSlidable = SlidableController(this);
 
   // Custom neon pull-to-refresh state.
   double _pull = 0; // px pulled beyond the top
   bool _refreshing = false;
+  // Whether the running refresh should drive the full-screen pull overlay
+  // (true for the pull gesture, false for the desktop refresh button).
+  bool _pullVisual = false;
   static const double _pullThreshold = 130;
+
+  @override
+  void dispose() {
+    _demoSlidable.dispose();
+    super.dispose();
+  }
+
+  /// Shows the gesture tutorial once, on touch platforms only (desktop users
+  /// get a right-click context menu on the rows instead).
+  void _maybeShowTutorial() {
+    if (_checkedTutorial) return;
+    _checkedTutorial = true;
+    final platform = Theme.of(context).platform;
+    final touch = platform == TargetPlatform.android ||
+        platform == TargetPlatform.iOS ||
+        platform == TargetPlatform.fuchsia;
+    if (!touch) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      // Only over the home screen itself — the first account may appear while
+      // a login/finalize screen is still on top (revocation code!). Re-arm and
+      // retry on a later build (the 1s tick rebuilds us) once we're current.
+      if (ModalRoute.of(context)?.isCurrent != true) {
+        _checkedTutorial = false;
+        return;
+      }
+      final store = ref.read(settingsStoreProvider);
+      if (await store.loadTutorialSeen() || !mounted) return;
+      await showGestureTutorial(
+        context,
+        codeKey: _codeKey,
+        firstRowKey: _firstRowKey,
+        slidable: _demoSlidable,
+      );
+      await store.saveTutorialSeen();
+    });
+  }
 
   void _cycleNameMode() => setState(() {
         _nameMode =
@@ -179,14 +230,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  Future<void> _startRefresh() async {
-    setState(() => _refreshing = true);
+  Future<void> _startRefresh({bool visual = true}) async {
+    if (_refreshing) return;
+    setState(() {
+      _refreshing = true;
+      _pullVisual = visual;
+    });
     try {
       await _runRefresh();
     } finally {
       if (mounted) {
         setState(() {
           _refreshing = false;
+          _pullVisual = false;
           _pull = 0;
         });
       }
@@ -214,6 +270,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         if (mounted) checkPendingLogins(context, ref, acc, silent: true);
       });
     }
+    // Settings → "replay tutorial" bumps the counter; re-arm the walkthrough.
+    final replay = ref.watch(tutorialReplayProvider);
+    if (replay != _lastTutorialReplay) {
+      _lastTutorialReplay = replay;
+      _checkedTutorial = false;
+    }
+    if (hasAccounts) _maybeShowTutorial();
 
     return Scaffold(
       // Header removed — settings is a floating button in the bottom-right.
@@ -225,7 +288,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       body: ScanlineOverlay(
         child: !hasAccounts
-            ? SafeArea(child: _EmptyState(onAdd: () => _addMenu(context)))
+            ? Stack(
+                children: [
+                  Positioned.fill(
+                      child: neon
+                          ? const CyberAmbient()
+                          : const PixelAmbient()),
+                  SafeArea(child: _EmptyState(onAdd: () => _addMenu(context))),
+                ],
+              )
             : LayoutBuilder(
                 builder: (context, c) {
                   final sidebar = _Sidebar(
@@ -247,6 +318,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     // or pixel blocks).
                     onPullPixels: _onPullPixels,
                     onPullEnd: _onPullEnd,
+                    // Desktop has no touch pull-to-refresh — the sidebar shows
+                    // a refresh button there instead (no full-screen overlay).
+                    onRefresh: () => _startRefresh(visual: false),
+                    refreshing: _refreshing,
+                    firstRowKey: _firstRowKey,
+                    demoSlidable: _demoSlidable,
                   );
                   final panel = _MainPanel(
                     account: accounts[_selected],
@@ -255,6 +332,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     wide: c.maxWidth >= 640,
                     nameMode: _nameMode,
                     onTapName: _cycleNameMode,
+                    codeKey: _codeKey,
                   );
                   final Widget content = SafeArea(
                     bottom: false,
@@ -274,7 +352,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ],
                           ),
                   );
-                  final pull01 = _refreshing
+                  final pull01 = _refreshing && _pullVisual
                       ? 1.0
                       : (_pull / _pullThreshold).clamp(0.0, 1.0);
                   return Stack(
@@ -324,29 +402,93 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _addMenu(BuildContext context) async {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).extension<SdaTokens>()!;
+
+    // Themed floating sheet (neon: glowing rounded panel / pixel: hard-edged
+    // sticker) instead of the stock M3 list.
+    Widget row(BuildContext ctx, IconData icon, String label, String result) =>
+        InkWell(
+          onTap: () => Navigator.pop(ctx, result),
+          borderRadius: BorderRadius.circular(t.radiusSm),
+          child: Padding(
+            padding: context.rInsets(h: 16, v: 11),
+            child: Row(
+              children: [
+                Container(
+                  width: context.r(36),
+                  height: context.r(36),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: t.accent.withValues(alpha: 0.13),
+                    borderRadius: BorderRadius.circular(t.radiusSm),
+                    border: Border.all(
+                        color: t.accent.withValues(alpha: 0.55),
+                        width: t.borderWidth),
+                  ),
+                  child: Icon(icon, color: t.accent, size: context.r(18)),
+                ),
+                SizedBox(width: context.r(14)),
+                Text(label,
+                    style:
+                        TextStyle(color: t.text, fontSize: context.r(14.5))),
+              ],
+            ),
+          ),
+        );
+
     final value = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: t.panel2,
+      backgroundColor: Colors.transparent,
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.file_open_outlined),
-              title: Text(l.actionImport),
-              onTap: () => Navigator.pop(ctx, 'import'),
+        child: Container(
+          margin: context.rInsets(h: 10, bottom: 10),
+          padding: context.rInsets(v: 8),
+          decoration: BoxDecoration(
+            // Nearly opaque so the list doesn't ghost through the neon glass.
+            color: t.isPixel ? t.panel2 : t.panel2.withValues(alpha: 0.96),
+            borderRadius: BorderRadius.circular(t.isPixel ? 0 : t.radius),
+            border: Border.all(
+              color: t.isPixel
+                  ? t.borderColor
+                  : t.accent.withValues(alpha: 0.5),
+              width: t.borderWidth,
             ),
-            ListTile(
-              leading: const Icon(Icons.add_moderator_outlined),
-              title: Text(l.actionAddAuthenticator),
-              onTap: () => Navigator.pop(ctx, 'login'),
+            boxShadow: t.isPixel
+                ? t.cardShadow()
+                : [
+                    BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 30,
+                        offset: const Offset(0, 10)),
+                    ...t.glowShadow(blur: context.r(18), opacity: 0.18),
+                  ],
+          ),
+          // Transparent Material above the opaque panel so the row ink
+          // ripples actually show.
+          child: Material(
+            type: MaterialType.transparency,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    margin: context.rInsets(top: 2, bottom: 6),
+                    width: context.r(40),
+                    height: context.r(4),
+                    decoration: BoxDecoration(
+                      color: t.line,
+                      borderRadius:
+                          BorderRadius.circular(t.isPixel ? 0 : context.r(2)),
+                    ),
+                  ),
+                ),
+                row(ctx, Icons.file_open_outlined, l.actionImport, 'import'),
+                row(ctx, Icons.add_moderator_outlined,
+                    l.actionAddAuthenticator, 'login'),
+                row(ctx, Icons.qr_code_scanner, l.approveTitle, 'approve'),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.qr_code_scanner),
-              title: Text(l.approveTitle),
-              onTap: () => Navigator.pop(ctx, 'approve'),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -390,6 +532,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             builder: (_) => MarketScreen(account: account)));
         break;
       case 'remove':
+        final t = Theme.of(context).extension<SdaTokens>()!;
         final ok = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -398,7 +541,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
                   child: Text(l.commonCancel)),
+              // Destructive action — red, visually separated from the accent.
               FilledButton(
+                  style: FilledButton.styleFrom(
+                      backgroundColor: t.bad,
+                      foregroundColor: const Color(0xFF06060F)),
                   onPressed: () => Navigator.pop(ctx, true),
                   child: Text(l.actionRemove)),
             ],
@@ -431,6 +578,10 @@ class _Sidebar extends StatelessWidget {
   final void Function(SteamGuardAccount account, String action) onAction;
   final _NameMode nameMode;
   final bool neon;
+  final VoidCallback? onRefresh;
+  final bool refreshing;
+  final GlobalKey? firstRowKey;
+  final SlidableController? demoSlidable;
   const _Sidebar({
     required this.accounts,
     required this.selected,
@@ -442,6 +593,10 @@ class _Sidebar extends StatelessWidget {
     required this.onAction,
     required this.onPullPixels,
     required this.onPullEnd,
+    this.onRefresh,
+    this.refreshing = false,
+    this.firstRowKey,
+    this.demoSlidable,
   });
 
   Widget _list(BuildContext context) => SlidableAutoCloseBehavior(
@@ -455,6 +610,8 @@ class _Sidebar extends StatelessWidget {
           padding: context.rInsets(left: 8, right: 8, top: 4, bottom: 78),
           itemCount: accounts.length,
           itemBuilder: (context, i) => _SidebarRow(
+            // The first row anchors the tutorial spotlight and its swipe demo.
+            key: i == 0 ? firstRowKey : null,
             account: accounts[i],
             code: _codeFor(accounts[i], tick),
             selected: i == selected,
@@ -462,6 +619,7 @@ class _Sidebar extends StatelessWidget {
             neon: neon,
             onTap: () => onSelect(i),
             onAction: onAction,
+            controller: i == 0 ? demoSlidable : null,
           ),
         ),
       );
@@ -481,48 +639,91 @@ class _Sidebar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: context.rInsets(left: 14, top: 12, right: 10, bottom: 6),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l.navAccounts,
-                    style: TextStyle(
-                        color: t.muted,
-                        fontSize: context.r(11),
-                        letterSpacing: context.r(1)),
+            padding: context.rInsets(left: 14, right: 10),
+            // Fixed 48dp-tall header so the add button gets a full-size touch
+            // target; the 24px visual is unchanged.
+            child: SizedBox(
+              height: context.r(48),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l.navAccounts,
+                      style: TextStyle(
+                          color: t.muted,
+                          fontSize: context.r(11),
+                          letterSpacing: context.r(1)),
+                    ),
                   ),
-                ),
-                // 24px visual (unchanged), but the tap zone widens to the right
-                // into otherwise-dead space — bigger target, same look.
-                InkWell(
-                  onTap: onAdd,
-                  borderRadius: BorderRadius.circular(t.radiusSm),
-                  child: SizedBox(
-                    width: context.r(52),
-                    height: context.r(24),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: Container(
-                        width: context.r(24),
-                        height: context.r(24),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          border: t.border,
-                          borderRadius: BorderRadius.circular(t.radiusSm),
+                  // Mouse users can't pull-to-refresh — give desktop a button.
+                  if (onRefresh != null &&
+                      switch (Theme.of(context).platform) {
+                        TargetPlatform.linux ||
+                        TargetPlatform.macOS ||
+                        TargetPlatform.windows =>
+                          true,
+                        _ => false,
+                      })
+                    InkWell(
+                      onTap: refreshing ? null : onRefresh,
+                      borderRadius: BorderRadius.circular(t.radiusSm),
+                      child: SizedBox(
+                        width: context.r(40),
+                        height: context.r(48),
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Container(
+                            width: context.r(24),
+                            height: context.r(24),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              border: t.border,
+                              borderRadius: BorderRadius.circular(t.radiusSm),
+                            ),
+                            child: refreshing
+                                ? SizedBox(
+                                    width: context.r(13),
+                                    height: context.r(13),
+                                    child: const CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  )
+                                : Icon(Icons.refresh,
+                                    size: context.r(15), color: t.accent),
+                          ),
                         ),
-                        child:
-                            Icon(Icons.add, size: context.r(16), color: t.accent),
+                      ),
+                    ),
+                  InkWell(
+                    onTap: onAdd,
+                    borderRadius: BorderRadius.circular(t.radiusSm),
+                    child: SizedBox(
+                      width: context.r(52),
+                      height: context.r(48),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Container(
+                          width: context.r(24),
+                          height: context.r(24),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            border: t.border,
+                            borderRadius: BorderRadius.circular(t.radiusSm),
+                          ),
+                          child: Icon(Icons.add,
+                              size: context.r(16), color: t.accent),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           Expanded(
             child: Listener(
               onPointerUp: (_) => onPullEnd(),
+              // Trackpads (macOS) scroll via pan-zoom events, not pointer up.
+              onPointerPanZoomEnd: (_) => onPullEnd(),
               child: NotificationListener<ScrollNotification>(
                 onNotification: (n) {
                   final px = n.metrics.pixels;
@@ -547,7 +748,9 @@ class _SidebarRow extends StatelessWidget {
   final bool neon;
   final VoidCallback onTap;
   final void Function(SteamGuardAccount account, String action) onAction;
+  final SlidableController? controller;
   const _SidebarRow({
+    super.key,
     required this.account,
     required this.code,
     required this.selected,
@@ -555,7 +758,44 @@ class _SidebarRow extends StatelessWidget {
     required this.neon,
     required this.onTap,
     required this.onAction,
+    this.controller,
   });
+
+  /// Desktop/mouse path for the swipe + long-press actions: a right-click
+  /// context menu with the same entries.
+  Future<void> _contextMenu(BuildContext context, Offset at) async {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+
+    PopupMenuItem<String> item(String value, IconData icon, String label,
+            {Color? color}) =>
+        PopupMenuItem(
+          value: value,
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: color ?? t.muted),
+              const SizedBox(width: 10),
+              Text(label, style: color != null ? TextStyle(color: color) : null),
+            ],
+          ),
+        );
+
+    final action = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+          at & const Size(1, 1), Offset.zero & overlay.size),
+      items: [
+        item('confirm', Icons.verified_user_outlined, l.actionConfirmations),
+        item('market', Icons.inventory_2_outlined, l.actionMarket),
+        item('login', Icons.refresh, l.commonRefresh),
+        item('export', Icons.ios_share, l.commonExport),
+        item('remove', Icons.delete_outline, l.commonDelete, color: t.bad),
+      ],
+    );
+    if (action != null && context.mounted) onAction(account, action);
+  }
 
   /// Long-press menu: manage the stored auto-login password.
   Widget _action(
@@ -631,6 +871,7 @@ class _SidebarRow extends StatelessWidget {
       padding: context.rInsets(bottom: 8),
       child: Slidable(
         key: ValueKey(account.steamId),
+        controller: controller,
         // Swipe RIGHT → enter trade confirmations (full swipe enters directly).
         startActionPane: ActionPane(
           motion: const BehindMotion(),
@@ -673,7 +914,10 @@ class _SidebarRow extends StatelessWidget {
                 onTap: () => onAction(account, 'remove')),
           ],
         ),
-        child: InkWell(
+        child: GestureDetector(
+          // Mouse right-click mirrors the touch gestures (desktop).
+          onSecondaryTapDown: (d) => _contextMenu(context, d.globalPosition),
+          child: InkWell(
           onTap: onTap,
           onLongPress: () => onAction(account, 'market'),
           borderRadius: BorderRadius.circular(t.radiusSm),
@@ -748,6 +992,7 @@ class _SidebarRow extends StatelessWidget {
           ],
         ),
           ),
+          ),
         ),
       ),
     );
@@ -762,12 +1007,14 @@ class _MainPanel extends StatelessWidget {
   final bool wide; // two-pane (tablet/desktop) layout
   final _NameMode nameMode;
   final VoidCallback onTapName;
+  final GlobalKey? codeKey; // tutorial spotlight anchor
   const _MainPanel(
       {required this.account,
       required this.tick,
       required this.onCopy,
       required this.nameMode,
       required this.onTapName,
+      this.codeKey,
       this.wide = false});
 
   @override
@@ -841,6 +1088,7 @@ class _MainPanel extends StatelessWidget {
           // explicit copy button is gone). Phone: scale the code relative to the
           // viewport; tablet / two-pane: keep the fixed design size.
           Row(
+            key: codeKey,
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1274,6 +1522,14 @@ class _Avatar extends StatelessWidget {
               displayUrl,
               width: avatarSize,
               height: avatarSize,
+              // Decode at display size (animated GIFs keep animating), in
+              // 32px buckets so desktop window resizes don't re-decode.
+              cacheWidth: (((avatarSize *
+                                  MediaQuery.devicePixelRatioOf(context))
+                              .ceil() +
+                          31) ~/
+                      32) *
+                  32,
               fit: BoxFit.cover,
               gaplessPlayback: true,
               errorBuilder: (_, _, _) => fallback(avatarSize),
@@ -1310,18 +1566,23 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final t = Theme.of(context).extension<SdaTokens>()!;
     return Center(
       child: Padding(
         padding: context.rInsets(all: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(l.accountsEmpty, textAlign: TextAlign.center),
-            SizedBox(height: context.r(16)),
+            FloatingLogo(child: AppLogo(size: context.r(84))),
+            SizedBox(height: context.r(22)),
+            Text(l.accountsEmpty,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: t.muted, height: 1.6)),
+            SizedBox(height: context.r(18)),
             FilledButton.icon(
               onPressed: onAdd,
               icon: const Icon(Icons.add),
-              label: Text(l.actionImport),
+              label: Text(l.emptyAddAccount),
             ),
           ],
         ),

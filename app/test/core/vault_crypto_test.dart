@@ -26,6 +26,21 @@ void main() {
   });
 
   group('DEK wrap / unwrap (PIN-bound)', () {
+    test('opens a wrap produced by the original pointycastle implementation',
+        () {
+      // Fixture generated with the pre-hashlib code (pointycastle PBKDF2 +
+      // GCM) — locks byte-compatibility so existing users' wraps keep
+      // opening across KDF implementation changes.
+      const salt = 'BxQhLjtIVWJvfImWo7C9yg==';
+      const blob =
+          'AQYLEBUaHyQpLjM4L3Y7YjQysD/gz3dYxSkkPNohyMrR5PKPDsPfbq9EB8kuiqjkB50Lwdp14IFk4I9y';
+      const dekB64 = 'Aw4ZJC86RVBbZnF8h5KdqLO+ydTf6vUACxYhLDdCTVg=';
+      final out =
+          VaultCrypto.unwrapDek('123456', salt, blob, iterations: 1000);
+      expect(out, isNotNull);
+      expect(base64.encode(out!), dekB64);
+    });
+
     test('round trips with the correct PIN', () {
       final dek = VaultCrypto.generateDek();
       final salt = VaultCrypto.randomSaltB64();

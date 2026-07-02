@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../core/crypto/vault_crypto.dart';
 import '../core/models/steam_guard_account.dart';
@@ -109,6 +110,23 @@ class LocaleController extends Notifier<Locale?> {
   }
 }
 
+/// The installed app version (from the platform package info).
+final appVersionProvider = FutureProvider<String>(
+    (ref) async => (await PackageInfo.fromPlatform()).version);
+
+/// Bumped by settings → "replay tutorial"; the home screen re-arms its
+/// first-run gesture walkthrough when this changes.
+final tutorialReplayProvider =
+    NotifierProvider<TutorialReplayController, int>(
+        TutorialReplayController.new);
+
+class TutorialReplayController extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void bump() => state++;
+}
+
 /// A 1-second tick used to refresh codes and countdowns.
 final tickProvider = StreamProvider<int>((ref) async* {
   yield SteamTime.currentSteamTime;
@@ -198,6 +216,19 @@ class AppController extends AsyncNotifier<AppData> {
     unawaited(ref.read(timeAlignerProvider)());
     Future.microtask(refreshSessions);
     Future.microtask(refreshAvatars);
+  }
+
+  /// Persists manifest-level settings and notifies watchers in place. Never
+  /// invalidate this provider for that: a full [build] re-runs the encrypted
+  /// bootstrap path and would re-lock the app.
+  Future<void> saveSettings() async {
+    final data = state.value;
+    if (data == null) return;
+    await data.store.save();
+    // Re-read: a concurrent refresh may have updated state during the await —
+    // notifying with the pre-await snapshot would clobber it.
+    final current = state.value ?? data;
+    state = AsyncData(current.copyWith());
   }
 
   bool _refreshingSessions = false;

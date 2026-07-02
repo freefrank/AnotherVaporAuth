@@ -97,7 +97,64 @@ class AppLocalizationsEn extends AppLocalizations {
       'No accounts yet. Import a maFile or log in to add one.';
 
   @override
+  String get emptyAddAccount => 'Add account';
+
+  @override
   String get accountReady => 'Ready';
+
+  @override
+  String get tutCodeTitle => 'Live token';
+
+  @override
+  String get tutCodeBody =>
+      'Tap the big code to copy it. Tap the account name to cycle username / nickname / SteamID.';
+
+  @override
+  String get tutSwipeRightTitle => 'Swipe right → confirmations';
+
+  @override
+  String get tutSwipeRightBody =>
+      'Swipe an account to the right to open its trade confirmations.';
+
+  @override
+  String get tutSwipeLeftTitle => 'Swipe left → more actions';
+
+  @override
+  String get tutSwipeLeftBody =>
+      'Swipe left to refresh the session, export the maFile, or remove the account.';
+
+  @override
+  String get tutLongPressTitle => 'Long-press → inventory & market';
+
+  @override
+  String get tutLongPressBody =>
+      'Long-press an account to browse its inventory and list items on the Community Market.';
+
+  @override
+  String get tutPullTitle => 'Pull to refresh';
+
+  @override
+  String get tutPullBody =>
+      'Pull the account list down to refresh avatars and check pending sign-ins.';
+
+  @override
+  String get tutSkip => 'Skip';
+
+  @override
+  String get tutNext => 'Next';
+
+  @override
+  String get tutDone => 'Got it';
+
+  @override
+  String get settingsTutorial => 'Gesture tutorial';
+
+  @override
+  String get settingsTutorialDesc =>
+      'Replay the home-screen walkthrough (swipes, long-press, pull-to-refresh).';
+
+  @override
+  String get settingsTutorialReplay => 'Replay';
 
   @override
   String get welcomeTitle => 'Welcome to AVA';
@@ -159,6 +216,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get confRejectAll => 'Reject all';
+
+  @override
+  String confAcceptAllConfirm(int count) {
+    return 'Accept all $count confirmations?';
+  }
+
+  @override
+  String confRejectAllConfirm(int count) {
+    return 'Reject all $count confirmations?';
+  }
+
+  @override
+  String get confAcceptAllWarn =>
+      'This approves every pending trade and market listing at once. Make sure you recognize all of them.';
+
+  @override
+  String get confRejectAllWarn =>
+      'This cancels every pending confirmation at once.';
 
   @override
   String confPending(int count) {

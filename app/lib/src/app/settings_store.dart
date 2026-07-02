@@ -58,6 +58,23 @@ class SettingsStore {
     await _write(data);
   }
 
+  /// Whether the first-run gesture tutorial has been shown (home screen).
+  Future<bool> loadTutorialSeen() async =>
+      (await _read())['tutorial_seen'] == true;
+
+  Future<void> saveTutorialSeen() async {
+    final data = await _read();
+    data['tutorial_seen'] = true;
+    await _write(data);
+  }
+
+  /// Clears the seen flag so the tutorial replays (settings → replay).
+  Future<void> resetTutorialSeen() async {
+    final data = await _read();
+    data.remove('tutorial_seen');
+    await _write(data);
+  }
+
   /// UI theme variant: 'neon' (default) or 'pixel'.
   Future<String?> loadTheme() async => (await _read())['theme'] as String?;
 

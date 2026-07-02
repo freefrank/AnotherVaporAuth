@@ -5,6 +5,90 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.65] — 2026-07-01
+
+### Added
+- **First-run gesture tutorial** (touch devices): a themed coach-mark overlay
+  that spotlights the live token and physically demonstrates the account row's
+  swipe panes (right → confirmations, left → refresh/export/delete), the
+  long-press market entry and pull-to-refresh. Skippable, shown once.
+- **Desktop support**: right-click an account row for a context menu with all
+  row actions, and a sidebar refresh button on desktop platforms (mouse users
+  have no pull-to-refresh). The market screen gained an app-bar refresh button.
+- Batch **"Accept all" / "Reject all" now ask for confirmation** (with count and
+  a warning) before acting on every pending confirmation at once.
+- Retry buttons on the confirmations and market error states; the market
+  inventory shows a first-load spinner and a paging indicator.
+- Settings → "Gesture tutorial → Replay" to rewatch the walkthrough.
+
+### Changed
+- Themed the remaining stock-Material surfaces: dialogs, tabs and context menus
+  now follow the Neon/Pixel design tokens; the "add account" sheet was redesigned
+  as a floating themed panel; the welcome and empty screens got the animated
+  theme ambience; destructive dialog buttons are red.
+- The animated backgrounds now fade out under the status bar and the HUD frame
+  stays inside the safe area — no more glyphs colliding with system icons.
+- Touch targets across the app raised to 48dp (visuals unchanged).
+- The unlock progress bar now fills up instead of looping endlessly.
+
+### Fixed
+- Toggling a settings switch no longer re-locks the app (the app state is now
+  updated in place instead of being rebuilt through the encrypted bootstrap).
+- Settings "About" now shows the real installed version instead of a stale
+  hardcoded one.
+- Market: "My listings" surfaces load errors (with retry), can be pull-refreshed
+  when empty, and reloads after you create a listing; the sell sheet no longer
+  hangs on a stuck progress bar when price data fails to load.
+
+### Performance
+- Unlock key derivation (PBKDF2, 100k iterations) moved off the UI thread — the
+  unlock animation actually animates now, and the PIN/biometric screen no longer
+  freezes for a moment before it.
+- Swapped the PBKDF2 implementation (pointycastle → hashlib, byte-identical
+  output, locked by a compatibility test) for a ~4.5× faster unlock; the KDF
+  round count is now stored alongside the wrapped key so it can be tuned in
+  future versions without breaking existing vaults.
+- The animated backgrounds (digital rain, HUD, starfield, scanlines) no longer
+  rebuild the widget tree every frame and pause completely while another screen
+  covers them — same 60 fps visuals, much less CPU/battery.
+- Network images (avatars, inventory icons) now decode at display size.
+
+—
+
+### 新增
+- **首次启动手势教程**(触屏设备):主题化 coach-mark 引导,聚光展示实时令牌,并真实
+  演示账户条目的滑动面板(右滑 → 交易确认,左滑 → 刷新/导出/删除)、长按进入市场与
+  下拉刷新。可跳过,仅显示一次。
+- **桌面端支持**:账户条目右键弹出包含全部操作的上下文菜单;桌面平台侧栏新增刷新
+  按钮(鼠标无法下拉刷新);市场页新增标题栏刷新按钮。
+- **「全部接受 / 全部拒绝」现在需要二次确认**(带数量与警告),不再一键批量生效。
+- 确认页与市场错误状态新增「重试」按钮;库存首次加载显示进度、分页加载有指示。
+- 设置新增「手势教程 → 重新播放」。
+
+### 变更
+- 补齐了剩余原生 Material 表面的主题化:对话框、标签页、右键菜单全部遵循
+  Neon/Pixel 设计令牌;「添加账户」底部菜单重做为悬浮主题面板;欢迎页与空状态页
+  加入了动态主题氛围背景;破坏性对话框按钮改为红色。
+- 动态背景在状态栏区域淡出、HUD 框架收进安全区——装饰元素不再与系统图标打架。
+- 全应用触控目标提升到 48dp(视觉不变)。
+- 解锁进度条改为填充式,不再无限循环。
+
+### 修复
+- 在设置页拨动开关不再导致应用重新上锁(应用状态改为原地更新,不再经过加密引导流程
+  整体重建)。
+- 设置页「关于」显示真实安装版本,不再是过期的硬编码版本号。
+- 市场:「我的上架」会展示加载错误(可重试)、空列表也能下拉刷新、上架成功后自动
+  重载;出售面板在价格数据加载失败时不再卡死在进度条。
+
+### 性能
+- 解锁密钥派生(PBKDF2 十万次迭代)移出 UI 线程——解锁动画真正动起来了,输入 PIN /
+  指纹后的界面也不再卡顿。
+- 更换 PBKDF2 实现(pointycastle → hashlib,输出逐字节一致并有兼容性测试锁定),
+  解锁约快 4.5 倍;KDF 迭代数现随包裹密钥一同存储,今后可平滑调整不破坏存量。
+- 动态背景(数字雨、HUD、星空、扫描线)不再每帧重建 widget 树,且在被其他页面遮挡时
+  完全暂停——视觉仍是 60 fps,CPU/电量占用大幅下降。
+- 网络图片(头像、库存图标)按显示尺寸解码。
+
 ## [v0.64] — 2026-07-01
 
 ### Changed

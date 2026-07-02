@@ -5,7 +5,9 @@ import '../../l10n/app_localizations.dart';
 import '../app/responsive.dart';
 import '../app/theme.dart';
 import 'widgets/app_logo.dart';
+import 'widgets/cyber_ambient.dart';
 import 'widgets/motion.dart';
+import 'widgets/pixel_ambient.dart';
 import 'widgets/scanline_overlay.dart';
 import 'import_helper.dart';
 import 'login_screen.dart';
@@ -22,48 +24,58 @@ class WelcomeScreen extends ConsumerWidget {
 
     return Scaffold(
       body: ScanlineOverlay(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: context.rInsets(all: 28),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FloatingLogo(child: AppLogo(size: context.r(96))),
-                  SizedBox(height: context.r(24)),
-                  Text(
-                    l.welcomeTitle,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: t.text, fontSize: context.r(20)),
+        child: Stack(
+          children: [
+            Positioned.fill(
+                child: t.isPixel ? const PixelAmbient() : const CyberAmbient()),
+            Center(
+              child: SingleChildScrollView(
+                padding: context.rInsets(all: 28),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 460),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FloatingLogo(child: AppLogo(size: context.r(96))),
+                      SizedBox(height: context.r(24)),
+                      Text(
+                        l.welcomeTitle,
+                        textAlign: TextAlign.center,
+                        style:
+                            TextStyle(color: t.text, fontSize: context.r(20)),
+                      ),
+                      SizedBox(height: context.r(10)),
+                      Text(
+                        l.welcomeSubtitle,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: t.muted,
+                            fontSize: context.r(14),
+                            height: 1.6),
+                      ),
+                      SizedBox(height: context.r(28)),
+                      _Cta(
+                        title: l.welcomeLoginCta,
+                        subtitle: l.welcomeLoginSub,
+                        emphasized: true,
+                        onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const LoginScreen(
+                                    reason: LoginReason.add))),
+                      ),
+                      SizedBox(height: context.r(14)),
+                      _Cta(
+                        title: l.welcomeImportCta,
+                        subtitle: l.welcomeImportSub,
+                        emphasized: false,
+                        onTap: () => importMaFileFlow(context, ref),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: context.r(10)),
-                  Text(
-                    l.welcomeSubtitle,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: t.muted, fontSize: context.r(14), height: 1.6),
-                  ),
-                  SizedBox(height: context.r(28)),
-                  _Cta(
-                    title: l.welcomeLoginCta,
-                    subtitle: l.welcomeLoginSub,
-                    emphasized: true,
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) =>
-                            const LoginScreen(reason: LoginReason.add))),
-                  ),
-                  SizedBox(height: context.r(14)),
-                  _Cta(
-                    title: l.welcomeImportCta,
-                    subtitle: l.welcomeImportSub,
-                    emphasized: false,
-                    onTap: () => importMaFileFlow(context, ref),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

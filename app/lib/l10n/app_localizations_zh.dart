@@ -93,7 +93,58 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountsEmpty => '暂无账户。导入 maFile 或登录以添加。';
 
   @override
+  String get emptyAddAccount => '添加账户';
+
+  @override
   String get accountReady => '已就绪';
+
+  @override
+  String get tutCodeTitle => '实时令牌';
+
+  @override
+  String get tutCodeBody => '点击大号令牌即可复制;点击账户名可在用户名 / 昵称 / SteamID 间切换。';
+
+  @override
+  String get tutSwipeRightTitle => '右滑 → 交易确认';
+
+  @override
+  String get tutSwipeRightBody => '在账户条目上向右滑动,直接打开它的交易确认列表。';
+
+  @override
+  String get tutSwipeLeftTitle => '左滑 → 更多操作';
+
+  @override
+  String get tutSwipeLeftBody => '向左滑动可刷新会话、导出 maFile 或删除账户。';
+
+  @override
+  String get tutLongPressTitle => '长按 → 库存与市场';
+
+  @override
+  String get tutLongPressBody => '长按账户可浏览库存,并把物品上架到社区市场。';
+
+  @override
+  String get tutPullTitle => '下拉刷新';
+
+  @override
+  String get tutPullBody => '下拉账户列表可刷新头像并检查待处理的登录请求。';
+
+  @override
+  String get tutSkip => '跳过';
+
+  @override
+  String get tutNext => '下一步';
+
+  @override
+  String get tutDone => '知道了';
+
+  @override
+  String get settingsTutorial => '手势教程';
+
+  @override
+  String get settingsTutorialDesc => '重新播放主屏手势引导(滑动、长按、下拉刷新)。';
+
+  @override
+  String get settingsTutorialReplay => '重新播放';
 
   @override
   String get welcomeTitle => '欢迎使用 AVA';
@@ -154,6 +205,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get confRejectAll => '全部拒绝';
+
+  @override
+  String confAcceptAllConfirm(int count) {
+    return '接受全部 $count 项确认?';
+  }
+
+  @override
+  String confRejectAllConfirm(int count) {
+    return '拒绝全部 $count 项确认?';
+  }
+
+  @override
+  String get confAcceptAllWarn => '将一次性批准所有待处理的交易与市场上架,请确认你认识其中每一项。';
+
+  @override
+  String get confRejectAllWarn => '将一次性取消所有待处理的确认。';
 
   @override
   String confPending(int count) {

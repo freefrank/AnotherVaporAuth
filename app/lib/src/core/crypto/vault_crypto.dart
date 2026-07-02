@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:hashlib/hashlib.dart' as hashlib;
 import 'package:pointycastle/export.dart';
 
 /// AVA's internal at-rest encryption for the `maFiles/` vault.
@@ -43,12 +44,15 @@ class VaultCrypto {
   static String randomSaltB64() => base64.encode(_randomBytes(pinSaltLength));
 
   /// Derives the PIN key-encryption key with PBKDF2-HMAC-SHA256.
+  ///
+  /// Uses hashlib rather than pointycastle: identical output (verified against
+  /// each other and the RFC vectors in the tests), ~4.5x faster — the
+  /// difference between a multi-second and a sub-second unlock at 100k rounds.
   static Uint8List _deriveKek(String pin, String saltB64, int iterations) {
     if (pin.isEmpty) throw ArgumentError('PIN is empty');
     final salt = base64.decode(saltB64);
-    final kdf = PBKDF2KeyDerivator(HMac(SHA256Digest(), 64))
-      ..init(Pbkdf2Parameters(salt, iterations, dekLength));
-    return kdf.process(Uint8List.fromList(utf8.encode(pin)));
+    return Uint8List.fromList(
+        hashlib.pbkdf2(utf8.encode(pin), salt, iterations, dekLength).bytes);
   }
 
   /// AES-256-GCM encrypt [plain] under [key]; returns nonce||ct||tag (base64).

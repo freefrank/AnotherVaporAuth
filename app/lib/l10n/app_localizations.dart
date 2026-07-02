@@ -266,11 +266,113 @@ abstract class AppLocalizations {
   /// **'No accounts yet. Import a maFile or log in to add one.'**
   String get accountsEmpty;
 
+  /// No description provided for @emptyAddAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Add account'**
+  String get emptyAddAccount;
+
   /// No description provided for @accountReady.
   ///
   /// In en, this message translates to:
   /// **'Ready'**
   String get accountReady;
+
+  /// No description provided for @tutCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Live token'**
+  String get tutCodeTitle;
+
+  /// No description provided for @tutCodeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the big code to copy it. Tap the account name to cycle username / nickname / SteamID.'**
+  String get tutCodeBody;
+
+  /// No description provided for @tutSwipeRightTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe right → confirmations'**
+  String get tutSwipeRightTitle;
+
+  /// No description provided for @tutSwipeRightBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe an account to the right to open its trade confirmations.'**
+  String get tutSwipeRightBody;
+
+  /// No description provided for @tutSwipeLeftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe left → more actions'**
+  String get tutSwipeLeftTitle;
+
+  /// No description provided for @tutSwipeLeftBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe left to refresh the session, export the maFile, or remove the account.'**
+  String get tutSwipeLeftBody;
+
+  /// No description provided for @tutLongPressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press → inventory & market'**
+  String get tutLongPressTitle;
+
+  /// No description provided for @tutLongPressBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press an account to browse its inventory and list items on the Community Market.'**
+  String get tutLongPressBody;
+
+  /// No description provided for @tutPullTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull to refresh'**
+  String get tutPullTitle;
+
+  /// No description provided for @tutPullBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull the account list down to refresh avatars and check pending sign-ins.'**
+  String get tutPullBody;
+
+  /// No description provided for @tutSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get tutSkip;
+
+  /// No description provided for @tutNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get tutNext;
+
+  /// No description provided for @tutDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get tutDone;
+
+  /// No description provided for @settingsTutorial.
+  ///
+  /// In en, this message translates to:
+  /// **'Gesture tutorial'**
+  String get settingsTutorial;
+
+  /// No description provided for @settingsTutorialDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay the home-screen walkthrough (swipes, long-press, pull-to-refresh).'**
+  String get settingsTutorialDesc;
+
+  /// No description provided for @settingsTutorialReplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay'**
+  String get settingsTutorialReplay;
 
   /// No description provided for @welcomeTitle.
   ///
@@ -391,6 +493,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reject all'**
   String get confRejectAll;
+
+  /// No description provided for @confAcceptAllConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept all {count} confirmations?'**
+  String confAcceptAllConfirm(int count);
+
+  /// No description provided for @confRejectAllConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject all {count} confirmations?'**
+  String confRejectAllConfirm(int count);
+
+  /// No description provided for @confAcceptAllWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'This approves every pending trade and market listing at once. Make sure you recognize all of them.'**
+  String get confAcceptAllWarn;
+
+  /// No description provided for @confRejectAllWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'This cancels every pending confirmation at once.'**
+  String get confRejectAllWarn;
 
   /// No description provided for @confPending.
   ///

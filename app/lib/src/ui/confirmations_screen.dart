@@ -92,6 +92,40 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
     await _refresh();
   }
 
+  /// Batch accept/reject with an explicit confirmation dialog — acting on
+  /// every pending confirmation must never be a single tap.
+  Future<void> _respondAll(List<Confirmation> confs, bool accept) async {
+    if (confs.isEmpty) return;
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).extension<SdaTokens>()!;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(accept
+            ? l.confAcceptAllConfirm(confs.length)
+            : l.confRejectAllConfirm(confs.length)),
+        content: Text(accept ? l.confAcceptAllWarn : l.confRejectAllWarn),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l.commonCancel)),
+          FilledButton(
+            // Destructive emphasis for reject; accept keeps the accent.
+            style: accept
+                ? null
+                : FilledButton.styleFrom(
+                    backgroundColor: t.bad,
+                    foregroundColor: const Color(0xFF06060F),
+                  ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(accept ? l.confAcceptAll : l.confRejectAll),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) await _respond(confs, accept);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -130,6 +164,11 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
               Icon(Icons.cloud_off, color: t.muted, size: context.r(40)),
               SizedBox(height: context.r(12)),
               Text('${l.commonError}: $_error', textAlign: TextAlign.center),
+              SizedBox(height: context.r(16)),
+              OutlinedButton(
+                onPressed: _refresh,
+                child: Text(l.commonRetry),
+              ),
             ],
           ),
         ),
@@ -162,13 +201,13 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
                 ),
               ),
               OutlinedButton.icon(
-                onPressed: _busy ? null : () => _respond(confs, false),
+                onPressed: _busy ? null : () => _respondAll(confs, false),
                 icon: Icon(Icons.close, size: context.r(16)),
                 label: Text(l.confRejectAll),
               ),
               SizedBox(width: context.r(8)),
               FilledButton.icon(
-                onPressed: _busy ? null : () => _respond(confs, true),
+                onPressed: _busy ? null : () => _respondAll(confs, true),
                 icon: Icon(Icons.check, size: context.r(16)),
                 label: Text(l.confAcceptAll),
               ),
@@ -306,13 +345,14 @@ class _ConfCardState extends State<_ConfCard>
                   ],
                 ),
               ),
-              SizedBox(width: context.r(12)),
+              // Gaps compensate the 5px of invisible hit-target padding on
+              // each side of _RoundAction (visually ~12 and ~10).
+              SizedBox(width: context.r(7)),
               _RoundAction(
                 icon: Icons.close,
                 color: t.bad,
                 onTap: widget.busy ? null : widget.onReject,
               ),
-              SizedBox(width: context.r(8)),
               _RoundAction(
                 icon: Icons.check,
                 color: t.good,
@@ -335,19 +375,26 @@ class _RoundAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).extension<SdaTokens>()!;
+    // 48dp tappable area around the 38dp visual box (a11y touch target).
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(t.radiusSm),
-      child: Container(
-        width: context.r(38),
-        height: context.r(38),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(t.radiusSm),
-          border: Border.all(color: color.withValues(alpha: 0.55)),
+      child: SizedBox(
+        width: context.r(48),
+        height: context.r(48),
+        child: Center(
+          child: Container(
+            width: context.r(38),
+            height: context.r(38),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(t.radiusSm),
+              border: Border.all(color: color.withValues(alpha: 0.55)),
+            ),
+            child: Icon(icon, color: color, size: context.r(18)),
+          ),
         ),
-        child: Icon(icon, color: color, size: context.r(18)),
       ),
     );
   }

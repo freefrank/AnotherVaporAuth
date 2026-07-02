@@ -66,17 +66,23 @@ class _SellSheetState extends ConsumerState<SellSheet> {
   }
 
   Future<void> _load() async {
-    final market = ref.read(marketClientProvider);
-    final p = await market.priceOverview(
-        widget.item.appid, widget.item.marketHashName, widget.wallet.currency);
-    final h = await market.priceHistory(
-        widget.account, widget.item.appid, widget.item.marketHashName);
-    if (!mounted) return;
-    setState(() {
-      _price = p;
-      _history = h;
-      _loadingPrice = false;
-    });
+    try {
+      final market = ref.read(marketClientProvider);
+      final p = await market.priceOverview(widget.item.appid,
+          widget.item.marketHashName, widget.wallet.currency);
+      final h = await market.priceHistory(
+          widget.account, widget.item.appid, widget.item.marketHashName);
+      if (!mounted) return;
+      setState(() {
+        _price = p;
+        _history = h;
+        _loadingPrice = false;
+      });
+    } catch (_) {
+      // Price data is advisory — fall through to "price unavailable" instead
+      // of leaving the progress bar stuck.
+      if (mounted) setState(() => _loadingPrice = false);
+    }
   }
 
   int _toMinor(String s) {
@@ -190,7 +196,8 @@ class _SellSheetState extends ConsumerState<SellSheet> {
             Row(
               children: [
                 if (widget.item.iconUrl.isNotEmpty)
-                  Image.network(widget.item.iconUrl, width: context.r(48)),
+                  Image.network(widget.item.iconUrl,
+                      width: context.r(48), cacheWidth: context.rCache(48)),
                 SizedBox(width: context.r(12)),
                 Expanded(
                   child: Text(widget.item.name,
@@ -237,16 +244,20 @@ class _SellSheetState extends ConsumerState<SellSheet> {
                       Positioned(
                         top: 0,
                         right: 0,
-                        child: Text('${l.marketHigh} ${_history.reduce((a, b) => a > b ? a : b).toStringAsFixed(2)}',
-                            style: TextStyle(
-                                color: t.good, fontSize: context.r(10.5))),
+                        child: _SparkLabel(
+                            text:
+                                '${l.marketHigh} ${_history.reduce((a, b) => a > b ? a : b).toStringAsFixed(2)}',
+                            color: t.good,
+                            panel: t.panel2),
                       ),
                       Positioned(
                         bottom: 0,
                         right: 0,
-                        child: Text('${l.marketLow} ${_history.reduce((a, b) => a < b ? a : b).toStringAsFixed(2)}',
-                            style: TextStyle(
-                                color: t.bad, fontSize: context.r(10.5))),
+                        child: _SparkLabel(
+                            text:
+                                '${l.marketLow} ${_history.reduce((a, b) => a < b ? a : b).toStringAsFixed(2)}',
+                            color: t.bad,
+                            panel: t.panel2),
                       ),
                     ],
                   ),
@@ -342,6 +353,30 @@ class _SellSheetState extends ConsumerState<SellSheet> {
         contentPadding: context.rInsets(h: 12, v: 10),
         border: const OutlineInputBorder(),
       ),
+    );
+  }
+}
+
+/// High/low tag over the sparkline — a translucent panel backing keeps it
+/// readable when it lands on top of the line.
+class _SparkLabel extends StatelessWidget {
+  final String text;
+  final Color color;
+  final Color panel;
+  const _SparkLabel(
+      {required this.text, required this.color, required this.panel});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+          horizontal: context.r(4), vertical: context.r(1)),
+      decoration: BoxDecoration(
+        color: panel.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Text(text,
+          style: TextStyle(color: color, fontSize: context.r(10.5))),
     );
   }
 }

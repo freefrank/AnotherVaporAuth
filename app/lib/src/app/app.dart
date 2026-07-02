@@ -8,6 +8,7 @@ import '../ui/setup_pin_screen.dart';
 import '../ui/unlock_screen.dart';
 import '../ui/welcome_screen.dart';
 import 'providers.dart';
+import 'route_observer.dart';
 import 'theme.dart';
 
 class SdaApp extends ConsumerWidget {
@@ -25,6 +26,7 @@ class SdaApp extends ConsumerWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       theme: buildSdaTheme(variant),
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [routeObserver],
       builder: (context, child) => _Backdrop(child: child ?? const SizedBox()),
       home: const _Root(),
     );

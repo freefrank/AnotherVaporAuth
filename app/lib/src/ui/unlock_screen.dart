@@ -194,14 +194,50 @@ class _UnlockLoading extends ConsumerWidget {
   }
 }
 
-/// A theme-aware indeterminate progress bar: a glowing sweep on Neon, a hard
-/// blocky sweep on Pixel.
-class _ScanBar extends StatelessWidget {
+/// A theme-aware progress bar that FILLS instead of looping — an endless sweep
+/// reads as "who knows how long", a filling bar reads as "almost there".
+///
+/// There is no real progress signal from the KDF, so the fill is a cubic
+/// ease-out sized to the typical unlock (~1s): it charges quickly to ~90%,
+/// then creeps asymptotically toward 98% on slower devices; the screen swaps
+/// away the moment the unlock completes. Pixel theme quantises the fill into
+/// hard blocks.
+class _ScanBar extends StatefulWidget {
   final SdaTokens tokens;
   const _ScanBar({required this.tokens});
 
   @override
+  State<_ScanBar> createState() => _ScanBarState();
+}
+
+class _ScanBarState extends State<_ScanBar>
+    with SingleTickerProviderStateMixin {
+  // Full curve duration: reaches ~90% around the typical unlock time and
+  // saturates slowly after; never completes on its own.
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 3200),
+  )..forward();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  double _fill(double t) {
+    // Cubic ease-out to 0.9 over the first ~40% of the timeline (≈1.3s),
+    // then a slow linear creep to 0.98.
+    if (t < 0.4) {
+      final k = t / 0.4;
+      return 0.9 * (1 - (1 - k) * (1 - k) * (1 - k));
+    }
+    return 0.9 + 0.08 * ((t - 0.4) / 0.6);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final tokens = widget.tokens;
     final pixel = tokens.isPixel;
     return Container(
       width: context.r(180),
@@ -214,9 +250,18 @@ class _ScanBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(pixel ? 0 : 4),
         child: SizedBox(
           height: context.r(pixel ? 10 : 5),
-          child: LinearProgressIndicator(
-            backgroundColor: pixel ? tokens.bg : tokens.line,
-            valueColor: AlwaysStoppedAnimation(tokens.accent),
+          child: AnimatedBuilder(
+            animation: _c,
+            builder: (context, _) {
+              var v = _fill(_c.value);
+              // Pixel: fill in hard 1/12 blocks instead of gliding.
+              if (pixel) v = (v * 12).floorToDouble() / 12;
+              return LinearProgressIndicator(
+                value: v,
+                backgroundColor: pixel ? tokens.bg : tokens.line,
+                valueColor: AlwaysStoppedAnimation(tokens.accent),
+              );
+            },
           ),
         ),
       ),

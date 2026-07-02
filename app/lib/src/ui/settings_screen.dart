@@ -11,7 +11,6 @@ import 'widgets/pin_field.dart';
 import 'widgets/scanline_overlay.dart';
 import 'widgets/sda_panel.dart';
 
-const _appVersion = '0.59';
 const _repoUrl = 'https://github.com/freefrank/AnotherVaporAuth';
 const _authorUrl = 'https://github.com/freefrank';
 const _licenseUrl =
@@ -40,10 +39,10 @@ class SettingsScreen extends ConsumerWidget {
       );
     }
 
-    Future<void> save() async {
-      await data!.store.save();
-      ref.invalidate(appControllerProvider);
-    }
+    // Persist manifest toggles in place — invalidating the app controller here
+    // would re-run the encrypted bootstrap and lock the app again.
+    Future<void> save() =>
+        ref.read(appControllerProvider.notifier).saveSettings();
 
     return Scaffold(
       appBar: AppBar(title: Text(l.navSettings)),
@@ -139,6 +138,30 @@ class SettingsScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+                // Replay the first-run gesture tutorial (touch platforms only —
+                // desktop uses the right-click context menu instead).
+                if (switch (Theme.of(context).platform) {
+                  TargetPlatform.android ||
+                  TargetPlatform.iOS ||
+                  TargetPlatform.fuchsia =>
+                    true,
+                  _ => false,
+                })
+                  _Card(
+                    title: l.settingsTutorial,
+                    description: l.settingsTutorialDesc,
+                    trailing: OutlinedButton(
+                      onPressed: () async {
+                        await ref
+                            .read(settingsStoreProvider)
+                            .resetTutorialSeen();
+                        ref.read(tutorialReplayProvider.notifier).bump();
+                        // Back to home, where the walkthrough starts.
+                        if (context.mounted) Navigator.of(context).pop();
+                      },
+                      child: Text(l.settingsTutorialReplay),
+                    ),
+                  ),
                 // Debug log (network trace for diagnosing the Steam flows)
                 _Card(
                   title: l.debugLog,
@@ -156,7 +179,8 @@ class SettingsScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('AVA · AnotherVaporAuth  v$_appVersion',
+                      Text(
+                          'AVA · AnotherVaporAuth  v${ref.watch(appVersionProvider).value ?? '…'}',
                           style:
                               TextStyle(color: t.text, fontSize: context.r(14))),
                       SizedBox(height: context.r(4)),
@@ -190,7 +214,8 @@ class SettingsScreen extends ConsumerWidget {
                         () => showLicensePage(
                           context: context,
                           applicationName: 'AVA · AnotherVaporAuth',
-                          applicationVersion: 'v$_appVersion',
+                          applicationVersion:
+                              'v${ref.read(appVersionProvider).value ?? ''}',
                           applicationLegalese: '© 2026 freefrank · MIT',
                         ),
                       ),
@@ -293,42 +318,14 @@ class SettingsScreen extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final data = ref.read(appControllerProvider).value;
     if (data == null) return;
-    final oldKeyCtrl = TextEditingController();
-    final newKeyCtrl = TextEditingController();
 
-    final ok = await showDialog<bool>(
+    final entered = await showDialog<({String old, String next})>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.pinChangeTitle),
-        content: SizedBox(
-          width: 260,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (data.encrypted) ...[
-                PinField(
-                    controller: oldKeyCtrl,
-                    label: l.pinCurrentLabel,
-                    autofocus: true),
-                const SizedBox(height: 12),
-              ],
-              PinField(controller: newKeyCtrl, label: l.pinNewLabel),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l.commonCancel)),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l.commonOk)),
-        ],
-      ),
+      builder: (_) => _PasskeyDialog(askOld: data.encrypted),
     );
 
-    if (ok != true) return;
-    final newKey = newKeyCtrl.text;
+    if (entered == null) return;
+    final newKey = entered.next;
     if (newKey.length != 6) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
@@ -336,7 +333,7 @@ class SettingsScreen extends ConsumerWidget {
       }
       return;
     }
-    final oldKey = oldKeyCtrl.text.isEmpty ? null : oldKeyCtrl.text;
+    final oldKey = entered.old.isEmpty ? null : entered.old;
     final success = await ref
         .read(appControllerProvider.notifier)
         .changePasskey(data.encrypted ? oldKey : null, newKey);
@@ -350,6 +347,59 @@ class SettingsScreen extends ConsumerWidget {
         SnackBar(content: Text(success ? l.commonOk : l.unlockInvalid)),
       );
     }
+  }
+}
+
+/// PIN change dialog. Owns its text controllers so they are disposed with the
+/// route; pops the entered `(old, next)` pair on OK, null on cancel.
+class _PasskeyDialog extends StatefulWidget {
+  final bool askOld;
+  const _PasskeyDialog({required this.askOld});
+
+  @override
+  State<_PasskeyDialog> createState() => _PasskeyDialogState();
+}
+
+class _PasskeyDialogState extends State<_PasskeyDialog> {
+  final _old = TextEditingController();
+  final _new = TextEditingController();
+
+  @override
+  void dispose() {
+    _old.dispose();
+    _new.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l.pinChangeTitle),
+      content: SizedBox(
+        width: 260,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.askOld) ...[
+              PinField(
+                  controller: _old, label: l.pinCurrentLabel, autofocus: true),
+              const SizedBox(height: 12),
+            ],
+            PinField(controller: _new, label: l.pinNewLabel),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l.commonCancel)),
+        FilledButton(
+            onPressed: () =>
+                Navigator.pop(context, (old: _old.text, next: _new.text)),
+            child: Text(l.commonOk)),
+      ],
+    );
   }
 }
 

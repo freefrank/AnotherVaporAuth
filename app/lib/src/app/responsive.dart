@@ -23,6 +23,15 @@ extension ResponsiveContext on BuildContext {
   /// A design value scaled to the current viewport.
   double r(double value) => value * scale;
 
+  /// [r] converted to physical pixels — for `Image.network(cacheWidth: …)` so
+  /// network images decode at display size instead of full resolution.
+  /// Rounded up to 32px buckets so live window resizes (desktop) don't thrash
+  /// the image cache with a re-decode per pixel of width change.
+  int rCache(double value) {
+    final px = (r(value) * MediaQuery.devicePixelRatioOf(this)).ceil();
+    return ((px + 31) ~/ 32) * 32;
+  }
+
   /// Symmetric/all-sides scaled insets helper.
   EdgeInsets rInsets({
     double all = 0,

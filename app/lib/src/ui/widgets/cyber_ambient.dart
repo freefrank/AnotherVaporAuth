@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../../app/route_observer.dart';
+
 /// Glyph pool for the digital rain — ASCII only so it renders on every device.
 const _glyphs = '0123456789ABCDEFGHJKLMNPRSTUVWXYZ#%&*+<>/=:';
 const _cell = 16.0; // column width / glyph row height
@@ -61,12 +63,20 @@ class CyberAmbient extends StatefulWidget {
   State<CyberAmbient> createState() => _CyberAmbientState();
 }
 
+/// Mutable animation state owned by the State: the ticker advances it every
+/// frame and the painter reads it by reference on every repaint.
+class _RainModel {
+  double phase = 0; // 0..1 slow loop for grid/glow/sweep
+  List<_RainColumn> cols = const [];
+}
+
 class _CyberAmbientState extends State<CyberAmbient>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, RouteAware {
   late final Ticker _ticker = createTicker(_onTick);
   Duration _last = Duration.zero;
-  double _phase = 0; // 0..1 slow loop for grid/glow/sweep
-  List<_RainColumn> _cols = const [];
+  final _RainModel _model = _RainModel();
+  // Bumped every tick so the painter repaints without rebuilding the widget.
+  final ValueNotifier<int> _frame = ValueNotifier<int>(0);
   Size _size = Size.zero;
 
   @override
@@ -76,26 +86,50 @@ class _CyberAmbientState extends State<CyberAmbient>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Pause while covered by a full-screen page (route may be null in tests;
+    // transparent overlays — dialogs, sheets, menus — must not pause us).
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<void>) routeObserver.subscribe(this, route);
+  }
+
+  @override
+  void didPushNext() {
+    if (_ticker.isActive) _ticker.stop();
+  }
+
+  @override
+  void didPopNext() {
+    if (!_ticker.isActive) {
+      _last = Duration.zero; // elapsed restarts from zero on start()
+      _ticker.start();
+    }
+  }
+
+  @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _ticker.dispose();
+    _frame.dispose();
     super.dispose();
   }
 
   void _ensureColumns(Size size) {
-    if (size == _size && _cols.isNotEmpty) return;
+    if (size == _size && _model.cols.isNotEmpty) return;
     _size = size;
     final n = (size.width / _cell).ceil() + 1;
-    _cols = List.generate(
+    _model.cols = List.generate(
         n, (_) => _RainColumn.spawn(size.height, anywhere: true));
   }
 
   void _onTick(Duration elapsed) {
     final dt = ((elapsed - _last).inMicroseconds / 1e6).clamp(0.0, 0.05);
     _last = elapsed;
-    _phase = (elapsed.inMilliseconds % 6000) / 6000;
+    _model.phase = (elapsed.inMilliseconds % 6000) / 6000;
     final h = _size.height;
     if (h > 0) {
-      for (final c in _cols) {
+      for (final c in _model.cols) {
         c.y += c.speed * dt;
         // Flicker a random glyph in the trail.
         if (_rnd.nextDouble() < 0.18) {
@@ -111,11 +145,14 @@ class _CyberAmbientState extends State<CyberAmbient>
         }
       }
     }
-    if (mounted) setState(() {});
+    _frame.value++; // repaint only — no widget rebuild
   }
 
   @override
   Widget build(BuildContext context) {
+    // Fade the ambience out under the status bar so rain glyphs and glows
+    // don't fight the clock/battery icons (the backdrop stays edge-to-edge).
+    final topFade = MediaQuery.paddingOf(context).top;
     return IgnorePointer(
       child: RepaintBoundary(
         child: LayoutBuilder(
@@ -123,7 +160,12 @@ class _CyberAmbientState extends State<CyberAmbient>
             _ensureColumns(Size(c.maxWidth, c.maxHeight));
             return CustomPaint(
               size: Size.infinite,
-              painter: _CyberPainter(phase: _phase, cols: _cols),
+              painter: _CyberPainter(
+                model: _model,
+                repaint: _frame,
+                topFade: topFade,
+                fadeColor: const Color(0xFF06060F),
+              ),
             );
           },
         ),
@@ -133,9 +175,15 @@ class _CyberAmbientState extends State<CyberAmbient>
 }
 
 class _CyberPainter extends CustomPainter {
-  final double phase;
-  final List<_RainColumn> cols;
-  _CyberPainter({required this.phase, required this.cols});
+  final _RainModel model;
+  final double topFade; // status-bar height to fade out under
+  final Color fadeColor;
+  _CyberPainter({
+    required this.model,
+    required Listenable repaint,
+    required this.topFade,
+    required this.fadeColor,
+  }) : super(repaint: repaint);
 
   static const _red = Color(0xFFFF1B6B);
   static const _blue = Color(0xFF18E0FF);
@@ -144,6 +192,8 @@ class _CyberPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final phase = model.phase;
+    final cols = model.cols;
     final w = size.width, h = size.height;
     final rect = Offset.zero & size;
     final breath = 0.5 + 0.5 * math.sin(phase * 2 * math.pi);
@@ -227,10 +277,27 @@ class _CyberPainter extends CustomPainter {
         ..strokeWidth = 2
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
+
+    // Status-bar protection: fade the ambience back to the backdrop colour
+    // across the top inset so system icons stay clean.
+    if (topFade > 0) {
+      final fade = Rect.fromLTWH(0, 0, w, topFade + 20);
+      canvas.drawRect(
+        fade,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [fadeColor, fadeColor.withValues(alpha: 0)],
+            stops: const [0.55, 1],
+          ).createShader(fade),
+      );
+    }
   }
 
   @override
-  bool shouldRepaint(_CyberPainter old) => true; // animated every frame
+  bool shouldRepaint(_CyberPainter old) => // frames come via `repaint`
+      old.topFade != topFade || old.fadeColor != fadeColor;
 }
 
 /// A thin neon HUD frame on top of everything: angled corner brackets, edge
@@ -243,26 +310,48 @@ class CyberHud extends StatefulWidget {
 }
 
 class _CyberHudState extends State<CyberHud>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, RouteAware {
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1400),
   )..repeat();
+  late final _HudPainter _painter = _HudPainter(_c);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Pause while covered by a full-screen page (route may be null in tests;
+    // transparent overlays — dialogs, sheets, menus — must not pause us).
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<void>) routeObserver.subscribe(this, route);
+  }
+
+  @override
+  void didPushNext() {
+    if (_c.isAnimating) _c.stop();
+  }
+
+  @override
+  void didPopNext() {
+    if (!_c.isAnimating) _c.repeat();
+  }
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _c.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Keep the HUD chrome (brackets, ticks, labels) inside the safe area so
+    // it doesn't collide with the status bar or gesture bar.
     return IgnorePointer(
       child: RepaintBoundary(
-        child: AnimatedBuilder(
-          animation: _c,
-          builder: (_, _) =>
-              CustomPaint(size: Size.infinite, painter: _HudPainter(_c.value)),
+        child: Padding(
+          padding: MediaQuery.paddingOf(context),
+          child: CustomPaint(size: Size.infinite, painter: _painter),
         ),
       ),
     );
@@ -270,8 +359,8 @@ class _CyberHudState extends State<CyberHud>
 }
 
 class _HudPainter extends CustomPainter {
-  final double t;
-  _HudPainter(this.t);
+  final Animation<double> t;
+  _HudPainter(this.t) : super(repaint: t);
 
   static const _cyan = Color(0xFF18E0FF);
   static const _red = Color(0xFFFF1B6B);
@@ -331,7 +420,7 @@ class _HudPainter extends CustomPainter {
         right: true);
 
     // Blinking REC dot, top-right.
-    final on = t % 1.0 < 0.5;
+    final on = t.value % 1.0 < 0.5;
     if (on) {
       final dot = Offset(w - m - 16, m + arm + 8);
       canvas.drawCircle(
@@ -345,5 +434,5 @@ class _HudPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_HudPainter old) => old.t != t;
+  bool shouldRepaint(_HudPainter old) => false; // driven by the controller
 }

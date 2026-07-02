@@ -267,6 +267,55 @@ ThemeData buildSdaTheme(SdaThemeVariant variant) {
         side: BorderSide(color: t.borderColor, width: t.borderWidth),
       ),
     ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: t.panel2,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(t.radius),
+        side: BorderSide(color: t.borderColor, width: t.borderWidth),
+      ),
+      titleTextStyle: displayFont.copyWith(
+        color: t.text,
+        fontSize: t.isPixel ? 13 : 17,
+        letterSpacing: 0.4,
+      ),
+      contentTextStyle: TextStyle(
+        color: t.text,
+        fontSize: 14,
+        fontFamily: codeFamily,
+        fontFamilyFallback: cjkFallback,
+      ),
+    ),
+    tabBarTheme: TabBarThemeData(
+      labelColor: t.accent,
+      unselectedLabelColor: t.muted,
+      indicatorColor: t.accent,
+      dividerColor: t.line,
+      labelStyle: displayFont.copyWith(
+        fontSize: t.isPixel ? 11 : 13,
+        letterSpacing: 0.5,
+      ),
+      // Must be set explicitly: unselected tabs don't inherit labelStyle.
+      unselectedLabelStyle: displayFont.copyWith(
+        fontSize: t.isPixel ? 11 : 13,
+        letterSpacing: 0.5,
+      ),
+    ),
+    popupMenuTheme: PopupMenuThemeData(
+      color: t.panel2,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(t.radiusSm),
+        side: BorderSide(color: t.borderColor, width: t.borderWidth),
+      ),
+      // M3 menu items read labelTextStyle (textStyle is the M2 path).
+      labelTextStyle: WidgetStatePropertyAll(TextStyle(
+        color: t.text,
+        fontSize: 13.5,
+        fontFamily: codeFamily,
+        fontFamilyFallback: cjkFallback,
+      )),
+    ),
     snackBarTheme: SnackBarThemeData(
       backgroundColor: t.panel2,
       contentTextStyle: TextStyle(color: t.text),

@@ -1,8 +1,16 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../core/crypto/vault_crypto.dart';
+
+// PBKDF2 at 100k iterations is still hundreds of ms — run the wrap/unwrap in
+// a background isolate so the unlock animation keeps playing. Top-level
+// functions because `compute` requires a sendable entry point.
+String _wrapJob((String pin, String salt, Uint8List dek, int iter) a) =>
+    VaultCrypto.wrapDek(a.$1, a.$2, a.$3, iterations: a.$4);
+
+Uint8List? _unwrapJob((String pin, String salt, String blob, int iter) a) =>
+    VaultCrypto.unwrapDek(a.$1, a.$2, a.$3, iterations: a.$4);
 
 /// Holds the vault Data Encryption Key, PIN-wrapped, in Android Keystore-backed
 /// secure storage. The wrapped blob and its salt are encrypted at rest by the
@@ -19,6 +27,10 @@ class VaultKeyStore {
 
   static const _kWrapped = 'ava.vault.wrappedDek';
   static const _kSalt = 'ava.vault.pinSalt';
+  // KDF rounds used for the stored wrap. Absent on installs from before it
+  // was recorded — those were always written with 100k.
+  static const _kIterations = 'ava.vault.pinKdfIter';
+  static const _legacyIterations = 100000;
 
   /// Whether a wrapped DEK is present (i.e. the vault has been set up).
   Future<bool> get exists async {
@@ -33,8 +45,12 @@ class VaultKeyStore {
   /// existing wrap (used for setup and PIN change).
   Future<void> storePinWrap(String pin, Uint8List dek) async {
     final salt = VaultCrypto.randomSaltB64();
-    final blob = VaultCrypto.wrapDek(pin, salt, dek);
+    const iterations = VaultCrypto.pinKdfIterations;
+    final blob = await compute(_wrapJob, (pin, salt, dek, iterations));
     await _store.write(key: _kSalt, value: salt);
+    // Recorded so the constant can change later without breaking old wraps
+    // (they re-wrap naturally on the next PIN change).
+    await _store.write(key: _kIterations, value: '$iterations');
     await _store.write(key: _kWrapped, value: blob);
   }
 
@@ -44,7 +60,10 @@ class VaultKeyStore {
       final salt = await _store.read(key: _kSalt);
       final blob = await _store.read(key: _kWrapped);
       if (salt == null || blob == null) return null;
-      return VaultCrypto.unwrapDek(pin, salt, blob);
+      final iterations = int.tryParse(
+              await _store.read(key: _kIterations) ?? '') ??
+          _legacyIterations;
+      return await compute(_unwrapJob, (pin, salt, blob, iterations));
     } catch (_) {
       return null;
     }
@@ -62,6 +81,7 @@ class VaultKeyStore {
     try {
       await _store.delete(key: _kWrapped);
       await _store.delete(key: _kSalt);
+      await _store.delete(key: _kIterations);
     } catch (_) {}
   }
 }

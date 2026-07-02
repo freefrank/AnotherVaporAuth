@@ -25,7 +25,11 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
 
   InventoryOverview? _overview;
   String? _error;
+  String? _itemsError;
   InventoryGame? _game;
+
+  // Bumped after a successful listing so the listings tab reloads itself.
+  int _listingsReload = 0;
 
   // Identical items are stacked (grouped by classid_instanceid) for display and
   // batch selling.
@@ -35,6 +39,9 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
   String? _lastAssetId;
   bool _moreItems = false;
   bool _loadingItems = false;
+  // Bumped on game switch / refresh so an in-flight page can't append stale
+  // items to the freshly cleared grid.
+  int _loadGen = 0;
 
   @override
   void initState() {
@@ -71,13 +78,20 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
       _stackByKey.clear();
       _lastAssetId = null;
       _moreItems = false;
+      _itemsError = null;
+      _loadGen++; // discard any in-flight page
+      _loadingItems = false;
     });
     await _loadItems();
   }
 
   Future<void> _loadItems() async {
     if (_loadingItems || _game == null) return;
-    setState(() => _loadingItems = true);
+    final gen = _loadGen;
+    setState(() {
+      _loadingItems = true;
+      _itemsError = null;
+    });
     try {
       final page = await ref.read(inventoryClientProvider).items(
             widget.account,
@@ -85,7 +99,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
             _game!.contextId,
             startAssetId: _lastAssetId,
           );
-      if (!mounted) return;
+      if (!mounted || gen != _loadGen) return; // stale page — drop it
       setState(() {
         for (final it in page.items) {
           final key = '${it.classId}_${it.instanceId}';
@@ -101,10 +115,14 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
         _lastAssetId = page.lastAssetId;
         _moreItems = page.more;
       });
-    } catch (_) {
-      // leave what we have
+    } catch (e) {
+      // Keep already-loaded items; surface the error only when there is
+      // nothing to show (the scroll listener retries pagination naturally).
+      if (mounted && gen == _loadGen && _stacks.isEmpty) {
+        setState(() => _itemsError = '$e');
+      }
     } finally {
-      if (mounted) setState(() => _loadingItems = false);
+      if (mounted && gen == _loadGen) setState(() => _loadingItems = false);
     }
   }
 
@@ -131,7 +149,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
       ),
     );
     if (listed == true && mounted) {
-      setState(() {}); // a listing was created; refresh view state
+      // A listing was created — tell the listings tab to reload itself.
+      setState(() => _listingsReload++);
     }
   }
 
@@ -141,6 +160,25 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.account.accountName ?? l.actionMarket),
+        actions: [
+          // Visible refresh so desktop/mouse users aren't stuck without
+          // pull-to-refresh.
+          IconButton(
+            tooltip: l.commonRefresh,
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              // Reload the current game's items (keeps the selection) or the
+              // whole overview when nothing is loaded yet.
+              final g = _game;
+              if (g == null) {
+                _loadOverview();
+              } else {
+                _selectGame(g);
+              }
+              setState(() => _listingsReload++);
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabs,
           tabs: [
@@ -153,7 +191,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
         controller: _tabs,
         children: [
           _inventoryTab(l),
-          _MyListingsTab(account: widget.account),
+          _MyListingsTab(account: widget.account, reload: _listingsReload),
         ],
       ),
     );
@@ -210,6 +248,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
                       child: Image.network(g.iconUrl,
                           width: context.r(28),
                           height: context.r(28),
+                          cacheWidth: context.rCache(28),
                           fit: BoxFit.cover,
                           errorBuilder: (_, _, _) => const SizedBox.shrink()),
                     ),
@@ -231,9 +270,21 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
   }
 
   Widget _itemGrid(AppLocalizations l) {
-    if (_stacks.isEmpty && !_loadingItems) {
+    if (_stacks.isEmpty) {
+      if (_loadingItems) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (_itemsError != null) {
+        return _Centered(
+          text: '${l.commonError}: $_itemsError',
+          action:
+              TextButton(onPressed: _loadItems, child: Text(l.commonRetry)),
+        );
+      }
       return _Centered(text: l.marketNoItems);
     }
+    // Trailing cell shows a spinner while the next page streams in.
+    final footer = _moreItems || _loadingItems;
     return GridView.builder(
       controller: _scroll,
       padding: context.rInsets(all: 12),
@@ -243,11 +294,22 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
         crossAxisSpacing: context.r(10),
         childAspectRatio: 0.82,
       ),
-      itemCount: _stacks.length,
-      itemBuilder: (context, i) => _ItemTile(
-        stack: _stacks[i],
-        onTap: _stacks[i].item.marketable ? () => _openSell(_stacks[i]) : null,
-      ),
+      itemCount: _stacks.length + (footer ? 1 : 0),
+      itemBuilder: (context, i) {
+        if (i >= _stacks.length) {
+          return const Center(
+            child: SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2)),
+          );
+        }
+        return _ItemTile(
+          stack: _stacks[i],
+          onTap:
+              _stacks[i].item.marketable ? () => _openSell(_stacks[i]) : null,
+        );
+      },
     );
   }
 }
@@ -292,6 +354,7 @@ class _ItemTile extends StatelessWidget {
                         ? const SizedBox.shrink()
                         : Image.network(item.iconUrl,
                             fit: BoxFit.contain,
+                            cacheWidth: context.rCache(110),
                             errorBuilder: (_, _, _) => const SizedBox.shrink()),
                   ),
                   SizedBox(height: context.r(4)),
@@ -333,7 +396,10 @@ class _ItemTile extends StatelessWidget {
 
 class _MyListingsTab extends ConsumerStatefulWidget {
   final SteamGuardAccount account;
-  const _MyListingsTab({required this.account});
+
+  /// Bumped by the parent (new listing created / appbar refresh) to reload.
+  final int reload;
+  const _MyListingsTab({required this.account, this.reload = 0});
 
   @override
   ConsumerState<_MyListingsTab> createState() => _MyListingsTabState();
@@ -348,10 +414,28 @@ class _MyListingsTabState extends ConsumerState<_MyListingsTab> {
     _future = _load();
   }
 
+  @override
+  void didUpdateWidget(_MyListingsTab old) {
+    super.didUpdateWidget(old);
+    if (old.reload != widget.reload) _refresh();
+  }
+
   Future<List<MarketListing>> _load() =>
       ref.read(marketClientProvider).myListings(widget.account);
 
   void _refresh() => setState(() => _future = _load());
+
+  /// Wraps empty/error states in a scrollable RefreshIndicator so they can
+  /// still be pulled to refresh (list content gets its own indicator below).
+  Widget _refreshable(Widget child) => RefreshIndicator(
+        onRefresh: () async => _refresh(),
+        child: LayoutBuilder(
+          builder: (context, c) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [SizedBox(height: c.maxHeight, child: child)],
+          ),
+        ),
+      );
 
   Future<void> _cancel(MarketListing l) async {
     final ok = await ref.read(marketClientProvider).cancel(widget.account, l.listingId);
@@ -372,8 +456,17 @@ class _MyListingsTabState extends ConsumerState<_MyListingsTab> {
         if (snap.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
         }
+        if (snap.hasError) {
+          return _refreshable(_Centered(
+            text: '${l.commonError}: ${snap.error}',
+            action:
+                TextButton(onPressed: _refresh, child: Text(l.commonRetry)),
+          ));
+        }
         final listings = snap.data ?? const <MarketListing>[];
-        if (listings.isEmpty) return _Centered(text: l.marketNoListings);
+        if (listings.isEmpty) {
+          return _refreshable(_Centered(text: l.marketNoListings));
+        }
         return RefreshIndicator(
           onRefresh: () async => _refresh(),
           child: ListView.separated(
@@ -385,7 +478,8 @@ class _MyListingsTabState extends ConsumerState<_MyListingsTab> {
               return ListTile(
                 leading: lst.iconUrl.isEmpty
                     ? null
-                    : Image.network(lst.iconUrl, width: context.r(40)),
+                    : Image.network(lst.iconUrl,
+                        width: context.r(40), cacheWidth: context.rCache(40)),
                 title: Text(lst.name,
                     maxLines: 1, overflow: TextOverflow.ellipsis),
                 subtitle: Text('${l.marketBuyerPays}: ${_money(lst.buyerPrice)}',

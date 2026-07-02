@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/route_observer.dart';
 import '../../app/theme.dart';
 
 /// Subtle CRT scanline overlay from the design spec. Neon variant scrolls the
@@ -13,16 +14,49 @@ class ScanlineOverlay extends StatefulWidget {
 }
 
 class _ScanlineOverlayState extends State<ScanlineOverlay>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, RouteAware {
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1100),
   )..repeat();
+  bool _animate = true;
+  bool _covered = false; // a pushed route is on top of this screen
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Pause while covered by a full-screen page (route may be null in tests;
+    // transparent overlays — dialogs, sheets, menus — must not pause us).
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<void>) routeObserver.subscribe(this, route);
+  }
+
+  @override
+  void didPushNext() {
+    _covered = true;
+    _updateRunning();
+  }
+
+  @override
+  void didPopNext() {
+    _covered = false;
+    _updateRunning();
+  }
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _c.dispose();
     super.dispose();
+  }
+
+  // Scroll only when the theme wants it and no pushed route covers us.
+  void _updateRunning() {
+    if (_animate && !_covered) {
+      if (!_c.isAnimating) _c.repeat();
+    } else if (_c.isAnimating) {
+      _c.stop();
+    }
   }
 
   @override
@@ -30,23 +64,21 @@ class _ScanlineOverlayState extends State<ScanlineOverlay>
     final t = Theme.of(context).extension<SdaTokens>()!;
     // Respect the OS "reduce motion" setting: freeze the scanline scroll.
     final reduce = MediaQuery.disableAnimationsOf(context);
-    final animate = t.scanAnimated && !reduce;
-    if (animate) {
-      if (!_c.isAnimating) _c.repeat();
-    } else if (_c.isAnimating) {
-      _c.stop();
-    }
+    _animate = t.scanAnimated && !reduce;
+    _updateRunning();
     return Stack(
       children: [
         widget.child,
         Positioned.fill(
           child: IgnorePointer(
-            child: AnimatedBuilder(
-              animation: _c,
-              builder: (context, _) => CustomPaint(
+            // Own layer so the per-frame scanline repaint doesn't force the
+            // whole screen subtree to repaint with it.
+            child: RepaintBoundary(
+              child: CustomPaint(
                 painter: _ScanPainter(
                   color: t.scanColor,
-                  offset: animate ? _c.value * 3 : 0,
+                  anim: _c,
+                  animate: _animate,
                   gap: t.isPixel ? 4 : 3,
                 ),
               ),
@@ -60,12 +92,19 @@ class _ScanlineOverlayState extends State<ScanlineOverlay>
 
 class _ScanPainter extends CustomPainter {
   final Color color;
-  final double offset;
+  final Animation<double> anim; // repaint driver, read in paint()
+  final bool animate;
   final double gap;
-  _ScanPainter({required this.color, required this.offset, required this.gap});
+  _ScanPainter({
+    required this.color,
+    required this.anim,
+    required this.animate,
+    required this.gap,
+  }) : super(repaint: anim);
 
   @override
   void paint(Canvas canvas, Size size) {
+    final offset = animate ? anim.value * 3 : 0.0;
     final paint = Paint()..color = color;
     for (double y = -gap + offset; y < size.height; y += gap) {
       canvas.drawRect(Rect.fromLTWH(0, y, size.width, 1), paint);
@@ -73,6 +112,6 @@ class _ScanPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_ScanPainter old) =>
-      old.offset != offset || old.color != color;
+  bool shouldRepaint(_ScanPainter old) => // frame repaints come from `anim`
+      old.color != color || old.gap != gap || old.animate != animate;
 }
