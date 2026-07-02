@@ -20,6 +20,9 @@ automated releases.
 - Retry buttons on the confirmations and market error states; the market
   inventory shows a first-load spinner and a paging indicator.
 - Settings → "Gesture tutorial → Replay" to rewatch the walkthrough.
+- **Manual account ordering**: a sort button next to "+" in the Accounts
+  header switches the list into reorder mode — drag the handle to arrange,
+  tap ✓ to finish. The order persists.
 - **Settings → Feedback**: send bug reports / ideas straight to the developer
   from inside the app (message + optional contact + a version line shown in the
   form; relayed by a Cloudflare Worker to the developer's mailbox, opt-in only).
@@ -33,9 +36,19 @@ automated releases.
   stays inside the safe area — no more glyphs colliding with system icons.
 - Touch targets across the app raised to 48dp (visuals unchanged).
 - The unlock progress bar now fills up instead of looping endlessly.
+- The application ID moved to `pro.dotslash.ava` (was `app.ava.authenticator`,
+  namespace `com.sdacommunity.sda`) ahead of the first Play upload — the
+  developer's own domain, consistent across Android/Linux/Windows. Existing
+  side-loaded builds install in parallel: export your maFiles from the old
+  copy, import in the new one, then uninstall the old.
 - The swipe-right action label reads "Confirmations" (was "Trade
   confirmations" — Steam's own term, and it no longer truncates); the About
   author link now points to dotslash.pro.
+- Remaining "SDA" naming was scrubbed from the project: internal theme/widget
+  classes, the macOS bundle (`pro.dotslash.ava`, was `com.sdacommunity.sda`),
+  the Windows project/executable metadata and the release artifact names (now
+  `AVA-*`). References to the original Steam Desktop Authenticator remain only
+  where they credit it or document maFile compatibility.
 
 ### Fixed
 - Toggling a settings switch no longer re-locks the app (the app state is now
@@ -94,6 +107,8 @@ automated releases.
 - **「全部接受 / 全部拒绝」现在需要二次确认**(带数量与警告),不再一键批量生效。
 - 确认页与市场错误状态新增「重试」按钮;库存首次加载显示进度、分页加载有指示。
 - 设置新增「手势教程 → 重新播放」。
+- **账户手动排序**:账户列表标题的 "+" 旁新增排序按钮,点击进入排序模式,拖动
+  手柄调整顺序,点 ✓ 完成;顺序持久保存。
 - **设置 → 反馈**:在应用内直接把 bug / 想法发给开发者(内容 + 选填联系方式 +
   表单中明示的版本信息;经 Cloudflare Worker 转发至开发者邮箱,完全由用户主动发起)。
 
@@ -104,8 +119,15 @@ automated releases.
 - 动态背景在状态栏区域淡出、HUD 框架收进安全区——装饰元素不再与系统图标打架。
 - 全应用触控目标提升到 48dp(视觉不变)。
 - 解锁进度条改为填充式,不再无限循环。
+- 应用包名迁移为 `pro.dotslash.ava`(原 `app.ava.authenticator`,命名空间
+  `com.sdacommunity.sda`),赶在首次上传 Play 之前统一为开发者自有域名,三端一致。
+  旧侧载版本会与新版并存:在旧版导出 maFiles → 新版导入 → 卸载旧版即可迁移。
 - 右滑动作标签改用 Steam 官方叫法 "Confirmations"(原 "Trade confirmations",
   过长会被截断);「关于」页作者链接改为 dotslash.pro。
+- 清理了项目中残留的 "SDA" 命名:内部主题/组件类名、macOS 包
+  (`pro.dotslash.ava`,原 `com.sdacommunity.sda`)、Windows 工程与可执行文件
+  元数据、发布产物名(现为 `AVA-*`)。仅在致谢与 maFile 格式兼容性说明处
+  保留对原 Steam Desktop Authenticator 的提及。
 
 ### 修复
 - 在设置页拨动开关不再导致应用重新上锁(应用状态改为原地更新,不再经过加密引导流程
