@@ -23,13 +23,13 @@ void main() {
 
     test('nested message', () {
       final inner = ProtoWriter()
-        ..writeString(1, 'SDA')
+        ..writeString(1, 'AVA')
         ..writeVarint(2, 1);
       final outer = ProtoWriter()..writeMessage(9, inner);
 
       final outerFields = ProtoReader(outer.toBytes()).parse();
       final innerFields = ProtoReader(outerFields[9]!.bytes!).parse();
-      expect(innerFields[1]!.asString, 'SDA');
+      expect(innerFields[1]!.asString, 'AVA');
       expect(innerFields[2]!.asInt, 1);
     });
 

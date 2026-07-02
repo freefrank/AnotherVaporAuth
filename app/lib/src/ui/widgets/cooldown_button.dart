@@ -58,7 +58,7 @@ class _CooldownButtonState extends State<CooldownButton> {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>();
+    final t = Theme.of(context).extension<AvaTokens>();
     final total = widget.cooldown.inMilliseconds / 1000.0;
     final frac = _frozen ? (_remaining / total).clamp(0.0, 1.0) : 0.0;
     final accent = t?.accent ?? Theme.of(context).colorScheme.primary;

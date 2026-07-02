@@ -1,6 +1,6 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
-project(sda LANGUAGES CXX)
+project(ava LANGUAGES CXX)
 
 # Newer MSVC errors on <experimental/coroutine> used by local_auth_windows.
 # Silence it globally so the plugin compiles.

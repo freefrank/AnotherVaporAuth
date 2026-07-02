@@ -9,7 +9,7 @@ import '../core/models/confirmation.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/confirmations_client.dart';
 import '../services/session_manager.dart';
-import 'widgets/sda_panel.dart';
+import 'widgets/ava_panel.dart';
 import 'widgets/scanline_overlay.dart';
 
 /// Design screen 06 — confirmations. Native JSON rendering (no WebView). Top
@@ -97,7 +97,7 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
   Future<void> _respondAll(List<Confirmation> confs, bool accept) async {
     if (confs.isEmpty) return;
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -129,7 +129,7 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final confs = _confs ?? const <Confirmation>[];
 
     return Scaffold(
@@ -150,7 +150,7 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
   }
 
   Widget _buildBody(
-      AppLocalizations l, SdaTokens t, List<Confirmation> confs) {
+      AppLocalizations l, AvaTokens t, List<Confirmation> confs) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -289,7 +289,7 @@ class _ConfCardState extends State<_ConfCard>
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final c = widget.conf;
     final isTrade = c.type == ConfirmationType.trade;
     final chipColor = isTrade ? t.accent : t.accent2;
@@ -305,7 +305,7 @@ class _ConfCardState extends State<_ConfCard>
       },
       child: Padding(
         padding: context.rInsets(bottom: 10),
-        child: SdaPanel(
+        child: AvaPanel(
           padding: context.rInsets(all: 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -316,7 +316,7 @@ class _ConfCardState extends State<_ConfCard>
                   children: [
                     Row(
                       children: [
-                        SdaChip(label: _typeLabel(l), color: chipColor),
+                        AvaChip(label: _typeLabel(l), color: chipColor),
                         if (c.typeName.isNotEmpty) ...[
                           SizedBox(width: context.r(8)),
                           Flexible(
@@ -374,7 +374,7 @@ class _RoundAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     // 48dp tappable area around the 38dp visual box (a11y touch target).
     return InkWell(
       onTap: onTap,

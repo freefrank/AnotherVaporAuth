@@ -20,7 +20,7 @@ class WelcomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
 
     return Scaffold(
       body: ScanlineOverlay(
@@ -96,7 +96,7 @@ class _Cta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final bg = emphasized ? t.accent : t.panel;
     final titleColor = emphasized ? const Color(0xFF06060F) : t.text;
     final subColor = emphasized

@@ -13,7 +13,7 @@ class DebugLogScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(

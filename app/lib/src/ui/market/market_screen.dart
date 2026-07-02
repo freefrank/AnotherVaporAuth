@@ -217,7 +217,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
   }
 
   Widget _gamePicker(List<InventoryGame> games) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     return SizedBox(
       height: context.r(64),
       child: ListView.separated(
@@ -329,7 +329,7 @@ class _ItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final l = AppLocalizations.of(context);
     final item = stack.item;
     return InkWell(
@@ -449,7 +449,7 @@ class _MyListingsTabState extends ConsumerState<_MyListingsTab> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     return FutureBuilder<List<MarketListing>>(
       future: _future,
       builder: (context, snap) {

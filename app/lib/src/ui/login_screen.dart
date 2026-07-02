@@ -306,7 +306,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildWaiting(BuildContext context, AppLocalizations l) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -343,7 +343,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: TextStyle(
                     fontSize: context.r(12.5),
                     color: Theme.of(context)
-                        .extension<SdaTokens>()
+                        .extension<AvaTokens>()
                         ?.muted)),
           ],
           SizedBox(height: context.r(12)),

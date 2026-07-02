@@ -257,7 +257,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     // The cyberpunk ambience / neon pull / glow borders are neon-theme only.
-    final neon = !(Theme.of(context).extension<SdaTokens>()?.isPixel ?? false);
+    final neon = !(Theme.of(context).extension<AvaTokens>()?.isPixel ?? false);
     final accounts =
         ref.watch(appControllerProvider).value?.accounts ??
             const <SteamGuardAccount>[];
@@ -405,7 +405,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Future<void> _addMenu(BuildContext context) async {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
 
     // Themed floating sheet (neon: glowing rounded panel / pixel: hard-edged
     // sticker) instead of the stock M3 list.
@@ -536,7 +536,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             builder: (_) => MarketScreen(account: account)));
         break;
       case 'remove':
-        final t = Theme.of(context).extension<SdaTokens>()!;
+        final t = Theme.of(context).extension<AvaTokens>()!;
         final ok = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -636,7 +636,7 @@ class _Sidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     return DecoratedBox(
       decoration: BoxDecoration(
         // Neon panel is already translucent; make the pixel list translucent too
@@ -773,7 +773,7 @@ class _SidebarRow extends StatelessWidget {
   /// context menu with the same entries.
   Future<void> _contextMenu(BuildContext context, Offset at) async {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final overlay =
         Overlay.of(context).context.findRenderObject() as RenderBox;
 
@@ -814,7 +814,7 @@ class _SidebarRow extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final r = context.r(1);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final neon = t.glow;
     // Neon theme: dark glassy pill + neon border/inset glow (HUD look).
     // Pixel theme: chunky retro button — bright fill, hard 2px border, hard
@@ -873,7 +873,7 @@ class _SidebarRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final l = AppLocalizations.of(context);
     return Padding(
       padding: context.rInsets(bottom: 8),
@@ -1031,7 +1031,7 @@ class _MainPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final code = _codeFor(account, tick);
     final remaining = SteamTotp.secondsRemaining(tick);
 
@@ -1144,7 +1144,7 @@ class _SettingsFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final neon = t.glow;
     final size = context.r(54);
     return Semantics(
@@ -1398,7 +1398,7 @@ class _PixelPullState extends State<_PixelPull>
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final reduce = MediaQuery.disableAnimationsOf(context);
     if (reduce) {
       if (_c.isAnimating) _c.stop();
@@ -1500,7 +1500,7 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final radius = BorderRadius.circular(t.radiusSm);
     Widget fallback(double d) => Container(
           width: d,
@@ -1587,7 +1587,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     return Center(
       child: Padding(
         padding: context.rInsets(all: 24),

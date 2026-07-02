@@ -23,7 +23,7 @@ class FlipCode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final style = TextStyle(
       fontFamily: DefaultTextStyle.of(context).style.fontFamily,
       fontSize: fontSize,

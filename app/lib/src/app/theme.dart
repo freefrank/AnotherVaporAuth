@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// The two visual themes from the SDA motion design spec.
-enum SdaThemeVariant { neon, pixel }
+/// The two visual themes from the AVA motion design spec.
+enum AvaThemeVariant { neon, pixel }
 
 /// Design tokens carried on [ThemeData] so any widget can read the current
 /// theme's palette, glow, fonts and radii. Mirrors the CSS custom properties in
-/// the `SDA 动效设计稿` comp (NEON cyan/magenta vs PIXEL orange/retro).
+/// the `AVA 动效设计稿` comp (NEON cyan/magenta vs PIXEL orange/retro).
 @immutable
-class SdaTokens extends ThemeExtension<SdaTokens> {
-  final SdaThemeVariant variant;
+class AvaTokens extends ThemeExtension<AvaTokens> {
+  final AvaThemeVariant variant;
 
   final Color bg;
   final Color panel;
@@ -42,7 +42,7 @@ class SdaTokens extends ThemeExtension<SdaTokens> {
   final Color scanColor;
   final bool scanAnimated;
 
-  const SdaTokens({
+  const AvaTokens({
     required this.variant,
     required this.bg,
     required this.panel,
@@ -68,7 +68,7 @@ class SdaTokens extends ThemeExtension<SdaTokens> {
     required this.scanAnimated,
   });
 
-  bool get isPixel => variant == SdaThemeVariant.pixel;
+  bool get isPixel => variant == AvaThemeVariant.pixel;
 
   /// Ring / bar colour by seconds remaining: <=5 bad, <=10 warn, else accent.
   Color ringColor(int remaining) {
@@ -98,8 +98,8 @@ class SdaTokens extends ThemeExtension<SdaTokens> {
 
   // ---- token sets -------------------------------------------------------
 
-  static const _neon = SdaTokens(
-    variant: SdaThemeVariant.neon,
+  static const _neon = AvaTokens(
+    variant: AvaThemeVariant.neon,
     bg: Color(0xFF06060F),
     panel: Color(0xA60E101E),
     panel2: Color(0xD916182C),
@@ -128,8 +128,8 @@ class SdaTokens extends ThemeExtension<SdaTokens> {
     scanAnimated: true,
   );
 
-  static const _pixel = SdaTokens(
-    variant: SdaThemeVariant.pixel,
+  static const _pixel = AvaTokens(
+    variant: AvaThemeVariant.pixel,
     bg: Color(0xFF2B2547),
     panel: Color(0xFF39335C),
     panel2: Color(0xFF463D72),
@@ -154,23 +154,23 @@ class SdaTokens extends ThemeExtension<SdaTokens> {
     scanAnimated: false,
   );
 
-  static SdaTokens of(SdaThemeVariant v) =>
-      v == SdaThemeVariant.pixel ? _pixel : _neon;
+  static AvaTokens of(AvaThemeVariant v) =>
+      v == AvaThemeVariant.pixel ? _pixel : _neon;
 
   @override
-  SdaTokens copyWith() => this;
+  AvaTokens copyWith() => this;
 
   @override
-  SdaTokens lerp(ThemeExtension<SdaTokens>? other, double t) {
-    if (other is! SdaTokens) return this;
+  AvaTokens lerp(ThemeExtension<AvaTokens>? other, double t) {
+    if (other is! AvaTokens) return this;
     return t < 0.5 ? this : other;
   }
 }
 
 /// Builds the global [ThemeData] for a variant. The dark cyberpunk base
-/// cascades to every screen; widgets read [SdaTokens] for accents and motion.
-ThemeData buildSdaTheme(SdaThemeVariant variant) {
-  final t = SdaTokens.of(variant);
+/// cascades to every screen; widgets read [AvaTokens] for accents and motion.
+ThemeData buildAvaTheme(AvaThemeVariant variant) {
+  final t = AvaTokens.of(variant);
 
   // Bundled fonts (no runtime download). Pixel theme uses Fusion Pixel for both
   // Latin and CJK (single pixel family). Neon theme uses Latin display/code

@@ -72,19 +72,19 @@ final settingsStoreProvider =
 
 /// The active UI theme variant (neon / pixel), persisted.
 final themeVariantProvider =
-    NotifierProvider<ThemeController, SdaThemeVariant>(ThemeController.new);
+    NotifierProvider<ThemeController, AvaThemeVariant>(ThemeController.new);
 
-class ThemeController extends Notifier<SdaThemeVariant> {
+class ThemeController extends Notifier<AvaThemeVariant> {
   @override
-  SdaThemeVariant build() {
+  AvaThemeVariant build() {
     ref.read(settingsStoreProvider).loadTheme().then((v) {
-      if (v == 'pixel') state = SdaThemeVariant.pixel;
-      if (v == 'neon') state = SdaThemeVariant.neon;
+      if (v == 'pixel') state = AvaThemeVariant.pixel;
+      if (v == 'neon') state = AvaThemeVariant.neon;
     });
-    return SdaThemeVariant.neon;
+    return AvaThemeVariant.neon;
   }
 
-  Future<void> setVariant(SdaThemeVariant variant) async {
+  Future<void> setVariant(AvaThemeVariant variant) async {
     state = variant;
     await ref.read(settingsStoreProvider).saveTheme(variant.name);
   }

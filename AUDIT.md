@@ -253,7 +253,7 @@ Recommended action:
 
 Package/build info from merged release manifest:
 
-- Package/application ID: `app.ava.authenticator`
+- Package/application ID: `pro.dotslash.ava`
 - Version code: `1`
 - Version name: `0.63.1`
 - Minimum SDK: `24`
@@ -263,7 +263,7 @@ Notes:
 
 - `versionCode=1` is valid for the first Play upload. Every subsequent upload must increment it.
 - Application ID should be treated as permanent once released on Play.
-- Android namespace is `com.sdacommunity.sda`; this can differ from application ID, but confirm that this is intentional before release.
+- Android namespace and application ID are both `pro.dotslash.ava` (renamed 2026-07-02, pre-first-upload).
 
 ## Policy and Store Listing Checklist
 

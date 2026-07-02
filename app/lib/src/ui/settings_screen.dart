@@ -10,7 +10,7 @@ import '../services/feedback_service.dart';
 import 'debug_log_screen.dart';
 import 'widgets/pin_field.dart';
 import 'widgets/scanline_overlay.dart';
-import 'widgets/sda_panel.dart';
+import 'widgets/ava_panel.dart';
 
 const _repoUrl = 'https://github.com/freefrank/AnotherVaporAuth';
 const _authorUrl = 'https://dotslash.pro';
@@ -27,7 +27,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final data = ref.watch(appControllerProvider).value;
     final manifest = data?.store.manifest;
     final variant = ref.watch(themeVariantProvider);
@@ -103,15 +103,15 @@ class SettingsScreen extends ConsumerWidget {
                     spacing: context.r(8),
                     children: [
                       _choice(context, t, l.themeNeon,
-                          variant == SdaThemeVariant.neon,
+                          variant == AvaThemeVariant.neon,
                           () => ref
                               .read(themeVariantProvider.notifier)
-                              .setVariant(SdaThemeVariant.neon)),
+                              .setVariant(AvaThemeVariant.neon)),
                       _choice(context, t, l.themePixel,
-                          variant == SdaThemeVariant.pixel,
+                          variant == AvaThemeVariant.pixel,
                           () => ref
                               .read(themeVariantProvider.notifier)
-                              .setVariant(SdaThemeVariant.pixel)),
+                              .setVariant(AvaThemeVariant.pixel)),
                     ],
                   ),
                 ),
@@ -257,7 +257,7 @@ class SettingsScreen extends ConsumerWidget {
     } catch (_) {/* no browser / launch failed — ignore */}
   }
 
-  Widget _aboutRow(BuildContext context, SdaTokens t, IconData icon,
+  Widget _aboutRow(BuildContext context, AvaTokens t, IconData icon,
       String label, String? value, VoidCallback onTap,
       {bool external = false}) {
     return InkWell(
@@ -290,7 +290,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _switchRow(BuildContext context, SdaTokens t, String label,
+  Widget _switchRow(BuildContext context, AvaTokens t, String label,
       bool value, ValueChanged<bool> onChanged) {
     return Row(
       children: [
@@ -302,7 +302,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _choice(BuildContext context, SdaTokens t, String label, bool selected,
+  Widget _choice(BuildContext context, AvaTokens t, String label, bool selected,
       VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
@@ -421,7 +421,7 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     return AlertDialog(
       title: Text(l.feedbackTitle),
       content: SizedBox(
@@ -615,10 +615,10 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     return Padding(
       padding: context.rInsets(bottom: 12),
-      child: SdaPanel(
+      child: AvaPanel(
         padding: context.rInsets(all: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

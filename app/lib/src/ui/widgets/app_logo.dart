@@ -14,10 +14,10 @@ class AppLogo extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final variant = ref.watch(themeVariantProvider);
-    final asset = variant == SdaThemeVariant.pixel
+    final asset = variant == AvaThemeVariant.pixel
         ? 'assets/icon/icon_pixel.png'
         : 'assets/icon/icon_neon.png';
-    final radius = variant == SdaThemeVariant.pixel ? size * 0.12 : size * 0.22;
+    final radius = variant == AvaThemeVariant.pixel ? size * 0.12 : size * 0.22;
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: Image.asset(
@@ -25,7 +25,7 @@ class AppLogo extends ConsumerWidget {
         width: size,
         height: size,
         filterQuality:
-            variant == SdaThemeVariant.pixel ? FilterQuality.none : FilterQuality.medium,
+            variant == AvaThemeVariant.pixel ? FilterQuality.none : FilterQuality.medium,
       ),
     );
   }

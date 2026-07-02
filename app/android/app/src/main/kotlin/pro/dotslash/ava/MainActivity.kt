@@ -1,4 +1,4 @@
-package com.sdacommunity.sda
+package pro.dotslash.ava
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

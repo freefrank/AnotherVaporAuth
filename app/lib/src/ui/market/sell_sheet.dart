@@ -178,7 +178,7 @@ class _SellSheetState extends ConsumerState<SellSheet> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final fmt = [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))];
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -340,7 +340,7 @@ class _SellSheetState extends ConsumerState<SellSheet> {
   }
 
   Widget _priceField(TextEditingController c, String label,
-      List<TextInputFormatter> fmt, ValueChanged<String> onChanged, SdaTokens t) {
+      List<TextInputFormatter> fmt, ValueChanged<String> onChanged, AvaTokens t) {
     return TextField(
       controller: c,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),

@@ -158,7 +158,7 @@ class _UnlockLoading extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final l = AppLocalizations.of(context);
     final pixel = t.isPixel;
     return Container(
@@ -204,7 +204,7 @@ class _UnlockLoading extends ConsumerWidget {
 /// the screen swaps away the moment the unlock completes. Pixel theme
 /// quantises the fill into hard blocks.
 class _ScanBar extends StatefulWidget {
-  final SdaTokens tokens;
+  final AvaTokens tokens;
   const _ScanBar({required this.tokens});
 
   @override

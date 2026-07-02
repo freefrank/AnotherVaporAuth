@@ -10,7 +10,7 @@ import 'package:ava/src/ui/tutorial.dart';
 Future<void> _pumpHost(WidgetTester tester,
     {required LayerLink codeLink, required LayerLink rowLink}) {
   return tester.pumpWidget(MaterialApp(
-    theme: buildSdaTheme(SdaThemeVariant.neon),
+    theme: buildAvaTheme(AvaThemeVariant.neon),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     locale: const Locale('en'),

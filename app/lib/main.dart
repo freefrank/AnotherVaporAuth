@@ -10,5 +10,5 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   // Age out avatar/frame images that haven't been shown in a while.
   unawaited(DiskImageCache.instance.prune());
-  runApp(const ProviderScope(child: SdaApp()));
+  runApp(const ProviderScope(child: AvaApp()));
 }

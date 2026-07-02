@@ -247,7 +247,7 @@ class _AddAuthenticatorScreenState
           ],
         );
       case _Step.finalize:
-        final t = Theme.of(context).extension<SdaTokens>()!;
+        final t = Theme.of(context).extension<AvaTokens>()!;
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -311,7 +311,7 @@ class _AddAuthenticatorScreenState
           ],
         );
       case _Step.present:
-        final t = Theme.of(context).extension<SdaTokens>()!;
+        final t = Theme.of(context).extension<AvaTokens>()!;
         Widget step(int n, String text) => Padding(
               padding: context.rInsets(bottom: 12),
               child: Row(

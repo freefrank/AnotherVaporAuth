@@ -18,7 +18,7 @@ void main() {
           timeAlignerProvider.overrideWithValue(() async {}),
           tickProvider.overrideWith((ref) => Stream<int>.value(1700000000)),
         ],
-        child: const SdaApp(),
+        child: const AvaApp(),
       ),
     );
 

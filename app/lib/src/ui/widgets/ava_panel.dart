@@ -5,12 +5,12 @@ import '../../app/theme.dart';
 
 /// A bordered panel/card in the design's style (neon glow halo or pixel hard
 /// shadow depending on theme). Used across screens for cards and form blocks.
-class SdaPanel extends StatelessWidget {
+class AvaPanel extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final bool emphasized; // accent border + glow
   final Color? color;
-  const SdaPanel({
+  const AvaPanel({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(16),
@@ -20,7 +20,7 @@ class SdaPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     return Container(
       padding: padding,
       decoration: BoxDecoration(
@@ -40,14 +40,14 @@ class SdaPanel extends StatelessWidget {
 }
 
 /// A small type chip (e.g. Trade / Market), accent-coloured.
-class SdaChip extends StatelessWidget {
+class AvaChip extends StatelessWidget {
   final String label;
   final Color color;
-  const SdaChip({super.key, required this.label, required this.color});
+  const AvaChip({super.key, required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     return Container(
       padding: context.rInsets(h: 9, v: 4),
       decoration: BoxDecoration(

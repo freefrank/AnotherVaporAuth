@@ -9,7 +9,7 @@ import 'debug_log.dart';
 
 /// Thin HTTP client for Steam's web APIs.
 ///
-/// Handles the two transports SDA needs:
+/// Handles the two transports the app needs:
 ///  - `api.steampowered.com/<Iface>/<Method>/v1` protobuf calls
 ///    (IAuthenticationService, ITwoFactorService).
 ///  - `steamcommunity.com/mobileconf/*` confirmation calls (plain query + cookies).

@@ -11,8 +11,8 @@ import 'providers.dart';
 import 'route_observer.dart';
 import 'theme.dart';
 
-class SdaApp extends ConsumerWidget {
-  const SdaApp({super.key});
+class AvaApp extends ConsumerWidget {
+  const AvaApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,7 +24,7 @@ class SdaApp extends ConsumerWidget {
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      theme: buildSdaTheme(variant),
+      theme: buildAvaTheme(variant),
       debugShowCheckedModeBanner: false,
       navigatorObservers: [routeObserver],
       builder: (context, child) => _Backdrop(child: child ?? const SizedBox()),
@@ -40,7 +40,7 @@ class _Backdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     return DecoratedBox(
       decoration: BoxDecoration(color: t.bg, gradient: t.bgGradient),
       child: child,

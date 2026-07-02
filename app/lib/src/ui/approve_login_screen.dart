@@ -10,7 +10,7 @@ import '../app/responsive.dart';
 import '../app/theme.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/qr_approval_client.dart';
-import 'widgets/sda_panel.dart';
+import 'widgets/ava_panel.dart';
 import 'widgets/scanline_overlay.dart';
 
 class ApproveLoginScreen extends ConsumerStatefulWidget {
@@ -80,7 +80,7 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
         .toList();
     _account ??= accounts.isNotEmpty ? accounts.first : null;
 
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     return Scaffold(
       appBar: AppBar(title: Text(l.approveTitle)),
       body: ScanlineOverlay(
@@ -89,7 +89,7 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
           constraints: const BoxConstraints(maxWidth: 420),
           child: SingleChildScrollView(
             padding: context.rInsets(all: 24),
-            child: SdaPanel(
+            child: AvaPanel(
               padding: context.rInsets(all: 20),
               child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

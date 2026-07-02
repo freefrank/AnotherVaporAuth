@@ -20,7 +20,7 @@ class CountdownRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final color = t.ringColor(remaining);
     final fraction = (remaining.clamp(0, 30)) / 30.0;
     return SizedBox(

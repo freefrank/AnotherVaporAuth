@@ -61,7 +61,7 @@ class _ScanlineOverlayState extends State<ScanlineOverlay>
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     // Respect the OS "reduce motion" setting: freeze the scanline scroll.
     final reduce = MediaQuery.disableAnimationsOf(context);
     _animate = t.scanAnimated && !reduce;

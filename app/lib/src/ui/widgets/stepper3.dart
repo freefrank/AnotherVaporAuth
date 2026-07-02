@@ -30,7 +30,7 @@ class _Stepper3State extends State<Stepper3>
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final children = <Widget>[];
     for (var i = 0; i < widget.labels.length; i++) {
       final done = i < widget.current;
@@ -61,7 +61,7 @@ class _Stepper3State extends State<Stepper3>
     return Row(children: children);
   }
 
-  Widget _badge(SdaTokens t, int i, bool done, bool active) {
+  Widget _badge(AvaTokens t, int i, bool done, bool active) {
     return AnimatedBuilder(
       animation: _c,
       builder: (context, _) {
@@ -118,7 +118,7 @@ class _SpinnerRingState extends State<SpinnerRing>
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     return SizedBox(
       width: widget.size,
       height: widget.size,

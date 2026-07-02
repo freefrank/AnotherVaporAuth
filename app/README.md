@@ -1,9 +1,10 @@
 # AVA — Steam authenticator (Flutter)
 
-A modern, lightweight, cross-platform rewrite of Steam Desktop Authenticator in
-Flutter. Targets **Windows / macOS / Linux desktop + Android** from a single
-codebase (iOS is planned). Logic is kept equivalent to the legacy .NET app and
-**maFiles are fully compatible** for zero-cost migration.
+AVA (AnotherVaporAuth) — a modern, lightweight, cross-platform Steam
+authenticator built with Flutter. Targets **Windows / macOS / Linux desktop +
+Android** from a single codebase (iOS is planned). **maFiles are fully
+compatible** with the legacy Steam Desktop Authenticator format for zero-cost
+migration.
 
 See the design spec: `../docs/superpowers/specs/2026-06-29-flutter-rewrite-design.md`
 

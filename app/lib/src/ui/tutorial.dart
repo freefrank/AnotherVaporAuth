@@ -4,7 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../l10n/app_localizations.dart';
 import '../app/responsive.dart';
 import '../app/theme.dart';
-import 'widgets/sda_panel.dart';
+import 'widgets/ava_panel.dart';
 
 /// First-run gesture tutorial: a themed coach-mark overlay that walks through
 /// the home screen's hidden gestures (tap-to-copy, swipe panes, long-press
@@ -191,7 +191,7 @@ class _GestureTutorialState extends State<_GestureTutorial> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     final step = _steps[_step];
     final last = _step == _steps.length - 1;
     // Re-read the target after every frame — the ambient backdrop and the swipe
@@ -269,7 +269,7 @@ class _GestureTutorialState extends State<_GestureTutorial> {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 460),
-                  child: SdaPanel(
+                  child: AvaPanel(
                     emphasized: true,
                     color: t.isPixel ? t.panel2 : null,
                     padding: context.rInsets(all: 16),
@@ -363,7 +363,7 @@ class _Dots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -470,7 +470,7 @@ class _GestureHintState extends State<_GestureHint>
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     if (MediaQuery.disableAnimationsOf(context)) {
       if (_c.isAnimating) _c.stop();
     } else if (!_c.isAnimating) {

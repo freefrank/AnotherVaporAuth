@@ -63,7 +63,7 @@ class _PixelAmbientState extends State<PixelAmbient>
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<SdaTokens>()!;
+    final t = Theme.of(context).extension<AvaTokens>()!;
     _reduce = MediaQuery.disableAnimationsOf(context);
     _updateRunning();
     return IgnorePointer(
