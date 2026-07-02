@@ -144,9 +144,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   _NameMode _nameMode = _NameMode.username;
 
   // First-run gesture tutorial hooks: spotlight targets + a controller that
-  // lets the tutorial physically open the first row's swipe panes.
-  final _codeKey = GlobalKey();
-  final _firstRowKey = GlobalKey();
+  // lets the tutorial physically open the first row's swipe panes. The targets
+  // are LayerLinks so the spotlight follows the real painted position of the
+  // code / first row across every layout (phone, tablet two-pane, foldable) —
+  // the compositing layer handles the transform, no manual coordinate math.
+  final _codeLink = LayerLink();
+  final _firstRowLink = LayerLink();
   late final _demoSlidable = SlidableController(this);
 
   // Custom neon pull-to-refresh state.
@@ -186,8 +189,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       if (await store.loadTutorialSeen() || !mounted) return;
       await showGestureTutorial(
         context,
-        codeKey: _codeKey,
-        firstRowKey: _firstRowKey,
+        codeLink: _codeLink,
+        firstRowLink: _firstRowLink,
         slidable: _demoSlidable,
       );
       await store.saveTutorialSeen();
@@ -323,7 +326,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     // a refresh button there instead (no full-screen overlay).
                     onRefresh: () => _startRefresh(visual: false),
                     refreshing: _refreshing,
-                    firstRowKey: _firstRowKey,
+                    firstRowLink: _firstRowLink,
                     demoSlidable: _demoSlidable,
                   );
                   final panel = _MainPanel(
@@ -333,7 +336,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     wide: c.maxWidth >= 640,
                     nameMode: _nameMode,
                     onTapName: _cycleNameMode,
-                    codeKey: _codeKey,
+                    codeLink: _codeLink,
                   );
                   final Widget content = SafeArea(
                     bottom: false,
@@ -581,7 +584,7 @@ class _Sidebar extends StatelessWidget {
   final bool neon;
   final VoidCallback? onRefresh;
   final bool refreshing;
-  final GlobalKey? firstRowKey;
+  final LayerLink? firstRowLink;
   final SlidableController? demoSlidable;
   const _Sidebar({
     required this.accounts,
@@ -596,7 +599,7 @@ class _Sidebar extends StatelessWidget {
     required this.onPullEnd,
     this.onRefresh,
     this.refreshing = false,
-    this.firstRowKey,
+    this.firstRowLink,
     this.demoSlidable,
   });
 
@@ -610,18 +613,23 @@ class _Sidebar extends StatelessWidget {
           // last row.
           padding: context.rInsets(left: 8, right: 8, top: 4, bottom: 78),
           itemCount: accounts.length,
-          itemBuilder: (context, i) => _SidebarRow(
-            // The first row anchors the tutorial spotlight and its swipe demo.
-            key: i == 0 ? firstRowKey : null,
-            account: accounts[i],
-            code: _codeFor(accounts[i], tick),
-            selected: i == selected,
-            nameMode: nameMode,
-            neon: neon,
-            onTap: () => onSelect(i),
-            onAction: onAction,
-            controller: i == 0 ? demoSlidable : null,
-          ),
+          itemBuilder: (context, i) {
+            final row = _SidebarRow(
+              account: accounts[i],
+              code: _codeFor(accounts[i], tick),
+              selected: i == selected,
+              nameMode: nameMode,
+              neon: neon,
+              onTap: () => onSelect(i),
+              onAction: onAction,
+              controller: i == 0 ? demoSlidable : null,
+            );
+            // The first row anchors the tutorial spotlight (+ its swipe demo).
+            if (i == 0 && firstRowLink != null) {
+              return CompositedTransformTarget(link: firstRowLink!, child: row);
+            }
+            return row;
+          },
         ),
       );
 
@@ -751,7 +759,6 @@ class _SidebarRow extends StatelessWidget {
   final void Function(SteamGuardAccount account, String action) onAction;
   final SlidableController? controller;
   const _SidebarRow({
-    super.key,
     required this.account,
     required this.code,
     required this.selected,
@@ -1008,15 +1015,18 @@ class _MainPanel extends StatelessWidget {
   final bool wide; // two-pane (tablet/desktop) layout
   final _NameMode nameMode;
   final VoidCallback onTapName;
-  final GlobalKey? codeKey; // tutorial spotlight anchor
+  final LayerLink? codeLink; // tutorial spotlight anchor
   const _MainPanel(
       {required this.account,
       required this.tick,
       required this.onCopy,
       required this.nameMode,
       required this.onTapName,
-      this.codeKey,
+      this.codeLink,
       this.wide = false});
+
+  Widget _linkTarget(LayerLink? link, Widget child) =>
+      link == null ? child : CompositedTransformTarget(link: link, child: child);
 
   @override
   Widget build(BuildContext context) {
@@ -1089,23 +1099,27 @@ class _MainPanel extends StatelessWidget {
           // explicit copy button is gone). Phone: scale the code relative to the
           // viewport; tablet / two-pane: keep the fixed design size.
           Row(
-            key: codeKey,
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
               Flexible(
-                child: _TapScale(
-                  onTap: () => onCopy(code),
-                  child: wide
-                      ? FlipCode(code: code, fontSize: t.codeSize)
-                      : SizedBox(
-                          width: (MediaQuery.sizeOf(context).width * 0.46)
-                              .clamp(120.0, 260.0),
-                          child: FittedBox(
-                            fit: BoxFit.fitWidth,
-                            child: FlipCode(code: code, fontSize: 56),
+                // The tutorial spotlight follows this via a LayerLink, so it
+                // tracks the code's real painted position in every layout.
+                child: _linkTarget(
+                  codeLink,
+                  _TapScale(
+                    onTap: () => onCopy(code),
+                    child: wide
+                        ? FlipCode(code: code, fontSize: t.codeSize)
+                        : SizedBox(
+                            width: (MediaQuery.sizeOf(context).width * 0.46)
+                                .clamp(120.0, 260.0),
+                            child: FittedBox(
+                              fit: BoxFit.fitWidth,
+                              child: FlipCode(code: code, fontSize: 56),
+                            ),
                           ),
-                        ),
+                  ),
                 ),
               ),
               SizedBox(width: context.r(18)),

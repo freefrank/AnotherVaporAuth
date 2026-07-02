@@ -36,6 +36,10 @@ automated releases.
   updated in place instead of being rebuilt through the encrypted bootstrap).
 - Settings "About" now shows the real installed version instead of a stale
   hardcoded one.
+- The first-run tutorial spotlight now anchors to the code / account row with a
+  LayerLink, so it frames the target correctly in every layout — phone, tablet
+  two-pane and foldable unfolded — instead of drifting off to one side (it no
+  longer relies on cross-route coordinate measurement).
 - Market: "My listings" surfaces load errors (with retry), can be pull-refreshed
   when empty, and reloads after you create a listing; the sell sheet no longer
   hangs on a stuck progress bar when price data fails to load.
@@ -94,6 +98,8 @@ automated releases.
 - 在设置页拨动开关不再导致应用重新上锁(应用状态改为原地更新,不再经过加密引导流程
   整体重建)。
 - 设置页「关于」显示真实安装版本,不再是过期的硬编码版本号。
+- 首次教程的聚光框改用 LayerLink 锚定验证码 / 账户行,在手机、平板两栏、折叠屏展开
+  等所有布局下都能正确框住目标,不再偏移(不再依赖跨路由坐标测量)。
 - 市场:「我的上架」会展示加载错误(可重试)、空列表也能下拉刷新、上架成功后自动
   重载;出售面板在价格数据加载失败时不再卡死在进度条。
 - 保险库密钥包裹、盐值与 KDF 参数改为单条原子记录存储(原为三条独立条目)——

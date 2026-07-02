@@ -14,8 +14,8 @@ import 'widgets/sda_panel.dart';
 /// right-click context menu instead.
 Future<void> showGestureTutorial(
   BuildContext context, {
-  required GlobalKey codeKey,
-  required GlobalKey firstRowKey,
+  required LayerLink codeLink,
+  required LayerLink firstRowLink,
   SlidableController? slidable,
 }) {
   // A dialog route (not a PageRoute): the ambient layers only pause for
@@ -29,8 +29,8 @@ Future<void> showGestureTutorial(
     pageBuilder: (_, _, _) => Material(
       type: MaterialType.transparency,
       child: _GestureTutorial(
-        codeKey: codeKey,
-        firstRowKey: firstRowKey,
+        codeLink: codeLink,
+        firstRowLink: firstRowLink,
         slidable: slidable,
       ),
     ),
@@ -91,12 +91,12 @@ String _t5(AppLocalizations l) => l.tutPullTitle;
 String _b5(AppLocalizations l) => l.tutPullBody;
 
 class _GestureTutorial extends StatefulWidget {
-  final GlobalKey codeKey;
-  final GlobalKey firstRowKey;
+  final LayerLink codeLink;
+  final LayerLink firstRowLink;
   final SlidableController? slidable;
   const _GestureTutorial({
-    required this.codeKey,
-    required this.firstRowKey,
+    required this.codeLink,
+    required this.firstRowLink,
     this.slidable,
   });
 
@@ -108,10 +108,43 @@ class _GestureTutorialState extends State<_GestureTutorial> {
   int _step = 0;
   bool _closing = false; // simultaneous taps must not double-pop
 
+  // The spotlight cutout, read back from a probe that a CompositedTransform-
+  // Follower parks exactly on the target (see build). The probe lives in THIS
+  // overlay's tree, so measuring it needs no cross-route coordinate juggling.
+  Rect? _cutout;
+  final _probeKey = GlobalKey();
+
+  LayerLink get _link =>
+      _steps[_step].onCode ? widget.codeLink : widget.firstRowLink;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _playDemo());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _playDemo();
+      _measure();
+    });
+  }
+
+  /// Reads the follower-parked probe's rect (in this overlay's own space) and
+  /// updates the cutout. Runs after every frame that could move the target.
+  void _measure() {
+    if (!mounted) return;
+    final probe = _probeKey.currentContext?.findRenderObject() as RenderBox?;
+    final self = context.findRenderObject() as RenderBox?;
+    if (probe == null || self == null || !probe.hasSize || !self.hasSize) return;
+    final tl = probe.localToGlobal(Offset.zero, ancestor: self);
+    final r = (tl & probe.size).inflate(6);
+    const m = 4.0;
+    final clamped = Rect.fromLTRB(
+      r.left.clamp(m, self.size.width - m),
+      r.top.clamp(m, self.size.height - m),
+      r.right.clamp(m, self.size.width - m),
+      r.bottom.clamp(m, self.size.height - m),
+    );
+    if (clamped != _cutout && clamped.width > 0 && clamped.height > 0) {
+      setState(() => _cutout = clamped);
+    }
   }
 
   @override
@@ -136,14 +169,6 @@ class _GestureTutorialState extends State<_GestureTutorial> {
     }
   }
 
-  Rect? _targetRect() {
-    final key = _steps[_step].onCode ? widget.codeKey : widget.firstRowKey;
-    final box = key.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null || !box.attached || !box.hasSize) return null;
-    final origin = box.localToGlobal(Offset.zero);
-    return (origin & box.size).inflate(6);
-  }
-
   void _advance() {
     if (_closing) return;
     if (_step >= _steps.length - 1) {
@@ -152,6 +177,8 @@ class _GestureTutorialState extends State<_GestureTutorial> {
     }
     setState(() => _step++);
     _playDemo();
+    // The spotlight target changed; re-read it once the new frame is laid out.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
   }
 
   void _finish() {
@@ -166,8 +193,11 @@ class _GestureTutorialState extends State<_GestureTutorial> {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).extension<SdaTokens>()!;
     final step = _steps[_step];
-    final rect = _targetRect();
     final last = _step == _steps.length - 1;
+    // Re-read the target after every frame — the ambient backdrop and the swipe
+    // demo can nudge it, and leaderSize isn't known on the very first frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
+    final leaderSize = _link.leaderSize ?? Size.zero;
 
     return GestureDetector(
       // Tapping anywhere advances; the card's buttons are on top of this.
@@ -175,33 +205,60 @@ class _GestureTutorialState extends State<_GestureTutorial> {
       behavior: HitTestBehavior.opaque,
       child: Stack(
         children: [
-          // Dimmed scrim with an animated spotlight cutout over the target.
-          Positioned.fill(
-            child: TweenAnimationBuilder<Rect?>(
-              // begin == end so the first frame shows the target in place;
-              // later steps animate from the tracked current rect to the new
-              // one (TweenAnimationBuilder retargets on tween change).
-              tween: RectTween(begin: rect, end: rect),
-              duration: const Duration(milliseconds: 320),
-              curve: Curves.easeOutCubic,
-              builder: (_, r, _) => CustomPaint(
-                painter: _SpotlightPainter(
-                  cutout: r,
-                  radius: t.isPixel ? 0 : t.radiusSm + 4,
-                  border: t.accent,
-                  glow: t.glow,
-                ),
-              ),
+          // Invisible probe: the compositing layer parks it exactly over the
+          // target (code / first row) in every layout, so measuring IT gives a
+          // correct cutout without any cross-route coordinate math.
+          CompositedTransformFollower(
+            link: _link,
+            showWhenUnlinked: false,
+            targetAnchor: Alignment.topLeft,
+            followerAnchor: Alignment.topLeft,
+            child: IgnorePointer(
+              child: SizedBox.fromSize(size: leaderSize, key: _probeKey),
             ),
           ),
-          // Ghost-gesture hint over the spotlight.
-          if (rect != null)
-            Positioned.fromRect(
-              rect: rect,
-              child: IgnorePointer(
+          // Dimmed scrim with an animated spotlight cutout over the target.
+          // Until the first measurement lands, paint the plain scrim (no hole).
+          Positioned.fill(
+            child: _cutout == null
+                ? CustomPaint(
+                    painter: _SpotlightPainter(
+                      cutout: null,
+                      radius: t.isPixel ? 0 : t.radiusSm + 4,
+                      border: t.accent,
+                      glow: t.glow,
+                    ),
+                  )
+                : TweenAnimationBuilder<Rect?>(
+                    // begin == end so the first frame shows the target in place;
+                    // later steps animate from the tracked current rect to the
+                    // new one (TweenAnimationBuilder retargets on tween change).
+                    tween: RectTween(begin: _cutout, end: _cutout),
+                    duration: const Duration(milliseconds: 320),
+                    curve: Curves.easeOutCubic,
+                    builder: (_, r, _) => CustomPaint(
+                      painter: _SpotlightPainter(
+                        cutout: r,
+                        radius: t.isPixel ? 0 : t.radiusSm + 4,
+                        border: t.accent,
+                        glow: t.glow,
+                      ),
+                    ),
+                  ),
+          ),
+          // Ghost-gesture hint, centred on the target via the same link.
+          CompositedTransformFollower(
+            link: _link,
+            showWhenUnlinked: false,
+            targetAnchor: Alignment.center,
+            followerAnchor: Alignment.center,
+            child: IgnorePointer(
+              child: SizedBox.fromSize(
+                size: leaderSize,
                 child: _GestureHint(hint: step.hint, pixel: t.isPixel),
               ),
             ),
+          ),
           // Bottom instruction card.
           Positioned(
             left: 0,

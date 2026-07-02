@@ -8,7 +8,7 @@ import 'package:ava/src/ui/tutorial.dart';
 /// Pumps a minimal themed host with two spotlight targets and a button that
 /// launches the tutorial route.
 Future<void> _pumpHost(WidgetTester tester,
-    {required GlobalKey codeKey, required GlobalKey rowKey}) {
+    {required LayerLink codeLink, required LayerLink rowLink}) {
   return tester.pumpWidget(MaterialApp(
     theme: buildSdaTheme(SdaThemeVariant.neon),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -18,11 +18,15 @@ Future<void> _pumpHost(WidgetTester tester,
       body: Builder(
         builder: (context) => Column(
           children: [
-            SizedBox(key: codeKey, height: 40, width: 200),
-            SizedBox(key: rowKey, height: 60, width: 300),
+            CompositedTransformTarget(
+                link: codeLink,
+                child: const SizedBox(height: 40, width: 200)),
+            CompositedTransformTarget(
+                link: rowLink,
+                child: const SizedBox(height: 60, width: 300)),
             ElevatedButton(
               onPressed: () => showGestureTutorial(context,
-                  codeKey: codeKey, firstRowKey: rowKey),
+                  codeLink: codeLink, firstRowLink: rowLink),
               child: const Text('go'),
             ),
           ],
@@ -43,9 +47,9 @@ Future<void> _pumpSteps(WidgetTester tester, [int frames = 3]) async {
 void main() {
   testWidgets('tutorial walks through all steps and completes',
       (tester) async {
-    final codeKey = GlobalKey();
-    final rowKey = GlobalKey();
-    await _pumpHost(tester, codeKey: codeKey, rowKey: rowKey);
+    final codeLink = LayerLink();
+    final rowLink = LayerLink();
+    await _pumpHost(tester, codeLink: codeLink, rowLink: rowLink);
 
     await tester.tap(find.text('go'));
     await _pumpSteps(tester);
@@ -72,9 +76,9 @@ void main() {
   });
 
   testWidgets('tutorial can be skipped from the first step', (tester) async {
-    final codeKey = GlobalKey();
-    final rowKey = GlobalKey();
-    await _pumpHost(tester, codeKey: codeKey, rowKey: rowKey);
+    final codeLink = LayerLink();
+    final rowLink = LayerLink();
+    await _pumpHost(tester, codeLink: codeLink, rowLink: rowLink);
 
     await tester.tap(find.text('go'));
     await _pumpSteps(tester);
@@ -85,9 +89,9 @@ void main() {
   });
 
   testWidgets('tapping the scrim advances a step', (tester) async {
-    final codeKey = GlobalKey();
-    final rowKey = GlobalKey();
-    await _pumpHost(tester, codeKey: codeKey, rowKey: rowKey);
+    final codeLink = LayerLink();
+    final rowLink = LayerLink();
+    await _pumpHost(tester, codeLink: codeLink, rowLink: rowLink);
 
     await tester.tap(find.text('go'));
     await _pumpSteps(tester);
