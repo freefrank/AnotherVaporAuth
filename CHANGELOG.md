@@ -5,9 +5,15 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
-## [v0.69] — 2026-07-02
+## [v0.70] — 2026-07-03
 
 ### Added
+- **Skin effects are now data-driven.** The ambient backdrops (matrix rain,
+  pixel starfield…), HUD, scanlines and pull-to-refresh washes are rendered by
+  a generic effect engine from JSON specs; the built-in Neon and Pixel skins
+  ship as bundled packs (`assets/skins/*.json`) and reproduce the previous
+  looks exactly. Unknown layer types degrade gracefully — groundwork for
+  downloadable skin packs (schema documented in `docs/skin-schema.md`).
 - **Appearance and Skins are now two separate settings.** Appearance picks
   light / dark / follow-system for the new standard look — quiet palettes
   (calm blue accent), the platform's default font, standard rounded cards,
@@ -38,6 +44,10 @@ automated releases.
   the opt-in feedback-relay exception).
 
 ### 新增
+- **皮肤特效全面数据驱动。**氛围背景(矩阵雨、像素星野等)、HUD、扫描线与
+  下拉刷新色染改由通用特效引擎按 JSON 规格渲染;内置霓虹/像素皮肤即两个
+  标准包(`assets/skins/*.json`),视觉与此前完全一致。未知层类型优雅降级
+  ——为可下载皮肤包铺路(schema 见 `docs/skin-schema.md`)。
 - **「明暗」与「皮肤」拆分为两个独立设置。**明暗(跟随系统/暗色/亮色)作用于
   新增的标准外观——安静配色(蓝色点缀)、系统默认字体、标准圆角卡片、无氛围
   特效,状态栏图标随明暗自动切换;皮肤(无/霓虹/像素)在其上叠加完整风格化
