@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -11,6 +12,7 @@ import '../core/protocol/inventory_client.dart';
 import '../core/protocol/market_client.dart';
 import '../services/account_store.dart';
 import '../services/launcher_icon.dart';
+import '../skins/skin_spec.dart';
 import '../services/auto_login.dart';
 import '../services/avatar_service.dart';
 import '../services/biometric_unlock.dart';
@@ -93,6 +95,30 @@ class SkinController extends Notifier<AvaSkin> {
     state = skin;
     await ref.read(settingsStoreProvider).saveSkin(skin.name);
     await LauncherIcon.apply(skin);
+  }
+}
+
+/// The active skin's effect spec, loaded from the bundled JSON pack.
+/// Null while loading and for the plain (no-skin) look.
+final skinSpecProvider =
+    NotifierProvider<SkinSpecController, SkinSpec?>(SkinSpecController.new);
+
+class SkinSpecController extends Notifier<SkinSpec?> {
+  @override
+  SkinSpec? build() {
+    final skin = ref.watch(skinProvider);
+    if (skin != AvaSkin.none) _load(skin);
+    return null;
+  }
+
+  Future<void> _load(AvaSkin skin) async {
+    try {
+      final text = await rootBundle.loadString('assets/skins/${skin.name}.json');
+      // Guard against a skin switch racing the asset load.
+      if (ref.read(skinProvider) == skin) state = SkinSpec.parse(text);
+    } catch (e) {
+      dlog('skin: failed to load ${skin.name}.json: $e');
+    }
   }
 }
 

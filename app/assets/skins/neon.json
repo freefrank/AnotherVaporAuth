@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "id": "neon",
+  "ambient": {
+    "topFade": { "style": "gradient", "color": "$bg" },
+    "layers": [
+      {
+        "type": "glow_corner",
+        "alignX": -1, "alignY": -1,
+        "color": "#FF1B6B",
+        "alphaMin": 0.05, "alphaMax": 0.12,
+        "radius": 1.1
+      },
+      {
+        "type": "glow_corner",
+        "alignX": 1, "alignY": 1,
+        "color": "#18E0FF",
+        "alphaMin": 0.05, "alphaMax": 0.12,
+        "radius": 1.1,
+        "invertPhase": true
+      },
+      {
+        "type": "grid",
+        "gap": 34, "color": "#00FFFF", "alpha": 0.045,
+        "stroke": 1, "drift": true
+      },
+      {
+        "type": "glyph_rain",
+        "glyphs": "0123456789ABCDEFGHJKLMNPRSTUVWXYZ#%&*+<>/=:",
+        "cell": 16, "fontSize": 13, "fontFamily": "JetBrainsMono",
+        "headColor": "#FFFFFF", "headAlpha": 0.85,
+        "palette": ["#39FF8B", "#00FFFF"],
+        "alphaMin": 0.06, "alphaMax": 0.48,
+        "speedMin": 60, "speedMax": 230,
+        "lenMin": 6, "lenMax": 22,
+        "flicker": 0.18
+      },
+      {
+        "type": "sweep",
+        "color": "#00FFFF",
+        "band": 90, "bandAlpha": 0.10,
+        "lineWidth": 2, "lineAlpha": 0.45, "blur": 8
+      }
+    ]
+  },
+  "overlay": {
+    "layers": [
+      {
+        "type": "brackets",
+        "style": "line", "margin": 8, "arm": 22, "thickness": 1.6,
+        "color": "#18E0FF", "alpha": 0.55
+      },
+      {
+        "type": "ticks",
+        "gap": 16, "longEvery": 4, "len": 3, "lenLong": 6,
+        "color": "#18E0FF", "alpha": 0.25, "inset": 44
+      },
+      {
+        "type": "labels",
+        "color": "#18E0FF", "fontSize": 9,
+        "fontFamily": "JetBrainsMono", "letterSpacing": 1.5,
+        "items": [
+          { "text": "AVA//NET", "anchor": "tl", "dx": 14, "dy": 34 },
+          { "text": "SECURE", "anchor": "br", "dx": -14, "dy": -44 }
+        ]
+      },
+      { "type": "rec_dot", "text": "REC", "color": "#FF1B6B", "anchor": "tr", "dx": -24, "dy": 38 }
+    ]
+  },
+  "scanline": { "gap": 3, "color": "#0D00F0FF", "animated": true },
+  "pull": {
+    "style": "neon",
+    "colorA": "#18E0FF", "colorB": "#FF1B6B",
+    "lineA": "#00FFFF", "lineB": "#FF2BD6"
+  }
+}

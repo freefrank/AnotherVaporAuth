@@ -15,10 +15,10 @@ import '../services/steam_time.dart';
 import 'widgets/animated_steam_image.dart';
 import 'widgets/app_logo.dart';
 import 'widgets/countdown_ring.dart';
-import 'widgets/cyber_ambient.dart';
 import 'widgets/flip_code.dart';
 import 'widgets/motion.dart';
-import 'widgets/pixel_ambient.dart';
+import '../skins/skin_engine.dart';
+import '../skins/skin_spec.dart';
 import 'widgets/scanline_overlay.dart';
 import 'widgets/steam_image_provider.dart';
 import 'approve_login_screen.dart';
@@ -258,11 +258,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    // The cyberpunk ambience / neon pull / glow borders are neon-theme only;
-    // plain themes (dark/light) render no ambient layers at all.
-    final tokens = Theme.of(context).extension<AvaTokens>();
-    final plain = tokens?.plain ?? false;
-    final neon = !plain && !(tokens?.isPixel ?? false);
+    // Ambience / HUD / scanlines / pull wash all come from the active skin's
+    // effect spec; the engine widgets render nothing for the plain themes.
+    final pullSpec = ref.watch(skinSpecProvider)?.pull;
+    // Row glow / border styling still keys off the resolved variant.
+    final neon = Theme.of(context).extension<AvaTokens>()?.variant ==
+        AvaThemeVariant.neon;
     final accounts =
         ref.watch(appControllerProvider).value?.accounts ??
             const <SteamGuardAccount>[];
@@ -299,11 +300,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         child: !hasAccounts
             ? Stack(
                 children: [
-                  if (!plain)
-                    Positioned.fill(
-                        child: neon
-                            ? const CyberAmbient()
-                            : const PixelAmbient()),
+                  const Positioned.fill(child: SkinAmbient()),
                   SafeArea(child: _EmptyState(onAdd: () => _addMenu(context))),
                 ],
               )
@@ -383,56 +380,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       : (_pull / _pullThreshold).clamp(0.0, 1.0);
                   return Stack(
                     children: [
-                      // Cyberpunk ambience / HUD / neon pull — neon theme only.
-                      if (neon) ...[
-                        const Positioned.fill(child: CyberAmbient()),
-                        content,
-                        const Positioned.fill(child: CyberHud()),
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: TweenAnimationBuilder<double>(
-                              tween: Tween(end: pull01),
-                              duration: const Duration(milliseconds: 150),
-                              curve: Curves.easeOut,
-                              builder: (_, v, _) => v <= 0.001
-                                  ? const SizedBox.shrink()
-                                  : _NeonPull(progress: v),
-                            ),
+                      // Skin ambience behind, HUD above, pull wash on top —
+                      // all driven by the active skin's effect spec.
+                      const Positioned.fill(child: SkinAmbient()),
+                      content,
+                      const Positioned.fill(child: SkinOverlay()),
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween(end: pull01),
+                            duration: const Duration(milliseconds: 150),
+                            curve: Curves.easeOut,
+                            builder: (_, v, _) => v <= 0.001
+                                ? const SizedBox.shrink()
+                                : pullSpec?.style == 'pixel'
+                                    ? _PixelPull(progress: v, spec: pullSpec)
+                                    : _NeonPull(progress: v, spec: pullSpec),
                           ),
                         ),
-                      ] else if (plain) ...[
-                        // Plain themes: no backdrop; reuse the accent-tinted
-                        // pull wash (calm blue under dark/light palettes).
-                        content,
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: TweenAnimationBuilder<double>(
-                              tween: Tween(end: pull01),
-                              duration: const Duration(milliseconds: 150),
-                              curve: Curves.easeOut,
-                              builder: (_, v, _) => v <= 0.001
-                                  ? const SizedBox.shrink()
-                                  : _NeonPull(progress: v),
-                            ),
-                          ),
-                        ),
-                      ] else ...[
-                        // Pixel theme: retro backdrop + blocky pull indicator.
-                        const Positioned.fill(child: PixelAmbient()),
-                        content,
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: TweenAnimationBuilder<double>(
-                              tween: Tween(end: pull01),
-                              duration: const Duration(milliseconds: 150),
-                              curve: Curves.easeOut,
-                              builder: (_, v, _) => v <= 0.001
-                                  ? const SizedBox.shrink()
-                                  : _PixelPull(progress: v),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ],
                   );
                 },
@@ -1349,7 +1315,8 @@ class _TapScaleState extends State<_TapScale> {
 /// a white-hot "charged" state once the trigger threshold is reached.
 class _NeonPull extends StatefulWidget {
   final double progress; // 0..1
-  const _NeonPull({required this.progress});
+  final PullSpec? spec; // colors; null (plain themes) falls back to tokens
+  const _NeonPull({required this.progress, this.spec});
 
   @override
   State<_NeonPull> createState() => _NeonPullState();
@@ -1384,14 +1351,22 @@ class _NeonPullState extends State<_NeonPull>
         heightFactor: widget.progress.clamp(0.0, 1.0),
         child: AnimatedBuilder(
           animation: _ac,
-          builder: (_, _) => CustomPaint(
-            size: Size.infinite,
-            painter: _NeonPainter(
-              progress: widget.progress,
-              t: reduce ? 0 : _ac.value,
-              charged: widget.progress >= 0.97,
-            ),
-          ),
+          builder: (_, _) {
+            final tokens = Theme.of(context).extension<AvaTokens>()!;
+            final spec = widget.spec;
+            return CustomPaint(
+              size: Size.infinite,
+              painter: _NeonPainter(
+                progress: widget.progress,
+                t: reduce ? 0 : _ac.value,
+                charged: widget.progress >= 0.97,
+                colorA: spec?.colorA.resolve(tokens) ?? tokens.accent,
+                colorB: spec?.colorB.resolve(tokens) ?? tokens.accent2,
+                lineA: spec?.lineA.resolve(tokens) ?? tokens.accent,
+                lineB: spec?.lineB.resolve(tokens) ?? tokens.accent2,
+              ),
+            );
+          },
         ),
       ),
     );
@@ -1402,13 +1377,19 @@ class _NeonPainter extends CustomPainter {
   final double progress;
   final double t; // 0..1 animation phase
   final bool charged;
-  _NeonPainter(
-      {required this.progress, required this.t, required this.charged});
-
-  static const _red = Color(0xFFFF1B6B);
-  static const _blue = Color(0xFF18E0FF);
-  static const _cyan = Color(0xFF00FFFF);
-  static const _magenta = Color(0xFFFF2BD6);
+  final Color colorA; // wash start (was neon blue)
+  final Color colorB; // wash end (was neon red)
+  final Color lineA; // sweep line pair (was cyan / magenta)
+  final Color lineB;
+  _NeonPainter({
+    required this.progress,
+    required this.t,
+    required this.charged,
+    required this.colorA,
+    required this.colorB,
+    required this.lineA,
+    required this.lineB,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1424,15 +1405,15 @@ class _NeonPainter extends CustomPainter {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            _blue.withValues(alpha: 0.05 + 0.32 * progress),
-            _red.withValues(alpha: 0.06 + 0.40 * progress),
+            colorA.withValues(alpha: 0.05 + 0.32 * progress),
+            colorB.withValues(alpha: 0.06 + 0.40 * progress),
           ],
         ).createShader(rect),
     );
 
     // Faint vertical cyber grid.
     final grid = Paint()
-      ..color = _cyan.withValues(alpha: 0.07 * progress)
+      ..color = lineA.withValues(alpha: 0.07 * progress)
       ..strokeWidth = 1;
     for (var x = 0.0; x < w; x += 26) {
       canvas.drawLine(Offset(x, 0), Offset(x, h), grid);
@@ -1442,7 +1423,7 @@ class _NeonPainter extends CustomPainter {
     const n = 5;
     for (var i = 0; i < n; i++) {
       final y = ((t + i / n) % 1.0) * h;
-      final c = i.isEven ? _cyan : _magenta;
+      final c = i.isEven ? lineA : lineB;
       canvas.drawLine(
         Offset(0, y),
         Offset(w, y),
@@ -1464,7 +1445,7 @@ class _NeonPainter extends CustomPainter {
     final edgeY = h - 2;
     final edgeRect = Rect.fromLTWH(0, edgeY - 3, w, 6);
     final edgeShader =
-        const LinearGradient(colors: [_red, _magenta, _blue]).createShader(edgeRect);
+        LinearGradient(colors: [colorB, lineB, colorA]).createShader(edgeRect);
     canvas.drawLine(
       Offset(0, edgeY),
       Offset(w, edgeY),
@@ -1493,14 +1474,19 @@ class _NeonPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_NeonPainter old) =>
-      old.t != t || old.progress != progress || old.charged != charged;
+      old.t != t ||
+      old.progress != progress ||
+      old.charged != charged ||
+      old.colorA != colorA ||
+      old.colorB != colorB;
 }
 
 /// Pixel-theme pull-to-refresh: a blocky retro fill that grows from the top with
 /// a chunky pixel leading bar and a blinking "LOADING" once charged.
 class _PixelPull extends StatefulWidget {
   final double progress; // 0..1
-  const _PixelPull({required this.progress});
+  final PullSpec? spec; // fill/bar color; null falls back to tokens.accent
+  const _PixelPull({required this.progress, this.spec});
 
   @override
   State<_PixelPull> createState() => _PixelPullState();
@@ -1543,7 +1529,7 @@ class _PixelPullState extends State<_PixelPull>
               children: [
                 CustomPaint(
                   painter: _PixelPullPainter(
-                    color: t.accent,
+                    color: widget.spec?.colorA.resolve(t) ?? t.accent,
                     progress: widget.progress,
                     blinkOn: blinkOn,
                   ),

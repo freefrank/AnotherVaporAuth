@@ -6,10 +6,9 @@ import '../app/providers.dart';
 import '../app/responsive.dart';
 import '../app/theme.dart';
 import 'widgets/app_logo.dart';
-import 'widgets/cyber_ambient.dart';
+import '../skins/skin_engine.dart';
 import 'widgets/motion.dart';
 import 'widgets/pin_field.dart';
-import 'widgets/pixel_ambient.dart';
 import 'widgets/scanline_overlay.dart';
 
 class UnlockScreen extends ConsumerStatefulWidget {
@@ -168,11 +167,7 @@ class _UnlockLoading extends ConsumerWidget {
         fit: StackFit.expand,
         children: [
           Positioned.fill(
-              child: t.plain
-                  ? const SizedBox.shrink()
-                  : pixel
-                      ? const PixelAmbient()
-                      : const CyberAmbient()),
+              child: const SkinAmbient()),
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,

@@ -63,10 +63,6 @@ class AvaTokens extends ThemeExtension<AvaTokens> {
   /// Background corner gradient (neon only).
   final Gradient? bgGradient;
 
-  /// Scanline overlay color + whether it animates.
-  final Color scanColor;
-  final bool scanAnimated;
-
   const AvaTokens({
     required this.variant,
     required this.bg,
@@ -89,8 +85,6 @@ class AvaTokens extends ThemeExtension<AvaTokens> {
     required this.codeSize,
     required this.glow,
     required this.bgGradient,
-    required this.scanColor,
-    required this.scanAnimated,
   });
 
   bool get isPixel => variant == AvaThemeVariant.pixel;
@@ -166,8 +160,6 @@ class AvaTokens extends ThemeExtension<AvaTokens> {
       radius: 1.4,
       colors: [Color(0x1A00F0FF), Color(0x0006060F)],
     ),
-    scanColor: Color(0x0D00F0FF),
-    scanAnimated: true,
   );
 
   static const _pixel = AvaTokens(
@@ -192,8 +184,6 @@ class AvaTokens extends ThemeExtension<AvaTokens> {
     codeSize: 58,
     glow: false,
     bgGradient: null,
-    scanColor: Color(0x29000000),
-    scanAnimated: false,
   );
 
   static const _dark = AvaTokens(
@@ -218,8 +208,6 @@ class AvaTokens extends ThemeExtension<AvaTokens> {
     codeSize: 46,
     glow: false,
     bgGradient: null,
-    scanColor: Color(0x00000000),
-    scanAnimated: false,
   );
 
   static const _light = AvaTokens(
@@ -244,8 +232,6 @@ class AvaTokens extends ThemeExtension<AvaTokens> {
     codeSize: 46,
     glow: false,
     bgGradient: null,
-    scanColor: Color(0x00000000),
-    scanAnimated: false,
   );
 
   static AvaTokens of(AvaThemeVariant v) => switch (v) {

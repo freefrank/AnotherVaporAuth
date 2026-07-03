@@ -5,9 +5,8 @@ import '../../l10n/app_localizations.dart';
 import '../app/responsive.dart';
 import '../app/theme.dart';
 import 'widgets/app_logo.dart';
-import 'widgets/cyber_ambient.dart';
+import '../skins/skin_engine.dart';
 import 'widgets/motion.dart';
-import 'widgets/pixel_ambient.dart';
 import 'widgets/scanline_overlay.dart';
 import 'import_helper.dart';
 import 'login_screen.dart';
@@ -26,12 +25,7 @@ class WelcomeScreen extends ConsumerWidget {
       body: ScanlineOverlay(
         child: Stack(
           children: [
-            Positioned.fill(
-                child: t.plain
-                    ? const SizedBox.shrink()
-                    : t.isPixel
-                        ? const PixelAmbient()
-                        : const CyberAmbient()),
+            const Positioned.fill(child: SkinAmbient()),
             Center(
               child: SingleChildScrollView(
                 padding: context.rInsets(all: 28),

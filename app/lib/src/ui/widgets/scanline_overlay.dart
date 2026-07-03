@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/providers.dart';
 import '../../app/route_observer.dart';
 import '../../app/theme.dart';
 
-/// Subtle CRT scanline overlay from the design spec. Neon variant scrolls the
-/// lines slowly (`scanMove`); pixel variant is static. Non-interactive.
-class ScanlineOverlay extends StatefulWidget {
+/// Subtle CRT scanline overlay, driven by the active skin's `scanline` spec
+/// (gap / color / animated). Renders just the child when no skin is active or
+/// the skin declares no scanline — the plain themes. Non-interactive.
+class ScanlineOverlay extends ConsumerStatefulWidget {
   final Widget child;
   const ScanlineOverlay({super.key, required this.child});
 
   @override
-  State<ScanlineOverlay> createState() => _ScanlineOverlayState();
+  ConsumerState<ScanlineOverlay> createState() => _ScanlineOverlayState();
 }
 
-class _ScanlineOverlayState extends State<ScanlineOverlay>
+class _ScanlineOverlayState extends ConsumerState<ScanlineOverlay>
     with SingleTickerProviderStateMixin, RouteAware {
   late final AnimationController _c = AnimationController(
     vsync: this,
@@ -50,7 +53,7 @@ class _ScanlineOverlayState extends State<ScanlineOverlay>
     super.dispose();
   }
 
-  // Scroll only when the theme wants it and no pushed route covers us.
+  // Animate only while visible and motion is allowed.
   void _updateRunning() {
     if (_animate && !_covered) {
       if (!_c.isAnimating) _c.repeat();
@@ -61,13 +64,14 @@ class _ScanlineOverlayState extends State<ScanlineOverlay>
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<AvaTokens>()!;
+    final scan = ref.watch(skinSpecProvider)?.scanline;
     // Respect the OS "reduce motion" setting: freeze the scanline scroll.
     final reduce = MediaQuery.disableAnimationsOf(context);
-    _animate = t.scanAnimated && !reduce;
+    _animate = (scan?.animated ?? false) && !reduce;
     _updateRunning();
-    // Plain themes have no CRT affectation at all.
-    if (t.plain) return widget.child;
+    // No skin (plain themes) or no scanline in the pack: no CRT affectation.
+    if (scan == null) return widget.child;
+    final tokens = Theme.of(context).extension<AvaTokens>()!;
     return Stack(
       children: [
         widget.child,
@@ -78,10 +82,10 @@ class _ScanlineOverlayState extends State<ScanlineOverlay>
             child: RepaintBoundary(
               child: CustomPaint(
                 painter: _ScanPainter(
-                  color: t.scanColor,
+                  color: scan.color.resolve(tokens),
                   anim: _c,
                   animate: _animate,
-                  gap: t.isPixel ? 4 : 3,
+                  gap: scan.gap,
                 ),
               ),
             ),

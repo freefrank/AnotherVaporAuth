@@ -84,6 +84,7 @@ flutter:
   generate: true
 
   assets:
+    - assets/skins/
     - assets/icon/
 
   # Fonts bundled into the build (no runtime download).
