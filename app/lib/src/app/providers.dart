@@ -10,6 +10,7 @@ import '../core/protocol/confirmations_client.dart';
 import '../core/protocol/inventory_client.dart';
 import '../core/protocol/market_client.dart';
 import '../services/account_store.dart';
+import '../services/launcher_icon.dart';
 import '../services/auto_login.dart';
 import '../services/avatar_service.dart';
 import '../services/biometric_unlock.dart';
@@ -81,6 +82,9 @@ class SkinController extends Notifier<AvaSkin> {
       for (final skin in AvaSkin.values) {
         if (v == skin.name) state = skin;
       }
+      // Reconcile the launcher icon on startup (covers upgrades and any
+      // toggle that was interrupted before it stuck).
+      LauncherIcon.apply(state);
     });
     return AvaSkin.neon;
   }
@@ -88,6 +92,7 @@ class SkinController extends Notifier<AvaSkin> {
   Future<void> setSkin(AvaSkin skin) async {
     state = skin;
     await ref.read(settingsStoreProvider).saveSkin(skin.name);
+    await LauncherIcon.apply(skin);
   }
 }
 
