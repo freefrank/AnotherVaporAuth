@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — AVA (AnotherVaporAuth)</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1c1e24; --muted: #5a5f6e; --accent: #0a7ea4;
+    --card: #f4f5f8; --border: #e2e4ea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101318; --fg: #e6e8ee; --muted: #9aa1b2; --accent: #4cc2e8;
+      --card: #191d25; --border: #2a2f3a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      "Noto Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  header { display: flex; align-items: baseline; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap; margin-bottom: .5rem; }
+  h1 { font-size: 1.6rem; margin: 0; }
+  .lang-switch { display: flex; gap: .5rem; }
+  .lang-switch button {
+    font: inherit; font-size: .85rem; padding: .3rem .9rem; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 999px;
+    background: var(--card); color: var(--muted);
+  }
+  .lang-switch button[aria-pressed="true"] {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  .meta { color: var(--muted); font-size: .9rem; margin: .25rem 0 2rem; }
+  h2 { font-size: 1.15rem; margin: 2.2rem 0 .6rem; }
+  p, li { color: var(--fg); }
+  ul { padding-left: 1.3rem; }
+  li { margin: .35rem 0; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { background: var(--card); border: 1px solid var(--border);
+    border-radius: 4px; padding: .05rem .35rem; font-size: .9em; }
+  .tldr { background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1rem 1.25rem; }
+  [hidden] { display: none !important; }
+  footer { margin-top: 3rem; color: var(--muted); font-size: .85rem;
+    border-top: 1px solid var(--border); padding-top: 1rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1 id="title">Privacy Policy — AVA</h1>
+  <nav class="lang-switch" aria-label="Language">
+    <button id="btn-en" aria-pressed="true" onclick="setLang('en')">English</button>
+    <button id="btn-zh" aria-pressed="false" onclick="setLang('zh')">简体中文</button>
+  </nav>
+</header>
+
+<!-- ============================== ENGLISH ============================== -->
+<article id="policy-en" lang="en">
+<p class="meta"><strong>AVA (AnotherVaporAuth)</strong> · Effective date: 2026-07-02</p>
+
+<p>AVA ("the app") is a free, open-source, community-built authenticator for
+Steam. It is not affiliated with Valve or Steam. This policy explains what data
+the app handles and how.</p>
+
+<p class="tldr"><strong>Short version:</strong> the current version of the app
+has no backend of its own. We (the developers) collect nothing automatically
+and have no access to your data. Everything stays on your device, and the app
+talks directly to Valve's official Steam servers, which are required for it to
+work. If a future version adds optional online features (such as cloud sync or
+trade notifications), they will be strictly opt-in and described in an update
+to this policy before you can enable them (see Section 7).</p>
+
+<h2>1. Data stored on your device</h2>
+<p>The app stores the following <strong>locally, on your device only</strong>:</p>
+<ul>
+  <li><strong>Steam Guard authenticator data</strong> (maFiles): shared secret,
+    identity secret, revocation code, SteamID, account name, device ID.</li>
+  <li><strong>Session tokens</strong> (access and refresh tokens) used to talk
+    to Steam.</li>
+  <li><strong>Your Steam password — optional.</strong> Only if you choose to
+    save it (to enable automatic session refresh). It is stored inside that
+    account's maFile.</li>
+  <li><strong>Cached profile data</strong>: avatar/frame image URLs and display
+    (persona) name.</li>
+  <li><strong>App settings</strong>: theme, language, and your app-unlock PIN
+    material.</li>
+  <li><strong>A short debug log</strong> (Settings → Debug log), kept in memory
+    only and cleared when the app closes.</li>
+</ul>
+<p>At rest this data is encrypted with <strong>AES-256-GCM</strong> using a
+random key held in your device's hardware-backed <strong>Android
+Keystore</strong> and unwrapped by your 6-digit unlock PIN (and, if enabled,
+your device biometrics / device credential). Because the key is bound to your
+device's keystore, copies of the data files are useless on any other device.
+None of it reaches us.</p>
+
+<h2>2. Data we collect</h2>
+<p><strong>Nothing automatically.</strong> The app contains no analytics,
+telemetry, advertising, crash reporting, or tracking of any kind, and there is
+no account with us. The only data that ever reaches the developer is feedback
+you compose and send yourself (see Section 3).</p>
+
+<h2>3. Network connections</h2>
+<p>To function, the app connects <strong>directly to Valve's official Steam
+services</strong>, including:</p>
+<ul>
+  <li><code>steamcommunity.com</code> and <code>api.steampowered.com</code> —
+    authentication, confirmations, sign-in requests, profile data.</li>
+  <li>Steam content CDNs (e.g. <code>*.steamstatic.com</code>) — avatar and
+    frame images.</li>
+</ul>
+<p>These requests go straight from your device to Valve. Your use of Steam
+through the app is subject to Valve's own
+<a href="https://store.steampowered.com/privacy_agreement/">Steam Privacy
+Policy</a>.</p>
+<p>The single exception is <strong>Settings → Feedback</strong>, which is
+entirely opt-in: nothing is transmitted unless you press send. When you do,
+your message, the optional contact field, and one metadata line shown verbatim
+in the form (app version, platform, language) are delivered to
+<code>ava-feedback.dotslash.pro</code> — a relay operated by the developer that
+forwards the report as an e-mail to the developer's mailbox and stores nothing
+else. If you tick <strong>“Attach debug log”</strong> (off by default), the
+in-app debug log is included too — recent network-trace lines that may contain
+your account names and SteamIDs, but never your secrets, tokens or passwords.
+Like any web request, the relay sees your IP address; it is included in
+the forwarded e-mail and kept nowhere else. Beyond this user-initiated
+feedback, the app makes <strong>no connection to any server operated by the AVA
+developers</strong>.</p>
+
+<h2>4. Permissions</h2>
+<ul>
+  <li><strong>Internet</strong> and <strong>network state</strong> — to reach
+    Steam's servers and detect whether the device is online.</li>
+  <li><strong>Camera</strong> (optional) — only when you scan a login QR
+    code.</li>
+  <li><strong>Biometric / fingerprint / device credential</strong> (optional) —
+    only to unlock the app.</li>
+</ul>
+<p>The app requests no location, contacts, or other sensitive permissions
+beyond these.</p>
+
+<h2>5. Sharing your data</h2>
+<p>We do not share your data because <strong>we do not have it</strong>. The
+app does not sell, rent, or transmit your data to any third party other than
+Valve (as required for the app to work).</p>
+
+<h2>6. Exporting your data</h2>
+<p>You can export an account's maFile from the app. An exported
+<strong>unencrypted</strong> maFile contains your Steam Guard secrets and, if
+you saved it, your account password. Anyone who obtains that file can access
+your account — store and share exports carefully. They are your
+responsibility.</p>
+
+<h2>7. Cloud sync and other online features (not currently available)</h2>
+<p>The current version has <strong>no cloud sync, cloud backup, or
+push-notification service</strong>. All data is local, as described above.</p>
+<p>We do plan optional online features — for example <strong>cloud
+sync/backup</strong> of your authenticator data, or <strong>trade/confirmation
+notifications</strong> (which may require a server component operated by us).
+Any such feature will:</p>
+<ul>
+  <li>be <strong>strictly opt-in and off by default</strong> — the app keeps
+    working fully locally if you don't enable it;</li>
+  <li>be described by an <strong>updated version of this policy before you can
+    enable it</strong>, stating exactly what data is involved, where it is
+    stored, and how it is protected (for synced secrets the design intent is
+    <strong>end-to-end encryption</strong>, so that only your devices hold the
+    keys; for notifications, the minimum data needed to deliver them);</li>
+  <li><strong>never</strong> enable itself or upload your data without your
+    explicit action.</li>
+</ul>
+<p>Until then, no data leaves your device except the direct Steam requests and
+the opt-in feedback described in Section 3.</p>
+
+<h2>8. Children</h2>
+<p>The app is not directed to children and is intended for Steam account
+holders, consistent with Valve's own age requirements.</p>
+
+<h2>9. Changes to this policy</h2>
+<p>We may update this policy as the app evolves (for example, when cloud sync
+or notifications are introduced). Changes are published with a new effective
+date, and the full history is available in the open-source project
+repository.</p>
+
+<h2>10. Contact</h2>
+<p>Questions? Open an issue on the project repository:<br>
+<a href="https://github.com/freefrank/AnotherVaporAuth">github.com/freefrank/AnotherVaporAuth</a></p>
+</article>
+
+<!-- ============================== 中文 ============================== -->
+<article id="policy-zh" lang="zh-CN" hidden>
+<p class="meta"><strong>AVA（AnotherVaporAuth）</strong> · 生效日期：2026-07-02</p>
+
+<p>AVA（下称「本应用」）是一个免费、开源、社区开发的 Steam 验证器，与 Valve 或
+Steam 无任何关联。本政策说明本应用会处理哪些数据、以及如何处理。</p>
+
+<p class="tldr"><strong>一句话版本：</strong>当前版本的应用<strong>没有自己的
+后端</strong>。开发者不会自动收集任何数据、也无法访问你的数据。所有数据都留在你的
+设备上，应用直接连往 <strong>Valve 官方 Steam 服务器</strong>——这是应用正常工作的
+必要条件。若未来版本加入可选的在线功能（如云同步、交易通知），它们将严格采用可选
+开启，并在你能启用之前先以本政策的更新版本说明清楚（见第 7 节）。</p>
+
+<h2>1. 存储在你设备上的数据</h2>
+<p>本应用仅在<strong>你的设备本地</strong>存储以下内容：</p>
+<ul>
+  <li><strong>Steam 令牌数据</strong>（maFiles）：shared secret、identity
+    secret、撤销码、SteamID、账户名、设备 ID。</li>
+  <li><strong>会话令牌</strong>（access token / refresh token），用于与 Steam
+    通信。</li>
+  <li><strong>你的 Steam 密码——可选。</strong>仅当你选择保存时（用于自动刷新
+    登录），保存在该账户的 maFile 内。</li>
+  <li><strong>缓存的资料数据</strong>：头像/头像框的图片链接、显示昵称
+    （persona）。</li>
+  <li><strong>应用设置</strong>：主题、语言、以及你的解锁 PIN 相关材料。</li>
+  <li><strong>一小段调试日志</strong>（设置 → 调试日志），仅存于内存，关闭应用
+    即清除。</li>
+</ul>
+<p>静置时，这些数据以 <strong>AES-256-GCM</strong> 加密，密钥是一个随机密钥，
+保存在你设备的硬件级 <strong>Android Keystore</strong> 中，由你的 6 位解锁 PIN
+解开（若启用，还会由设备指纹 / 设备密码把关）。由于该密钥绑定到你设备的
+keystore，数据文件即使被拷走，在其他设备上也无法使用。这些内容都不会到达我们
+手里。</p>
+
+<h2>2. 我们收集的数据</h2>
+<p><strong>不会自动收集任何数据。</strong>本应用不含任何分析、遥测、广告、崩溃
+上报或追踪，你在我们这里也没有账户。唯一会到达开发者的数据，是你自己撰写并主动
+发送的反馈（见第 3 节）。</p>
+
+<h2>3. 网络连接</h2>
+<p>为正常工作，本应用会<strong>直接连往 Valve 官方 Steam 服务</strong>，包括：</p>
+<ul>
+  <li><code>steamcommunity.com</code> 与 <code>api.steampowered.com</code>——
+    登录认证、交易确认、登录请求、资料数据。</li>
+  <li>Steam 内容 CDN（如 <code>*.steamstatic.com</code>）——头像与头像框图片。</li>
+</ul>
+<p>这些请求由你的设备<strong>直接</strong>发往 Valve。你通过本应用使用 Steam 的
+行为，受 Valve 自己的
+<a href="https://store.steampowered.com/privacy_agreement/">Steam 隐私政策</a>
+约束。</p>
+<p>唯一的例外是<strong>「设置 → 反馈」</strong>，完全由你主动发起：不按发送，就
+不会传输任何内容。发送时，你的留言、可选的联系方式、以及表单中原样展示的一行
+元信息（应用版本、平台、语言）会送达
+<code>ava-feedback.dotslash.pro</code>——由开发者运营的中转服务，它将报告以邮件
+形式转发到开发者邮箱，除此之外不存储任何内容。若你勾选<strong>「附加调试日志」</strong>
+（默认不勾选），应用内的调试日志也会一并发送——即最近的网络跟踪记录，可能包含
+你的账户名与 SteamID，但绝不含密钥、令牌或密码。与任何网络请求一样，中转服务能
+看到你的 IP 地址；它会包含在转发邮件中，不在其他任何地方保留。除这类由你主动
+发起的反馈外，本应用<strong>不会连接任何由 AVA 开发者运营的服务器</strong>。</p>
+
+<h2>4. 权限</h2>
+<ul>
+  <li><strong>网络 / 网络状态</strong>——用于连接 Steam 服务器、检测设备是否
+    联网。</li>
+  <li><strong>相机</strong>（可选）——仅在你扫描登录二维码时使用。</li>
+  <li><strong>生物识别 / 指纹 / 设备密码</strong>（可选）——仅用于解锁应用。</li>
+</ul>
+<p>除此之外，本应用不索取定位、通讯录或其他敏感权限。</p>
+
+<h2>5. 数据共享</h2>
+<p>我们不共享你的数据，因为我们<strong>根本没有</strong>你的数据。本应用不会将
+你的数据出售、出租或传输给除 Valve 之外的任何第三方（连 Valve 也仅限应用正常
+工作所必需）。</p>
+
+<h2>6. 导出数据</h2>
+<p>你可以从应用中导出某账户的 maFile。导出的<strong>未加密</strong> maFile 含有
+你的 Steam 令牌密钥，以及（若你保存了）你的账户密码。任何拿到该文件的人都能
+访问你的账户——请妥善保管与分享导出文件，风险自负。</p>
+
+<h2>7. 云同步与其他在线功能（当前不提供）</h2>
+<p>当前版本<strong>没有云同步、云备份或推送通知服务</strong>，所有数据均在本地
+（见上文）。</p>
+<p>我们确实计划一些可选的在线功能——例如令牌数据的<strong>云同步/云备份</strong>、
+或<strong>交易/确认通知</strong>（后者可能需要由我们运营的服务器组件）。任何
+此类功能都将：</p>
+<ul>
+  <li><strong>严格采用可选开启、默认关闭</strong>——不启用时，应用完整保持纯本地
+    工作方式；</li>
+  <li>在你能启用之前，先以<strong>更新后的本政策</strong>说明清楚涉及哪些数据、
+    存于何处、如何保护（对同步的密钥数据，设计目标是<strong>端到端加密</strong>，
+    让密钥只掌握在你的设备上；对通知，只使用送达所必需的最少数据）；</li>
+  <li><strong>绝不</strong>在你未明确操作的情况下自行启用或上传你的数据。</li>
+</ul>
+<p>在此之前，除第 3 节所述的 Steam 直连请求与你主动发送的反馈外，不会有任何数据
+离开你的设备。</p>
+
+<h2>8. 未成年人</h2>
+<p>本应用不面向儿童，仅供符合 Valve 年龄要求的 Steam 账户持有者使用。</p>
+
+<h2>9. 政策变更</h2>
+<p>我们可能随应用演进更新本政策（例如引入云同步或通知功能时）。变更会以新的
+生效日期发布，完整历史可在开源项目仓库中查阅。</p>
+
+<h2>10. 联系方式</h2>
+<p>有疑问？请在项目仓库提交 issue：<br>
+<a href="https://github.com/freefrank/AnotherVaporAuth">github.com/freefrank/AnotherVaporAuth</a></p>
+</article>
+
+<footer>
+  <span id="foot-en">AVA (AnotherVaporAuth) · open source (MIT) · not affiliated
+    with Valve or Steam.</span>
+  <span id="foot-zh" hidden>AVA（AnotherVaporAuth）· 开源（MIT）· 与 Valve /
+    Steam 官方无任何关联。</span>
+</footer>
+</div>
+
+<script>
+function setLang(l) {
+  var en = l === 'en';
+  document.getElementById('policy-en').hidden = !en;
+  document.getElementById('policy-zh').hidden = en;
+  document.getElementById('foot-en').hidden = !en;
+  document.getElementById('foot-zh').hidden = en;
+  document.getElementById('btn-en').setAttribute('aria-pressed', en);
+  document.getElementById('btn-zh').setAttribute('aria-pressed', !en);
+  document.getElementById('title').textContent =
+    en ? 'Privacy Policy — AVA' : '隐私政策 — AVA';
+  document.documentElement.lang = en ? 'en' : 'zh-CN';
+  try { localStorage.setItem('ava-privacy-lang', l); } catch (e) {}
+}
+(function () {
+  var saved = null;
+  try { saved = localStorage.getItem('ava-privacy-lang'); } catch (e) {}
+  var l = saved || ((navigator.language || '').toLowerCase().indexOf('zh') === 0
+    ? 'zh' : 'en');
+  if (l === 'zh') setLang('zh');
+})();
+</script>
+</body>
+</html>

@@ -61,7 +61,10 @@ nothing is transmitted unless you press send. When you do, your message, the
 optional contact field, and one metadata line shown verbatim in the form (app
 version, platform, language) are delivered to `ava-feedback.dotslash.pro` — a
 relay operated by the developer that forwards the report as an e-mail to the
-developer's mailbox and stores nothing else. Like any web request, the relay
+developer's mailbox and stores nothing else. If you tick **"Attach debug
+log"** (off by default), the in-app debug log is included too — recent
+network-trace lines that may contain your account names and SteamIDs, but
+never your secrets, tokens or passwords. Like any web request, the relay
 sees your IP address; it is included in the forwarded e-mail and kept nowhere
 else. Beyond this user-initiated feedback, the app makes **no connection to any
 server operated by the AVA developers**.

@@ -23,6 +23,7 @@ class FeedbackService {
     required String message,
     required String contact,
     required String meta,
+    String? log,
   }) async {
     final dio = Dio(BaseOptions(
       connectTimeout: const Duration(seconds: 10),
@@ -31,7 +32,12 @@ class FeedbackService {
     try {
       final res = await dio.post<Map<String, dynamic>>(
         _endpoint,
-        data: {'message': message, 'contact': contact, 'meta': meta},
+        data: {
+          'message': message,
+          'contact': contact,
+          'meta': meta,
+          if (log != null && log.isNotEmpty) 'log': log,
+        },
         options: Options(headers: {'x-ava-client': _clientToken}),
       );
       if (res.data?['ok'] != true) {

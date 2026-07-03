@@ -680,6 +680,48 @@ abstract class AppLocalizations {
   /// **'Couldn\'t send. Check your network and try again.'**
   String get feedbackFailed;
 
+  /// No description provided for @feedbackAttachLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach debug log'**
+  String get feedbackAttachLog;
+
+  /// No description provided for @feedbackAttachLogHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent network trace; may include account names / SteamIDs'**
+  String get feedbackAttachLogHint;
+
+  /// No description provided for @feedbackLogConsentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The debug log contains recent network-trace lines from this session. It may include your account names and SteamIDs — never your secrets, tokens or passwords. It is sent only together with this report, as described in the Privacy Policy.'**
+  String get feedbackLogConsentBody;
+
+  /// No description provided for @feedbackLogConsentAgree.
+  ///
+  /// In en, this message translates to:
+  /// **'Agree'**
+  String get feedbackLogConsentAgree;
+
+  /// No description provided for @backupReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up your secrets'**
+  String get backupReminderTitle;
+
+  /// No description provided for @backupReminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'AVA keeps your authenticator data on this device only. Store a copy of your maFiles somewhere safe, and make sure you can find each account\'s revocation code (R-code) — it is the only way to remove the authenticator if this device is lost.'**
+  String get backupReminderBody;
+
+  /// No description provided for @backupReminderOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get backupReminderOk;
+
   /// No description provided for @debugCopyAll.
   ///
   /// In en, this message translates to:

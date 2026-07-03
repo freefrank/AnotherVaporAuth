@@ -58,6 +58,27 @@ class SettingsStore {
     await _write(data);
   }
 
+  /// Whether the one-time post-import backup reminder has been shown.
+  Future<bool> loadBackupReminderShown() async =>
+      (await _read())['backup_reminder_shown'] == true;
+
+  Future<void> saveBackupReminderShown() async {
+    final data = await _read();
+    data['backup_reminder_shown'] = true;
+    await _write(data);
+  }
+
+  /// Whether the user has agreed to the debug-log attachment notice (the
+  /// one-time prompt shown when first ticking "attach debug log" in feedback).
+  Future<bool> loadLogConsentShown() async =>
+      (await _read())['log_consent_shown'] == true;
+
+  Future<void> saveLogConsentShown() async {
+    final data = await _read();
+    data['log_consent_shown'] = true;
+    await _write(data);
+  }
+
   /// Whether the first-run gesture tutorial has been shown (home screen).
   Future<bool> loadTutorialSeen() async =>
       (await _read())['tutorial_seen'] == true;

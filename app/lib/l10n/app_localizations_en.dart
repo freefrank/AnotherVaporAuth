@@ -333,6 +333,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t send. Check your network and try again.';
 
   @override
+  String get feedbackAttachLog => 'Attach debug log';
+
+  @override
+  String get feedbackAttachLogHint =>
+      'Recent network trace; may include account names / SteamIDs';
+
+  @override
+  String get feedbackLogConsentBody =>
+      'The debug log contains recent network-trace lines from this session. It may include your account names and SteamIDs — never your secrets, tokens or passwords. It is sent only together with this report, as described in the Privacy Policy.';
+
+  @override
+  String get feedbackLogConsentAgree => 'Agree';
+
+  @override
+  String get backupReminderTitle => 'Back up your secrets';
+
+  @override
+  String get backupReminderBody =>
+      'AVA keeps your authenticator data on this device only. Store a copy of your maFiles somewhere safe, and make sure you can find each account\'s revocation code (R-code) — it is the only way to remove the authenticator if this device is lost.';
+
+  @override
+  String get backupReminderOk => 'Got it';
+
+  @override
   String get debugCopyAll => 'Copy all';
 
   @override

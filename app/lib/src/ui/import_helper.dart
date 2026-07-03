@@ -30,12 +30,39 @@ Future<void> importMaFileFlow(BuildContext context, WidgetRef ref) async {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.importSuccess)));
     }
+    // One-time reminder to keep maFiles / revocation codes backed up.
+    if (context.mounted) await showBackupReminderOnce(context, ref);
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.importFailed('$e'))));
     }
   }
+}
+
+
+/// One-time reminder that authenticator data lives on this device only —
+/// keep maFiles and revocation codes backed up. Shown after the first
+/// successful import; the flag persists so it never repeats.
+Future<void> showBackupReminderOnce(BuildContext context, WidgetRef ref) async {
+  final settings = ref.read(settingsStoreProvider);
+  if (await settings.loadBackupReminderShown()) return;
+  await settings.saveBackupReminderShown();
+  if (!context.mounted) return;
+  final l = AppLocalizations.of(context);
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l.backupReminderTitle),
+      content: Text(l.backupReminderBody),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l.backupReminderOk),
+        ),
+      ],
+    ),
+  );
 }
 
 /// Exports an account as an **unencrypted** `*.maFile` (plain JSON), named after

@@ -8,6 +8,7 @@ const CLIENT_TOKEN = "ava-feedback-v1";
 const MAX_MESSAGE = 4000;
 const MAX_CONTACT = 200;
 const MAX_META = 300;
+const MAX_LOG = 16000;
 
 function bad(status, msg) {
   return new Response(JSON.stringify({ ok: false, error: msg }), {
@@ -42,11 +43,13 @@ async function handle(request, env) {
   const message = (body.message ?? "").toString().trim();
   const contact = (body.contact ?? "").toString().trim();
   const meta = (body.meta ?? "").toString().trim(); // "AVA 0.65.2 · android · zh"
+  const log = (body.log ?? "").toString(); // opt-in in-app debug log tail
   if (!message) return bad(400, "empty message");
   if (
     message.length > MAX_MESSAGE ||
     contact.length > MAX_CONTACT ||
-    meta.length > MAX_META
+    meta.length > MAX_META ||
+    log.length > MAX_LOG
   ) {
     return bad(413, "too long");
   }
@@ -60,6 +63,7 @@ async function handle(request, env) {
     `contact: ${contact || "-"}`,
     `ip:      ${ip}`,
     `time:    ${new Date().toISOString()}`,
+    ...(log ? ["", `--- debug log (${log.length} chars) ---`, log] : []),
   ].join("\n");
 
   try {

@@ -313,6 +313,29 @@ class AppLocalizationsZh extends AppLocalizations {
   String get feedbackFailed => '发送失败，请检查网络后重试。';
 
   @override
+  String get feedbackAttachLog => '附加调试日志';
+
+  @override
+  String get feedbackAttachLogHint => '最近的网络跟踪记录，可能包含账户名 / SteamID';
+
+  @override
+  String get feedbackLogConsentBody =>
+      '调试日志是本次会话中最近的网络跟踪记录，可能包含你的账户名与 SteamID——绝不含密钥、令牌或密码。它只会随本条反馈一并发送，详见隐私政策。';
+
+  @override
+  String get feedbackLogConsentAgree => '同意';
+
+  @override
+  String get backupReminderTitle => '记得备份';
+
+  @override
+  String get backupReminderBody =>
+      'AVA 的令牌数据只保存在本机。请将 maFile 备份到安全的地方，并确认你能找到每个账户的撤销码（R 码）——设备丢失时，它是移除令牌的唯一途径。';
+
+  @override
+  String get backupReminderOk => '知道了';
+
+  @override
   String get debugCopyAll => '全部复制';
 
   @override

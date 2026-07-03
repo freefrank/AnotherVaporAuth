@@ -1,0 +1,9 @@
+name = "ava-site"
+compatibility_date = "2026-07-02"
+
+routes = [
+  { pattern = "ava.dotslash.pro", custom_domain = true }
+]
+
+[assets]
+directory = "./public"

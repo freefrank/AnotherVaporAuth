@@ -7,6 +7,7 @@ import '../app/providers.dart';
 import '../app/responsive.dart';
 import '../app/theme.dart';
 import '../services/feedback_service.dart';
+import '../services/debug_log.dart';
 import 'debug_log_screen.dart';
 import 'widgets/pin_field.dart';
 import 'widgets/scanline_overlay.dart';
@@ -367,18 +368,19 @@ class SettingsScreen extends ConsumerWidget {
 /// route; pops the entered `(old, next)` pair on OK, null on cancel.
 /// Compose-and-send dialog for in-app feedback. Shows exactly what metadata
 /// travels with the message; nothing is sent until the user presses send.
-class _FeedbackDialog extends StatefulWidget {
+class _FeedbackDialog extends ConsumerStatefulWidget {
   const _FeedbackDialog();
 
   @override
-  State<_FeedbackDialog> createState() => _FeedbackDialogState();
+  ConsumerState<_FeedbackDialog> createState() => _FeedbackDialogState();
 }
 
-class _FeedbackDialogState extends State<_FeedbackDialog> {
+class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
   final _message = TextEditingController();
   final _contact = TextEditingController();
   String _meta = '';
   bool _sending = false;
+  bool _attachLog = false;
 
   @override
   void initState() {
@@ -407,6 +409,7 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
         message: _message.text.trim(),
         contact: _contact.text.trim(),
         meta: _meta,
+        log: _attachLog ? _logTail() : null,
       );
       navigator.pop();
       messenger.showSnackBar(SnackBar(content: Text(l.feedbackSent)));
@@ -416,6 +419,46 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
         messenger.showSnackBar(SnackBar(content: Text(l.feedbackFailed)));
       }
     }
+  }
+
+  /// First tick shows a one-time consent notice describing what the log
+  /// contains; the agreement persists across sessions.
+  Future<void> _onAttachLogChanged(bool? v) async {
+    if (v != true) {
+      setState(() => _attachLog = false);
+      return;
+    }
+    final settings = ref.read(settingsStoreProvider);
+    if (!await settings.loadLogConsentShown()) {
+      if (!mounted) return;
+      final l = AppLocalizations.of(context);
+      final agreed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l.feedbackAttachLog),
+          content: Text(l.feedbackLogConsentBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l.feedbackLogConsentAgree),
+            ),
+          ],
+        ),
+      );
+      if (agreed != true) return;
+      await settings.saveLogConsentShown();
+    }
+    if (mounted) setState(() => _attachLog = true);
+  }
+
+  /// Last chunk of the in-app debug log (kept within the relay's size cap).
+  String _logTail() {
+    final d = DebugLog.instance.dump();
+    return d.length > 12000 ? d.substring(d.length - 12000) : d;
   }
 
   @override
@@ -453,7 +496,19 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
                 counterText: '',
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 4),
+            CheckboxListTile(
+              value: _attachLog,
+              onChanged: _sending ? null : _onAttachLogChanged,
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(l.feedbackAttachLog,
+                  style: const TextStyle(fontSize: 13)),
+              subtitle: Text(l.feedbackAttachLogHint,
+                  style: TextStyle(color: t.muted, fontSize: 11)),
+            ),
+            const SizedBox(height: 4),
             Text(
               l.feedbackAttachNote(_meta),
               style: TextStyle(color: t.muted, fontSize: 12),
