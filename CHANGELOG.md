@@ -43,6 +43,12 @@ automated releases.
   The Chinese policy was brought in sync with the English one (it was missing
   the opt-in feedback-relay exception).
 
+### Fixed
+- The post-import backup reminder no longer implies the app can surface your
+  revocation code. It now says the R-code is shown only once, when you add an
+  authenticator — write it down then; it is the last resort if the device is
+  lost.
+
 ### 新增
 - **皮肤特效全面数据驱动。**氛围背景(矩阵雨、像素星野等)、HUD、扫描线与
   下拉刷新色染改由通用特效引擎按 JSON 规格渲染;内置霓虹/像素皮肤即两个
@@ -63,6 +69,10 @@ automated releases.
 - 主题字体全面统一:调试日志改为继承当前主题的代码字体(此前固定
   JetBrains Mono,像素主题下不匹配);霓虹主题的"矩阵雨"字符改用内置
   JetBrains Mono,不再依赖系统 monospace。
+
+### 修复
+- 导入后的备份提醒不再暗示 App 能显示撤销码。改为说明 R 码仅在添加令牌时
+  显示一次——请当场抄下;设备丢失时它是最后手段。
 
 ### 变更
 - 隐私政策措辞更新:"纯本地"承诺限定为当前版本,并将"云同步"一节扩展为

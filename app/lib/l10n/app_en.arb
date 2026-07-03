@@ -121,7 +121,7 @@
   "feedbackLogConsentBody": "The debug log contains recent network-trace lines from this session. It may include your account names and SteamIDs — never your secrets, tokens or passwords. It is sent only together with this report, as described in the Privacy Policy.",
   "feedbackLogConsentAgree": "Agree",
   "backupReminderTitle": "Back up your secrets",
-  "backupReminderBody": "AVA keeps your authenticator data on this device only. Store a copy of your maFiles somewhere safe, and make sure you can find each account's revocation code (R-code) — it is the only way to remove the authenticator if this device is lost.",
+  "backupReminderBody": "AVA keeps your authenticator data on this device only. Back up your maFiles somewhere safe. Your revocation code (R-code) is shown only once, when you first add an authenticator — write it down and keep it then; it is your last resort for removing the authenticator if this device is ever lost.",
   "backupReminderOk": "Got it",
   "debugCopyAll": "Copy all",
   "debugCopied": "Log copied",

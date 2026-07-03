@@ -713,7 +713,7 @@ abstract class AppLocalizations {
   /// No description provided for @backupReminderBody.
   ///
   /// In en, this message translates to:
-  /// **'AVA keeps your authenticator data on this device only. Store a copy of your maFiles somewhere safe, and make sure you can find each account\'s revocation code (R-code) — it is the only way to remove the authenticator if this device is lost.'**
+  /// **'AVA keeps your authenticator data on this device only. Back up your maFiles somewhere safe. Your revocation code (R-code) is shown only once, when you first add an authenticator — write it down and keep it then; it is your last resort for removing the authenticator if this device is ever lost.'**
   String get backupReminderBody;
 
   /// No description provided for @backupReminderOk.

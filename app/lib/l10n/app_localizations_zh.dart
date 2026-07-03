@@ -330,7 +330,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get backupReminderBody =>
-      'AVA 的令牌数据只保存在本机。请将 maFile 备份到安全的地方，并确认你能找到每个账户的撤销码（R 码）——设备丢失时，它是移除令牌的唯一途径。';
+      'AVA 的令牌数据只保存在本机。请将 maFile 备份到安全的地方。撤销码（R 码）仅在你首次添加令牌时显示一次——请当场抄下并妥善保管；设备丢失时，它是移除令牌的最后手段。';
 
   @override
   String get backupReminderOk => '知道了';
