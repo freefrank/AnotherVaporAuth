@@ -4,9 +4,11 @@ import 'package:flutter/services.dart';
 
 import '../app/theme.dart';
 
-/// Keeps the Android home-screen icon in sync with the active skin by
-/// toggling launcher activity-aliases (see MainActivity.kt). No-op on
-/// other platforms and safe to call repeatedly.
+/// Reconciles the Android home-screen icon with the active skin by toggling
+/// launcher activity-aliases (see MainActivity.kt), which no-ops when already
+/// correct. Called only at startup and when the app backgrounds — never on the
+/// skin switch itself — so the swap stays invisible and never disrupts the
+/// running task. No-op on other platforms and safe to call repeatedly.
 class LauncherIcon {
   static const _channel = MethodChannel('ava/launcher_icon');
 

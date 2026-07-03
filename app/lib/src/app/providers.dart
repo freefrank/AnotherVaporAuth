@@ -84,8 +84,9 @@ class SkinController extends Notifier<AvaSkin> {
       for (final skin in AvaSkin.values) {
         if (v == skin.name) state = skin;
       }
-      // Reconcile the launcher icon on startup (covers upgrades and any
-      // toggle that was interrupted before it stuck).
+      // Reconcile the launcher icon on startup — the icon follows the skin
+      // but the swap is deferred to app launch / background so it never
+      // disrupts the running task (see [LauncherIcon] and app lifecycle).
       LauncherIcon.apply(state);
     });
     return AvaSkin.neon;
@@ -94,7 +95,9 @@ class SkinController extends Notifier<AvaSkin> {
   Future<void> setSkin(AvaSkin skin) async {
     state = skin;
     await ref.read(settingsStoreProvider).saveSkin(skin.name);
-    await LauncherIcon.apply(skin);
+    // Deliberately NOT applying the launcher icon here: toggling launcher
+    // aliases mid-session makes some launchers drop the task (feels like a
+    // restart). The icon reconciles on next background/launch instead.
   }
 }
 

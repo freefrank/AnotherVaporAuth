@@ -22,20 +22,28 @@ class MainActivity : FlutterFragmentActivity() {
             }
     }
 
-    /// The home-screen icon follows the skin by enabling exactly one
-    /// launcher activity-alias. DONT_KILL_APP keeps the app alive during
-    /// the toggle; launchers pick the change up within a few seconds.
+    /// The home-screen icon follows the skin by enabling exactly one launcher
+    /// activity-alias. Called only at startup and when the app goes to the
+    /// background, so the swap is invisible and never disrupts the running
+    /// task. DONT_KILL_APP keeps the process alive; each alias is written only
+    /// when its state actually needs to change, so unchanged launches cause no
+    /// launcher churn.
     private fun setLauncherIcon(skin: String) {
+        // Manifest defaults: Neon enabled, Pixel disabled.
         val aliases = mapOf(
             "pro.dotslash.ava.LauncherNeon" to (skin != "pixel"),
             "pro.dotslash.ava.LauncherPixel" to (skin == "pixel"),
         )
         for ((name, enabled) in aliases) {
-            packageManager.setComponentEnabledSetting(
-                ComponentName(this, name),
+            val component = ComponentName(this, name)
+            val target =
                 if (enabled) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-                else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                PackageManager.DONT_KILL_APP,
+                else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            if (packageManager.getComponentEnabledSetting(component) == target) {
+                continue // already correct — writing again would churn launchers
+            }
+            packageManager.setComponentEnabledSetting(
+                component, target, PackageManager.DONT_KILL_APP,
             )
         }
     }

@@ -8,6 +8,7 @@ import '../ui/privacy_consent_screen.dart';
 import '../ui/setup_pin_screen.dart';
 import '../ui/unlock_screen.dart';
 import '../ui/welcome_screen.dart';
+import '../services/launcher_icon.dart';
 import 'providers.dart';
 import 'route_observer.dart';
 import 'theme.dart';
@@ -36,6 +37,16 @@ class _AvaAppState extends ConsumerState<AvaApp> with WidgetsBindingObserver {
   // AvaBrightnessMode.system with no skin active).
   @override
   void didChangePlatformBrightness() => setState(() {});
+
+  // Reconcile the launcher icon when leaving the app. Deferring the swap to
+  // background (and startup) keeps it invisible — toggling launcher aliases
+  // while foregrounded makes some launchers drop the task.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      LauncherIcon.apply(ref.read(skinProvider));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
