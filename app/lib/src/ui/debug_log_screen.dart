@@ -56,8 +56,9 @@ class DebugLogScreen extends StatelessWidget {
                 padding: context.rInsets(v: 1),
                 child: SelectableText(
                   line,
+                  // No fontFamily override: inherit the theme's code font
+                  // (JetBrains Mono in Neon, Fusion Pixel in Pixel).
                   style: TextStyle(
-                    fontFamily: 'JetBrainsMono',
                     fontSize: context.r(12),
                     color: isErr ? t.bad : t.text,
                   ),

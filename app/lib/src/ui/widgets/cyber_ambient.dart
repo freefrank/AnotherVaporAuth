@@ -23,7 +23,7 @@ TextPainter _glyph(String ch, Color color) {
           color: color,
           fontSize: 13,
           height: 1.0,
-          fontFamily: 'monospace',
+          fontFamily: 'JetBrainsMono',
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -373,7 +373,7 @@ class _HudPainter extends CustomPainter {
         style: TextStyle(
           color: color,
           fontSize: 9,
-          fontFamily: 'monospace',
+          fontFamily: 'JetBrainsMono',
           fontWeight: FontWeight.w700,
           letterSpacing: 1.5,
         ),
