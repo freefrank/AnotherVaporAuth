@@ -22,8 +22,10 @@
   - **WSL 工作树是唯一正本**:sync 用 `--delete`,镜像侧单独多出的文件会被
     删掉。要保留的文件(构建产物等)必须先放进 WSL 侧对应目录再 sync。
     构建产物统一先落 `dist/`(如 `dist/AVA-v<版本>.aab`)。
-  - push 之后镜像用 `git pull --ff-only` 对齐;若 sync 曾复制过即将被跟踪的
-    新文件,pull 前先删除镜像里的未跟踪副本,避免 git 拒绝覆盖。
+  - push 之后镜像用 `git fetch origin && git reset --hard origin/main` 对齐
+    (不要用 pull:rsync 会把未提交内容写进镜像的跟踪文件,pull 会因
+    "本地改动将被覆盖"而中止;reset 安全——WSL 是唯一正本,且 dist/、
+    posts/、store/ 是未跟踪目录,reset 不会碰它们)。
 
 ## 硬性约束
 
