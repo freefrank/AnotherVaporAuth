@@ -153,13 +153,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late final _demoSlidable = SlidableController(this);
 
   // Custom neon pull-to-refresh state.
-  double _pull = 0; // px pulled beyond the top
+  double _pull = 0; // accumulated finger travel while pulling, in logical px
   bool _refreshing = false;
   // Account-list manual sort mode (toggled by the sidebar's sort button).
   bool _sortMode = false;
   // Whether the running refresh should drive the full-screen pull overlay
   // (true for the pull gesture, false for the desktop refresh button).
   bool _pullVisual = false;
+  // Measured in finger travel (logical px), not scroll pixels: the list uses
+  // BouncingScrollPhysics, whose rubber-band damping
+  // (0.52 * (1 - overscrollPast/viewportDimension)^2) scales with the
+  // viewport height, so on small screens the same finger travel produces a
+  // much smaller scroll-pixel delta — a pixel-based threshold made small
+  // phones need a near full-screen drag to trigger. ~130 logical px of real
+  // finger travel matches Material's RefreshIndicator feel on any screen.
   static const double _pullThreshold = 130;
 
   @override
@@ -204,15 +211,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             _NameMode.values[(_nameMode.index + 1) % _NameMode.values.length];
       });
 
-  void _onPullPixels(double overscroll) {
+  /// Accumulates the finger's real vertical travel while the list is
+  /// overscrolled at the top (dy > 0 pulls further; dy < 0 — dragging back
+  /// up — subtracts, clamped to >= 0). Driving this off finger delta rather
+  /// than scroll pixels keeps the trigger travel consistent across screen
+  /// sizes (see `_pullThreshold`).
+  void _onPullDelta(double dy) {
     if (_refreshing) return;
-    final p = overscroll.clamp(0.0, _pullThreshold * 1.5);
+    final p = (_pull + dy).clamp(0.0, _pullThreshold * 1.5);
     if (p == _pull) return;
     // Haptic "click" the moment the pull charges past the trigger threshold.
     if (_pull < _pullThreshold && p >= _pullThreshold) {
       HapticFeedback.mediumImpact();
     }
     setState(() => _pull = p);
+  }
+
+  /// The list scrolled back into its normal (non-overscrolled) region — any
+  /// accumulated pull is stale and must be cleared immediately.
+  void _onPullReset() {
+    if (_refreshing || _pull == 0) return;
+    setState(() => _pull = 0);
   }
 
   void _onPullEnd() {
@@ -323,7 +342,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     onAction: (acc, action) => _onAction(context, acc, action),
                     // Custom pull drives the full-screen overlay below (neon fill
                     // or pixel blocks).
-                    onPullPixels: _onPullPixels,
+                    onPullDelta: _onPullDelta,
+                    onPullReset: _onPullReset,
                     onPullEnd: _onPullEnd,
                     // Desktop has no touch pull-to-refresh — the sidebar shows
                     // a refresh button there instead (no full-screen overlay).
@@ -581,7 +601,8 @@ class _Sidebar extends StatelessWidget {
   final int tick;
   final void Function(int index) onSelect;
   final VoidCallback onAdd;
-  final void Function(double overscroll) onPullPixels;
+  final void Function(double dy) onPullDelta;
+  final VoidCallback onPullReset;
   final VoidCallback onPullEnd;
   final void Function(SteamGuardAccount account, String action) onAction;
   final _NameMode nameMode;
@@ -602,7 +623,8 @@ class _Sidebar extends StatelessWidget {
     required this.nameMode,
     required this.neon,
     required this.onAction,
-    required this.onPullPixels,
+    required this.onPullDelta,
+    required this.onPullReset,
     required this.onPullEnd,
     this.onRefresh,
     this.refreshing = false,
@@ -824,8 +846,25 @@ class _Sidebar extends StatelessWidget {
               onPointerPanZoomEnd: (_) => onPullEnd(),
               child: NotificationListener<ScrollNotification>(
                 onNotification: (n) {
-                  final px = n.metrics.pixels;
-                  onPullPixels(px < 0 ? -px : 0);
+                  final metrics = n.metrics;
+                  // Back inside the normal scroll region — no longer pulling.
+                  if (metrics.pixels > 0) {
+                    onPullReset();
+                    return false;
+                  }
+                  // Only real finger drags count — mouse wheel / trackpad
+                  // scroll notifications never carry dragDetails, so desktop
+                  // scrolling can never trigger the pull. Only accumulate
+                  // while the list is overscrolled at the top, or on the very
+                  // first frame of the pull (pixels may still read 0 before
+                  // BouncingScrollPhysics' damping produces a negative value).
+                  if (n is ScrollUpdateNotification) {
+                    final drag = n.dragDetails;
+                    final atTop = metrics.pixels < 0 ||
+                        (metrics.extentBefore == 0 &&
+                            (drag?.delta.dy ?? 0) > 0);
+                    if (drag != null && atTop) onPullDelta(drag.delta.dy);
+                  }
                   return false;
                 },
                 child: sorting ? _sortList(context) : _list(context),

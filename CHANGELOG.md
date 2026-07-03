@@ -5,6 +5,21 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.70.5] — 2026-07-03
+
+### Fixed
+- Pull-to-refresh on the home screen needed a near full-screen drag on small
+  phones: the trigger was measured in post-rubber-band scroll pixels, and the
+  bounce damping scales with viewport height. It now measures real finger
+  travel (~130dp), consistent on every screen size. (beta feedback)
+
+—
+
+### 修复
+- 小屏手机上主界面下拉刷新几乎要划满全屏才触发:原判定用的是橡皮筋阻尼后的滚动
+  像素,而阻尼强度与视口高度挂钩。现改为按手指真实位移(约 130dp)判定,任何屏幕
+  尺寸手感一致。(内测反馈)
+
 ## [v0.70.4] — 2026-07-03
 
 ### Fixed
