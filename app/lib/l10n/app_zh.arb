@@ -129,6 +129,8 @@
   "loginTitle": "登录 Steam",
   "loginUsername": "用户名",
   "loginPassword": "密码",
+  "loginShowPassword": "显示密码",
+  "loginHidePassword": "隐藏密码",
   "loginSavePassword": "保存密码",
   "loginSavePasswordHint": "存在该账户的 maFile 中用于自动刷新登录；导出的未加密 maFile 会包含它。",
   "loginButton": "登录",

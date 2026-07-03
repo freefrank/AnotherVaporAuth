@@ -5,6 +5,17 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.70.3] — 2026-07-03
+
+### Added
+- A show/hide toggle on the Steam password field — typing a long password
+  blind was error-prone. (beta feedback)
+
+—
+
+### 新增
+- Steam 密码输入框新增「显示/隐藏」切换——盲打长密码太容易出错。(内测反馈)
+
 ## [v0.70.2] — 2026-07-03
 
 ### Fixed

@@ -134,6 +134,8 @@
   "loginTitle": "Log in to Steam",
   "loginUsername": "Username",
   "loginPassword": "Password",
+  "loginShowPassword": "Show password",
+  "loginHidePassword": "Hide password",
   "loginSavePassword": "Save password",
   "loginSavePasswordHint": "Kept in this account's maFile for automatic session refresh; an unencrypted export will contain it.",
   "loginButton": "Log in",

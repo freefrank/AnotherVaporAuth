@@ -43,6 +43,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _qrMode = false;
   String? _qrUrl;
   bool _busy = false;
+  bool _showPassword = false;
   bool _savePassword = true; // store the password in the maFile for auto-refresh
   bool _waiting = false; // polling for mobile/email confirmation
   String? _status;
@@ -400,12 +401,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               SizedBox(height: context.r(12)),
               TextField(
                 controller: _password,
-                obscureText: true,
+                obscureText: !_showPassword,
                 autofillHints: const [AutofillHints.password],
                 textInputAction: TextInputAction.done,
                 decoration: InputDecoration(
                   labelText: l.loginPassword,
                   border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    tooltip: _showPassword
+                        ? l.loginHidePassword
+                        : l.loginShowPassword,
+                    icon: Icon(_showPassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined),
+                    onPressed: () =>
+                        setState(() => _showPassword = !_showPassword),
+                  ),
                 ),
                 onSubmitted: (_) => _startPassword(),
               ),

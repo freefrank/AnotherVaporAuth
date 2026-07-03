@@ -365,6 +365,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loginPassword => '密码';
 
   @override
+  String get loginShowPassword => '显示密码';
+
+  @override
+  String get loginHidePassword => '隐藏密码';
+
+  @override
   String get loginSavePassword => '保存密码';
 
   @override
