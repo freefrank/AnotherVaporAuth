@@ -5,7 +5,23 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
-## [v0.66] — 2026-07-02
+## [v0.68] — 2026-07-02
+
+### Added
+- Feedback can now **attach the in-app debug log** (opt-in checkbox, off by
+  default) so bug reports carry the network trace; the relay accepts the extra
+  field and the privacy policy documents exactly what the log may contain.
+- A one-time **backup reminder** after the first maFile import: data lives on
+  this device only — keep maFiles and revocation codes backed up.
+
+### Fixed
+- Steam-served text now follows the app language: confirmation headlines and
+  summaries, inventory item names and market listings are requested in the
+  UI language (Chinese UI no longer shows English strings from Steam).
+- Theme fonts are applied consistently: the debug log inherits the active
+  theme's code font (it was hard-wired to JetBrains Mono even in Pixel), and
+  the Neon matrix-rain glyphs use the bundled JetBrains Mono instead of the
+  system monospace font.
 
 ### Changed
 - Privacy policy reworded: the local-only guarantees are now scoped to the
@@ -14,6 +30,19 @@ automated releases.
   update before enablement, end-to-end encryption intent for synced secrets.
   The Chinese policy was brought in sync with the English one (it was missing
   the opt-in feedback-relay exception).
+
+### 新增
+- 反馈功能支持**附加应用内调试日志**（可选勾选，默认关闭），错误报告可以带上
+  网络跟踪现场；中转服务已支持该字段，隐私政策同步说明了日志可能包含的内容。
+- 首次导入 maFile 后弹出**一次性备份提醒**：数据只存本机，请备份 maFile 与
+  撤销码（R 码）。
+
+### 修复
+- 来自 Steam 的文本现在跟随应用语言:交易确认的标题/摘要、库存物品名、
+  市场挂单均按界面语言请求(中文界面不再夹杂 Steam 返回的英文)。
+- 主题字体全面统一:调试日志改为继承当前主题的代码字体(此前固定
+  JetBrains Mono,像素主题下不匹配);霓虹主题的"矩阵雨"字符改用内置
+  JetBrains Mono,不再依赖系统 monospace。
 
 ### 变更
 - 隐私政策措辞更新:"纯本地"承诺限定为当前版本,并将"云同步"一节扩展为
