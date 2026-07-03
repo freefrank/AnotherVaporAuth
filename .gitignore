@@ -356,3 +356,8 @@ MigrationBackup/
 # Local design/dev skill tooling (not part of the app)
 .agents/
 skills-lock.json
+
+# Local working assets (store listing kit, posts, built artifacts)
+/store/
+/posts/
+/dist/
