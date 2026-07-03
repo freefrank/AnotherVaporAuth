@@ -17,7 +17,10 @@ class ConfirmationsClient {
   /// [ok] confirmations succeeded, [failed] did not.
   Future<List<Confirmation>> fetch(SteamGuardAccount account) async {
     final time = SteamTime.currentSteamTime;
-    final query = _baseQuery(account, time, 'list')..['tag'] = 'list';
+    final query = _baseQuery(account, time, 'list')
+      ..['tag'] = 'list'
+      // Localizes headline/summary/type_name; not part of the signed hash.
+      ..['l'] = api.steamLanguage;
     final json = await api.communityGetJson(
       '/mobileconf/getlist',
       query,

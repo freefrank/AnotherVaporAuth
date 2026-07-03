@@ -90,7 +90,7 @@ class InventoryClient {
     final json = await api.communityGetJson(
       '/inventory/${account.steamId}/$appid/$contextId',
       {
-        'l': 'english',
+        'l': api.steamLanguage,
         'count': '$count',
         'start_assetid': ?startAssetId,
       },

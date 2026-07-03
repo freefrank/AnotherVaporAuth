@@ -122,7 +122,7 @@ class MarketClient {
     final sid = _newSessionId();
     final json = await api.communityGetJson(
       '/market/mylistings/',
-      {'norender': '1', 'count': '$count'},
+      {'norender': '1', 'count': '$count', 'l': api.steamLanguage},
       cookies: _cookies(account, sid),
     );
     final listings = (json['listings'] as List?) ?? const [];

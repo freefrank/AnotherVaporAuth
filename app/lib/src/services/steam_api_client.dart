@@ -31,6 +31,12 @@ class SteamApiClient {
     'Sec-Fetch-Dest': 'empty',
   };
 
+  /// Steam community language (`l=` query param) for localized strings —
+  /// confirmation headlines/summaries, inventory item names. Kept in sync
+  /// with the app locale by the UI layer; Steam falls back to English for
+  /// values it doesn't recognize.
+  String steamLanguage = 'english';
+
   SteamApiClient({Dio? dio})
       : _dio = dio ??
             Dio(BaseOptions(

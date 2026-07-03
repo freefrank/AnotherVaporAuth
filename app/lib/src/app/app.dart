@@ -27,9 +27,27 @@ class AvaApp extends ConsumerWidget {
       theme: buildAvaTheme(variant),
       debugShowCheckedModeBanner: false,
       navigatorObservers: [routeObserver],
-      builder: (context, child) => _Backdrop(child: child ?? const SizedBox()),
+      builder: (context, child) => _SteamLanguageSync(
+        child: _Backdrop(child: child ?? const SizedBox()),
+      ),
       home: const _Root(),
     );
+  }
+}
+
+/// Mirrors the resolved app locale onto [SteamApiClient.steamLanguage] so
+/// Steam-served strings (confirmation headlines, item names) match the UI
+/// language. Runs inside MaterialApp where Localizations is available.
+class _SteamLanguageSync extends ConsumerWidget {
+  final Widget child;
+  const _SteamLanguageSync({required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final code = Localizations.localeOf(context).languageCode;
+    ref.read(apiClientProvider).steamLanguage =
+        code == 'zh' ? 'schinese' : 'english';
+    return child;
   }
 }
 
