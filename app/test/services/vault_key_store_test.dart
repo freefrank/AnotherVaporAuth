@@ -47,8 +47,10 @@ void main() {
     expect(await store.exists, isTrue);
     expect(await store.unwrapWithPin('123456'), equals(dek));
 
-    // Migrated: record present at the current KDF cost, legacy keys gone.
-    expect(data.keys, [kRecord]);
+    // Migrated: record present at the current KDF cost. The legacy keys stay
+    // (same PIN, same DEK) so a downgraded app version can still unlock.
+    expect(data.keys, contains(kRecord));
+    expect(data.keys, contains(kLegacyWrapped));
     final rec = jsonDecode(data[kRecord]!) as Map<String, dynamic>;
     expect(rec['iter'], VaultCrypto.pinKdfIterations);
     expect(await store.unwrapWithPin('123456'), equals(dek));
@@ -62,7 +64,7 @@ void main() {
         VaultCrypto.wrapDek('123456', salt, dek, iterations: 100000);
 
     expect(await store.unwrapWithPin('123456'), equals(dek));
-    expect(data.keys, [kRecord]);
+    expect(data.keys, contains(kRecord));
   });
 
   test('wrong PIN on a legacy layout does not migrate or destroy it',
@@ -109,11 +111,53 @@ void main() {
 
     expect(await store.unwrapWithPin('123456'), equals(dek));
 
-    // Healed: a fresh valid record, legacy keys cleaned up.
-    expect(data.keys, [kRecord]);
+    // Healed: a fresh valid record (legacy copies are kept — same PIN).
+    expect(data.keys, contains(kRecord));
     final rec = jsonDecode(data[kRecord]!) as Map<String, dynamic>;
     expect(rec['iter'], VaultCrypto.pinKdfIterations);
     expect(await store.unwrapWithPin('123456'), equals(dek));
+  });
+
+  test('a valid record takes precedence over stale legacy keys', () async {
+    // The coexistence state: a record under the CURRENT pin next to legacy
+    // keys still wrapped under a RETIRED pin (e.g. a PIN change whose legacy
+    // delete failed). The record must win — the retired PIN must not open
+    // the vault or trigger a destructive migration.
+    final dek = VaultCrypto.generateDek();
+    final recSalt = VaultCrypto.randomSaltB64();
+    final legSalt = VaultCrypto.randomSaltB64();
+    data[kRecord] = jsonEncode({
+      'v': 1,
+      'salt': recSalt,
+      'iter': VaultCrypto.pinKdfIterations,
+      'wrap': VaultCrypto.wrapDek('654321', recSalt, dek,
+          iterations: VaultCrypto.pinKdfIterations),
+    });
+    data[kLegacySalt] = legSalt;
+    data[kLegacyWrapped] =
+        VaultCrypto.wrapDek('123456', legSalt, dek, iterations: 1000);
+    data[kLegacyIterations] = '1000';
+
+    final recordBefore = data[kRecord];
+    expect(await store.unwrapWithPin('654321'), equals(dek));
+    expect(await store.unwrapWithPin('123456'), isNull); // retired PIN dead
+    expect(data[kRecord], recordBefore); // record untouched
+  });
+
+  test('a PIN change retires the legacy copies', () async {
+    // After rewrapPin the old PIN must be dead everywhere — including for an
+    // older app version that only reads the split keys.
+    final dek = VaultCrypto.generateDek();
+    final salt = VaultCrypto.randomSaltB64();
+    data[kLegacySalt] = salt;
+    data[kLegacyWrapped] =
+        VaultCrypto.wrapDek('123456', salt, dek, iterations: 1000);
+    data[kLegacyIterations] = '1000';
+
+    expect(await store.rewrapPin('123456', '654321'), isTrue);
+    expect(data.keys, [kRecord]); // split keys gone
+    expect(await store.unwrapWithPin('654321'), equals(dek));
+    expect(await store.unwrapWithPin('123456'), isNull);
   });
 
   test('a corrupt record without a legacy fallback returns null, not a throw',

@@ -54,7 +54,14 @@ class VaultKeyStore {
 
   /// Wraps [dek] with [pin] under a fresh salt and stores the record.
   /// Overwrites any existing wrap (used for setup and PIN change).
-  Future<void> storePinWrap(String pin, Uint8List dek) async {
+  ///
+  /// [dropLegacy]: by default the split-key copies are removed so a retired
+  /// PIN can't keep opening the vault on an app version that still reads
+  /// them. The same-PIN opportunistic migration passes false — its legacy
+  /// wrap is equivalent (same DEK, same PIN), and keeping it lets a
+  /// downgraded install still unlock instead of rejecting the correct PIN.
+  Future<void> storePinWrap(String pin, Uint8List dek,
+      {bool dropLegacy = true}) async {
     final salt = VaultCrypto.randomSaltB64();
     const iterations = VaultCrypto.pinKdfIterations;
     final blob = await compute(_wrapJob, (pin, salt, dek, iterations));
@@ -67,6 +74,7 @@ class VaultKeyStore {
         'wrap': blob,
       }),
     );
+    if (!dropLegacy) return;
     // The record is now live; the split-key copies are stale. Best-effort
     // only: _readWrap prefers the record, so a failed delete is harmless and
     // must not turn an already-durable wrap into a reported error.
@@ -85,10 +93,12 @@ class VaultKeyStore {
       if (dek == null) return null;
       // Opportunistic upgrade: legacy layout or an out-of-date KDF cost gets
       // re-wrapped under the current parameters. Safe to fail — the write is
-      // atomic and the existing wrap keeps opening until it succeeds.
+      // atomic and the existing wrap keeps opening until it succeeds. The
+      // legacy copies stay (same PIN, same DEK) so a downgrade keeps working;
+      // only a PIN change retires them.
       if (wrap.legacy || wrap.iterations != VaultCrypto.pinKdfIterations) {
         try {
-          await storePinWrap(pin, dek);
+          await storePinWrap(pin, dek, dropLegacy: false);
         } catch (_) {}
       }
       return dek;
