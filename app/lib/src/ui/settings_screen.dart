@@ -31,7 +31,8 @@ class SettingsScreen extends ConsumerWidget {
     final t = Theme.of(context).extension<AvaTokens>()!;
     final data = ref.watch(appControllerProvider).value;
     final manifest = data?.store.manifest;
-    final variant = ref.watch(themeVariantProvider);
+    final skin = ref.watch(skinProvider);
+    final mode = ref.watch(brightnessModeProvider);
     final locale = ref.watch(localeProvider);
 
     if (manifest == null) {
@@ -96,23 +97,50 @@ class SettingsScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                // Theme
+                // Appearance (light/dark for the plain look)
                 _Card(
-                  title: l.settingsTheme,
-                  description: l.settingsThemeDesc,
+                  title: l.settingsAppearance,
+                  description: l.settingsAppearanceDesc,
                   child: Wrap(
                     spacing: context.r(8),
                     children: [
-                      _choice(context, t, l.themeNeon,
-                          variant == AvaThemeVariant.neon,
+                      _choice(context, t, l.themeSystem,
+                          mode == AvaBrightnessMode.system,
                           () => ref
-                              .read(themeVariantProvider.notifier)
-                              .setVariant(AvaThemeVariant.neon)),
-                      _choice(context, t, l.themePixel,
-                          variant == AvaThemeVariant.pixel,
+                              .read(brightnessModeProvider.notifier)
+                              .setMode(AvaBrightnessMode.system)),
+                      _choice(context, t, l.themeDark,
+                          mode == AvaBrightnessMode.dark,
                           () => ref
-                              .read(themeVariantProvider.notifier)
-                              .setVariant(AvaThemeVariant.pixel)),
+                              .read(brightnessModeProvider.notifier)
+                              .setMode(AvaBrightnessMode.dark)),
+                      _choice(context, t, l.themeLight,
+                          mode == AvaBrightnessMode.light,
+                          () => ref
+                              .read(brightnessModeProvider.notifier)
+                              .setMode(AvaBrightnessMode.light)),
+                    ],
+                  ),
+                ),
+                // Skins (styled looks; override appearance while active)
+                _Card(
+                  title: l.settingsSkin,
+                  description: l.settingsSkinDesc,
+                  child: Wrap(
+                    spacing: context.r(8),
+                    children: [
+                      _choice(context, t, l.skinNone, skin == AvaSkin.none,
+                          () => ref
+                              .read(skinProvider.notifier)
+                              .setSkin(AvaSkin.none)),
+                      _choice(context, t, l.themeNeon, skin == AvaSkin.neon,
+                          () => ref
+                              .read(skinProvider.notifier)
+                              .setSkin(AvaSkin.neon)),
+                      _choice(context, t, l.themePixel, skin == AvaSkin.pixel,
+                          () => ref
+                              .read(skinProvider.notifier)
+                              .setSkin(AvaSkin.pixel)),
                     ],
                   ),
                 ),

@@ -70,23 +70,46 @@ final timeAlignerProvider =
 final settingsStoreProvider =
     Provider<SettingsStore>((ref) => SettingsStore(ref.read(storageProvider)));
 
-/// The active UI theme variant (neon / pixel), persisted.
-final themeVariantProvider =
-    NotifierProvider<ThemeController, AvaThemeVariant>(ThemeController.new);
+/// The styled skin layer (none / neon / pixel), persisted.
+final skinProvider = NotifierProvider<SkinController, AvaSkin>(
+    SkinController.new);
 
-class ThemeController extends Notifier<AvaThemeVariant> {
+class SkinController extends Notifier<AvaSkin> {
   @override
-  AvaThemeVariant build() {
-    ref.read(settingsStoreProvider).loadTheme().then((v) {
-      if (v == 'pixel') state = AvaThemeVariant.pixel;
-      if (v == 'neon') state = AvaThemeVariant.neon;
+  AvaSkin build() {
+    ref.read(settingsStoreProvider).loadSkin().then((v) {
+      for (final skin in AvaSkin.values) {
+        if (v == skin.name) state = skin;
+      }
     });
-    return AvaThemeVariant.neon;
+    return AvaSkin.neon;
   }
 
-  Future<void> setVariant(AvaThemeVariant variant) async {
-    state = variant;
-    await ref.read(settingsStoreProvider).saveTheme(variant.name);
+  Future<void> setSkin(AvaSkin skin) async {
+    state = skin;
+    await ref.read(settingsStoreProvider).saveSkin(skin.name);
+  }
+}
+
+/// Light/dark preference for the plain look (system / dark / light).
+final brightnessModeProvider =
+    NotifierProvider<BrightnessModeController, AvaBrightnessMode>(
+        BrightnessModeController.new);
+
+class BrightnessModeController extends Notifier<AvaBrightnessMode> {
+  @override
+  AvaBrightnessMode build() {
+    ref.read(settingsStoreProvider).loadBrightnessMode().then((v) {
+      for (final mode in AvaBrightnessMode.values) {
+        if (v == mode.name) state = mode;
+      }
+    });
+    return AvaBrightnessMode.system;
+  }
+
+  Future<void> setMode(AvaBrightnessMode mode) async {
+    state = mode;
+    await ref.read(settingsStoreProvider).saveBrightnessMode(mode.name);
   }
 }
 

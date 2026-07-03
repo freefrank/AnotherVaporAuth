@@ -27,7 +27,11 @@ class WelcomeScreen extends ConsumerWidget {
         child: Stack(
           children: [
             Positioned.fill(
-                child: t.isPixel ? const PixelAmbient() : const CyberAmbient()),
+                child: t.plain
+                    ? const SizedBox.shrink()
+                    : t.isPixel
+                        ? const PixelAmbient()
+                        : const CyberAmbient()),
             Center(
               child: SingleChildScrollView(
                 padding: context.rInsets(all: 28),

@@ -96,6 +96,45 @@ class SettingsStore {
     await _write(data);
   }
 
+  /// Styled skin: 'none' | 'neon' | 'pixel'. Falls back to the legacy
+  /// single 'theme' key ('neon'/'pixel'/'dark'/'light') for older installs.
+  Future<String?> loadSkin() async {
+    final data = await _read();
+    final skin = data['skin'] as String?;
+    if (skin != null) return skin;
+    return switch (data['theme'] as String?) {
+      'neon' => 'neon',
+      'pixel' => 'pixel',
+      'dark' || 'light' => 'none',
+      _ => null,
+    };
+  }
+
+  Future<void> saveSkin(String skin) async {
+    final data = await _read();
+    data['skin'] = skin;
+    await _write(data);
+  }
+
+  /// Plain-look brightness: 'system' | 'dark' | 'light'. Migrates the legacy
+  /// 'theme' key the same way as [loadSkin].
+  Future<String?> loadBrightnessMode() async {
+    final data = await _read();
+    final mode = data['brightness_mode'] as String?;
+    if (mode != null) return mode;
+    return switch (data['theme'] as String?) {
+      'dark' => 'dark',
+      'light' => 'light',
+      _ => null,
+    };
+  }
+
+  Future<void> saveBrightnessMode(String mode) async {
+    final data = await _read();
+    data['brightness_mode'] = mode;
+    await _write(data);
+  }
+
   /// UI theme variant: 'neon' (default) or 'pixel'.
   Future<String?> loadTheme() async => (await _read())['theme'] as String?;
 

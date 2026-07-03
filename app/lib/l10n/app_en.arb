@@ -218,7 +218,13 @@
 
   "settingsEncryption": "Encryption",
   "settingsEncryptionDesc": "Your local maFiles are encrypted with a random 256-bit key (AES-256-GCM) held in the device Keystore; your 6-digit PIN unlocks it.",
-  "settingsThemeDesc": "Switch the whole UI between Neon and Pixel.",
+  "settingsThemeDesc": "Switch the whole UI style.",
+  "settingsAppearance": "Appearance",
+  "settingsAppearanceDesc": "Light or dark for the standard look. A skin overrides this while active.",
+  "settingsSkin": "Skins",
+  "settingsSkinDesc": "Full-styled looks with their own fonts and effects.",
+  "themeSystem": "System",
+  "skinNone": "None",
   "settingsChange": "Change",
   "settingsSetPasskey": "Set / change encryption passkey",
   "settingsPeriodicChecking": "Periodically check for confirmations",
@@ -231,6 +237,8 @@
   "settingsTheme": "Theme",
   "themeNeon": "Neon",
   "themePixel": "Pixel",
+  "themeDark": "Dark",
+  "themeLight": "Light",
 
   "settingsAbout": "About",
   "aboutTagline": "An open-source Steam Guard authenticator, rewritten in Flutter.",

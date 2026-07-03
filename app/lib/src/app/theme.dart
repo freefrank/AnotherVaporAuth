@@ -1,7 +1,32 @@
 import 'package:flutter/material.dart';
 
-/// The two visual themes from the AVA motion design spec.
-enum AvaThemeVariant { neon, pixel }
+/// The visual themes: the two styled ones from the AVA motion design spec
+/// (neon / pixel) and two plain ones (dark / light) — quiet palettes, system
+/// fonts, no ambient animation.
+enum AvaThemeVariant { neon, pixel, dark, light }
+
+/// The styled skin layer: none (plain look, follows [AvaBrightnessMode]),
+/// or one of the full-effect skins that carry their own dark palette.
+enum AvaSkin { none, neon, pixel }
+
+/// Light/dark preference for the plain look (ignored while a skin is active).
+enum AvaBrightnessMode { system, dark, light }
+
+/// Resolves the two user settings (+ the OS brightness) into the concrete
+/// theme variant the widget tree renders.
+AvaThemeVariant resolveThemeVariant(
+    AvaSkin skin, AvaBrightnessMode mode, Brightness platform) {
+  switch (skin) {
+    case AvaSkin.neon:
+      return AvaThemeVariant.neon;
+    case AvaSkin.pixel:
+      return AvaThemeVariant.pixel;
+    case AvaSkin.none:
+      final light = mode == AvaBrightnessMode.light ||
+          (mode == AvaBrightnessMode.system && platform == Brightness.light);
+      return light ? AvaThemeVariant.light : AvaThemeVariant.dark;
+  }
+}
 
 /// Design tokens carried on [ThemeData] so any widget can read the current
 /// theme's palette, glow, fonts and radii. Mirrors the CSS custom properties in
@@ -70,6 +95,13 @@ class AvaTokens extends ThemeExtension<AvaTokens> {
 
   bool get isPixel => variant == AvaThemeVariant.pixel;
 
+  /// Plain themes: no ambient backdrop, no scanlines, no glow, system fonts.
+  bool get plain =>
+      variant == AvaThemeVariant.dark || variant == AvaThemeVariant.light;
+
+  Brightness get brightness =>
+      variant == AvaThemeVariant.light ? Brightness.light : Brightness.dark;
+
   /// Ring / bar colour by seconds remaining: <=5 bad, <=10 warn, else accent.
   Color ringColor(int remaining) {
     if (remaining <= 5) return bad;
@@ -83,8 +115,18 @@ class AvaTokens extends ThemeExtension<AvaTokens> {
     return [BoxShadow(color: accent.withValues(alpha: opacity), blurRadius: blur)];
   }
 
-  /// Card shadow: soft neon halo vs hard pixel offset.
+  /// Card shadow: soft neon halo vs hard pixel offset vs plain elevation.
   List<BoxShadow> cardShadow() {
+    if (plain) {
+      final light = brightness == Brightness.light;
+      return [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: light ? 0.08 : 0.40),
+          blurRadius: 20,
+          offset: const Offset(0, 6),
+        ),
+      ];
+    }
     if (isPixel) {
       return [BoxShadow(color: const Color(0xFF15111F), offset: const Offset(5, 5))];
     }
@@ -154,8 +196,64 @@ class AvaTokens extends ThemeExtension<AvaTokens> {
     scanAnimated: false,
   );
 
-  static AvaTokens of(AvaThemeVariant v) =>
-      v == AvaThemeVariant.pixel ? _pixel : _neon;
+  static const _dark = AvaTokens(
+    variant: AvaThemeVariant.dark,
+    bg: Color(0xFF0F1115),
+    panel: Color(0xFF161A20),
+    panel2: Color(0xFF1C212A),
+    chrome: Color(0xFF12151B),
+    line: Color(0xFF2A303B),
+    text: Color(0xFFE7EAF0),
+    muted: Color(0xFF8B93A2),
+    accent: Color(0xFF5B8CFF),
+    accent2: Color(0xFF8B7CF6),
+    good: Color(0xFF34C77B),
+    bad: Color(0xFFEF4E5E),
+    warn: Color(0xFFF0B429),
+    radius: 14,
+    radiusSm: 10,
+    radiusLg: 24,
+    borderWidth: 1,
+    borderColor: Color(0xFF2A303B),
+    codeSize: 46,
+    glow: false,
+    bgGradient: null,
+    scanColor: Color(0x00000000),
+    scanAnimated: false,
+  );
+
+  static const _light = AvaTokens(
+    variant: AvaThemeVariant.light,
+    bg: Color(0xFFF4F6F9),
+    panel: Color(0xFFFFFFFF),
+    panel2: Color(0xFFFFFFFF),
+    chrome: Color(0xFFFFFFFF),
+    line: Color(0xFFE2E6EC),
+    text: Color(0xFF1B2026),
+    muted: Color(0xFF64707F),
+    accent: Color(0xFF2F6BFF),
+    accent2: Color(0xFF7C3AED),
+    good: Color(0xFF15803D),
+    bad: Color(0xFFDC2626),
+    warn: Color(0xFFB45309),
+    radius: 14,
+    radiusSm: 10,
+    radiusLg: 24,
+    borderWidth: 1,
+    borderColor: Color(0xFFE2E6EC),
+    codeSize: 46,
+    glow: false,
+    bgGradient: null,
+    scanColor: Color(0x00000000),
+    scanAnimated: false,
+  );
+
+  static AvaTokens of(AvaThemeVariant v) => switch (v) {
+        AvaThemeVariant.neon => _neon,
+        AvaThemeVariant.pixel => _pixel,
+        AvaThemeVariant.dark => _dark,
+        AvaThemeVariant.light => _light,
+      };
 
   @override
   AvaTokens copyWith() => this;
@@ -173,13 +271,19 @@ ThemeData buildAvaTheme(AvaThemeVariant variant) {
   final t = AvaTokens.of(variant);
 
   // Bundled fonts (no runtime download). Pixel theme uses Fusion Pixel for both
-  // Latin and CJK (single pixel family). Neon theme uses Latin display/code
-  // fonts with Noto Sans SC as the Chinese (CJK) fallback.
-  final codeFamily = t.isPixel ? 'FusionPixel' : 'JetBrainsMono';
-  final displayFamily = t.isPixel ? 'FusionPixel' : 'ChakraPetch';
+  // Latin and CJK (single pixel family); neon uses Latin display/code fonts
+  // with Noto Sans SC as the CJK fallback; plain themes keep the platform
+  // default font (null family) with the bundled Noto as CJK safety net.
+  final String? codeFamily =
+      t.plain ? null : (t.isPixel ? 'FusionPixel' : 'JetBrainsMono');
+  final String? displayFamily =
+      t.plain ? null : (t.isPixel ? 'FusionPixel' : 'ChakraPetch');
   final cjkFallback = t.isPixel
       ? const ['FusionPixel', 'NotoSansSC']
       : const ['NotoSansSC'];
+  // Plain accents are mid-tone blues: white text reads best on them. The
+  // styled themes use bright cyan/orange accents with near-black ink.
+  final onAccent = t.plain ? Colors.white : const Color(0xFF06060F);
 
   TextTheme displayCode(TextTheme base) => base.apply(
         fontFamily: codeFamily,
@@ -190,16 +294,16 @@ ThemeData buildAvaTheme(AvaThemeVariant variant) {
 
   final scheme = ColorScheme.fromSeed(
     seedColor: t.accent,
-    brightness: Brightness.dark,
+    brightness: t.brightness,
   ).copyWith(
     primary: t.accent,
     secondary: t.accent2,
     surface: t.panel2,
     error: t.bad,
-    onPrimary: const Color(0xFF06060F),
+    onPrimary: onAccent,
   );
 
-  final base = ThemeData(useMaterial3: true, brightness: Brightness.dark);
+  final base = ThemeData(useMaterial3: true, brightness: t.brightness);
   final displayFont =
       TextStyle(fontFamily: displayFamily, fontFamilyFallback: cjkFallback);
 
@@ -241,7 +345,7 @@ ThemeData buildAvaTheme(AvaThemeVariant variant) {
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: t.accent,
-        foregroundColor: const Color(0xFF06060F),
+        foregroundColor: onAccent,
         textStyle: displayFont.copyWith(
           fontSize: t.isPixel ? 11 : 13,
           letterSpacing: 0.5,

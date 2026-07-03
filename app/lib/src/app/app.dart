@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -11,13 +12,39 @@ import 'providers.dart';
 import 'route_observer.dart';
 import 'theme.dart';
 
-class AvaApp extends ConsumerWidget {
+class AvaApp extends ConsumerStatefulWidget {
   const AvaApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AvaApp> createState() => _AvaAppState();
+}
+
+class _AvaAppState extends ConsumerState<AvaApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Re-resolve the theme when the OS light/dark setting flips (matters for
+  // AvaBrightnessMode.system with no skin active).
+  @override
+  void didChangePlatformBrightness() => setState(() {});
+
+  @override
+  Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
-    final variant = ref.watch(themeVariantProvider);
+    final variant = resolveThemeVariant(
+      ref.watch(skinProvider),
+      ref.watch(brightnessModeProvider),
+      WidgetsBinding.instance.platformDispatcher.platformBrightness,
+    );
 
     return MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
@@ -59,9 +86,21 @@ class _Backdrop extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).extension<AvaTokens>()!;
-    return DecoratedBox(
-      decoration: BoxDecoration(color: t.bg, gradient: t.bgGradient),
-      child: child,
+    final dark = t.brightness == Brightness.dark;
+    // Most screens have no AppBar, so pin the system icon brightness here
+    // (dark status icons on the light theme, light icons everywhere else).
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: t.brightness,
+        systemNavigationBarIconBrightness:
+            dark ? Brightness.light : Brightness.dark,
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: t.bg, gradient: t.bgGradient),
+        child: child,
+      ),
     );
   }
 }

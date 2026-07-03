@@ -258,8 +258,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    // The cyberpunk ambience / neon pull / glow borders are neon-theme only.
-    final neon = !(Theme.of(context).extension<AvaTokens>()?.isPixel ?? false);
+    // The cyberpunk ambience / neon pull / glow borders are neon-theme only;
+    // plain themes (dark/light) render no ambient layers at all.
+    final tokens = Theme.of(context).extension<AvaTokens>();
+    final plain = tokens?.plain ?? false;
+    final neon = !plain && !(tokens?.isPixel ?? false);
     final accounts =
         ref.watch(appControllerProvider).value?.accounts ??
             const <SteamGuardAccount>[];
@@ -296,10 +299,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         child: !hasAccounts
             ? Stack(
                 children: [
-                  Positioned.fill(
-                      child: neon
-                          ? const CyberAmbient()
-                          : const PixelAmbient()),
+                  if (!plain)
+                    Positioned.fill(
+                        child: neon
+                            ? const CyberAmbient()
+                            : const PixelAmbient()),
                   SafeArea(child: _EmptyState(onAdd: () => _addMenu(context))),
                 ],
               )
@@ -384,6 +388,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         const Positioned.fill(child: CyberAmbient()),
                         content,
                         const Positioned.fill(child: CyberHud()),
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: TweenAnimationBuilder<double>(
+                              tween: Tween(end: pull01),
+                              duration: const Duration(milliseconds: 150),
+                              curve: Curves.easeOut,
+                              builder: (_, v, _) => v <= 0.001
+                                  ? const SizedBox.shrink()
+                                  : _NeonPull(progress: v),
+                            ),
+                          ),
+                        ),
+                      ] else if (plain) ...[
+                        // Plain themes: no backdrop; reuse the accent-tinted
+                        // pull wash (calm blue under dark/light palettes).
+                        content,
                         Positioned.fill(
                           child: IgnorePointer(
                             child: TweenAnimationBuilder<double>(

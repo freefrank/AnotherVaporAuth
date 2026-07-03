@@ -602,7 +602,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your local maFiles are encrypted with a random 256-bit key (AES-256-GCM) held in the device Keystore; your 6-digit PIN unlocks it.';
 
   @override
-  String get settingsThemeDesc => 'Switch the whole UI between Neon and Pixel.';
+  String get settingsThemeDesc => 'Switch the whole UI style.';
+
+  @override
+  String get settingsAppearance => 'Appearance';
+
+  @override
+  String get settingsAppearanceDesc =>
+      'Light or dark for the standard look. A skin overrides this while active.';
+
+  @override
+  String get settingsSkin => 'Skins';
+
+  @override
+  String get settingsSkinDesc =>
+      'Full-styled looks with their own fonts and effects.';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get skinNone => 'None';
 
   @override
   String get settingsChange => 'Change';
@@ -639,6 +659,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themePixel => 'Pixel';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get themeLight => 'Light';
 
   @override
   String get settingsAbout => 'About';

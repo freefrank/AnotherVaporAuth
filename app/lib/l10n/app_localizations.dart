@@ -1163,8 +1163,44 @@ abstract class AppLocalizations {
   /// No description provided for @settingsThemeDesc.
   ///
   /// In en, this message translates to:
-  /// **'Switch the whole UI between Neon and Pixel.'**
+  /// **'Switch the whole UI style.'**
   String get settingsThemeDesc;
+
+  /// No description provided for @settingsAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearance;
+
+  /// No description provided for @settingsAppearanceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Light or dark for the standard look. A skin overrides this while active.'**
+  String get settingsAppearanceDesc;
+
+  /// No description provided for @settingsSkin.
+  ///
+  /// In en, this message translates to:
+  /// **'Skins'**
+  String get settingsSkin;
+
+  /// No description provided for @settingsSkinDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Full-styled looks with their own fonts and effects.'**
+  String get settingsSkinDesc;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @skinNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get skinNone;
 
   /// No description provided for @settingsChange.
   ///
@@ -1237,6 +1273,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pixel'**
   String get themePixel;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
 
   /// No description provided for @settingsAbout.
   ///

@@ -168,7 +168,11 @@ class _UnlockLoading extends ConsumerWidget {
         fit: StackFit.expand,
         children: [
           Positioned.fill(
-              child: pixel ? const PixelAmbient() : const CyberAmbient()),
+              child: t.plain
+                  ? const SizedBox.shrink()
+                  : pixel
+                      ? const PixelAmbient()
+                      : const CyberAmbient()),
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,

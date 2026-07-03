@@ -570,7 +570,25 @@ class AppLocalizationsZh extends AppLocalizations {
       '本机 maFiles 由存于设备 Keystore 的随机 256 位密钥加密（AES-256-GCM），6 位 PIN 用于解锁。';
 
   @override
-  String get settingsThemeDesc => '在霓虹与像素之间切换整体界面。';
+  String get settingsThemeDesc => '切换整体界面风格。';
+
+  @override
+  String get settingsAppearance => '明暗';
+
+  @override
+  String get settingsAppearanceDesc => '标准外观的亮暗模式；启用皮肤时以皮肤为准。';
+
+  @override
+  String get settingsSkin => '皮肤';
+
+  @override
+  String get settingsSkinDesc => '带专属字体与特效的完整风格外观。';
+
+  @override
+  String get themeSystem => '跟随系统';
+
+  @override
+  String get skinNone => '无';
 
   @override
   String get settingsChange => '修改';
@@ -607,6 +625,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get themePixel => '像素';
+
+  @override
+  String get themeDark => '暗色';
+
+  @override
+  String get themeLight => '亮色';
 
   @override
   String get settingsAbout => '关于';

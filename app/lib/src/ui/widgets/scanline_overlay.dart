@@ -66,6 +66,8 @@ class _ScanlineOverlayState extends State<ScanlineOverlay>
     final reduce = MediaQuery.disableAnimationsOf(context);
     _animate = t.scanAnimated && !reduce;
     _updateRunning();
+    // Plain themes have no CRT affectation at all.
+    if (t.plain) return widget.child;
     return Stack(
       children: [
         widget.child,
