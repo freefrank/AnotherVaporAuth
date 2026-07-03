@@ -5,6 +5,19 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.70.2] — 2026-07-03
+
+### Fixed
+- The Steam Guard code field during sign-in only offered a number keyboard —
+  Steam's email and authenticator codes contain letters. It now uses a full
+  keyboard and uppercases input automatically. (beta feedback)
+
+—
+
+### 修复
+- 登录时的 Steam 验证码输入框只提供数字键盘——而 Steam 的邮箱码和令牌码都含字母。
+  现已改用全键盘并自动转为大写。(内测反馈)
+
 ## [v0.70] — 2026-07-03
 
 ### Added

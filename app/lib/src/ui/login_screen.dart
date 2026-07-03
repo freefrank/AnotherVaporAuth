@@ -19,6 +19,12 @@ import 'add_authenticator_screen.dart';
 
 enum LoginReason { add, refresh }
 
+/// Steam guard codes are case-insensitive but shown uppercase everywhere —
+/// normalise as the user types (length is preserved, so the caret stays put).
+final _upperCase = TextInputFormatter.withFunction(
+  (oldValue, newValue) => newValue.copyWith(text: newValue.text.toUpperCase()),
+);
+
 class LoginScreen extends ConsumerStatefulWidget {
   final LoginReason reason;
   final SteamGuardAccount? account;
@@ -350,7 +356,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           TextField(
             controller: _code,
             autofocus: true,
-            keyboardType: TextInputType.number,
+            // Steam Guard codes (email AND authenticator) are alphanumeric —
+            // a number keyboard can't type them at all.
+            keyboardType: TextInputType.text,
+            autocorrect: false,
+            enableSuggestions: false,
+            textCapitalization: TextCapitalization.characters,
+            inputFormatters: [_upperCase],
             autofillHints: const [AutofillHints.oneTimeCode],
             decoration: const InputDecoration(border: OutlineInputBorder()),
             onSubmitted: (_) => _submitCode(),
