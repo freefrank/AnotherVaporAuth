@@ -806,6 +806,24 @@ abstract class AppLocalizations {
   /// **'Log in'**
   String get loginButton;
 
+  /// No description provided for @loginErrInvalidPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong account name or password.'**
+  String get loginErrInvalidPassword;
+
+  /// No description provided for @loginErrRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts — please wait a while and try again.'**
+  String get loginErrRateLimited;
+
+  /// No description provided for @loginErrCodeMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'That code didn\'t match — check it and try again.'**
+  String get loginErrCodeMismatch;
+
   /// No description provided for @loginViaQr.
   ///
   /// In en, this message translates to:

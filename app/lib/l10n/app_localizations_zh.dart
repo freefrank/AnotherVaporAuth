@@ -381,6 +381,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loginButton => '登录';
 
   @override
+  String get loginErrInvalidPassword => '账户名或密码错误。';
+
+  @override
+  String get loginErrRateLimited => '尝试太频繁，请稍候片刻再试。';
+
+  @override
+  String get loginErrCodeMismatch => '验证码不正确，请检查后重试。';
+
+  @override
   String get loginViaQr => '扫码登录';
 
   @override

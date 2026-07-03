@@ -5,6 +5,19 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.70.4] — 2026-07-03
+
+### Fixed
+- A wrong password during sign-in dumped a raw `SteamApiException(…)` at the
+  user. Common sign-in errors (wrong password, rate limiting, wrong guard
+  code) now show plain localized messages. (beta feedback)
+
+—
+
+### 修复
+- 登录密码输错时,界面直接抛出原始的 `SteamApiException(…)` 异常文本。常见登录
+  错误(密码错误、请求过频、验证码不符)现在显示友好的本地化提示。(内测反馈)
+
 ## [v0.70.3] — 2026-07-03
 
 ### Added

@@ -402,6 +402,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginButton => 'Log in';
 
   @override
+  String get loginErrInvalidPassword => 'Wrong account name or password.';
+
+  @override
+  String get loginErrRateLimited =>
+      'Too many attempts — please wait a while and try again.';
+
+  @override
+  String get loginErrCodeMismatch =>
+      'That code didn\'t match — check it and try again.';
+
+  @override
   String get loginViaQr => 'Log in with QR code';
 
   @override

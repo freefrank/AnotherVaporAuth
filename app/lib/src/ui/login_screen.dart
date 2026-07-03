@@ -11,6 +11,7 @@ import '../app/responsive.dart';
 import '../app/theme.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/steam_auth_session.dart';
+import '../services/steam_api_client.dart';
 import '../services/steam_time.dart';
 import 'widgets/cooldown_button.dart';
 import 'widgets/scanline_overlay.dart';
@@ -169,7 +170,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       setState(() {
         _busy = false;
         _needGuard = GuardType.deviceCode;
-        _error = '$e';
+        _error = _friendlyError(e, AppLocalizations.of(context));
       });
     }
   }
@@ -261,9 +262,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final l = AppLocalizations.of(context);
     setState(() {
       _busy = false;
-      _error = l.loginFailed('$e');
+      _error = _friendlyError(e, l);
       _status = null;
     });
+  }
+
+  /// Users shouldn't be reading raw SteamApiException dumps — map the
+  /// common sign-in EResults to human messages, fall back to the dump.
+  String _friendlyError(Object e, AppLocalizations l) {
+    if (e is SteamApiException) {
+      switch (e.eresult) {
+        case 5: // InvalidPassword
+          return l.loginErrInvalidPassword;
+        case 84: // RateLimitExceeded
+        case 87: // AccountLoginDeniedThrottle
+          return l.loginErrRateLimited;
+        case 88: // TwoFactorCodeMismatch
+          return l.loginErrCodeMismatch;
+      }
+    }
+    return l.loginFailed('$e');
   }
 
   @override
