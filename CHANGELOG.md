@@ -5,9 +5,15 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
-## [v0.68] — 2026-07-02
+## [v0.69] — 2026-07-02
 
 ### Added
+- **Appearance and Skins are now two separate settings.** Appearance picks
+  light / dark / follow-system for the new standard look — quiet palettes
+  (calm blue accent), the platform's default font, standard rounded cards,
+  no ambient effects, status-bar icons following the brightness. Skins
+  (None / Neon / Pixel) layer the full styled experiences on top and override
+  the appearance while active. Existing theme choices migrate automatically.
 - Feedback can now **attach the in-app debug log** (opt-in checkbox, off by
   default) so bug reports carry the network trace; the relay accepts the extra
   field and the privacy policy documents exactly what the log may contain.
@@ -32,6 +38,10 @@ automated releases.
   the opt-in feedback-relay exception).
 
 ### 新增
+- **「明暗」与「皮肤」拆分为两个独立设置。**明暗(跟随系统/暗色/亮色)作用于
+  新增的标准外观——安静配色(蓝色点缀)、系统默认字体、标准圆角卡片、无氛围
+  特效,状态栏图标随明暗自动切换;皮肤(无/霓虹/像素)在其上叠加完整风格化
+  体验,启用时覆盖明暗设置。旧版已选主题自动迁移。
 - 反馈功能支持**附加应用内调试日志**（可选勾选，默认关闭），错误报告可以带上
   网络跟踪现场；中转服务已支持该字段，隐私政策同步说明了日志可能包含的内容。
 - 首次导入 maFile 后弹出**一次性备份提醒**：数据只存本机，请备份 maFile 与
