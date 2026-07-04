@@ -25,6 +25,66 @@ function clean(s) {
   return s.replace(/[\x00-\x08\x0B-\x1F\x7F]/g, "");
 }
 
+// --- Rate limiting (per client IP) -------------------------------------
+// The client token in this file is not a secret (see above), so anyone who
+// copies it can script requests. This is the abuse brake: cap how often a
+// single IP can trigger an actual SMTP send.
+//
+// Backed by Workers KV (binding `RL`, see wrangler.toml) so the limit is
+// shared across all Worker instances/regions, not per-instance memory.
+// KV is eventually consistent and has no atomic increment, so a burst of
+// truly simultaneous requests from the same IP could each read the same
+// stale counter and all slip through — that's an accepted trade-off for a
+// soft abuse deterrent, not a hard security boundary (the token + size caps
+// still apply on top).
+//
+// Fail-open on KV errors: if the store itself is down/misconfigured, we log
+// and let the request continue rather than break legitimate feedback
+// delivery because of an unrelated infra hiccup. This does mean rate
+// limiting is best-effort, not guaranteed — acceptable here since email
+// abuse (reputation damage) is the concern, not a resource-exhaustion DoS.
+const RATE_LIMIT_PER_MINUTE = 3; // sends allowed per IP per rolling minute bucket
+const RATE_LIMIT_PER_DAY = 20; // sends allowed per IP per rolling day bucket
+const MINUTE_BUCKET_TTL = 120; // seconds; > 60 so a slow read can't undercount near the edge
+const DAY_BUCKET_TTL = 60 * 60 * 25; // seconds; > 1 day for the same reason
+
+async function isRateLimited(env, ip) {
+  if (!env.RL || !ip || ip === "unknown") {
+    // No KV bound (e.g. local dev without the namespace configured yet) or
+    // no way to identify the caller — nothing to key the limit on.
+    return false;
+  }
+
+  const now = Date.now();
+  const minuteKey = `m:${ip}:${Math.floor(now / 60000)}`;
+  const dayKey = `d:${ip}:${Math.floor(now / 86400000)}`;
+
+  try {
+    const [minuteRaw, dayRaw] = await Promise.all([
+      env.RL.get(minuteKey),
+      env.RL.get(dayKey),
+    ]);
+    const minuteCount = parseInt(minuteRaw, 10) || 0;
+    const dayCount = parseInt(dayRaw, 10) || 0;
+
+    if (minuteCount >= RATE_LIMIT_PER_MINUTE || dayCount >= RATE_LIMIT_PER_DAY) {
+      return true;
+    }
+
+    // Best-effort increment (not atomic — see comment above).
+    await Promise.all([
+      env.RL.put(minuteKey, String(minuteCount + 1), {
+        expirationTtl: MINUTE_BUCKET_TTL,
+      }),
+      env.RL.put(dayKey, String(dayCount + 1), { expirationTtl: DAY_BUCKET_TTL }),
+    ]);
+    return false;
+  } catch (e) {
+    console.error("rate limit store error:", e && e.stack ? e.stack : e);
+    return false; // fail-open; see comment above
+  }
+}
+
 export default {
   async fetch(request, env) {
     try {
@@ -42,6 +102,11 @@ async function handle(request, env) {
   if (request.method !== "POST") return bad(405, "POST only");
   if (request.headers.get("x-ava-client") !== CLIENT_TOKEN) {
     return bad(403, "unknown client");
+  }
+
+  const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
+  if (await isRateLimited(env, ip)) {
+    return bad(429, "too many requests");
   }
 
   let body;
@@ -65,7 +130,6 @@ async function handle(request, env) {
     return bad(413, "too long");
   }
 
-  const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
   const text = [
     message,
     "",

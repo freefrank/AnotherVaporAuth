@@ -12,6 +12,13 @@ main = "src/index.js"
 compatibility_date = "2026-06-01"
 routes = [{ pattern = "ava-feedback.dotslash.pro", custom_domain = true }]
 
+# Per-IP rate limiting counters (see src/index.js). Create the namespace
+# once with `npx wrangler kv namespace create RL`, then replace the id
+# below with the one it prints.
+[[kv_namespaces]]
+binding = "RL"
+id = "REPLACE_ME" # TODO: 用户需 wrangler kv namespace create 后填入 id
+
 [vars]
 MAIL_TO = "freefrank21@gmail.com"
 SMTP_HOST = "mx.deployr.ca"
