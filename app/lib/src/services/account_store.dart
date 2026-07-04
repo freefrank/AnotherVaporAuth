@@ -5,6 +5,7 @@ import '../core/crypto/ma_file_crypto.dart';
 import '../core/crypto/vault_crypto.dart';
 import '../core/models/manifest.dart';
 import '../core/models/steam_guard_account.dart';
+import 'debug_log.dart';
 import 'storage_provider.dart';
 
 /// Manages the `maFiles/` directory: the manifest plus the per-account
@@ -107,14 +108,30 @@ class AccountStore {
       texts = raws;
     }
     final accounts = <SteamGuardAccount>[];
+    var decodedAny = false;
+    var failed = 0;
     for (final text in texts) {
-      if (text == null) return const []; // wrong key
+      if (text == null) {
+        failed++; // corrupt blob OR wrong key — decided below
+        continue;
+      }
       try {
         accounts.add(SteamGuardAccount.fromJson(
             jsonDecode(text) as Map<String, dynamic>));
+        decodedAny = true;
       } catch (_) {
-        continue;
+        failed++;
       }
+    }
+    // "Empty == wrong key" is a contract callers rely on, but only when the
+    // key genuinely can't open anything. If at least one entry decrypted, the
+    // rest are individually corrupt — keep the good accounts instead of hiding
+    // them all (a single bad maFile used to blank the whole list). For the
+    // vault the DEK was already validated by its wrapper, so a null is always
+    // corruption, never a wrong key; return whatever decoded.
+    if (failed > 0) dlog('getAllAccounts: $failed/${entries.length} unreadable');
+    if (entries.isNotEmpty && !decodedAny && !manifest.vault) {
+      return const []; // no entry opened with this key → treat as wrong key
     }
     return accounts;
   }
@@ -163,16 +180,26 @@ class AccountStore {
           iterations: manifest.kdfIterations);
     }
 
-    final filename = '${account.steamId}.maFile';
+    final idx =
+        manifest.entries.indexWhere((e) => e.steamId == account.steamId);
+    final oldEntry = idx >= 0 ? manifest.entries[idx] : null;
+
+    // Encrypted UPDATE of an existing account: write the new ciphertext under a
+    // *fresh* filename so the manifest (carrying the matching salt/iv) is the
+    // single atomic commit point. Overwriting in place would let a crash leave
+    // the manifest's salt/iv describing a different file's ciphertext — the
+    // account then can't be decrypted (the legacy corruption window). New
+    // accounts and the unencrypted path have no salt/iv to desync, so they
+    // keep the canonical name.
+    final filename = (encrypt && oldEntry != null)
+        ? _altSlot(oldEntry.filename, account.steamId)
+        : (oldEntry?.filename ?? '${account.steamId}.maFile');
     final newEntry = ManifestEntry(
       steamId: account.steamId,
       iv: iv,
       salt: salt,
       filename: filename,
     );
-
-    final idx =
-        manifest.entries.indexWhere((e) => e.steamId == account.steamId);
     if (idx >= 0) {
       manifest.entries[idx] = newEntry;
     } else {
@@ -182,15 +209,27 @@ class AccountStore {
     final wasEncrypted = manifest.encrypted;
     manifest.encrypted = encrypt || manifest.encrypted;
     try {
-      // Payload before manifest: a crash in between leaves the manifest
-      // pointing at the previous (valid) payload or, for a new account, an
-      // orphan payload that recompute ignores — never a manifest entry whose
-      // file is missing or stale.
+      // Payload before manifest (both atomic): a crash in between leaves the
+      // manifest pointing at the previous (valid) file — for an update that's
+      // the untouched old file, for a new account an orphan payload recompute
+      // ignores. save() is the commit point.
       await storage.writeFile(filename, jsonAccount);
       await save();
+      // The old ciphertext is now orphaned (manifest points at the new file).
+      if (oldEntry != null && oldEntry.filename != filename) {
+        try {
+          await storage.deleteFile(oldEntry.filename);
+        } catch (_) {}
+      }
       return true;
     } catch (_) {
+      // Restore in-memory state to match what's still on disk.
       manifest.encrypted = wasEncrypted;
+      if (oldEntry != null) {
+        manifest.entries[idx] = oldEntry;
+      } else {
+        manifest.entries.removeWhere((e) => e.steamId == account.steamId);
+      }
       return false;
     }
   }
@@ -217,7 +256,22 @@ class AccountStore {
     return true;
   }
 
+  /// The alternate filename slot for [steamId], used to write an updated
+  /// ciphertext without overwriting the one the current manifest still points
+  /// at (two-phase commit). Toggles between `<id>.maFile` and `<id>.b.maFile`.
+  String _altSlot(String current, int steamId) {
+    final a = '$steamId.maFile';
+    return current == a ? '$steamId.b.maFile' : a;
+  }
+
   /// Re-encrypts every maFile with [newKey] (or decrypts when [newKey] is null).
+  ///
+  /// Two-phase: every account is re-written to a *fresh* filename first, then
+  /// the manifest (new filenames + salt/iv + iteration count) is committed in
+  /// one atomic save; only afterwards are the old ciphertexts deleted. Until
+  /// that save lands the old files and old manifest stay fully consistent, so a
+  /// crash mid-rotation leaves the store openable with the old key rather than
+  /// a half-rotated, partly-undecryptable mess.
   Future<bool> changeEncryptionKey(String? oldKey, String? newKey) async {
     if (manifest.encrypted) {
       if (oldKey == null || !await verifyPasskey(oldKey)) return false;
@@ -225,6 +279,12 @@ class AccountStore {
     final oldIterations = manifest.kdfIterations;
     final toEncrypt = newKey != null;
     final newIterations = toEncrypt ? avaIterations : oldIterations;
+
+    // Phase 1: write every re-keyed payload to a new filename. No manifest
+    // mutation yet, so a failure/return here leaves the store untouched.
+    final oldFiles = <String>[];
+    final rewritten =
+        <int, ({String filename, String? salt, String? iv})>{};
     for (final entry in manifest.entries) {
       if (!await storage.fileExists(entry.filename)) continue;
       var contents = await storage.readFile(entry.filename);
@@ -243,9 +303,20 @@ class AccountStore {
         toWrite = MaFileCrypto.encrypt(newKey, newSalt, newIv, contents,
             iterations: newIterations);
       }
-      await storage.writeFile(entry.filename, toWrite);
-      entry.iv = newIv;
-      entry.salt = newSalt;
+      final newName = _altSlot(entry.filename, entry.steamId);
+      await storage.writeFile(newName, toWrite);
+      oldFiles.add(entry.filename);
+      rewritten[entry.steamId] =
+          (filename: newName, salt: newSalt, iv: newIv);
+    }
+
+    // Phase 2 (commit): point every entry at its new file + params, save once.
+    for (final entry in manifest.entries) {
+      final r = rewritten[entry.steamId];
+      if (r == null) continue;
+      entry.filename = r.filename;
+      entry.salt = r.salt;
+      entry.iv = r.iv;
     }
     manifest.encrypted = toEncrypt;
     manifest.kdfIterations = newIterations;
@@ -260,7 +331,17 @@ class AccountStore {
     } else {
       manifest.passkeyCheck = null;
     }
-    await save();
+    await save(); // commit point — new files are now the source of truth
+    // Delete the old ciphertexts the manifest no longer references. A leftover
+    // is harmless (recompute ignores unreferenced files); never delete a name
+    // a rewrite reused.
+    final live = rewritten.values.map((r) => r.filename).toSet();
+    for (final f in oldFiles) {
+      if (live.contains(f)) continue;
+      try {
+        await storage.deleteFile(f);
+      } catch (_) {}
+    }
     return true;
   }
 
