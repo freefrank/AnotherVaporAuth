@@ -19,6 +19,30 @@ abstract class StorageProvider {
     return _DesktopStorageProvider();
   }
 
+  /// Validates a filename that came (ultimately) from a manifest — an
+  /// attacker-tamperable file — before it is joined onto [maFilesDir] for a
+  /// read/write/delete. A crafted `filename` like `../../x` or an absolute
+  /// path would otherwise let a tampered manifest reach files outside the
+  /// `maFiles/` sandbox (path traversal). Returns the name unchanged when
+  /// safe; throws [ArgumentError] otherwise.
+  static String sanitizeFilename(String name) {
+    // Reject spaces and control characters (incl. NUL / poison-null-byte)
+    // up front, then any path structure.
+    final hasBadChar = name.codeUnits.any((c) => c <= 0x20 || c == 0x7f);
+    final bad = name.isEmpty ||
+        name == '.' ||
+        name == '..' ||
+        hasBadChar ||
+        name.contains('/') ||
+        name.contains(r'\') ||
+        p.isAbsolute(name) ||
+        p.basename(name) != name; // any directory component
+    if (bad) {
+      throw ArgumentError.value(name, 'filename', 'unsafe storage filename');
+    }
+    return name;
+  }
+
   /// Absolute path to the `maFiles/` directory.
   Future<String> maFilesDir();
 
@@ -26,7 +50,7 @@ abstract class StorageProvider {
       p.join(await maFilesDir(), 'manifest.json');
 
   Future<String> filePath(String filename) async =>
-      p.join(await maFilesDir(), filename);
+      p.join(await maFilesDir(), sanitizeFilename(filename));
 
   Future<bool> dirExists() async => Directory(await maFilesDir()).exists();
 
@@ -101,14 +125,17 @@ class MemoryStorageProvider extends StorageProvider {
   @override
   Future<void> ensureDir() async {}
   @override
-  Future<bool> fileExists(String filename) async => files.containsKey(filename);
+  Future<bool> fileExists(String filename) async =>
+      files.containsKey(StorageProvider.sanitizeFilename(filename));
   @override
-  Future<String> readFile(String filename) async => files[filename]!;
+  Future<String> readFile(String filename) async =>
+      files[StorageProvider.sanitizeFilename(filename)]!;
   @override
   Future<void> writeFile(String filename, String contents) async =>
-      files[filename] = contents;
+      files[StorageProvider.sanitizeFilename(filename)] = contents;
   @override
-  Future<void> deleteFile(String filename) async => files.remove(filename);
+  Future<void> deleteFile(String filename) async =>
+      files.remove(StorageProvider.sanitizeFilename(filename));
   @override
   Future<List<String>> listFiles({String extension = '.maFile'}) async =>
       files.keys.where((k) => k.endsWith(extension)).toList();
