@@ -5,6 +5,24 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.74] — 2026-07-03
+
+### Added
+- **QR sign-in approval moved front and center**: a scan button now sits in the
+  home screen's top-right corner. Tap it to scan a Steam login QR code and the
+  approval runs as the currently selected account, with a confirmation dialog
+  showing where the sign-in comes from (location / IP / device) before you
+  approve or reject. Desktop opens the paste-the-link flow preselected to the
+  current account. (Previously buried in the "add account" menu.)
+
+—
+
+### 新增
+- **扫码批准登录挪到台前**:主界面右上角新增扫码按钮,点击即以当前选中账户扫描
+  Steam 登录二维码,批准前会弹出确认框展示登录来源(位置 / IP / 设备)再选择
+  批准或拒绝。桌面端打开粘贴链接的流程并预选当前账户。(此前藏在「添加账户」
+  菜单里。)
+
 ## [v0.70.5] — 2026-07-03
 
 ### Fixed

@@ -160,6 +160,10 @@
   "approveReject": "拒绝",
   "approveSuccess": "登录已批准。",
   "approveRejected": "登录已拒绝。",
+  "approveBadCode": "这不是 Steam 登录二维码。",
+  "approveLocation": "位置",
+  "approveDevice": "设备",
+  "approveWarnStranger": "不是你本人发起的登录？请拒绝。",
 
   "importTitle": "导入账户",
   "importPickFile": "选择 .maFile 文件",

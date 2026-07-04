@@ -938,6 +938,30 @@ abstract class AppLocalizations {
   /// **'Sign in rejected.'**
   String get approveRejected;
 
+  /// No description provided for @approveBadCode.
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s not a Steam sign-in QR code.'**
+  String get approveBadCode;
+
+  /// No description provided for @approveLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get approveLocation;
+
+  /// No description provided for @approveDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Device'**
+  String get approveDevice;
+
+  /// No description provided for @approveWarnStranger.
+  ///
+  /// In en, this message translates to:
+  /// **'Didn\'t start this sign-in yourself? Reject it.'**
+  String get approveWarnStranger;
+
   /// No description provided for @importTitle.
   ///
   /// In en, this message translates to:

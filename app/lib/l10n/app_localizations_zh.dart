@@ -449,6 +449,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get approveRejected => '登录已拒绝。';
 
   @override
+  String get approveBadCode => '这不是 Steam 登录二维码。';
+
+  @override
+  String get approveLocation => '位置';
+
+  @override
+  String get approveDevice => '设备';
+
+  @override
+  String get approveWarnStranger => '不是你本人发起的登录？请拒绝。';
+
+  @override
   String get importTitle => '导入账户';
 
   @override

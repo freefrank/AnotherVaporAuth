@@ -13,8 +13,105 @@ import '../core/protocol/qr_approval_client.dart';
 import 'widgets/ava_panel.dart';
 import 'widgets/scanline_overlay.dart';
 
+/// Streamlined entry for the home screen's top-right scan button: on touch
+/// devices, jump straight into the camera for [account] and confirm from a
+/// dialog showing where the sign-in comes from; desktop (no camera) falls
+/// back to the full screen with the paste field, preselected to [account].
+Future<void> quickApproveLogin(
+    BuildContext context, WidgetRef ref, SteamGuardAccount account) async {
+  final l = AppLocalizations.of(context);
+  if (!(Platform.isAndroid || Platform.isIOS)) {
+    await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => ApproveLoginScreen(initialAccount: account)));
+    return;
+  }
+  if (!account.session.hasTokens) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(l.sessionExpired)));
+    return;
+  }
+  final code = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const _ScannerPage()));
+  if (code == null || !context.mounted) return;
+  final challenge = QrChallenge.tryParse(code);
+  if (challenge == null) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(l.approveBadCode)));
+    return;
+  }
+  final client = QrApprovalClient(ref.read(apiClientProvider));
+  // Best-effort context (IP / location / device) for the confirm dialog —
+  // the approval itself works without it.
+  AuthSessionInfo? info;
+  try {
+    info = await client.sessionInfo(account, challenge.clientId);
+  } catch (_) {}
+  if (!context.mounted) return;
+  final approve = await _confirmApproveDialog(context, account, info);
+  if (approve == null || !context.mounted) return;
+  try {
+    final ok = await client.respond(account, challenge, approve: approve);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(ok
+            ? (approve ? l.approveSuccess : l.approveRejected)
+            : l.commonError)));
+  } catch (e) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('${l.commonError}: $e')));
+  }
+}
+
+Future<bool?> _confirmApproveDialog(BuildContext context,
+    SteamGuardAccount account, AuthSessionInfo? info) {
+  final l = AppLocalizations.of(context);
+  final t = Theme.of(context).extension<AvaTokens>()!;
+  Widget detail(String text) => Padding(
+        padding: EdgeInsets.only(top: context.r(3)),
+        child: Text(text,
+            style: TextStyle(color: t.muted, fontSize: context.r(13))),
+      );
+  return showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l.approveTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(account.accountName ?? '${account.steamId}',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold, fontSize: context.r(15))),
+          SizedBox(height: context.r(6)),
+          if (info != null) ...[
+            if (info.location.isNotEmpty)
+              detail('${l.approveLocation}: ${info.location}'),
+            if (info.ip.isNotEmpty) detail('IP: ${info.ip}'),
+            if (info.deviceName.isNotEmpty)
+              detail('${l.approveDevice}: ${info.deviceName}'),
+          ],
+          SizedBox(height: context.r(12)),
+          Text(l.approveWarnStranger,
+              style: TextStyle(color: t.warn, fontSize: context.r(12.5))),
+        ],
+      ),
+      actions: [
+        OutlinedButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.approveReject)),
+        FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.approveButton)),
+      ],
+    ),
+  );
+}
+
 class ApproveLoginScreen extends ConsumerStatefulWidget {
-  const ApproveLoginScreen({super.key});
+  /// Preselects this account in the dropdown (if it has a live session).
+  final SteamGuardAccount? initialAccount;
+  const ApproveLoginScreen({super.key, this.initialAccount});
 
   @override
   ConsumerState<ApproveLoginScreen> createState() =>
@@ -78,7 +175,9 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
             const <SteamGuardAccount>[])
         .where((a) => a.session.hasTokens)
         .toList();
-    _account ??= accounts.isNotEmpty ? accounts.first : null;
+    _account ??= accounts.contains(widget.initialAccount)
+        ? widget.initialAccount
+        : (accounts.isNotEmpty ? accounts.first : null);
 
     final t = Theme.of(context).extension<AvaTokens>()!;
     return Scaffold(

@@ -405,6 +405,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       const Positioned.fill(child: SkinAmbient()),
                       content,
                       const Positioned.fill(child: SkinOverlay()),
+                      // Top-right: approve a sign-in started elsewhere by
+                      // scanning its QR code as the selected account
+                      // (desktop falls back to the paste flow).
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: SafeArea(
+                          child: Padding(
+                            padding: context.rInsets(top: 6, right: 10),
+                            child: _ScanFab(
+                              label: l.approveTitle,
+                              onTap: () => quickApproveLogin(
+                                  context, ref, accounts[_selected]),
+                            ),
+                          ),
+                        ),
+                      ),
                       Positioned.fill(
                         child: IgnorePointer(
                           child: TweenAnimationBuilder<double>(
@@ -513,7 +530,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 row(ctx, Icons.file_open_outlined, l.actionImport, 'import'),
                 row(ctx, Icons.add_moderator_outlined,
                     l.actionAddAuthenticator, 'login'),
-                row(ctx, Icons.qr_code_scanner, l.approveTitle, 'approve'),
               ],
             ),
           ),
@@ -528,10 +544,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       case 'login':
         await Navigator.of(context).push(MaterialPageRoute(
             builder: (_) => const LoginScreen(reason: LoginReason.add)));
-        break;
-      case 'approve':
-        await Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ApproveLoginScreen()));
         break;
     }
   }
@@ -1265,6 +1277,64 @@ class _MainPanel extends StatelessWidget {
 
 /// Floating settings button (bottom-right), styled per theme: neon glass disc
 /// with an accent glow, or a chunky pixel square with a hard offset shadow.
+/// Compact top-right corner chip that launches the QR sign-in approval for
+/// the selected account — same visual language as [_SettingsFab], sized down.
+class _ScanFab extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _ScanFab({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<AvaTokens>()!;
+    final neon = t.glow;
+    final size = context.r(44);
+    return Semantics(
+      button: true,
+      label: label,
+      child: Tooltip(
+        message: label,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(neon ? size / 2 : t.radiusSm),
+            child: Container(
+              width: size,
+              height: size,
+              alignment: Alignment.center,
+              decoration: neon
+                  ? BoxDecoration(
+                      color: t.panel2,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                          color: t.accent.withValues(alpha: 0.75),
+                          width: context.r(1.2)),
+                      boxShadow: [
+                        BoxShadow(
+                            color: t.accent.withValues(alpha: 0.3),
+                            blurRadius: context.r(10)),
+                      ],
+                    )
+                  : BoxDecoration(
+                      color: t.panel2,
+                      border: Border.all(color: t.accent, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                            color: t.borderColor,
+                            offset: Offset(context.r(2), context.r(2))),
+                      ],
+                    ),
+              child: Icon(Icons.qr_code_scanner,
+                  color: t.accent, size: context.r(20)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SettingsFab extends StatelessWidget {
   final String label;
   final VoidCallback onTap;

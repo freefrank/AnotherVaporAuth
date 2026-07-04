@@ -474,6 +474,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get approveRejected => 'Sign in rejected.';
 
   @override
+  String get approveBadCode => 'That\'s not a Steam sign-in QR code.';
+
+  @override
+  String get approveLocation => 'Location';
+
+  @override
+  String get approveDevice => 'Device';
+
+  @override
+  String get approveWarnStranger =>
+      'Didn\'t start this sign-in yourself? Reject it.';
+
+  @override
   String get importTitle => 'Import account';
 
   @override

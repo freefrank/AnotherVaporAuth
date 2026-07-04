@@ -165,6 +165,10 @@
   "approveReject": "Reject",
   "approveSuccess": "Sign in approved.",
   "approveRejected": "Sign in rejected.",
+  "approveBadCode": "That's not a Steam sign-in QR code.",
+  "approveLocation": "Location",
+  "approveDevice": "Device",
+  "approveWarnStranger": "Didn't start this sign-in yourself? Reject it.",
 
   "importTitle": "Import account",
   "importPickFile": "Choose a .maFile",
