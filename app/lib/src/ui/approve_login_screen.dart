@@ -149,14 +149,34 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
       return;
     }
     setState(() => _busy = true);
+    final client = QrApprovalClient(ref.read(apiClientProvider));
+    var finalApprove = approve;
+    if (approve) {
+      // Anti-phishing gate: never approve blind. Pull best-effort context
+      // (IP / location / device) and make the user confirm it's really them
+      // via the same dialog the quick-scan path (quickApproveLogin above)
+      // shows, before actually sending approve:true.
+      AuthSessionInfo? info;
+      try {
+        info = await client.sessionInfo(account, challenge.clientId);
+      } catch (_) {}
+      if (!mounted) return;
+      final confirmed = await _confirmApproveDialog(context, account, info);
+      if (!mounted) return;
+      if (confirmed == null) {
+        setState(() => _busy = false);
+        return;
+      }
+      finalApprove = confirmed;
+    }
     try {
-      final client = QrApprovalClient(ref.read(apiClientProvider));
-      final ok = await client.respond(account, challenge, approve: approve);
+      final ok =
+          await client.respond(account, challenge, approve: finalApprove);
       if (!mounted) return;
       setState(() {
         _busy = false;
         _message = ok
-            ? (approve ? l.approveSuccess : l.approveRejected)
+            ? (finalApprove ? l.approveSuccess : l.approveRejected)
             : l.commonError;
       });
     } catch (e) {
