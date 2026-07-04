@@ -34,7 +34,7 @@ void main() {
   }
 
   final png = Uint8List.fromList(List.generate(64, (i) => i));
-  const url = 'https://cdn.example/avatars/ab/abcdef_full.jpg';
+  const url = 'https://avatars.steamstatic.com/avatars/ab/abcdef_full.jpg';
 
   setUp(() async {
     tmp = await Directory.systemTemp.createTemp('ava_img_cache_test');
@@ -109,5 +109,72 @@ void main() {
     expect(await torn.exists(), isFalse);
     expect(await c.load(url), equals(png)); // fresh entry survived
     expect(adapter.hits, 1);
+  });
+
+  group('isAllowedImageHost', () {
+    test('accepts real Steam CDN host shapes', () {
+      for (final u in [
+        'https://avatars.steamstatic.com/ab/abcdef_full.jpg',
+        'https://avatars.akamai.steamstatic.com/ab/abcdef_full.jpg',
+        'https://avatars.cloudflare.steamstatic.com/ab/abcdef_full.jpg',
+        'https://avatars.fastly.steamstatic.com/ab/abcdef_full.jpg',
+        'https://community.cloudflare.steamstatic.com/economy/image/x',
+        'https://community.fastly.steamstatic.com/economy/image/x',
+        'https://cdn.fastly.steamstatic.com/steamcommunity/public/images/items/1/x.png',
+        'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/x.png',
+        'https://steamstatic.com/x.png',
+        'https://STEAMSTATIC.COM/x.png', // host match is case-insensitive
+        'https://avatars.steamstatic.com./ab/abcdef_full.jpg', // trailing-dot FQDN
+      ]) {
+        expect(isAllowedImageHost(u), isTrue, reason: u);
+      }
+    });
+
+    test('rejects an arbitrary non-Steam host', () {
+      expect(isAllowedImageHost('https://evil.example/x.png'), isFalse);
+    });
+
+    test('rejects a Steam-CDN host over plain http', () {
+      expect(isAllowedImageHost('http://avatars.steamstatic.com/x.png'),
+          isFalse);
+    });
+
+    test('rejects look-alike hosts that merely contain the CDN domain', () {
+      for (final u in [
+        'https://steamstatic.com.evil.example/x.png',
+        'https://notsteamstatic.com/x.png',
+        'https://avatars.steamstatic.com.evil.example/x.png',
+        'https://evil.example/?u=https://avatars.steamstatic.com/x.png',
+      ]) {
+        expect(isAllowedImageHost(u), isFalse, reason: u);
+      }
+    });
+
+    test('rejects unparseable URLs', () {
+      expect(isAllowedImageHost('not a url'), isFalse);
+    });
+  });
+
+  test('refuses to download from a non-Steam-CDN host', () async {
+    const evilUrl = 'https://evil.example/x.png';
+    final c = cache();
+    expect(await c.load(evilUrl), isNull);
+    expect(adapter.hits, 0); // never even attempted the network request
+    expect(tmp.listSync().whereType<File>(), isEmpty);
+  });
+
+  test('refuses to download from a Steam-CDN host over plain http', () async {
+    const insecureUrl = 'http://avatars.steamstatic.com/x.png';
+    final c = cache();
+    expect(await c.load(insecureUrl), isNull);
+    expect(adapter.hits, 0);
+  });
+
+  test('rejects and does not cache an oversized response', () async {
+    final huge = Uint8List(maxCachedImageBytes + 1);
+    adapter.onGet = (_) => huge;
+    final c = cache();
+    expect(await c.load(url), isNull);
+    expect(tmp.listSync().whereType<File>(), isEmpty);
   });
 }

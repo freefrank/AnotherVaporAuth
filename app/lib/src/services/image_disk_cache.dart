@@ -8,6 +8,48 @@ import 'package:path_provider/path_provider.dart';
 
 import 'debug_log.dart';
 
+/// Hosts that legitimately serve Steam avatar / item-image assets. A maFile
+/// is untrusted input (it can be edited or forged before import), so the
+/// avatar/avatarFrame/animatedAvatar URLs it carries must never be fetched
+/// as-is — that would let a malicious file make this app issue a request to
+/// an arbitrary attacker-controlled URL (SSRF) and write the response to
+/// disk. Only Steam's own CDN, over https, is allowed.
+///
+/// `*.steamstatic.com` covers the observed real-world hosts (see
+/// `avatar_service.dart` / `steam_item.dart`): `avatars.steamstatic.com`,
+/// `avatars.akamai.steamstatic.com`, `avatars.cloudflare.steamstatic.com`,
+/// `avatars.fastly.steamstatic.com`, `cdn.fastly.steamstatic.com`,
+/// `community.fastly.steamstatic.com`, `community.cloudflare.steamstatic.com`.
+/// `steamcdn-a.akamaihd.net` is the legacy CDN host some old profile XML
+/// still points at.
+bool isAllowedImageHost(String url) {
+  final Uri uri;
+  try {
+    uri = Uri.parse(url);
+  } catch (_) {
+    return false;
+  }
+  if (uri.scheme.toLowerCase() != 'https') return false;
+  var host = uri.host.toLowerCase();
+  // A trailing dot denotes the DNS root and is otherwise equivalent
+  // (`steamstatic.com.` == `steamstatic.com`); strip it before comparing.
+  if (host.endsWith('.')) host = host.substring(0, host.length - 1);
+  if (host.isEmpty) return false;
+  const exactAllowed = {
+    'steamstatic.com',
+    'steamcdn-a.akamaihd.net',
+  };
+  if (exactAllowed.contains(host)) return true;
+  // endsWith('.steamstatic.com') requires the dot, so a look-alike like
+  // `steamstatic.com.evil.example` or `notsteamstatic.com` is rejected.
+  return host.endsWith('.steamstatic.com');
+}
+
+/// Hard cap on a single downloaded image: a forged/compromised maFile must
+/// not be able to make this app pull down and store an arbitrarily large
+/// payload.
+const int maxCachedImageBytes = 2 * 1024 * 1024; // 2 MiB
+
 /// A tiny content-addressed disk cache for Steam CDN images (avatars, avatar
 /// frames), so a relaunch shows them instantly instead of re-downloading.
 ///
@@ -84,10 +126,27 @@ class DiskImageCache {
   }
 
   Future<Uint8List?> _download(String url, {required File? into}) async {
+    if (!isAllowedImageHost(url)) {
+      dlog('image-cache: refusing non-Steam-CDN host ($url)');
+      return null;
+    }
+    final cancelToken = CancelToken();
     try {
-      final resp = await _dio.get<List<int>>(url);
+      final resp = await _dio.get<List<int>>(
+        url,
+        cancelToken: cancelToken,
+        onReceiveProgress: (received, total) {
+          // Belt-and-suspenders size cap: bail as soon as either the
+          // advertised Content-Length or the bytes actually streamed so far
+          // exceed the limit, so an oversized response is never fully
+          // buffered just to be thrown away.
+          if (total > maxCachedImageBytes || received > maxCachedImageBytes) {
+            cancelToken.cancel('image exceeds $maxCachedImageBytes bytes');
+          }
+        },
+      );
       final bytes = Uint8List.fromList(resp.data ?? const []);
-      if (bytes.isEmpty) return null;
+      if (bytes.isEmpty || bytes.length > maxCachedImageBytes) return null;
       if (into != null) {
         // Atomic write: a crash mid-write must not leave a torn cache file.
         final tmp = File('${into.path}.${bytes.length}.tmp');
