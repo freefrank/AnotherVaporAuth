@@ -11,6 +11,20 @@ import '../../core/models/confirmation.dart';
 import '../../core/models/steam_guard_account.dart';
 import '../../core/models/steam_item.dart';
 
+/// The market-listing confirmations in [latest] that are NOT in the
+/// [preExistingCreatorIds] snapshot — i.e. the ones created since the snapshot.
+/// Auto-confirm uses this so it only ever approves the current listing, never
+/// a market confirmation the user already had pending.
+@visibleForTesting
+List<Confirmation> newMarketConfirmations(
+    Set<String> preExistingCreatorIds, List<Confirmation> latest) {
+  return latest
+      .where((c) =>
+          c.type == ConfirmationType.marketListing &&
+          !preExistingCreatorIds.contains(c.creatorId))
+      .toList();
+}
+
 /// Bottom sheet to list an inventory item for sale: market price + trend,
 /// two linked price fields (you receive ⇄ buyer pays) computed with Steam's
 /// live fees, and an optional auto-confirm. Pops `true` once a listing is made.
@@ -124,6 +138,24 @@ class _SellSheetState extends ConsumerState<SellSheet> {
     });
     try {
       final market = ref.read(marketClientProvider);
+      final confirmations = ref.read(confirmationsClientProvider);
+
+      // Snapshot the market-listing confirmations that already exist BEFORE we
+      // create ours, so auto-confirm only ever approves the listing(s) made
+      // here — never a pending market confirmation the user set up elsewhere.
+      // If this fetch fails we can't tell old from new, so we skip auto-confirm
+      // entirely (safer than risking approving something unintended).
+      Set<String>? preExistingCreatorIds;
+      try {
+        final pre = await confirmations.fetch(widget.account);
+        preExistingCreatorIds = pre
+            .where((c) => c.type == ConfirmationType.marketListing)
+            .map((c) => c.creatorId)
+            .toSet();
+      } catch (_) {
+        preExistingCreatorIds = null;
+      }
+
       final ids = widget.assetIds.take(_quantity).toList();
       var listed = 0;
       var needsConf = false;
@@ -146,23 +178,21 @@ class _SellSheetState extends ConsumerState<SellSheet> {
         });
         return;
       }
-      // Confirm the listing(s) if requested.
-      if (needsConf && _autoConfirm) {
-        final confs =
-            await ref.read(confirmationsClientProvider).fetch(widget.account);
-        final marketConfs = confs
-            .where((c) => c.type == ConfirmationType.marketListing)
-            .toList();
-        if (marketConfs.isNotEmpty) {
-          await ref
-              .read(confirmationsClientProvider)
-              .respondMultiple(widget.account, marketConfs, true);
+      // Auto-confirm only the confirmations that appeared for THIS listing.
+      var autoConfirmedOk = false;
+      if (needsConf && _autoConfirm && preExistingCreatorIds != null) {
+        final latest = await confirmations.fetch(widget.account);
+        final newConfs =
+            newMarketConfirmations(preExistingCreatorIds, latest);
+        if (newConfs.isNotEmpty) {
+          await confirmations.respondMultiple(widget.account, newConfs, true);
+          autoConfirmedOk = true;
         }
       }
       if (!mounted) return;
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(needsConf && !_autoConfirm
+          content: Text(needsConf && !autoConfirmedOk
               ? l.marketListed
               : l.marketListedDone)));
     } catch (e) {
