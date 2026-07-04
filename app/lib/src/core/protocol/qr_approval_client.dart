@@ -14,11 +14,23 @@ class QrChallenge {
   final int clientId;
   const QrChallenge(this.version, this.clientId);
 
+  /// Only Steam's own hosts issue login QR codes — reject anything else so a
+  /// crafted QR (e.g. `https://evil.example/q/1/123`) can't be treated as a
+  /// legitimate challenge to approve.
+  static const _allowedHosts = {
+    's.team',
+    'steamcommunity.com',
+    'www.steamcommunity.com',
+  };
+
   /// Parses the challenge URL embedded in a login QR code.
   static QrChallenge? tryParse(String raw) {
     final input = raw.trim();
     final uri = Uri.tryParse(input);
     if (uri == null) return null;
+    if (uri.scheme != 'https' || !_allowedHosts.contains(uri.host)) {
+      return null;
+    }
     // Path looks like /q/<version>/<client_id> (host s.team or steamcommunity).
     final segs = uri.pathSegments;
     final qIdx = segs.indexOf('q');

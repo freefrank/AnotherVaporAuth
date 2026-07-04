@@ -17,9 +17,30 @@ void main() {
       expect(c.clientId, 987654321);
     });
 
+    test('parses www.steamcommunity.com variant', () {
+      final c = QrChallenge.tryParse('https://www.steamcommunity.com/q/3/42');
+      expect(c!.version, 3);
+      expect(c.clientId, 42);
+    });
+
     test('returns null for unrelated text', () {
       expect(QrChallenge.tryParse('not a url'), isNull);
       expect(QrChallenge.tryParse('https://example.com/foo/bar'), isNull);
+    });
+
+    test('rejects a valid path shape on a non-Steam host', () {
+      expect(QrChallenge.tryParse('https://evil.example/q/1/123'), isNull);
+    });
+
+    test('rejects a non-HTTPS scheme on a Steam host', () {
+      expect(QrChallenge.tryParse('http://s.team/q/1/123'), isNull);
+    });
+
+    test('rejects malformed/short paths on a trusted host', () {
+      expect(QrChallenge.tryParse('https://s.team/q/1'), isNull);
+      expect(QrChallenge.tryParse('https://s.team/q'), isNull);
+      expect(QrChallenge.tryParse('https://s.team/'), isNull);
+      expect(QrChallenge.tryParse('https://s.team/q/abc/123'), isNull);
     });
   });
 }
