@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import '../core/crypto/ma_file_crypto.dart';
 import '../core/crypto/vault_crypto.dart';
+import '../core/ma_file_normalizer.dart';
 import '../core/models/manifest.dart';
 import '../core/models/steam_guard_account.dart';
 import 'debug_log.dart';
@@ -431,9 +432,11 @@ class AccountStore {
   /// Returns the imported account, encrypting it under the store's current
   /// passkey when the store is encrypted.
   Future<SteamGuardAccount> importMaFileContents(
-      String contents, String? passKey) async {
+      String contents, String? passKey,
+      {String? sourceName}) async {
+    final decoded = jsonDecode(contents) as Map<String, dynamic>;
     final account = SteamGuardAccount.fromJson(
-        jsonDecode(contents) as Map<String, dynamic>);
+        MaFileNormalizer.normalize(decoded, sourceName: sourceName));
     if (account.steamId == 0) {
       throw const MaFileImportException('maFile has no SteamID');
     }

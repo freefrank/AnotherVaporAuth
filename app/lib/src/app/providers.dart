@@ -542,10 +542,11 @@ class AppController extends AsyncNotifier<AppData> {
     state = AsyncData(data.copyWith(accounts: accounts));
   }
 
-  Future<void> importMaFile(String contents) async {
+  Future<void> importMaFile(String contents, {String? sourceName}) async {
     final data = state.value;
     if (data == null) return;
-    await data.store.importMaFileContents(contents, data.passKey);
+    await data.store
+        .importMaFileContents(contents, data.passKey, sourceName: sourceName);
     await reload();
     unawaited(refreshAvatars());
   }

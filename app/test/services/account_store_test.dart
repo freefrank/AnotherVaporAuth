@@ -232,6 +232,80 @@ void main() {
       expect(store.entries.length, 1);
     });
 
+    test('imports Steam++ style maFile with SteamID alias and base32 secret',
+        () async {
+      final storage = MemoryStorageProvider();
+      final store = AccountStore(storage);
+      final contents = jsonEncode({
+        'steam64': '76561198000000003',
+        'account_name': 'steam-plus',
+        'shared_secret': 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ',
+        'uri':
+            'otpauth://totp/Steam:steam-plus?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Steam',
+        'identity_secret': 'YWJjZGVmZ2hpamtsbW5vcHFyc3Q=',
+        'secret_1': 'czE=',
+        'serial_number': '123',
+        'revocation_code': 'R12345',
+        'token_gid': 'abc',
+      });
+
+      final acc = await store.importMaFileContents(contents, null);
+
+      expect(acc.steamId, 76561198000000003);
+      expect(acc.sharedSecret, 'MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=');
+      expect(storage.files.containsKey('76561198000000003.maFile'), isTrue);
+      final saved =
+          jsonDecode(storage.files['76561198000000003.maFile']!) as Map;
+      expect((saved['Session'] as Map)['SteamID'], 76561198000000003);
+      expect(saved['steam64'], '76561198000000003');
+    });
+
+    test('imports maFile with sbeamid typo alias', () async {
+      final storage = MemoryStorageProvider();
+      final store = AccountStore(storage);
+      final contents = jsonEncode({
+        'sbeamid': '76561198000000004',
+        'account_name': 'typo',
+        'shared_secret': 'MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=',
+      });
+
+      final acc = await store.importMaFileContents(contents, null);
+
+      expect(acc.steamId, 76561198000000004);
+      expect(acc.sharedSecret, 'MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=');
+    });
+
+    test('imports maFile SteamID from source filename as a fallback', () async {
+      final storage = MemoryStorageProvider();
+      final store = AccountStore(storage);
+      final contents = jsonEncode({
+        'account_name': 'filename',
+        'shared_secret': 'MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=',
+      });
+
+      final acc = await store.importMaFileContents(
+        contents,
+        null,
+        sourceName: '76561198000000005.maFile',
+      );
+
+      expect(acc.steamId, 76561198000000005);
+    });
+
+    test('still rejects maFile without any SteamID source', () async {
+      final storage = MemoryStorageProvider();
+      final store = AccountStore(storage);
+      final contents = jsonEncode({
+        'account_name': 'missing',
+        'shared_secret': 'MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=',
+      });
+
+      expect(
+        () => store.importMaFileContents(contents, null),
+        throwsA(isA<MaFileImportException>()),
+      );
+    });
+
     test('remove account deletes maFile and resets encryption', () async {
       final storage = MemoryStorageProvider();
       final store = AccountStore(storage);
