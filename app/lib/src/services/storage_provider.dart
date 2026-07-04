@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -5,9 +6,9 @@ import 'package:path_provider/path_provider.dart';
 
 /// Abstracts where the `maFiles/` directory lives per platform.
 ///
-/// - Desktop: next to the executable (matches the legacy .NET layout so an
-///   existing install can be pointed at the same folder for migration).
-/// - Mobile: the app's private support directory.
+/// - Desktop & mobile: the app's per-user application-support directory (stable
+///   across upgrades / bundle replacement). Older desktop builds kept it next
+///   to the executable; that store is migrated over on first run.
 abstract class StorageProvider {
   StorageProvider();
 
@@ -65,16 +66,47 @@ abstract class StorageProvider {
   Future<String> readFile(String filename) async =>
       File(await filePath(filename)).readAsString();
 
+  // Serializes writes to the same filename. Two concurrent saves — e.g.
+  // refreshSessions and refreshAvatars both persisting the manifest — must not
+  // race on the temp file or lose an update; this chains them per filename.
+  final Map<String, Future<void>> _writeChains = {};
+  // Monotonic suffix so each in-flight write uses its own temp file (a shared
+  // "$path.tmp" could be clobbered or renamed out from under a sibling write).
+  int _tmpSeq = 0;
+
   Future<void> writeFile(String filename, String contents) async {
+    final prev = _writeChains[filename] ?? Future<void>.value();
+    final done = Completer<void>();
+    _writeChains[filename] = done.future;
+    await prev.catchError((_) {}); // wait our turn; ignore a prior failure
+    try {
+      await _writeAtomic(filename, contents);
+    } finally {
+      done.complete();
+      if (identical(_writeChains[filename], done.future)) {
+        _writeChains.remove(filename);
+      }
+    }
+  }
+
+  Future<void> _writeAtomic(String filename, String contents) async {
     await ensureDir();
     final path = await filePath(filename);
-    // Write to a sibling temp file then rename over the target: a crash or
-    // partial write leaves the old file intact instead of a truncated one,
+    // Write to a unique sibling temp file then rename over the target: a crash
+    // or partial write leaves the old file intact instead of a truncated one,
     // so the manifest and payloads can't be torn mid-write. Rename within a
     // directory is atomic on the platforms we target.
-    final tmp = File('$path.tmp');
-    await tmp.writeAsString(contents, flush: true);
-    await tmp.rename(path);
+    final tmp = File('$path.${_tmpSeq++}.tmp');
+    try {
+      await tmp.writeAsString(contents, flush: true);
+      await tmp.rename(path);
+    } catch (_) {
+      // Clean up a leftover temp on failure so it can't masquerade as data.
+      try {
+        if (await tmp.exists()) await tmp.delete();
+      } catch (_) {}
+      rethrow;
+    }
   }
 
   Future<void> deleteFile(String filename) async {
@@ -100,8 +132,33 @@ class _DesktopStorageProvider extends StorageProvider {
   @override
   Future<String> maFilesDir() async {
     if (_cached != null) return _cached!;
-    final exeDir = p.dirname(Platform.resolvedExecutable);
-    return _cached = p.join(exeDir, 'maFiles');
+    // Store in the per-user application-support directory, NOT next to the
+    // executable. An exe-adjacent folder is lost or emptied by app-bundle
+    // replacement, package-manager upgrades, or running from a temp/extracted
+    // location — the user would see an empty vault or lose data.
+    final support = await getApplicationSupportDirectory();
+    final dir = p.join(support.path, 'maFiles');
+    await _migrateFromExeAdjacent(dir);
+    return _cached = dir;
+  }
+
+  /// One-time move of an existing store from the legacy exe-adjacent location
+  /// (used by older builds) into the stable [stableDir]. Runs only when the
+  /// stable dir has no manifest yet but the legacy one does. Copies (doesn't
+  /// delete the source) so an interrupted migration can't lose data.
+  Future<void> _migrateFromExeAdjacent(String stableDir) async {
+    try {
+      if (await File(p.join(stableDir, 'manifest.json')).exists()) return;
+      final legacyDir = p.join(p.dirname(Platform.resolvedExecutable), 'maFiles');
+      if (!await File(p.join(legacyDir, 'manifest.json')).exists()) return;
+      await Directory(stableDir).create(recursive: true);
+      for (final f in Directory(legacyDir).listSync().whereType<File>()) {
+        await f.copy(p.join(stableDir, p.basename(f.path)));
+      }
+    } catch (_) {
+      // Best-effort: a failed migration falls back to a fresh empty store
+      // rather than crashing; the legacy files remain for manual recovery.
+    }
   }
 }
 
