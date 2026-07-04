@@ -8,6 +8,7 @@ import '../../app/theme.dart';
 import '../../core/models/steam_guard_account.dart';
 import '../../core/models/steam_item.dart';
 import '../../core/protocol/inventory_client.dart';
+import '../../services/auto_login.dart';
 import 'sell_sheet.dart';
 
 /// Inventory browser + market listings for one account.
@@ -60,8 +61,18 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
   Future<void> _loadOverview() async {
     setState(() => _error = null);
     try {
-      // Make sure the session is fresh before hitting the community endpoints.
-      await ref.read(autoLoginProvider).ensureSession(widget.account);
+      // Make sure the session is fresh before hitting the community
+      // endpoints. A refresh failure (expired login, no stored password,
+      // needs an interactive email code, ...) must not fall through to an
+      // inventory fetch that would just come back empty and be mistaken for
+      // "no items".
+      final outcome = await ref.read(autoLoginProvider).ensureSession(widget.account);
+      if (outcome != AutoLoginOutcome.ok) {
+        if (mounted) {
+          setState(() => _error = AppLocalizations.of(context).sessionExpired);
+        }
+        return;
+      }
       final ov = await ref.read(inventoryClientProvider).overview(widget.account);
       if (!mounted) return;
       setState(() => _overview = ov);

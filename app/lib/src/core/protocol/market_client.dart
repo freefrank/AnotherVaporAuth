@@ -136,15 +136,31 @@ class MarketClient {
   Future<bool> cancel(SteamGuardAccount account, String listingId) async {
     final sid = _newSessionId();
     try {
-      await api.communityPostJson(
+      final json = await api.communityPostJson(
         '/market/removelisting/$listingId',
         {'sessionid': sid},
         cookies: _cookies(account, sid),
         referer: '${SteamApiClient.communityBase}/market/',
       );
-      return true;
+      final ok = isCancelSuccess(json);
+      dlog('removelisting $listingId -> success=$ok');
+      return ok;
     } catch (_) {
       return false;
     }
+  }
+
+  /// Whether a `/market/removelisting/` response actually confirms the
+  /// listing was removed. Steam's normal success reply has no body worth
+  /// parsing — [SteamApiClient.communityPostJson] decodes an empty/bare-list
+  /// body as `{}` — so an empty object (no failure markers) counts as
+  /// success. An explicit `success: false`, or a needs-reauth marker, is a
+  /// failure regardless of the lack of a thrown exception; any other
+  /// explicit `success` value must equal `true`. Pure/static so it's
+  /// unit-testable without a network stack.
+  static bool isCancelSuccess(Map<String, dynamic> json) {
+    if (json['needauth'] == true || json['needsauth'] == true) return false;
+    if (!json.containsKey('success')) return true;
+    return json['success'] == true;
   }
 }
