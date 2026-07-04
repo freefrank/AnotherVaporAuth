@@ -93,19 +93,40 @@ Future<void> exportMaFileFlow(
     ),
   );
   if (confirmed != true) return;
+  // Path of the plaintext maFile written below, if we get that far — kept
+  // outside the try so the finally block can always find it for cleanup.
+  String? path;
   try {
     final raw = (account.accountName ?? '').trim();
     final base = raw.isEmpty ? '${account.steamId}' : raw;
     final safe = base.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
     final json = const JsonEncoder.withIndent('  ').convert(account.toJson());
     final dir = await getTemporaryDirectory();
-    final path = '${dir.path}/$safe.maFile';
+    path = '${dir.path}/$safe.maFile';
     await File(path).writeAsString(json);
+    // Share is asynchronous on every platform; we must await its result
+    // before deleting, or the receiving app may not have finished reading
+    // the file yet.
     await Share.shareXFiles([XFile(path)], subject: '$safe.maFile');
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.exportFailed('$e'))));
+    }
+  } finally {
+    // This maFile is plaintext (Steam session token, shared_secret…). Never
+    // leave it behind in the temp dir — clean it up whether the share sheet
+    // succeeded, was cancelled, or the export itself threw.
+    if (path != null) {
+      try {
+        final tmp = File(path);
+        if (await tmp.exists()) {
+          await tmp.delete();
+        }
+      } catch (_) {
+        // Best-effort cleanup; a failure here shouldn't mask the export's
+        // own success/failure, which has already been reported above.
+      }
     }
   }
 }

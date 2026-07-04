@@ -710,7 +710,7 @@ packages:
     source: hosted
     version: "2.2.2"
   path_provider_platform_interface:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: path_provider_platform_interface
       sha256: "484838772624c3a4b94f1e44a3e19897fee738f2d5c4ce448443b0417f7c9dda"
@@ -822,7 +822,7 @@ packages:
     source: hosted
     version: "10.1.4"
   share_plus_platform_interface:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: share_plus_platform_interface
       sha256: cc012a23fc2d479854e6c80150696c4a5f5bb62cb89af4de1c505cf78d0a5d0b
