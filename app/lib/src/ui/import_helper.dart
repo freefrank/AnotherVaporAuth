@@ -25,7 +25,11 @@ Future<void> importMaFileFlow(BuildContext context, WidgetRef ref) async {
     final contents = await file.readAsString();
     // Validate it parses as JSON before importing.
     jsonDecode(contents);
-    await ref.read(appControllerProvider.notifier).importMaFile(contents);
+    // The filename is a last-resort SteamID source (e.g. <steamid>.maFile) for
+    // exports that drop the Session block.
+    await ref
+        .read(appControllerProvider.notifier)
+        .importMaFile(contents, sourceName: file.name);
     if (context.mounted) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.importSuccess)));

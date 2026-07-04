@@ -225,6 +225,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (widget.reason == LoginReason.refresh && widget.account != null) {
       final account = widget.account!;
+      // A code-only import (no SteamID) carries a synthetic negative id; capture
+      // it so the placeholder entry can be dropped once the real one is saved.
+      final oldSteamId = account.steamId;
       account.session
         ..steamId = session.steamId
         ..accessToken = session.accessToken
@@ -239,6 +242,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
       account.fullyEnrolled = true;
       await ref.read(appControllerProvider.notifier).persistAccount(account);
+      // Now stored under the real SteamID — remove the code-only placeholder.
+      if (oldSteamId < 0 && account.steamId > 0 && account.steamId != oldSteamId) {
+        await ref
+            .read(appControllerProvider.notifier)
+            .removeAccountBySteamId(oldSteamId);
+      }
       if (mounted) Navigator.of(context).pop();
       return;
     }

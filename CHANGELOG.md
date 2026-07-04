@@ -5,6 +5,24 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.77.2] — 2026-07-04
+
+### Fixed
+- Importing a maFile exported by other tools (Steam++ / Watt Toolkit) no longer
+  fails. AVA now recognizes their SteamID variants (decimal or base64 aliases,
+  or the SteamID in the filename) and normalizes the shared secret. A maFile
+  with no SteamID at all is imported as a code-only account — its Steam Guard
+  codes work immediately, and signing in later (to use the market or trade
+  confirmations) fills in the real SteamID automatically.
+
+—
+
+### 修复
+- 其他工具(Steam++ / Watt Toolkit)导出的 maFile 现在能正常导入。AVA 会识别它们的
+  SteamID 变体(十进制或 base64 别名、或文件名里的 SteamID)并规范化共享密钥。完全
+  没有 SteamID 的 maFile 会作为「仅验证码」账户导入——验证码立即可用,之后登录(使用
+  市场或交易确认时)会自动补齐真实 SteamID。
+
 ## [v0.77.1] — 2026-07-04
 
 ### Fixed

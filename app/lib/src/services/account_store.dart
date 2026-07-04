@@ -1,8 +1,10 @@
 import 'dart:convert';
-import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 
 import '../core/crypto/ma_file_crypto.dart';
 import '../core/crypto/vault_crypto.dart';
+import '../core/ma_file_normalizer.dart';
 import '../core/models/manifest.dart';
 import '../core/models/steam_guard_account.dart';
 import 'debug_log.dart';
@@ -256,6 +258,19 @@ class AccountStore {
     return true;
   }
 
+  /// Removes the manifest entry (and its maFile) for [steamId], if present.
+  /// Used to drop a code-only account's synthetic-id placeholder once its real
+  /// SteamID is known after sign-in.
+  Future<void> removeEntryById(int steamId) async {
+    final idx = manifest.entries.indexWhere((e) => e.steamId == steamId);
+    if (idx < 0) return;
+    final entry = manifest.entries.removeAt(idx);
+    await save();
+    try {
+      await storage.deleteFile(entry.filename);
+    } catch (_) {}
+  }
+
   /// The alternate filename slot for [steamId], used to write an updated
   /// ciphertext without overwriting the one the current manifest still points
   /// at (two-phase commit). Toggles between `<id>.maFile` and `<id>.b.maFile`.
@@ -431,15 +446,41 @@ class AccountStore {
   /// Returns the imported account, encrypting it under the store's current
   /// passkey when the store is encrypted.
   Future<SteamGuardAccount> importMaFileContents(
-      String contents, String? passKey) async {
+      String contents, String? passKey,
+      {String? sourceName}) async {
+    final decoded = jsonDecode(contents) as Map<String, dynamic>;
     final account = SteamGuardAccount.fromJson(
-        jsonDecode(contents) as Map<String, dynamic>);
+        MaFileNormalizer.normalize(decoded, sourceName: sourceName));
     if (account.steamId == 0) {
-      throw const MaFileImportException('maFile has no SteamID');
+      // Some exports (Steam++ / Watt Toolkit) drop the Session block entirely,
+      // so there is no SteamID. The shared_secret still generates valid 2FA
+      // codes, so import it as a code-only account under a stable synthetic
+      // key; signing in later (to use market / confirmations) fills in the
+      // real SteamID and re-keys it.
+      if ((account.sharedSecret ?? '').trim().isEmpty) {
+        throw const MaFileImportException('maFile has no SteamID or secret');
+      }
+      account.session.steamId = syntheticSteamId(account);
     }
     final ok = await saveAccount(account, manifest.encrypted, passKey: passKey);
     if (!ok) throw const MaFileImportException('Failed to save imported file');
     return account;
+  }
+
+  /// A stable, negative synthetic id for a code-only account (no real SteamID).
+  /// Negative so it can never collide with a real SteamID64 (always positive);
+  /// derived deterministically from the shared secret so re-importing the same
+  /// account overwrites rather than duplicates. Marked [visibleForTesting] so
+  /// tests can assert the code-only path without hard-coding the value.
+  @visibleForTesting
+  static int syntheticSteamId(SteamGuardAccount a) {
+    final seed = (a.sharedSecret ?? a.accountName ?? '').trim();
+    // FNV-1a (32-bit), stable across runs unlike String.hashCode.
+    var h = 0x811c9dc5;
+    for (final c in seed.codeUnits) {
+      h = ((h ^ c) * 0x01000193) & 0xffffffff;
+    }
+    return -(h & 0x7fffffff) - 1; // [-2^31 .. -1]
   }
 }
 

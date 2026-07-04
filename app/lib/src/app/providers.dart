@@ -542,12 +542,23 @@ class AppController extends AsyncNotifier<AppData> {
     state = AsyncData(data.copyWith(accounts: accounts));
   }
 
-  Future<void> importMaFile(String contents) async {
+  Future<void> importMaFile(String contents, {String? sourceName}) async {
     final data = state.value;
     if (data == null) return;
-    await data.store.importMaFileContents(contents, data.passKey);
+    await data.store
+        .importMaFileContents(contents, data.passKey, sourceName: sourceName);
     await reload();
     unawaited(refreshAvatars());
+  }
+
+  /// Drops a code-only account's synthetic-id placeholder entry after it has
+  /// been re-saved under a real SteamID (post sign-in).
+  Future<void> removeAccountBySteamId(int steamId) async {
+    final data = state.value;
+    if (data == null) return;
+    await data.store.removeEntryById(steamId);
+    await ref.read(credentialStoreProvider).clear(steamId);
+    await reload();
   }
 
   Future<void> removeAccount(SteamGuardAccount account) async {
