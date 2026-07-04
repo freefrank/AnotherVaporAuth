@@ -1,5 +1,13 @@
 # Google Play Release Audit — AVA
 
+> **Status (2026-07-04): resolved / historical.** Every blocker below has since
+> been fixed — release signing is wired from `key.properties` (App Signing
+> ready), the at-rest KDF concern was resolved by the Keystore-held DEK vault,
+> and the permission/privacy items are addressed. This file is kept as a record
+> of the pre-v0.64 release readiness pass. Ongoing security work now lives in
+> [`docs/adversarial-audit-2026-07-03.md`](docs/adversarial-audit-2026-07-03.md)
+> (three hardening passes through v0.77.0).
+
 Date: 2026-07-01 (original: Codex; reviewed & revised 2026-07-01: Claude)
 
 Scope: Flutter Android app under `app/`, with focus on Google Play readiness, security-sensitive storage, privacy-policy consistency, permissions, and release build verification.

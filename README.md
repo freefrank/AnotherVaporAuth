@@ -45,12 +45,17 @@
   plus the account's own TOTP when the refresh token expires.
 - **Login flows** — password + **QR**, session refresh, add authenticator, and
   approving another device's login by scanning its QR.
-- **App lock** — a mandatory 6-digit PIN encrypts the local store (AES-256), with
-  biometric / device-credential unlock; it signs in as soon as the PIN is entered.
+- **App lock** — a mandatory 6-digit PIN gates a random 256-bit key held in the
+  device's hardware Keystore, which encrypts the local store (AES-256-GCM); with
+  biometric / device-credential unlock, it signs in as soon as the PIN is entered.
 - **Animated avatars** — pulls each account's Steam avatar and avatar frame and
   plays them (GIF natively, APNG decoded frame-by-frame).
-- **Two full themes** — Neon (cyberpunk ambience + glow) and Pixel (retro
-  starfield) — switchable in settings, each with its own pull-to-refresh.
+- **Appearance & skins** — a plain **Light / Dark / follow-system** appearance,
+  and separately a **skin** layer (None / Neon cyberpunk / Pixel retro), each
+  skin a data-driven effect pack with its own ambience and pull-to-refresh; on
+  Android the launcher icon follows the active skin.
+- **First-run gesture tutorial** on touch devices (desktop gets right-click row
+  menus instead).
 - **i18n** (English + 简体/繁體 Chinese) with more locales planned.
 - Fully **offline**: fonts and assets are bundled, nothing is downloaded at runtime.
 - **In-app Debug log** (Settings → Debug log) — a copyable network trace of the
@@ -72,7 +77,7 @@ Requires the Flutter SDK (3.44.x). See `app/README.md` for details.
 ```sh
 cd app
 flutter pub get
-flutter test                       # analyze + 51 tests
+flutter test                       # 158 tests
 flutter run -d linux               # or windows / macos
 flutter build apk --release --split-per-abi
 ```
