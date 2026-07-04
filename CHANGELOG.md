@@ -5,6 +5,27 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.74.4] — 2026-07-03
+
+### Security
+- Hardening pass from an adversarial audit (no user-visible change; all with
+  regression tests): session cookies are no longer carried across a redirect
+  to a non-Steam origin; adding an authenticator now waits for a fresh code
+  window between retries instead of hammering the same code; tampered-manifest
+  filenames can no longer escape the maFiles folder; account writes are now
+  crash-atomic (temp-file + rename, payload before manifest); the debug log
+  attached to feedback is scrubbed of any token/secret-shaped text; the
+  feedback endpoint sanitizes fields and no longer echoes internal errors.
+
+—
+
+### 安全
+- 一轮对抗性审计的加固(无可见变化,均带回归测试):会话 cookie 不再在跳转到非
+  Steam 域时被携带;添加验证器时重试会等待新的验证码窗口,不再反复提交同一个码;
+  被篡改的 manifest 文件名无法再逃出 maFiles 目录;账户写入改为崩溃安全(临时文件
+  + 重命名、先写 payload 再写 manifest);随反馈附带的调试日志会清除任何疑似
+  令牌/密钥的文本;反馈端点会清洗字段且不再回显内部错误。
+
 ## [v0.74.3] — 2026-07-03
 
 ### Added
