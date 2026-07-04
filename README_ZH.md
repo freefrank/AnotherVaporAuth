@@ -25,7 +25,7 @@
 
 ## 功能亮点
 
-- **maFile 兼容** —— 读写旧版 `.maFile` 格式（PBKDF2/SHA1 + AES-256-CBC），老账户零成本迁移，随时可导出。
+- **maFile 兼容** —— 读写旧版 `.maFile` 格式（PBKDF2/SHA1 + AES-256-CBC），老账户零成本迁移，随时可导出。还能导入其他工具的变体（Steam++ / Watt Toolkit），包括没有 SteamID 的导出（作为「仅验证码」账户导入，验证码离线可用）。
 - **Steam Guard 验证码** —— 每账户列表 + 实时倒计时环、点按复制；点名称在 用户名 / 昵称 / ID 间切换。
 - **应用内批准登录** —— 在 AVA 内弹窗批准/拒绝 Steam 登录（显示设备 + 位置），与官方 App 一致，基于轮询、无需推送。
 - **交易 / 市场确认** —— 支持批量接受/拒绝（原生 JSON 渲染，不用内嵌 WebView）。
@@ -35,7 +35,7 @@
 - **自动刷新登录** —— access token 按需用 refresh_token 刷新；refresh_token 失效时可用保存的密码 + 账户自身 TOTP 无界面全量重登。
 - **登录方式** —— 密码 + **扫码**、会话刷新、添加验证器、扫描他人二维码批准其登录。
 - **应用锁** —— 强制 6 位 PIN 把关一个存于设备**硬件 Keystore** 的随机 256 位密钥，由它加密本地存储（AES-256-GCM）；支持指纹 / 设备密码解锁，输满 PIN 即自动登录。
-- **动态头像** —— 拉取每个账户的 Steam 头像与头像框并播放（GIF 原生、APNG 逐帧解码）。
+- **动态头像** —— 拉取每个账户的 Steam 头像与头像框并播放（GIF 原生;APNG 自行解析并逐帧合成,正确处理每帧的偏移 / 混合 / dispose,带偏移的帧不再闪烁）。
 - **外观与皮肤** —— 朴素的**浅色 / 深色 / 跟随系统**外观,以及独立的**皮肤**层(无 / 霓虹赛博朋克 / 像素复古),每套皮肤都是数据驱动的特效包,各有专属氛围与下拉刷新;Android 上桌面图标跟随当前皮肤。
 - **首次启动手势教程**(触屏设备;桌面端改为账户行右键菜单)。
 - **多语言**（English + 简体/繁體中文），更多语言规划中。
@@ -58,7 +58,7 @@ docs/     设计文档（docs/superpowers/specs/）
 ```sh
 cd app
 flutter pub get
-flutter test                       # 158 项测试
+flutter test                       # 167 项测试
 flutter run -d linux               # 或 windows / macos
 flutter build apk --release --split-per-abi
 ```

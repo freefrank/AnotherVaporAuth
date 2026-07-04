@@ -5,6 +5,12 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.78.0] — 2026-07-04
+
+Rolls up v0.77.1–v0.77.3 for release: animated avatar-frame flicker fix,
+Steam++ / Watt Toolkit maFile import (incl. no-SteamID code-only accounts),
+and the sign-in-instead-of-retry flow on expired sessions. READMEs updated.
+
 ## [v0.77.3] — 2026-07-04
 
 ### Changed

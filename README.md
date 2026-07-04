@@ -29,6 +29,8 @@
 
 - **maFile compatible** — reads/writes the legacy `.maFile` format
   (PBKDF2/SHA1 + AES-256-CBC), so existing accounts migrate with no changes.
+  Also imports other tools' variants (Steam++ / Watt Toolkit), including exports
+  with no SteamID (imported as a code-only account whose codes work offline).
   Export an account's maFile at any time.
 - **Steam Guard codes** — a per-account list with live countdown rings and
   tap-to-copy; tap a name to cycle username / persona / id.
@@ -49,7 +51,8 @@
   device's hardware Keystore, which encrypts the local store (AES-256-GCM); with
   biometric / device-credential unlock, it signs in as soon as the PIN is entered.
 - **Animated avatars** — pulls each account's Steam avatar and avatar frame and
-  plays them (GIF natively, APNG decoded frame-by-frame).
+  plays them (GIF natively; APNG parsed and composited by hand, honoring each
+  frame's offset / blend / dispose, so offset-based frames don't flicker).
 - **Appearance & skins** — a plain **Light / Dark / follow-system** appearance,
   and separately a **skin** layer (None / Neon cyberpunk / Pixel retro), each
   skin a data-driven effect pack with its own ambience and pull-to-refresh; on
@@ -77,7 +80,7 @@ Requires the Flutter SDK (3.44.x). See `app/README.md` for details.
 ```sh
 cd app
 flutter pub get
-flutter test                       # 158 tests
+flutter test                       # 167 tests
 flutter run -d linux               # or windows / macos
 flutter build apk --release --split-per-abi
 ```
