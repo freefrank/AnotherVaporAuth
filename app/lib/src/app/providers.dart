@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../core/crypto/vault_crypto.dart';
+import '../core/models/manifest.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/confirmations_client.dart';
 import '../core/protocol/inventory_client.dart';
@@ -226,6 +227,32 @@ class AppData {
       );
 }
 
+/// Wipes an undecryptable vault back to a clean, unlocked store. Ordered so a
+/// failure at any step can never brick the vault:
+///   1. Commit a clean, non-vault manifest (atomic). This is the point of no
+///      return — once it lands, bootstrap yields an unlocked empty store, so we
+///      can never be stranded with a vault manifest whose DEK we already threw
+///      away. If this very write fails, the original vault is untouched.
+///   2. Best-effort delete of the now-orphaned payload files (a leftover maFile
+///      is harmless — the fresh manifest references none).
+///   3. Only now drop the keys — the store is already clean and unlocked, so a
+///      failure here can't strand a vault behind a missing key.
+@visibleForTesting
+Future<void> performVaultReset({
+  required StorageProvider storage,
+  required Future<void> Function() clearKeys,
+  required Future<void> Function() disableBiometric,
+}) async {
+  await AccountStore(storage, Manifest()).save();
+  try {
+    for (final f in await storage.listFiles()) {
+      await storage.deleteFile(f);
+    }
+  } catch (_) {}
+  await clearKeys();
+  await disableBiometric();
+}
+
 /// Bootstraps and owns the account list / unlock state.
 final appControllerProvider =
     AsyncNotifierProvider<AppController, AppData>(AppController.new);
@@ -268,17 +295,11 @@ class AppController extends AsyncNotifier<AppData> {
   /// clean, unlocked state. Settings survive. The user re-imports from their
   /// maFile backups; nothing on the Steam side is touched.
   Future<void> resetVault() async {
-    await ref.read(vaultKeyStoreProvider).clear();
-    await ref.read(biometricUnlockProvider).disable();
-    final storage = ref.read(storageProvider);
-    try {
-      for (final f in await storage.listFiles()) {
-        await storage.deleteFile(f);
-      }
-      await storage.deleteFile('manifest.json');
-    } catch (_) {
-      // Partially-deleted is still an improvement; bootstrap tolerates it.
-    }
+    await performVaultReset(
+      storage: ref.read(storageProvider),
+      clearKeys: () => ref.read(vaultKeyStoreProvider).clear(),
+      disableBiometric: () => ref.read(biometricUnlockProvider).disable(),
+    );
     ref.invalidateSelf();
   }
 
