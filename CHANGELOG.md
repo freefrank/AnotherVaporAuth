@@ -5,6 +5,20 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.74.3] — 2026-07-03
+
+### Added
+- A "Can't unlock?" escape hatch on the unlock screen: if the vault has become
+  undecryptable (restored backup, migrated phone), you can now wipe the
+  encrypted data and start fresh from inside the app — with a clear warning —
+  instead of digging through system settings to clear app data.
+
+—
+
+### 新增
+- 解锁页新增「无法解锁？」逃生入口:当保险库已无法解密(备份恢复、换机迁移)时,
+  可在应用内(带明确警告)清除加密数据重新开始,不用再去系统设置里清数据。
+
 ## [v0.74.2] — 2026-07-03
 
 ### Fixed

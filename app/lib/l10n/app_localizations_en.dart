@@ -36,6 +36,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unlockLoading => 'Decrypting…';
 
   @override
+  String get unlockCantUnlock => 'Can\'t unlock?';
+
+  @override
+  String get resetVaultTitle => 'Reset encrypted data';
+
+  @override
+  String get resetVaultBody =>
+      'This deletes every account entry and encryption key stored on this device; afterwards you re-import your maFile backups. Your Steam accounts and their authenticators are not affected.\n\nUse this when the correct PIN keeps being rejected — typically after a backup restore or phone migration, since the hardware key never leaves the original device, restored data can never be decrypted.\n\nThis cannot be undone.';
+
+  @override
+  String get resetVaultConfirm => 'Delete & reset';
+
+  @override
   String get pinSetupTitle => 'Set unlock PIN';
 
   @override

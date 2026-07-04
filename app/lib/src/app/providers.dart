@@ -261,6 +261,27 @@ class AppController extends AsyncNotifier<AppData> {
         privacyAccepted: privacyAccepted);
   }
 
+  /// Last-resort escape hatch for a vault that can no longer be decrypted
+  /// (e.g. data restored onto another device without its Keystore key, so the
+  /// correct PIN is rejected forever). Deletes the wrapped key, the biometric
+  /// passkey copy, the manifest and every maFile, then re-bootstraps into a
+  /// clean, unlocked state. Settings survive. The user re-imports from their
+  /// maFile backups; nothing on the Steam side is touched.
+  Future<void> resetVault() async {
+    await ref.read(vaultKeyStoreProvider).clear();
+    await ref.read(biometricUnlockProvider).disable();
+    final storage = ref.read(storageProvider);
+    try {
+      for (final f in await storage.listFiles()) {
+        await storage.deleteFile(f);
+      }
+      await storage.deleteFile('manifest.json');
+    } catch (_) {
+      // Partially-deleted is still an improvement; bootstrap tolerates it.
+    }
+    ref.invalidateSelf();
+  }
+
   /// Records first-run acceptance of the Privacy Policy, then kicks off the
   /// network work that was held back until consent. Updates state immediately
   /// and persists in the background.

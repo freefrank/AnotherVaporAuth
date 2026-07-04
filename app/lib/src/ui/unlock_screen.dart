@@ -86,6 +86,34 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
     }
   }
 
+  Future<void> _confirmReset() async {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).extension<AvaTokens>()!;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.resetVaultTitle),
+        content: Text(l.resetVaultBody),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l.commonCancel)),
+          FilledButton(
+              style: FilledButton.styleFrom(
+                  backgroundColor: t.bad,
+                  foregroundColor: const Color(0xFF06060F)),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l.resetVaultConfirm)),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _busy = true);
+    // The app root swaps to the (empty, unlocked) home once the state
+    // rebuilds — no navigation needed here.
+    await ref.read(appControllerProvider.notifier).resetVault();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -140,6 +168,23 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
                       label: Text(l.unlockWithBiometric),
                     ),
                   ],
+                  SizedBox(height: context.r(18)),
+                  // Escape hatch: a vault restored from a backup / another
+                  // device can never be decrypted (Keystore key stays on the
+                  // original device) — without this, the only way out is
+                  // clearing app data from system settings.
+                  TextButton(
+                    onPressed: _busy ? null : _confirmReset,
+                    child: Text(
+                      l.unlockCantUnlock,
+                      style: TextStyle(
+                        color: Theme.of(context)
+                            .extension<AvaTokens>()!
+                            .muted,
+                        fontSize: context.r(12.5),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -36,6 +36,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unlockLoading => '正在解锁…';
 
   @override
+  String get unlockCantUnlock => '无法解锁？';
+
+  @override
+  String get resetVaultTitle => '重置加密数据';
+
+  @override
+  String get resetVaultBody =>
+      '将删除本机存储的全部账户条目与加密密钥，之后需要重新导入你的 maFile 备份。你的 Steam 账户和已绑定的验证器不受影响。\n\n适用于正确 PIN 一直被拒的情况——通常发生在备份恢复或换机迁移之后：硬件密钥不会离开原设备，恢复出来的数据永远无法解密。\n\n此操作无法撤销。';
+
+  @override
+  String get resetVaultConfirm => '全部删除并重置';
+
+  @override
   String get pinSetupTitle => '设置解锁 PIN';
 
   @override

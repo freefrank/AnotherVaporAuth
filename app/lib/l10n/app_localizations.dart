@@ -152,6 +152,30 @@ abstract class AppLocalizations {
   /// **'Decrypting…'**
   String get unlockLoading;
 
+  /// No description provided for @unlockCantUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t unlock?'**
+  String get unlockCantUnlock;
+
+  /// No description provided for @resetVaultTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset encrypted data'**
+  String get resetVaultTitle;
+
+  /// No description provided for @resetVaultBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This deletes every account entry and encryption key stored on this device; afterwards you re-import your maFile backups. Your Steam accounts and their authenticators are not affected.\n\nUse this when the correct PIN keeps being rejected — typically after a backup restore or phone migration, since the hardware key never leaves the original device, restored data can never be decrypted.\n\nThis cannot be undone.'**
+  String get resetVaultBody;
+
+  /// No description provided for @resetVaultConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete & reset'**
+  String get resetVaultConfirm;
+
   /// No description provided for @pinSetupTitle.
   ///
   /// In en, this message translates to:
