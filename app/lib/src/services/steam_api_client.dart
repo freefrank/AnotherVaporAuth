@@ -17,6 +17,24 @@ class SteamApiClient {
   static const String apiBase = 'https://api.steampowered.com';
   static const String communityBase = 'https://steamcommunity.com';
 
+  /// Whether [url] is a Steam-owned HTTPS origin we may keep sending session
+  /// cookies (`steamLoginSecure` etc.) to while following a redirect chain.
+  /// A redirect to anything else — a non-HTTPS scheme or a non-Steam host —
+  /// must not carry the auth cookies (session-hijack via a rogue redirect).
+  static bool isSteamOrigin(String url) {
+    final u = Uri.tryParse(url);
+    if (u == null || u.scheme != 'https' || !u.hasAuthority) return false;
+    final host = u.host.toLowerCase();
+    return host == 'steamcommunity.com' ||
+        host == 'steampowered.com' ||
+        host == 'store.steampowered.com' ||
+        host == 'help.steampowered.com' ||
+        host == 'login.steampowered.com' ||
+        host == 'api.steampowered.com' ||
+        host.endsWith('.steamcommunity.com') ||
+        host.endsWith('.steampowered.com');
+  }
+
   final Dio _dio;
 
   /// Headers that make AVA's requests look like the official Steam mobile app
@@ -175,7 +193,14 @@ class SteamApiClient {
         hops++ < 6) {
       final loc = resp.headers.value('location');
       if (loc == null || loc.isEmpty) break;
-      url = loc.startsWith('http') ? loc : '$communityBase$loc';
+      // Resolve relative redirects against the current URL, then refuse to
+      // follow off a Steam origin while carrying session cookies — a rogue
+      // redirect to an external host would otherwise leak steamLoginSecure.
+      url = Uri.parse(url).resolve(loc).toString();
+      if (!isSteamOrigin(url)) {
+        dlog('  ✕ refused off-origin redirect $url');
+        break;
+      }
       dlog('  ↪ redirect $url');
       resp = await _dio.get<String>(url, options: opts());
       absorb(resp);
