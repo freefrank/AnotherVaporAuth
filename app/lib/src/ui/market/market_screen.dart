@@ -9,6 +9,7 @@ import '../../core/models/steam_guard_account.dart';
 import '../../core/models/steam_item.dart';
 import '../../core/protocol/inventory_client.dart';
 import '../../services/auto_login.dart';
+import '../login_screen.dart';
 import 'sell_sheet.dart';
 
 /// Inventory browser + market listings for one account.
@@ -26,6 +27,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
 
   InventoryOverview? _overview;
   String? _error;
+  bool _needsLogin = false; // session expired → offer sign-in, not retry
   String? _itemsError;
   InventoryGame? _game;
 
@@ -59,7 +61,10 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
   }
 
   Future<void> _loadOverview() async {
-    setState(() => _error = null);
+    setState(() {
+      _error = null;
+      _needsLogin = false;
+    });
     try {
       // Make sure the session is fresh before hitting the community
       // endpoints. A refresh failure (expired login, no stored password,
@@ -68,8 +73,14 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
       // "no items".
       final outcome = await ref.read(autoLoginProvider).ensureSession(widget.account);
       if (outcome != AutoLoginOutcome.ok) {
+        // The session can't be refreshed silently (expired, no stored password,
+        // or a code-only import that was never signed in) — offer sign-in, not
+        // a pointless retry.
         if (mounted) {
-          setState(() => _error = AppLocalizations.of(context).sessionExpired);
+          setState(() {
+            _error = AppLocalizations.of(context).sessionExpired;
+            _needsLogin = true;
+          });
         }
         return;
       }
@@ -80,6 +91,17 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
     } catch (e) {
       if (mounted) setState(() => _error = '$e');
     }
+  }
+
+  /// Opens the sign-in flow for this account, then retries the load. A
+  /// successful sign-in refreshes the session (and, for a code-only import,
+  /// fills in the real SteamID).
+  Future<void> _signIn() async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) =>
+          LoginScreen(reason: LoginReason.refresh, account: widget.account),
+    ));
+    if (mounted) _loadOverview();
   }
 
   Future<void> _selectGame(InventoryGame g) async {
@@ -212,7 +234,10 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
     if (_error != null) {
       return _Centered(
         text: _error!,
-        action: TextButton(onPressed: _loadOverview, child: Text(l.commonRetry)),
+        action: _needsLogin
+            ? FilledButton(onPressed: _signIn, child: Text(l.loginButton))
+            : TextButton(
+                onPressed: _loadOverview, child: Text(l.commonRetry)),
       );
     }
     final ov = _overview;

@@ -5,6 +5,20 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.77.3] — 2026-07-04
+
+### Changed
+- When a Steam session has expired and can't be refreshed silently, the market
+  and confirmations screens now offer a **Sign in** button instead of a
+  pointless Retry — one tap re-establishes the session (and, for a code-only
+  imported account, fills in the real SteamID).
+
+—
+
+### 变更
+- 当 Steam 会话已过期且无法静默刷新时,市场页和确认页现在提供**「登录」**按钮,而不是
+  无用的「重试」——一键即可重建会话(对仅验证码导入的账户还会补齐真实 SteamID)。
+
 ## [v0.77.2] — 2026-07-04
 
 ### Fixed

@@ -9,6 +9,7 @@ import '../core/models/confirmation.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/confirmations_client.dart';
 import '../services/session_manager.dart';
+import 'login_screen.dart';
 import 'widgets/ava_panel.dart';
 import 'widgets/scanline_overlay.dart';
 
@@ -30,6 +31,7 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
   bool _loading = true;
   bool _busy = false;
   String? _error;
+  bool _needsLogin = false; // session needs interactive sign-in, not a retry
 
   @override
   void initState() {
@@ -42,6 +44,7 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _needsLogin = false;
     });
     try {
       final list = await _fetchWithAutoRefresh();
@@ -52,13 +55,24 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
       });
     } catch (e) {
       if (!mounted) return;
+      final needsLogin = e is ConfirmationAuthException;
       setState(() {
         _loading = false;
-        _error = e is ConfirmationAuthException
+        _needsLogin = needsLogin;
+        _error = needsLogin
             ? AppLocalizations.of(context).confNeedsLogin
             : '$e';
       });
     }
+  }
+
+  /// Opens sign-in for this account, then re-fetches on return.
+  Future<void> _signIn() async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) =>
+          LoginScreen(reason: LoginReason.refresh, account: widget.account),
+    ));
+    if (mounted) _refresh();
   }
 
   /// Fetches confirmations; on a stale session (`needauth`) it transparently
@@ -163,12 +177,16 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
             children: [
               Icon(Icons.cloud_off, color: t.muted, size: context.r(40)),
               SizedBox(height: context.r(12)),
-              Text('${l.commonError}: $_error', textAlign: TextAlign.center),
-              SizedBox(height: context.r(16)),
-              OutlinedButton(
-                onPressed: _refresh,
-                child: Text(l.commonRetry),
+              Text(
+                _needsLogin ? _error! : '${l.commonError}: $_error',
+                textAlign: TextAlign.center,
               ),
+              SizedBox(height: context.r(16)),
+              _needsLogin
+                  ? FilledButton(
+                      onPressed: _signIn, child: Text(l.loginButton))
+                  : OutlinedButton(
+                      onPressed: _refresh, child: Text(l.commonRetry)),
             ],
           ),
         ),
