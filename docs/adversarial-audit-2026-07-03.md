@@ -25,6 +25,18 @@ This audit intentionally focuses on hostile inputs, crash consistency, secret ha
 > - #5 `QrChallenge.tryParse` accepted any host → Steam-host + https allowlist (`a6253b2`).
 > - #6 one corrupt blob blanked the whole list → keep decodable accounts (`3af175d`).
 > - #7 market auto-confirm over-approved → confirm only newly-created listings (`0e7c14f`).
+>
+> **Third pass (v0.77.0):** ten more findings, all fixed with tests —
+> - #1 (High) authenticator save failure swallowed → persistAccount returns its result; setup aborts + shows the revocation code on failure (`2f36184`).
+> - #2 (High) desktop maFiles next to the executable → moved to per-user app-support dir with first-run migration (`8faf8be`).
+> - #3 exported plaintext maFile lingered in temp → deleted after share (`c250772`).
+> - #4 fixed `$path.tmp` write race → unique temp names + per-file write serialization (`8faf8be`).
+> - #5 cancel-listing false success → parse Steam's response (`a37ebfc`).
+> - #6 ignored ensureSession() result → surface session-expired instead of empty inventory (`a37ebfc`).
+> - #7 approve calls sent empty access token → require hasAccessToken, fail fast (`f06faab`).
+> - #8 full approve page approved blind → source-confirm dialog first (`4d9dcd5`).
+> - #9 unbounded avatar download → Steam-CDN host allowlist + 2 MiB cap (`6dfbbda`).
+> - #10 feedback relay unthrottled → per-IP KV rate limiting (`2944d94`; needs a KV namespace before deploy).
 
 ## Verification
 

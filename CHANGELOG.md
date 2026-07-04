@@ -5,6 +5,45 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.77.0] — 2026-07-03
+
+### Fixed
+- Third adversarial-audit pass (10 findings, all with tests):
+  - **Adding an authenticator now aborts if it can't be saved locally**
+    (disk full / read-only), showing the revocation code so you can remove the
+    pending authenticator — previously the secret could be lost while Steam
+    Guard attached to the account.
+  - **Desktop data moved to the per-user app directory** (was next to the
+    executable, which upgrades/reinstalls could wipe); existing data migrates
+    on first run.
+  - **Exported maFiles are deleted from the temp folder after sharing** (they
+    contain a session token; a copy used to linger).
+  - Concurrency-safe local writes (no more clobbered temp files / lost updates).
+  - Cancelling a market listing now reports real success/failure; an expired
+    session in the market shows a sign-in prompt instead of an empty inventory.
+  - Approving a sign-in requires a live session token, and the full approve
+    screen now shows the sign-in's origin (location/IP/device) before you
+    approve, matching the quick-scan flow.
+  - Avatar images are only downloaded from Steam's CDN and capped at 2 MiB
+    (a tampered maFile can't make the app fetch arbitrary URLs).
+  - The feedback endpoint is rate-limited per IP.
+
+—
+
+### 修复
+- 第三轮对抗审计(10 项,均带测试):
+  - **添加验证器时若无法在本机保存(磁盘满 / 只读)会中止**,并显示撤销码以便你
+    移除待处理的验证器——此前 secret 可能丢失而 Steam Guard 已绑定到账户。
+  - **桌面数据迁到每用户应用目录**(原来放在可执行文件旁,升级/重装可能抹掉);
+    存量数据首次运行时自动迁移。
+  - **导出的 maFile 分享后从临时目录删除**(其中含会话 token,以前会残留一份)。
+  - 本机写入并发安全(不再互踩临时文件 / 丢更新)。
+  - 取消市场挂单如实反映成功/失败;市场里会话过期显示重新登录提示而非空库存。
+  - 批准登录要求有效会话 token,完整批准页在批准前也展示登录来源(位置/IP/设备),
+    与快捷扫码一致。
+  - 头像只从 Steam CDN 下载且限制 2 MiB(被篡改的 maFile 无法让 App 下载任意 URL)。
+  - 反馈端点按 IP 限流。
+
 ## [v0.76.0] — 2026-07-03
 
 ### Changed
