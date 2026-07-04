@@ -184,6 +184,14 @@ class SteamApiClient {
     }
 
     var url = path.startsWith('http') ? path : '$communityBase$path';
+    // The initial URL must also clear the origin gate when it's absolute —
+    // a relative path resolves under communityBase (always Steam), but an
+    // absolute `path` bypasses that and could otherwise ship cookies to a
+    // rogue host on the very first request. Defense in depth alongside the
+    // redirect-chain check below.
+    if (path.startsWith('http') && !isSteamOrigin(url)) {
+      throw ArgumentError.value(path, 'path', 'not a Steam origin');
+    }
     dlog('→ GET(text) $path');
     var resp = await _dio.get<String>(url, queryParameters: query, options: opts());
     absorb(resp);
