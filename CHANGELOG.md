@@ -5,6 +5,36 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.76.0] — 2026-07-03
+
+### Changed
+- "Auto-confirm market transactions" now shows what it actually does (as an
+  inline description, no longer under a redundant "Confirmations" header): it
+  only pre-ticks the confirm box when you list an item, so a new listing is
+  confirmed right after creation. It never confirms anything in the background.
+
+### Removed
+- The "Periodically check for confirmations", "Check all accounts" and
+  "Auto-confirm trades" settings. They were carried over from the legacy SDA
+  manifest for file compatibility but were never wired to any behaviour in AVA
+  — toggling them did nothing, which is especially misleading for switches that
+  imply automatic trade approval. Only "Auto-confirm market transactions"
+  remains (it sets the default of the sell sheet's confirm checkbox). The
+  underlying manifest fields are kept for .NET maFile round-trip compatibility.
+
+—
+
+### 变更
+- 「自动确认市场交易」现在标明了它的真实作用(以内联说明呈现,不再套一层多余的
+  「确认」分组标题):它只是在上架物品时预先勾选确认框,让新上架在创建后立即被
+  确认,不会在后台确认任何东西。
+
+### 移除
+- 「周期检查确认」「检查所有账户」「自动确认交易」三个设置。它们是为兼容旧版 SDA 的
+  manifest 文件格式而保留的字段,在 AVA 里从未接任何行为——拨动毫无效果,尤其"自动
+  确认交易"这种暗示自动同意交易的开关极具误导。仅保留「自动确认市场交易」(它决定
+  出售面板确认勾选框的默认状态)。底层 manifest 字段保留以兼容 .NET maFile 往返。
+
 ## [v0.75.2] — 2026-07-03
 
 ### Fixed

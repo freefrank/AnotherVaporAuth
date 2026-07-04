@@ -69,32 +69,21 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 // Biometric / device-credential unlock
                 const _BiometricCard(),
-                // Periodic checking + auto-confirm
+                // Auto-confirm. Only the market-listing default is wired up —
+                // the legacy SDA "periodic checking / check all / auto-confirm
+                // trades" toggles were file-format fields with no behaviour in
+                // AVA, so they've been removed rather than mislead. The manifest
+                // fields stay for .NET maFile round-trip compatibility. A single
+                // self-describing toggle needs no separate group header.
                 _Card(
-                  title: l.confirmationsTitle,
-                  child: Column(
-                    children: [
-                      _switchRow(context, t, l.settingsPeriodicChecking,
-                          manifest.periodicChecking, (v) {
-                        manifest.periodicChecking = v;
-                        save();
-                      }),
-                      _switchRow(context, t, l.settingsCheckAll,
-                          manifest.checkAllAccounts, (v) {
-                        manifest.checkAllAccounts = v;
-                        save();
-                      }),
-                      _switchRow(context, t, l.settingsAutoConfirmMarket,
-                          manifest.autoConfirmMarketTransactions, (v) {
-                        manifest.autoConfirmMarketTransactions = v;
-                        save();
-                      }),
-                      _switchRow(context, t, l.settingsAutoConfirmTrades,
-                          manifest.autoConfirmTrades, (v) {
-                        manifest.autoConfirmTrades = v;
-                        save();
-                      }),
-                    ],
+                  title: l.settingsAutoConfirmMarket,
+                  description: l.settingsAutoConfirmMarketDesc,
+                  trailing: Switch(
+                    value: manifest.autoConfirmMarketTransactions,
+                    onChanged: (v) {
+                      manifest.autoConfirmMarketTransactions = v;
+                      save();
+                    },
                   ),
                 ),
                 // Appearance (light/dark for the plain look)
@@ -319,17 +308,6 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _switchRow(BuildContext context, AvaTokens t, String label,
-      bool value, ValueChanged<bool> onChanged) {
-    return Row(
-      children: [
-        Expanded(
-            child: Text(label,
-                style: TextStyle(color: t.text, fontSize: context.r(14)))),
-        Switch(value: value, onChanged: onChanged),
-      ],
-    );
-  }
 
   Widget _choice(BuildContext context, AvaTokens t, String label, bool selected,
       VoidCallback onTap) {

@@ -637,19 +637,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsSetPasskey => '设置 / 修改加密口令';
 
   @override
-  String get settingsPeriodicChecking => '周期检查确认';
-
-  @override
-  String get settingsCheckInterval => '检查间隔（秒）';
-
-  @override
-  String get settingsCheckAll => '检查所有账户';
-
-  @override
   String get settingsAutoConfirmMarket => '自动确认市场交易';
 
   @override
-  String get settingsAutoConfirmTrades => '自动确认交易';
+  String get settingsAutoConfirmMarketDesc =>
+      '上架物品时预先勾选确认框,让新上架在创建后立即被确认。它不会在后台确认任何东西。';
 
   @override
   String get settingsLanguage => '语言';

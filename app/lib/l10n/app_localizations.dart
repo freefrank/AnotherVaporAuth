@@ -1292,35 +1292,17 @@ abstract class AppLocalizations {
   /// **'Set / change encryption passkey'**
   String get settingsSetPasskey;
 
-  /// No description provided for @settingsPeriodicChecking.
-  ///
-  /// In en, this message translates to:
-  /// **'Periodically check for confirmations'**
-  String get settingsPeriodicChecking;
-
-  /// No description provided for @settingsCheckInterval.
-  ///
-  /// In en, this message translates to:
-  /// **'Check interval (seconds)'**
-  String get settingsCheckInterval;
-
-  /// No description provided for @settingsCheckAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Check all accounts'**
-  String get settingsCheckAll;
-
   /// No description provided for @settingsAutoConfirmMarket.
   ///
   /// In en, this message translates to:
   /// **'Auto-confirm market transactions'**
   String get settingsAutoConfirmMarket;
 
-  /// No description provided for @settingsAutoConfirmTrades.
+  /// No description provided for @settingsAutoConfirmMarketDesc.
   ///
   /// In en, this message translates to:
-  /// **'Auto-confirm trades'**
-  String get settingsAutoConfirmTrades;
+  /// **'Pre-ticks the confirm box when you list an item, so a new listing is confirmed right after it\'s created. It never confirms anything in the background.'**
+  String get settingsAutoConfirmMarketDesc;
 
   /// No description provided for @settingsLanguage.
   ///

@@ -674,19 +674,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSetPasskey => 'Set / change encryption passkey';
 
   @override
-  String get settingsPeriodicChecking => 'Periodically check for confirmations';
-
-  @override
-  String get settingsCheckInterval => 'Check interval (seconds)';
-
-  @override
-  String get settingsCheckAll => 'Check all accounts';
-
-  @override
   String get settingsAutoConfirmMarket => 'Auto-confirm market transactions';
 
   @override
-  String get settingsAutoConfirmTrades => 'Auto-confirm trades';
+  String get settingsAutoConfirmMarketDesc =>
+      'Pre-ticks the confirm box when you list an item, so a new listing is confirmed right after it\'s created. It never confirms anything in the background.';
 
   @override
   String get settingsLanguage => 'Language';
