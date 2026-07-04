@@ -9,6 +9,7 @@ import 'package:image/image.dart' as img;
 
 import '../../services/debug_log.dart';
 import '../../services/image_disk_cache.dart';
+import 'apng_decoder.dart';
 
 /// A decoded (possibly animated) image: one or more frames with per-frame delays.
 class SteamImageFrames {
@@ -87,23 +88,34 @@ class SteamImageCache {
   /// Runs in an isolate: decode all frames to composited RGBA buffers,
   /// downscaling oversized frames.
   static List<_RawFrame>? _decode(Uint8List bytes) {
+    // Animated APNG (avatar frames especially) must be composited by hand —
+    // the image package mishandles offset sub-frames and they flicker.
+    final apng = decodeApngFrames(bytes);
+    if (apng != null) {
+      return [
+        for (final fr in apng)
+          _rawFrom(_fit(fr.image), fr.delayMs),
+      ];
+    }
     final decoded = img.decodeImage(bytes);
     if (decoded == null) return null;
-    final out = <_RawFrame>[];
-    for (final frame in decoded.frames) {
-      var f = frame;
-      final m = f.width > f.height ? f.width : f.height;
-      if (m > _maxDim) {
-        final scale = _maxDim / m;
-        f = img.copyResize(frame,
-            width: (f.width * scale).round(),
-            height: (f.height * scale).round());
-      }
-      final rgba = f.getBytes(order: img.ChannelOrder.rgba);
-      out.add(_RawFrame(rgba, f.width, f.height, frame.frameDuration));
-    }
-    return out;
+    return [
+      for (final frame in decoded.frames)
+        _rawFrom(_fit(frame), frame.frameDuration),
+    ];
   }
+
+  static img.Image _fit(img.Image f) {
+    final m = f.width > f.height ? f.width : f.height;
+    if (m <= _maxDim) return f;
+    final scale = _maxDim / m;
+    return img.copyResize(f,
+        width: (f.width * scale).round(),
+        height: (f.height * scale).round());
+  }
+
+  static _RawFrame _rawFrom(img.Image f, int delayMs) => _RawFrame(
+      f.getBytes(order: img.ChannelOrder.rgba), f.width, f.height, delayMs);
 }
 
 /// Renders a Steam profile image at [size], animating it if it is an animated

@@ -5,6 +5,23 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.77.1] — 2026-07-04
+
+### Fixed
+- Animated avatar frames that use offset sub-regions (many Steam avatar frames)
+  flickered badly — the image library returns those APNG frames with the wrong
+  buffer size and no offset/blend/dispose info. AVA now parses and composites
+  the APNG itself (honoring the palette + per-frame region, blend and dispose),
+  so animated frames play smoothly with their transparent centre intact.
+
+—
+
+### 修复
+- 使用偏移子区域的动态头像框(许多 Steam 头像框如此)会严重闪烁——图像库返回的
+  这类 APNG 帧缓冲区大小错误且缺少偏移/混合/dispose 信息。AVA 现在自行解析并合成
+  APNG(正确处理调色板 + 每帧区域、混合与 dispose),动态头像框播放流畅,透明中心
+  也保留。
+
 ## [v0.77.0] — 2026-07-03
 
 ### Fixed
