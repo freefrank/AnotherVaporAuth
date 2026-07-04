@@ -5,7 +5,7 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
-## [v0.74.4] — 2026-07-03
+## [v0.75.0] — 2026-07-03
 
 ### Security
 - Hardening pass from an adversarial audit (no user-visible change; all with
