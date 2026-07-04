@@ -266,7 +266,9 @@ class _ScannerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).approveTitle)),
+      // "Sign in with QR" — the user came here to scan; "approve" only makes
+      // sense on the confirm step that follows.
+      appBar: AppBar(title: Text(AppLocalizations.of(context).loginViaQr)),
       body: MobileScanner(
         onDetect: (capture) {
           final code = capture.barcodes

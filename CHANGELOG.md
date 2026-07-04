@@ -5,6 +5,24 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.74.1] — 2026-07-03
+
+### Fixed
+- The QR scanner crashed with a native null-pointer error in release builds:
+  R8 full-mode shrinking stripped ML Kit's reflectively-discovered barcode
+  components. Added keep rules; the camera now opens.
+- The scan button no longer collides with the skins' corner-bracket
+  decoration, and its label now reads "Sign in with QR code" (the
+  approve/reject wording only appears on the confirm step).
+
+—
+
+### 修复
+- 扫码页在 release 包中闪退(原生空指针):R8 full mode 把 ML Kit 反射注册的
+  条码组件剥掉了。已加 keep 规则,相机可以正常打开。
+- 扫码按钮不再与皮肤的角落装饰框重叠;入口文案改为「扫码登录」(批准/拒绝的
+  措辞只出现在确认步骤)。
+
 ## [v0.74] — 2026-07-03
 
 ### Added

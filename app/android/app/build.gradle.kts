@@ -58,6 +58,12 @@ android {
                 signingConfigs.getByName("release")
             else
                 signingConfigs.getByName("debug")
+            // Keep rules for reflection-based libraries (ML Kit barcode) that
+            // R8 full mode otherwise breaks in release builds.
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

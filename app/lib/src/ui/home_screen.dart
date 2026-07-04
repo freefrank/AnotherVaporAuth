@@ -413,9 +413,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         right: 0,
                         child: SafeArea(
                           child: Padding(
-                            padding: context.rInsets(top: 6, right: 10),
+                            // Nested inside the skins' corner brackets (their
+                            // lines sit 6–10px from the edges) instead of
+                            // colliding with them.
+                            padding: context.rInsets(top: 16, right: 16),
                             child: _ScanFab(
-                              label: l.approveTitle,
+                              label: l.loginViaQr,
                               onTap: () => quickApproveLogin(
                                   context, ref, accounts[_selected]),
                             ),
