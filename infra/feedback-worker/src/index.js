@@ -17,12 +17,23 @@ function bad(status, msg) {
   });
 }
 
+// Strip control characters (except tab/newline) so a crafted field can't
+// inject SMTP headers or forge the email's structure. Applied to every
+// user-supplied field before it goes into the message body.
+function clean(s) {
+  // eslint-disable-next-line no-control-regex
+  return s.replace(/[\x00-\x08\x0B-\x1F\x7F]/g, "");
+}
+
 export default {
   async fetch(request, env) {
     try {
       return await handle(request, env);
     } catch (e) {
-      return bad(500, `internal: ${e.message}`);
+      // Log the detail server-side; never leak internal/provider error text
+      // to the client (it only helps an attacker tune abuse).
+      console.error("feedback worker error:", e && e.stack ? e.stack : e);
+      return bad(500, "internal error");
     }
   },
 };
@@ -40,10 +51,10 @@ async function handle(request, env) {
     return bad(400, "invalid JSON");
   }
 
-  const message = (body.message ?? "").toString().trim();
-  const contact = (body.contact ?? "").toString().trim();
-  const meta = (body.meta ?? "").toString().trim(); // "AVA 0.65.2 · android · zh"
-  const log = (body.log ?? "").toString(); // opt-in in-app debug log tail
+  const message = clean((body.message ?? "").toString().trim());
+  const contact = clean((body.contact ?? "").toString().trim());
+  const meta = clean((body.meta ?? "").toString().trim()); // "AVA 0.65.2 · android · zh"
+  const log = clean((body.log ?? "").toString()); // opt-in in-app debug log tail
   if (!message) return bad(400, "empty message");
   if (
     message.length > MAX_MESSAGE ||
@@ -82,7 +93,8 @@ async function handle(request, env) {
       text,
     });
   } catch (e) {
-    return bad(502, `send failed: ${e.message}`);
+    console.error("feedback send failed:", e && e.stack ? e.stack : e);
+    return bad(502, "send failed");
   }
 
   return new Response(JSON.stringify({ ok: true }), {
