@@ -182,8 +182,12 @@ class AccountStore {
     final wasEncrypted = manifest.encrypted;
     manifest.encrypted = encrypt || manifest.encrypted;
     try {
-      await save();
+      // Payload before manifest: a crash in between leaves the manifest
+      // pointing at the previous (valid) payload or, for a new account, an
+      // orphan payload that recompute ignores — never a manifest entry whose
+      // file is missing or stale.
       await storage.writeFile(filename, jsonAccount);
+      await save();
       return true;
     } catch (_) {
       manifest.encrypted = wasEncrypted;
@@ -278,8 +282,10 @@ class AccountStore {
       manifest.entries.add(entry);
     }
     try {
-      await save();
+      // Payload before manifest (see saveAccount) so a crash can't leave the
+      // manifest referencing an unwritten or stale vault blob.
       await storage.writeFile(filename, blob);
+      await save();
       return true;
     } catch (_) {
       return false;

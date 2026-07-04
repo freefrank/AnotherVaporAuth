@@ -67,7 +67,14 @@ abstract class StorageProvider {
 
   Future<void> writeFile(String filename, String contents) async {
     await ensureDir();
-    await File(await filePath(filename)).writeAsString(contents);
+    final path = await filePath(filename);
+    // Write to a sibling temp file then rename over the target: a crash or
+    // partial write leaves the old file intact instead of a truncated one,
+    // so the manifest and payloads can't be torn mid-write. Rename within a
+    // directory is atomic on the platforms we target.
+    final tmp = File('$path.tmp');
+    await tmp.writeAsString(contents, flush: true);
+    await tmp.rename(path);
   }
 
   Future<void> deleteFile(String filename) async {
