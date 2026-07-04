@@ -575,12 +575,30 @@ class _PasskeyDialog extends StatefulWidget {
 class _PasskeyDialogState extends State<_PasskeyDialog> {
   final _old = TextEditingController();
   final _new = TextEditingController();
+  final _confirm = TextEditingController();
+  String? _error;
 
   @override
   void dispose() {
     _old.dispose();
     _new.dispose();
+    _confirm.dispose();
     super.dispose();
+  }
+
+  void _submit() {
+    final l = AppLocalizations.of(context);
+    if (_new.text.length != 6) {
+      setState(() => _error = l.pinSixDigits);
+      return;
+    }
+    // Confirm the new PIN before committing — a mistyped new PIN would
+    // re-wrap the vault under a value the user can't reproduce (lockout).
+    if (_confirm.text != _new.text) {
+      setState(() => _error = l.pinMismatch);
+      return;
+    }
+    Navigator.pop(context, (old: _old.text, next: _new.text));
   }
 
   @override
@@ -598,7 +616,21 @@ class _PasskeyDialogState extends State<_PasskeyDialog> {
                   controller: _old, label: l.pinCurrentLabel, autofocus: true),
               const SizedBox(height: 12),
             ],
-            PinField(controller: _new, label: l.pinNewLabel),
+            PinField(
+              controller: _new,
+              label: l.pinNewLabel,
+              autofocus: !widget.askOld,
+              onCompleted: (_) {
+                if (_error != null) setState(() => _error = null);
+              },
+            ),
+            const SizedBox(height: 12),
+            PinField(
+              controller: _confirm,
+              label: l.pinConfirmLabel,
+              errorText: _error,
+              onCompleted: (_) => _submit(),
+            ),
           ],
         ),
       ),
@@ -606,10 +638,7 @@ class _PasskeyDialogState extends State<_PasskeyDialog> {
         TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(l.commonCancel)),
-        FilledButton(
-            onPressed: () =>
-                Navigator.pop(context, (old: _old.text, next: _new.text)),
-            child: Text(l.commonOk)),
+        FilledButton(onPressed: _submit, child: Text(l.commonOk)),
       ],
     );
   }

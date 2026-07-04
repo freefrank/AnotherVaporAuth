@@ -5,6 +5,19 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.75.2] — 2026-07-03
+
+### Fixed
+- Changing the unlock PIN now asks you to confirm the new PIN a second time.
+  Previously a single mistyped new PIN would re-encrypt the vault under a value
+  you couldn't reproduce — a lockout. (First-run PIN setup already confirmed.)
+
+—
+
+### 修复
+- 修改解锁 PIN 时现在需要再次确认新 PIN。此前若新 PIN 输错一次,保险库会被用一个你
+  无法复现的值重新加密——直接锁死。(首次设置 PIN 本就有确认。)
+
 ## [v0.75.1] — 2026-07-03
 
 ### Security
