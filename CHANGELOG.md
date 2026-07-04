@@ -5,6 +5,28 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.75.1] — 2026-07-03
+
+### Security
+- Second hardening pass (no user-visible change; all with regression tests):
+  updating or re-keying an encrypted account is now crash-safe (writes a fresh
+  file and commits the manifest atomically, so a crash can't leave the
+  manifest describing a different file's ciphertext); a single corrupt maFile
+  no longer blanks the whole account list; the "reset encrypted data" escape
+  hatch commits a clean store before dropping keys so it can never half-brick;
+  login QR codes are only accepted from Steam hosts; the community request
+  gates its initial URL on a Steam origin; and market auto-confirm approves
+  only the listing you just made, never a confirmation already pending.
+
+—
+
+### 安全
+- 第二轮加固(无可见变化,均带回归测试):更新或换密加密账户改为崩溃安全(先写新
+  文件再原子提交 manifest,崩溃不会让 manifest 与密文错配);单个损坏的 maFile 不再
+  清空整个账户列表;「重置加密数据」逃生入口先提交干净库再清密钥,不会半砖;登录
+  二维码只接受 Steam 域;社区请求的初始 URL 也做 Steam origin 门控;市场自动确认只
+  批准本次上架,不再误批已有待确认项。
+
 ## [v0.75.0] — 2026-07-03
 
 ### Security

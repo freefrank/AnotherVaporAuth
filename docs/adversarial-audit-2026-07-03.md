@@ -15,6 +15,16 @@ This audit intentionally focuses on hostile inputs, crash consistency, secret ha
 >
 > Remaining operational task (not code): WAF rate-limiting on the feedback
 > worker's custom domain, and deploying the worker change with `wrangler deploy`.
+>
+> **Second pass (v0.75.1):** a follow-up review surfaced seven more findings,
+> all fixed with regression tests —
+> - #1 legacy encrypted update crash window → fresh-file two-phase commit (`3af175d`).
+> - #2 non-transactional `changeEncryptionKey` → write all payloads, then one atomic manifest commit (`3af175d`).
+> - #3 `resetVault` could half-brick → commit a clean manifest before dropping keys (`7ca5f65`).
+> - #4 initial community URL not origin-gated → gate absolute initial URLs (`86347f5`).
+> - #5 `QrChallenge.tryParse` accepted any host → Steam-host + https allowlist (`a6253b2`).
+> - #6 one corrupt blob blanked the whole list → keep decodable accounts (`3af175d`).
+> - #7 market auto-confirm over-approved → confirm only newly-created listings (`0e7c14f`).
 
 ## Verification
 
