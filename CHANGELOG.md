@@ -5,6 +5,22 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.74.2] — 2026-07-03
+
+### Fixed
+- Android backups and phone-migration tools no longer carry AVA's data: the
+  vault key lives in the hardware Keystore and never leaves the device, so a
+  restored copy could never be decrypted — it just produced a vault that
+  rejected the correct PIN forever, fixable only by clearing app data. A
+  restored install now starts clean; re-import your maFiles instead.
+
+—
+
+### 修复
+- AVA 的数据不再随 Android 备份 / 换机迁移工具走:保险库密钥存于硬件 Keystore、
+  永不离开设备,恢复出来的数据永远无法解密——只会得到一个"正确 PIN 也一直被拒"
+  的保险库,只能清数据自救。现在恢复安装会以干净状态启动,重新导入 maFile 即可。
+
 ## [v0.74.1] — 2026-07-03
 
 ### Fixed

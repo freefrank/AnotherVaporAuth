@@ -1,10 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- Backups and device-to-device transfer are opted out on purpose: the
+         vault key lives in the hardware Keystore, which never leaves the
+         device, so restored copies of the encrypted storage can never be
+         decrypted — they'd only produce a vault that rejects the correct PIN
+         forever. A clean first run + maFile re-import is strictly better. -->
     <application
         android:label="AVA"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"
