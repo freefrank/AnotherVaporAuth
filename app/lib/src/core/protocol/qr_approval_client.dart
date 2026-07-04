@@ -66,6 +66,19 @@ class AuthSessionInfo {
   String get location => [city, country].where((s) => s.isNotEmpty).join(', ');
 }
 
+/// Thrown when an operation needs to call a Steam Web API endpoint directly
+/// but the account's session has no access token (e.g. a refresh-only
+/// session that hasn't been renewed yet). Without this check the call would
+/// silently go out with an empty access token, which fails in a confusing,
+/// hard-to-diagnose way indistinguishable from a genuine server error.
+class MissingAccessTokenException implements Exception {
+  final String message;
+  const MissingAccessTokenException(
+      [this.message = 'account session has no access token']);
+  @override
+  String toString() => 'MissingAccessTokenException: $message';
+}
+
 /// Direction B: this app acts as the approver for a login started elsewhere —
 /// either by scanning the login QR, or by polling the account's own pending
 /// login sessions (GetAuthSessionsForAccount) so they can be approved like the
@@ -74,13 +87,24 @@ class QrApprovalClient {
   final SteamApiClient api;
   QrApprovalClient(this.api);
 
+  /// Guards every call below: these endpoints authenticate with the access
+  /// token alone (a refresh token — [SessionData.hasTokens] without
+  /// [SessionData.hasAccessToken] — is not enough), so fail clearly instead
+  /// of sending an empty token.
+  void _requireAccessToken(SteamGuardAccount account) {
+    if (!account.session.hasAccessToken) {
+      throw const MissingAccessTokenException();
+    }
+  }
+
   /// Lists client ids of pending login sessions awaiting approval for [account].
   Future<List<int>> pendingLoginClientIds(SteamGuardAccount account) async {
+    _requireAccessToken(account);
     final fields = (await api.callProtobuf(
       'IAuthenticationService',
       'GetAuthSessionsForAccount',
       request: ProtoWriter(),
-      accessToken: account.session.accessToken ?? '',
+      accessToken: account.session.accessToken!,
       useGet: true,
     ))
         .parseAll();
@@ -112,12 +136,13 @@ class QrApprovalClient {
   /// Fetches details (IP / location / device / version) for a pending login.
   Future<AuthSessionInfo?> sessionInfo(
       SteamGuardAccount account, int clientId) async {
+    _requireAccessToken(account);
     final req = ProtoWriter()..writeUint64(1, clientId);
     final f = (await api.callProtobuf(
       'IAuthenticationService',
       'GetAuthSessionInfo',
       request: req,
-      accessToken: account.session.accessToken ?? '',
+      accessToken: account.session.accessToken!,
     ))
         .parse();
     return AuthSessionInfo(
@@ -150,7 +175,8 @@ class QrApprovalClient {
     required int clientId,
     required bool approve,
   }) async {
-    final accessToken = account.session.accessToken ?? '';
+    _requireAccessToken(account);
+    final accessToken = account.session.accessToken!;
     final signature = _signature(account,
         version: version, clientId: clientId, steamId: account.steamId);
 

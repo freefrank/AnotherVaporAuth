@@ -23,6 +23,15 @@ class SessionData {
       (accessToken != null && accessToken!.isNotEmpty) ||
       (refreshToken != null && refreshToken!.isNotEmpty);
 
+  /// True only when a non-empty access token is present. Unlike [hasTokens]
+  /// (which also accepts a refresh-only session — legitimate for "can this be
+  /// renewed?" checks such as [AutoLogin.ensureSession]), callers that are
+  /// about to call a Steam Web API endpoint directly need *this* to be true:
+  /// those endpoints are authenticated with the access token alone, and a
+  /// refresh-only session would otherwise send an empty access token instead
+  /// of failing clearly.
+  bool get hasAccessToken => accessToken != null && accessToken!.isNotEmpty;
+
   static const _known = {'SteamID', 'AccessToken', 'RefreshToken'};
 
   factory SessionData.fromJson(Map<String, dynamic> json) {
