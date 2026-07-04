@@ -45,7 +45,18 @@ class AuthenticatorLinker {
   int _confirmType = 0;
   bool get activatesByEmail => _confirmType == 3;
 
-  AuthenticatorLinker(this.api, this.session);
+  /// Seams for [finalize]'s window timing — overridable in tests so the retry
+  /// logic can run without real 30-second waits.
+  final int Function() now;
+  final Future<void> Function(Duration) sleep;
+
+  AuthenticatorLinker(
+    this.api,
+    this.session, {
+    int Function()? now,
+    Future<void> Function(Duration)? sleep,
+  })  : now = now ?? (() => SteamTime.currentSteamTime),
+        sleep = sleep ?? Future.delayed;
 
   String get _accessToken => session.accessToken ?? '';
 
@@ -135,14 +146,37 @@ class AuthenticatorLinker {
   /// Finalizes the link with the [activationCode] Steam delivered — via SMS for
   /// phone accounts, or via email when the account has no phone. Steam wants a
   /// run of correct TOTP codes; it asks for more via `want_more` until aligned.
+  /// Seconds a caller must wait after submitting a code at [lastSubmitTime]
+  /// before a *new* TOTP window (hence a different code) is available at
+  /// [now]. Returns 0 once [now] is already in a later 30-second window.
+  /// Steam Guard codes are stable for the whole window, so retrying inside
+  /// the same one just resubmits the identical code — the old tight loop
+  /// could burn every retry on one code and trip rate limits.
+  static int windowWaitSeconds(int lastSubmitTime, int now) {
+    if (now ~/ 30 > lastSubmitTime ~/ 30) return 0;
+    // Time left in the window that lastSubmitTime belongs to, measured from
+    // now, plus a 1s buffer to be safely past the boundary.
+    final windowEnd = (lastSubmitTime ~/ 30 + 1) * 30;
+    final wait = windowEnd - now + 1;
+    return wait > 0 ? wait : 1;
+  }
+
   Future<FinalizeResult> finalize(String activationCode) async {
     final account = linkedAccount;
     if (account == null) return FinalizeResult.generalFailure;
 
+    // Steam asks for a short run of consecutive codes; each must come from a
+    // fresh window, so cap by distinct windows rather than a tight loop.
     var tries = 0;
-    while (tries <= 30) {
-      final time = SteamTime.currentSteamTime;
+    var lastSubmit = -1;
+    while (tries < 5) {
+      if (lastSubmit >= 0) {
+        final wait = windowWaitSeconds(lastSubmit, now());
+        if (wait > 0) await sleep(Duration(seconds: wait));
+      }
+      final time = now();
       final code = account.generateCode(time);
+      lastSubmit = time;
       final req = ProtoWriter()
         ..writeFixed64(1, session.steamId) // steamid (fixed64!)
         ..writeString(2, code) // authenticator_code
