@@ -626,6 +626,12 @@ abstract class AppLocalizations {
   /// **'Failed to add authenticator.'**
   String get addErrFailed;
 
+  /// No description provided for @addErrSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the authenticator to this device, so setup was stopped before it took effect. Write down this revocation code and remove the pending authenticator from your account, then try again: {code}'**
+  String addErrSaveFailed(String code);
+
   /// No description provided for @addErrBadSms.
   ///
   /// In en, this message translates to:

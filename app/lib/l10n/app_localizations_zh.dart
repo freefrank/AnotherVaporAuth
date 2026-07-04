@@ -285,6 +285,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addErrFailed => '添加验证器失败。';
 
   @override
+  String addErrSaveFailed(String code) {
+    return '无法把验证器保存到本机，已在生效前停止设置。请记下这个撤销码,并从你的账户移除这个待处理的验证器,然后重试:$code';
+  }
+
+  @override
   String get addErrBadSms => '短信验证码错误，请重试。';
 
   @override

@@ -101,6 +101,8 @@
   "addErrLocked": "该账户已被 Steam 锁定/限制 —— 请先到 help.steampowered.com 恢复后再添加验证器。",
   "addErrRateLimited": "尝试次数过多，请稍后再试。",
   "addErrFailed": "添加验证器失败。",
+  "addErrSaveFailed": "无法把验证器保存到本机，已在生效前停止设置。请记下这个撤销码,并从你的账户移除这个待处理的验证器,然后重试:{code}",
+  "@addErrSaveFailed": { "placeholders": { "code": { "type": "String" } } },
   "addErrBadSms": "短信验证码错误，请重试。",
   "debugLog": "调试日志",
   "debugLogDesc": "用于诊断登录 / 确认的网络追踪",

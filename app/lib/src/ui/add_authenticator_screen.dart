@@ -74,9 +74,18 @@ class _AddAuthenticatorScreenState
           if (widget.password != null && widget.password!.isNotEmpty) {
             _linker.linkedAccount!.password = widget.password;
           }
-          await ref
+          final saved = await ref
               .read(appControllerProvider.notifier)
               .persistAccount(_linker.linkedAccount!);
+          // If the local save failed we must NOT finalize — Steam Guard would
+          // attach to the account while AVA holds no secret to generate codes.
+          // Surface the revocation code so the user can remove the not-yet-
+          // finalized authenticator and recover.
+          if (!saved) {
+            _failWith(l.addErrSaveFailed(
+                _linker.linkedAccount!.revocationCode ?? '—'));
+            break;
+          }
           setState(() {
             _busy = false;
             _step = _Step.finalize;

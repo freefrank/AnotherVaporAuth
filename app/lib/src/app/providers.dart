@@ -575,13 +575,19 @@ class AppController extends AsyncNotifier<AppData> {
   }
 
   /// Persists an account back to disk (e.g. after a session refresh / link).
-  Future<void> persistAccount(SteamGuardAccount account) async {
+  /// Returns false if the write failed (disk full, read-only, manifest write
+  /// error) — callers persisting a freshly-linked authenticator MUST check
+  /// this before proceeding, or the secret is lost while Steam Guard may
+  /// already be attached to the account.
+  Future<bool> persistAccount(SteamGuardAccount account) async {
     final data = state.value;
-    if (data == null) return;
-    await data.store
+    if (data == null) return false;
+    final ok = await data.store
         .saveAccount(account, data.store.encrypted, passKey: data.passKey);
+    if (!ok) return false;
     await reload();
     unawaited(refreshAvatars(steamIds: [account.steamId]));
+    return true;
   }
 
   /// Changes (or sets) the unlock PIN.

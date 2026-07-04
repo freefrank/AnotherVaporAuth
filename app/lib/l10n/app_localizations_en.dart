@@ -301,6 +301,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addErrFailed => 'Failed to add authenticator.';
 
   @override
+  String addErrSaveFailed(String code) {
+    return 'Couldn\'t save the authenticator to this device, so setup was stopped before it took effect. Write down this revocation code and remove the pending authenticator from your account, then try again: $code';
+  }
+
+  @override
   String get addErrBadSms => 'Wrong SMS code, please try again.';
 
   @override

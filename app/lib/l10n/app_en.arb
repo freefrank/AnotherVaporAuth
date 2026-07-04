@@ -101,6 +101,8 @@
   "addErrLocked": "This account is locked/restricted by Steam — recover it at help.steampowered.com before adding an authenticator.",
   "addErrRateLimited": "Too many attempts. Please wait a while and try again.",
   "addErrFailed": "Failed to add authenticator.",
+  "addErrSaveFailed": "Couldn't save the authenticator to this device, so setup was stopped before it took effect. Write down this revocation code and remove the pending authenticator from your account, then try again: {code}",
+  "@addErrSaveFailed": { "placeholders": { "code": { "type": "String" } } },
   "addErrBadSms": "Wrong SMS code, please try again.",
   "debugLog": "Debug log",
   "debugLogDesc": "Network trace for diagnosing login / confirmations",
