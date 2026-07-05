@@ -20,6 +20,15 @@ abstract class StorageProvider {
     return _DesktopStorageProvider();
   }
 
+  /// Desktop portable mode: returns `<exeDir>/maFiles` when the user has
+  /// dropped a `portable.txt` marker file next to the executable, else null.
+  /// [fileExists] is injectable for tests.
+  static String? portableOverride(
+      String exeDir, bool Function(String path) fileExists) {
+    if (!fileExists(p.join(exeDir, 'portable.txt'))) return null;
+    return p.join(exeDir, 'maFiles');
+  }
+
   /// Validates a filename that came (ultimately) from a manifest — an
   /// attacker-tamperable file — before it is joined onto [maFilesDir] for a
   /// read/write/delete. A crafted `filename` like `../../x` or an absolute
@@ -132,7 +141,17 @@ class _DesktopStorageProvider extends StorageProvider {
   @override
   Future<String> maFilesDir() async {
     if (_cached != null) return _cached!;
-    // Store in the per-user application-support directory, NOT next to the
+    // Opt-in portable mode: a `portable.txt` marker dropped next to the
+    // executable keeps account data inside the app folder instead of the
+    // per-user profile. Note the vault's PIN wrap still lives in the OS
+    // keystore (DPAPI / libsecret), so a portable folder moved to a different
+    // machine or user account carries the accounts but not the unlock key.
+    final portable = StorageProvider.portableOverride(
+      p.dirname(Platform.resolvedExecutable),
+      (path) => File(path).existsSync(),
+    );
+    if (portable != null) return _cached = portable;
+    // Default: the per-user application-support directory, NOT next to the
     // executable. An exe-adjacent folder is lost or emptied by app-bundle
     // replacement, package-manager upgrades, or running from a temp/extracted
     // location — the user would see an empty vault or lose data.

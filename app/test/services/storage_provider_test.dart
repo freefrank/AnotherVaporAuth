@@ -101,4 +101,17 @@ void main() {
       }
     });
   });
+
+  group('portableOverride', () {
+    test('returns exe-adjacent maFiles dir when portable.txt exists', () {
+      final dir = StorageProvider.portableOverride(
+          '/opt/ava', (path) => path == '/opt/ava/portable.txt');
+      expect(dir, '/opt/ava/maFiles');
+    });
+
+    test('returns null without the marker', () {
+      expect(StorageProvider.portableOverride('/opt/ava', (_) => false),
+          isNull);
+    });
+  });
 }
