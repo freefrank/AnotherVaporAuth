@@ -202,7 +202,7 @@
   },
   "exportWarnTitle": "Export unencrypted maFile?",
   "exportWarnBody": "The exported .maFile is NOT encrypted. It holds this account’s Steam Guard secrets and revocation code — anyone with the file can take over your authenticator. Store it somewhere safe and delete it when done.",
-  "exportWarnPassword": "It also contains your saved Steam password.",
+  "exportIncludePassword": "Also include the saved Steam password (not recommended)",
 
   "addAuthTitle": "Add authenticator",
   "addAuthPhonePrompt": "Enter your phone number (with country code)",

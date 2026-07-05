@@ -1094,11 +1094,11 @@ abstract class AppLocalizations {
   /// **'The exported .maFile is NOT encrypted. It holds this account’s Steam Guard secrets and revocation code — anyone with the file can take over your authenticator. Store it somewhere safe and delete it when done.'**
   String get exportWarnBody;
 
-  /// No description provided for @exportWarnPassword.
+  /// No description provided for @exportIncludePassword.
   ///
   /// In en, this message translates to:
-  /// **'It also contains your saved Steam password.'**
-  String get exportWarnPassword;
+  /// **'Also include the saved Steam password (not recommended)'**
+  String get exportIncludePassword;
 
   /// No description provided for @addAuthTitle.
   ///

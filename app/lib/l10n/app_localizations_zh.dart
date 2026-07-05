@@ -537,7 +537,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '导出的 .maFile 是未加密的。它包含该账户的 Steam 令牌密钥与撤销码——任何拿到文件的人都能接管你的验证器。请妥善保存，用完及时删除。';
 
   @override
-  String get exportWarnPassword => '它还包含你保存的 Steam 密码。';
+  String get exportIncludePassword => '同时导出已保存的 Steam 密码（不建议）';
 
   @override
   String get addAuthTitle => '添加验证器';

@@ -125,6 +125,16 @@ class SteamGuardAccount {
         'Session': session.toJson(),
       };
 
+  /// JSON for a plaintext maFile export. Unlike [toJson] (internal
+  /// persistence), the saved Steam password stays out of the file unless the
+  /// user explicitly opts in — an exported maFile already grants authenticator
+  /// takeover, it shouldn't hand over the account password too.
+  Map<String, dynamic> toExportJson({bool includePassword = false}) {
+    final json = toJson();
+    if (!includePassword) json.remove('password');
+    return json;
+  }
+
   /// Steam ID convenience accessor.
   int get steamId => session.steamId;
 

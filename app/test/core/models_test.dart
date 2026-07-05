@@ -57,6 +57,31 @@ void main() {
     });
   });
 
+  group('SteamGuardAccount export JSON', () {
+    SteamGuardAccount accountWithPassword() => SteamGuardAccount.fromJson({
+          'shared_secret': 'c2hhcmVk',
+          'account_name': 'tester',
+          'password': 'hunter2',
+          'Session': {'SteamID': 76561190000000000},
+        });
+
+    test('toExportJson drops the saved password by default', () {
+      final json = accountWithPassword().toExportJson();
+      expect(json.containsKey('password'), isFalse);
+      expect(json['account_name'], 'tester');
+      expect(json['shared_secret'], 'c2hhcmVk');
+    });
+
+    test('toExportJson keeps the password when explicitly included', () {
+      final json = accountWithPassword().toExportJson(includePassword: true);
+      expect(json['password'], 'hunter2');
+    });
+
+    test('toJson (internal persistence) still carries the password', () {
+      expect(accountWithPassword().toJson()['password'], 'hunter2');
+    });
+  });
+
   group('Manifest JSON', () {
     test('round trips with field names matching the .NET version', () {
       const raw = '''

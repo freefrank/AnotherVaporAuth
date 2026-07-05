@@ -197,7 +197,7 @@
   },
   "exportWarnTitle": "导出未加密的 maFile？",
   "exportWarnBody": "导出的 .maFile 是未加密的。它包含该账户的 Steam 令牌密钥与撤销码——任何拿到文件的人都能接管你的验证器。请妥善保存，用完及时删除。",
-  "exportWarnPassword": "它还包含你保存的 Steam 密码。",
+  "exportIncludePassword": "同时导出已保存的 Steam 密码（不建议）",
 
   "addAuthTitle": "添加验证器",
   "addAuthPhonePrompt": "请输入手机号（含国家区号）",

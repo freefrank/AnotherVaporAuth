@@ -74,26 +74,40 @@ Future<void> showBackupReminderOnce(BuildContext context, WidgetRef ref) async {
 Future<void> exportMaFileFlow(
     BuildContext context, SteamGuardAccount account) async {
   final l = AppLocalizations.of(context);
-  // The export is a plaintext maFile — warn before it leaves the app, and call
-  // out a saved password specifically since it travels with the file.
+  // The export is a plaintext maFile — warn before it leaves the app. A saved
+  // Steam password is stripped from the export unless the user opts in here.
   final hasPassword = (account.password ?? '').isNotEmpty;
+  var includePassword = false;
   final confirmed = await showDialog<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(l.exportWarnTitle),
-      content: Text(
-        hasPassword
-            ? '${l.exportWarnBody}\n\n${l.exportWarnPassword}'
-            : l.exportWarnBody,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => AlertDialog(
+        title: Text(l.exportWarnTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.exportWarnBody),
+            if (hasPassword)
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                value: includePassword,
+                onChanged: (v) =>
+                    setState(() => includePassword = v ?? false),
+                title: Text(l.exportIncludePassword),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l.commonCancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l.commonExport)),
+        ],
       ),
-      actions: [
-        TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.commonCancel)),
-        FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.commonExport)),
-      ],
     ),
   );
   if (confirmed != true) return;
@@ -104,7 +118,8 @@ Future<void> exportMaFileFlow(
     final raw = (account.accountName ?? '').trim();
     final base = raw.isEmpty ? '${account.steamId}' : raw;
     final safe = base.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
-    final json = const JsonEncoder.withIndent('  ').convert(account.toJson());
+    final json = const JsonEncoder.withIndent('  ')
+        .convert(account.toExportJson(includePassword: includePassword));
     final dir = await getTemporaryDirectory();
     path = '${dir.path}/$safe.maFile';
     await File(path).writeAsString(json);

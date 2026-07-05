@@ -45,7 +45,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _qrUrl;
   bool _busy = false;
   bool _showPassword = false;
-  bool _savePassword = true; // store the password in the maFile for auto-refresh
+  // Storing the Steam password in the maFile enables headless session
+  // refresh, but widens the blast radius of any maFile leak — opt-in only.
+  bool _savePassword = false;
   bool _waiting = false; // polling for mobile/email confirmation
   String? _status;
   String? _error;
