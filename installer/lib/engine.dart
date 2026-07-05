@@ -105,22 +105,26 @@ foreach (\$sf in @('Programs','Desktop')) {
     await Process.run('reg', ['delete', _regKey, '/f']);
     progress(0.8);
     log('scheduling folder removal');
-    // This exe lives inside the folder, so it can't delete it while running:
-    // a detached PowerShell retries until our process exits and the lock on
-    // uninstall.exe is released. (Not cmd: Dart's Windows argument quoting
-    // and cmd's parser disagree on embedded quotes, silently breaking `rd`.)
-    await Process.start(
-      'powershell',
-      [
-        '-NoProfile',
-        '-WindowStyle', 'Hidden',
-        '-Command',
-        "for(\$i=0;\$i -lt 15;\$i++){ Start-Sleep 1; "
-            "try { Remove-Item -LiteralPath '${_q(dir)}' -Recurse -Force "
-            '-ErrorAction Stop; break } catch {} }',
-      ],
-      mode: ProcessStartMode.detached,
-    );
+    // This exe lives inside the folder, so it can't delete it while running.
+    // A plain detached child doesn't survive either: the Enigma box tears
+    // down / cripples children spawned from inside it on exit. So the
+    // cleanup script goes to %TEMP% and is launched via WMI
+    // Win32_Process.Create — that process is parented to the WMI service,
+    // outside our process tree, and reliably outlives the uninstaller.
+    final script = p.join(
+        Platform.environment['TEMP'] ?? r'C:\Windows\Temp',
+        'ava_uninstall_cleanup.ps1');
+    File(script).writeAsStringSync('''
+for (\$i = 0; \$i -lt 30; \$i++) {
+  Start-Sleep 1
+  try { Remove-Item -LiteralPath '${_q(dir)}' -Recurse -Force -ErrorAction Stop; break } catch {}
+}
+Remove-Item -LiteralPath \$MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
+''');
+    await _ps("Invoke-CimMethod -ClassName Win32_Process -MethodName Create "
+        "-Arguments @{ CommandLine = 'powershell -NoProfile -WindowStyle "
+        "Hidden -ExecutionPolicy Bypass -File \"${_q(script)}\"' } "
+        '| Out-Null');
     progress(1.0);
     log('uninstalled — this window can be closed');
   }
