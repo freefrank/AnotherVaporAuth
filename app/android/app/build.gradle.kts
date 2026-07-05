@@ -8,9 +8,11 @@ plugins {
 }
 
 // Release signing is loaded from android/key.properties (git-ignored, never
-// committed). When it's absent — CI, or a dev who only builds debug — the
-// release build falls back to the debug keystore so `flutter run --release`
-// still works. See android/key.properties.example.
+// committed). When it's absent — CI, or a dev who only builds debug — release
+// APKs fall back to the debug keystore so `flutter run --release` still works.
+// Store bundles (bundleRelease) are the exception: they must never ship
+// debug-signed, so those fail closed below when key.properties is missing.
+// See android/key.properties.example.
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 val hasReleaseSigning = keystorePropertiesFile.exists()
@@ -65,6 +67,21 @@ android {
                 "proguard-rules.pro",
             )
         }
+    }
+}
+
+// Fail closed: a Play bundle built without the upload key would be silently
+// debug-signed and rejected (or worse, archived as a broken release artifact).
+gradle.taskGraph.whenReady {
+    val aabTask = Regex("^bundle\\w*Release$") // bundleRelease, bundle<Flavor>Release
+    if (!hasReleaseSigning &&
+        allTasks.any { it.project == project && aabTask.matches(it.name) }
+    ) {
+        throw GradleException(
+            "Release bundle requested but android/key.properties is missing — " +
+                "the AAB would be debug-signed. Provide the upload key " +
+                "(see android/key.properties.example) or build a debug bundle instead."
+        )
     }
 }
 
