@@ -106,10 +106,19 @@ foreach (\$sf in @('Programs','Desktop')) {
     progress(0.8);
     log('scheduling folder removal');
     // This exe lives inside the folder, so it can't delete it while running:
-    // a detached cmd waits for us to exit, then removes the tree.
+    // a detached PowerShell retries until our process exits and the lock on
+    // uninstall.exe is released. (Not cmd: Dart's Windows argument quoting
+    // and cmd's parser disagree on embedded quotes, silently breaking `rd`.)
     await Process.start(
-      'cmd',
-      ['/c', 'ping -n 3 127.0.0.1 >nul & rd /s /q "$dir"'],
+      'powershell',
+      [
+        '-NoProfile',
+        '-WindowStyle', 'Hidden',
+        '-Command',
+        "for(\$i=0;\$i -lt 15;\$i++){ Start-Sleep 1; "
+            "try { Remove-Item -LiteralPath '${_q(dir)}' -Recurse -Force "
+            '-ErrorAction Stop; break } catch {} }',
+      ],
       mode: ProcessStartMode.detached,
     );
     progress(1.0);
