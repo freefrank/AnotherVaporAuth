@@ -89,11 +89,11 @@ Desktop releases (Windows x64 zip + Linux x86_64 AppImage) are built by
 GitHub Actions on every `v*` tag or manual dispatch, see
 `.github/workflows/desktop-release.yml`.
 
-**Portable mode (desktop):** create an empty `portable.txt` next to the
-executable and account data is kept in a `maFiles/` folder beside the app
-instead of your user profile. The vault's PIN unlock key still lives in the
-OS keystore (DPAPI / libsecret), so a portable folder moved to another
-machine carries the accounts but needs a maFile re-import to unlock there.
+**Portable build (Windows):** a separate workflow
+(`.github/workflows/windows-portable.yml`) packs the whole app into one
+single-file `AVA-…-portable.exe` (Enigma Virtual Box). It runs from anywhere
+with nothing to install; account data is stored in the regular per-user data
+directory, same as the folder build.
 
 ## Fonts
 

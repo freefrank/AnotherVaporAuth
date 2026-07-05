@@ -8,11 +8,10 @@ automated releases.
 ## [v0.78.2] — 2026-07-05
 
 ### Added
-- **Desktop portable mode**: drop a `portable.txt` file next to the executable
-  and account data lives in a `maFiles/` folder beside the app instead of the
-  user profile. Note: the vault's PIN unlock key still lives in the OS keystore
-  (DPAPI / libsecret), so a portable folder moved to another machine or user
-  carries the accounts but must be re-unlocked via maFile import there.
+- **Windows portable build**: a dedicated workflow packs the app into a
+  **single-file** `AVA-…-portable.exe` (Enigma Virtual Box) — nothing to
+  install, runs from anywhere; account data stays in the per-user data
+  directory just like the folder build.
 - **Desktop release CI**: `v*` tags (or manual dispatch) now build a Windows
   x64 folder and a Linux x86_64 AppImage; tag builds attach both to the GitHub
   Release. Artifacts are no longer double-zipped.
@@ -20,10 +19,9 @@ automated releases.
 —
 
 ### 新增
-- **桌面便携模式**:在可执行文件旁放一个 `portable.txt`,账户数据就存到程序目录下的
-  `maFiles/`,不再写入用户配置目录。注意:金库的 PIN 解锁密钥仍在系统钥匙串
-  (DPAPI / libsecret)里,便携文件夹拷到其他电脑/用户后账户数据还在,
-  但需通过 maFile 导入重新解锁。
+- **Windows 便携版**:独立 workflow 打包出**单文件** `AVA-…-portable.exe`
+  (Enigma Virtual Box),免安装、放哪都能跑;账户数据与普通版一样写入
+  用户数据目录。
 - **桌面版发布 CI**:打 `v*` tag(或手动触发)会构建 Windows x64 目录包与
   Linux x86_64 AppImage;tag 构建会自动附到 GitHub Release,产物不再出现双层 zip。
 

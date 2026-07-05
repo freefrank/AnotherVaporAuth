@@ -1,0 +1,70 @@
+name: Windows portable
+
+# Dedicated packaging workflow: builds the Windows app and packs it into a
+# single-file portable exe with Enigma Virtual Box (tool/pack_portable.ps1).
+# Account data still goes to the per-user data directory.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: '3.44.4'
+
+jobs:
+  portable:
+    name: Single-file exe
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - run: flutter pub get
+      - run: flutter build windows --release
+
+      - name: Read version
+        id: ver
+        shell: bash
+        run: echo "v=$(grep '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Install Enigma Virtual Box
+        shell: pwsh
+        run: |
+          curl.exe -sL -o "$env:TEMP\enigmavb.exe" https://enigmaprotector.com/assets/files/enigmavb.exe
+          Start-Process "$env:TEMP\enigmavb.exe" -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+
+      - name: Pack single-file exe
+        shell: pwsh
+        working-directory: .
+        run: ./tool/pack_portable.ps1 -ReleaseDir app/build/windows/x64/runner/Release -Output "AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable.exe"
+
+      - name: Smoke test
+        shell: pwsh
+        working-directory: .
+        run: |
+          Start-Process "AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable.exe"
+          Start-Sleep 8
+          $p = Get-Process "AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable" -ErrorAction SilentlyContinue
+          if (-not $p) { throw 'packed exe did not stay running' }
+          $p | Stop-Process
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable
+          path: AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable.exe
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable.exe
