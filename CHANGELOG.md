@@ -5,6 +5,32 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.78.1] — 2026-07-04
+
+### Changed
+- Saving the Steam password at login is now **opt-in** (previously checked by
+  default). Exported maFiles no longer include a saved password unless
+  explicitly ticked in the export dialog — a plaintext maFile already grants
+  authenticator takeover; it shouldn't hand over the account password too.
+- Building a release AAB now **fails outright** when the upload key
+  (`android/key.properties`) is missing, instead of silently producing a
+  debug-signed bundle. `flutter run --release` is unaffected.
+
+### Removed
+- Unused dependencies `cookie_jar`, `dio_cookie_manager`, `asn1lib`.
+
+—
+
+### 变更
+- 登录时保存 Steam 密码改为**显式勾选**（此前默认勾选）。导出的 maFile 默认不再携带
+  已保存的密码，除非在导出对话框中显式勾选——明文 maFile 本身已足以接管验证器，
+  不应再连账户密码一起交出去。
+- 缺少上传密钥（`android/key.properties`）时，构建 release AAB 会**直接失败**，
+  而不是悄悄产出 debug 签名的包；`flutter run --release` 不受影响。
+
+### 移除
+- 未使用的依赖 `cookie_jar`、`dio_cookie_manager`、`asn1lib`。
+
 ## [v0.78.0] — 2026-07-04
 
 Rolls up v0.77.1–v0.77.3 for release: animated avatar-frame flicker fix,
