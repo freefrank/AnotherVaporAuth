@@ -63,8 +63,13 @@ flutter run -d linux               # 或 windows / macos
 flutter build apk --release --split-per-abi
 ```
 
-每推送一个 `v*` 标签，GitHub Actions 会自动构建发布（Android APK + Linux + Windows），
-见 `.github/workflows/release.yml`。
+每推送一个 `v*` 标签（或手动触发），GitHub Actions 会自动构建桌面版发布
+（Windows x64 zip + Linux x86_64 AppImage），见 `.github/workflows/desktop-release.yml`。
+
+**便携模式（桌面端）**：在可执行文件旁新建一个空的 `portable.txt`，账户数据就会
+存到程序目录下的 `maFiles/`，不再写入用户配置目录。注意：金库 PIN 解锁密钥仍在
+系统钥匙串（DPAPI / libsecret）中，便携文件夹拷到其他电脑后账户数据还在，
+但需要重新导入 maFile 才能解锁。
 
 ## 字体
 

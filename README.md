@@ -85,8 +85,15 @@ flutter run -d linux               # or windows / macos
 flutter build apk --release --split-per-abi
 ```
 
-Releases are built automatically by GitHub Actions on every `v*` tag
-(Android APKs + Linux + Windows), see `.github/workflows/release.yml`.
+Desktop releases (Windows x64 zip + Linux x86_64 AppImage) are built by
+GitHub Actions on every `v*` tag or manual dispatch, see
+`.github/workflows/desktop-release.yml`.
+
+**Portable mode (desktop):** create an empty `portable.txt` next to the
+executable and account data is kept in a `maFiles/` folder beside the app
+instead of your user profile. The vault's PIN unlock key still lives in the
+OS keystore (DPAPI / libsecret), so a portable folder moved to another
+machine carries the accounts but needs a maFile re-import to unlock there.
 
 ## Fonts
 
