@@ -20,12 +20,9 @@ dependencies:
   # Crypto (maFile PBKDF2+AES-CBC, RSA, HMAC)
   pointycastle: ^4.0.0
   crypto: ^3.0.6
-  asn1lib: ^1.5.5
 
   # Networking (Steam web API)
   dio: ^5.7.0
-  cookie_jar: ^4.0.8
-  dio_cookie_manager: ^3.1.1
 
   # QR (login direction A render / direction B scan)
   qr_flutter: ^4.1.0
