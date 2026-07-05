@@ -72,8 +72,9 @@ jobs:
 
   linux-appimage:
     name: Linux AppImage
-    # Oldest supported LTS runner => oldest glibc => widest AppImage compat.
-    runs-on: ubuntu-22.04
+    # 24.04: Flutter 3.44's Linux build passes clang≥17-only warning flags
+    # (-Wno-deprecated-literal-operator), which 22.04's clang 14 rejects.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: app
