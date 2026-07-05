@@ -58,8 +58,14 @@ jobs:
         shell: pwsh
         working-directory: .
         run: |
-          curl.exe -sL -o "$env:TEMP\enigmavb.exe" https://enigmaprotector.com/assets/files/enigmavb.exe
-          Start-Process "$env:TEMP\enigmavb.exe" -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+          $out = "$env:TEMP\enigmavb.exe"
+          foreach ($i in 1..3) {
+            curl.exe -sL -o $out https://enigmaprotector.com/assets/files/enigmavb.exe
+            if ((Get-Item $out -ErrorAction SilentlyContinue).Length -gt 5MB) { break }
+            Start-Sleep 5
+          }
+          if ((Get-Item $out).Length -le 5MB) { throw 'enigmavb.exe download failed/truncated' }
+          Start-Process $out -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
 
       - name: Pack single-file setup exe
         shell: pwsh
