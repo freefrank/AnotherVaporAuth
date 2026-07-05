@@ -103,16 +103,31 @@ foreach (\$sf in @('Programs','Desktop')) {
     progress(0.5);
     log('removing registry entry');
     await Process.run('reg', ['delete', _regKey, '/f']);
-    progress(0.8);
-    log('scheduling folder removal');
-    // This exe lives inside the folder, so it can't delete it while running.
-    // A plain detached child doesn't survive either: the Enigma box tears
-    // down / cripples children spawned from inside it on exit. So the
-    // cleanup script goes to %TEMP% and is launched via WMI
-    // Win32_Process.Create — that process is parented to the WMI service,
-    // outside our process tree, and reliably outlives the uninstaller.
-    final script = p.join(
-        Platform.environment['TEMP'] ?? r'C:\Windows\Temp',
+    progress(0.7);
+    // This exe can't delete itself while running, and nothing spawned from
+    // inside the Enigma box at exit time has proven reliable. So: delete
+    // everything else synchronously with plain Dart I/O right now, then
+    // register a RunOnce entry (reg.exe children DO work from the box) that
+    // clears the leftover uninstall.exe + empty dir at next logon. A WMI-
+    // launched sweeper is attempted too as a best effort for instant cleanup.
+    log('removing files');
+    await for (final e in Directory(dir).list()) {
+      if (p.basename(e.path).toLowerCase() == 'uninstall.exe') continue;
+      try {
+        await e.delete(recursive: true);
+      } catch (err) {
+        log('  ! could not remove ${p.basename(e.path)}: $err');
+      }
+    }
+    progress(0.85);
+    log('registering leftover cleanup (next logon)');
+    await Process.run('reg', [
+      'add', r'HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce',
+      '/v', 'AVACleanup', '/d', 'cmd.exe /c rd /s /q "$dir"', '/f',
+    ]);
+    progress(0.95);
+    log('trying instant cleanup');
+    final script = p.join(Platform.environment['TEMP'] ?? r'C:\Windows\Temp',
         'ava_uninstall_cleanup.ps1');
     File(script).writeAsStringSync('''
 for (\$i = 0; \$i -lt 30; \$i++) {
@@ -121,10 +136,15 @@ for (\$i = 0; \$i -lt 30; \$i++) {
 }
 Remove-Item -LiteralPath \$MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
 ''');
-    await _ps("Invoke-CimMethod -ClassName Win32_Process -MethodName Create "
-        "-Arguments @{ CommandLine = 'powershell -NoProfile -WindowStyle "
-        "Hidden -ExecutionPolicy Bypass -File \"${_q(script)}\"' } "
-        '| Out-Null');
+    final wmi = await Process.run('powershell', [
+      '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
+      "(Invoke-CimMethod -ClassName Win32_Process -MethodName Create "
+          "-Arguments @{ CommandLine = 'powershell -NoProfile -WindowStyle "
+          "Hidden -ExecutionPolicy Bypass -File \"${_q(script)}\"' })"
+          '.ReturnValue',
+    ]);
+    log('  sweeper rv=${wmi.stdout.toString().trim()}'
+        '${wmi.exitCode != 0 ? ' err=${wmi.stderr.toString().trim()}' : ''}');
     progress(1.0);
     log('uninstalled — this window can be closed');
   }
