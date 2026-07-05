@@ -37,17 +37,51 @@ jobs:
         shell: bash
         run: echo "v=$(grep '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)" >> "$GITHUB_OUTPUT"
 
-      # The artifact is the bare Release folder: GitHub wraps artifacts in one
-      # zip on download, so uploading a pre-zipped file would nest two layers.
+      # ---- scene-style installer (installer/): app Release becomes the
+      # payload asset, the installer app is built around it, then Enigma
+      # packs the whole thing into one setup exe. ----
+      - name: Embed payload
+        shell: pwsh
+        working-directory: .
+        run: |
+          Compress-Archive -Path app/build/windows/x64/runner/Release/* -DestinationPath installer/assets/payload.zip -Force
+          $size = (Get-Item installer/assets/payload.zip).Length
+          if ($size -lt 10MB) { throw "payload.zip suspiciously small ($size bytes) — refusing to ship a placeholder installer" }
+
+      - name: Build installer app
+        working-directory: installer
+        run: |
+          flutter pub get
+          flutter build windows --release --dart-define=AVA_VERSION=${{ steps.ver.outputs.v }}
+
+      - name: Install Enigma Virtual Box
+        shell: pwsh
+        working-directory: .
+        run: |
+          curl.exe -sL -o "$env:TEMP\enigmavb.exe" https://enigmaprotector.com/assets/files/enigmavb.exe
+          Start-Process "$env:TEMP\enigmavb.exe" -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+
+      - name: Pack single-file setup exe
+        shell: pwsh
+        working-directory: .
+        run: ./tool/pack_portable.ps1 -ReleaseDir installer/build/windows/x64/runner/Release -Output "AVA-v${{ steps.ver.outputs.v }}-windows-x64-setup.exe" -ExeName ava_installer.exe -NoTempMap
+
+      - name: E2E install test
+        shell: pwsh
+        working-directory: .
+        run: |
+          $p = Start-Process ".\AVA-v${{ steps.ver.outputs.v }}-windows-x64-setup.exe" -ArgumentList '--auto' -PassThru -Wait
+          if ($p.ExitCode -ne 0) { throw "auto-install exited $($p.ExitCode)" }
+          $dir = "$env:LOCALAPPDATA\Programs\AVA"
+          foreach ($f in @('ava.exe','uninstall.exe','data\icudtl.dat')) {
+            if (-not (Test-Path "$dir\$f")) { throw "missing $f after install" }
+          }
+          reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\AVA /v UninstallString
+
       - uses: actions/upload-artifact@v4
         with:
-          name: AVA-v${{ steps.ver.outputs.v }}-windows-x64
-          path: app/build/windows/x64/runner/Release/
-
-      - name: Zip for release
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: pwsh
-        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "AVA-v${{ steps.ver.outputs.v }}-windows-x64.zip"
+          name: AVA-v${{ steps.ver.outputs.v }}-windows-x64-setup
+          path: AVA-v${{ steps.ver.outputs.v }}-windows-x64-setup.exe
 
       - name: Extract changelog
         if: startsWith(github.ref, 'refs/tags/')
@@ -67,7 +101,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: app/AVA-v${{ steps.ver.outputs.v }}-windows-x64.zip
+          files: AVA-v${{ steps.ver.outputs.v }}-windows-x64-setup.exe
           body_path: ${{ steps.notes.outputs.path }}
 
   linux-appimage:

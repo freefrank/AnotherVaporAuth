@@ -12,8 +12,13 @@ automated releases.
   **single-file** `AVA-…-portable.exe` (Enigma Virtual Box) — nothing to
   install, runs from anywhere; account data stays in the per-user data
   directory just like the folder build.
-- **Desktop release CI**: `v*` tags (or manual dispatch) now build a Windows
-  x64 folder and a Linux x86_64 AppImage; tag builds attach both to the GitHub
+- **Scene-style Windows installer**: a single-file `AVA-…-setup.exe` built
+  from a dedicated Flutter installer app — frameless neon/pixel UI with
+  scanlines and a greetz marquee; per-user install (no UAC), Start-menu /
+  desktop shortcuts, proper Add/Remove entry, and an uninstaller that never
+  touches account data.
+- **Desktop release CI**: `v*` tags (or manual dispatch) now build the Windows
+  installer and a Linux x86_64 AppImage; tag builds attach both to the GitHub
   Release. Artifacts are no longer double-zipped.
 
 —
@@ -22,7 +27,10 @@ automated releases.
 - **Windows 便携版**:独立 workflow 打包出**单文件** `AVA-…-portable.exe`
   (Enigma Virtual Box),免安装、放哪都能跑;账户数据与普通版一样写入
   用户数据目录。
-- **桌面版发布 CI**:打 `v*` tag(或手动触发)会构建 Windows x64 目录包与
+- **scene 风格 Windows 安装包**:单文件 `AVA-…-setup.exe`,由专门的 Flutter
+  安装器应用构建——无边框霓虹像素界面、扫描线与跑马灯动效;装到用户目录免 UAC,
+  自带开始菜单/桌面快捷方式与标准卸载项,卸载不会动账户数据。
+- **桌面版发布 CI**:打 `v*` tag(或手动触发)会构建 Windows 安装包与
   Linux x86_64 AppImage;tag 构建会自动附到 GitHub Release,产物不再出现双层 zip。
 
 ## [v0.78.1] — 2026-07-04

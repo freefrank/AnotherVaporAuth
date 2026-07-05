@@ -63,12 +63,17 @@ flutter run -d linux               # 或 windows / macos
 flutter build apk --release --split-per-abi
 ```
 
-每推送一个 `v*` 标签（或手动触发），GitHub Actions 会自动构建桌面版发布
-（Windows x64 zip + Linux x86_64 AppImage），见 `.github/workflows/desktop-release.yml`。
+每推送一个 `v*` 标签（或手动触发），GitHub Actions 会自动构建桌面版发布，
+见 `.github/workflows/desktop-release.yml`：
+
+- **Windows 安装包** —— scene 风格的单文件 `AVA-…-setup.exe`，由我们自研的
+  Flutter 安装器（`installer/`）打包：无边框霓虹像素界面，装到用户目录免 UAC，
+  自带开始菜单/桌面快捷方式与标准卸载项；卸载不会动账户数据。
+- **Linux AppImage** —— 单文件 `AVA-…-linux-x86_64.AppImage`。
 
 **便携版（Windows）**：由独立 workflow（`.github/workflows/windows-portable.yml`）
 打包为**单文件** `AVA-…-portable.exe`（Enigma Virtual Box），免安装、放哪都能跑；
-账户数据与普通版一样写入用户数据目录。
+账户数据与安装版一样写入用户数据目录。
 
 ## 字体
 

@@ -85,15 +85,20 @@ flutter run -d linux               # or windows / macos
 flutter build apk --release --split-per-abi
 ```
 
-Desktop releases (Windows x64 zip + Linux x86_64 AppImage) are built by
-GitHub Actions on every `v*` tag or manual dispatch, see
-`.github/workflows/desktop-release.yml`.
+Desktop releases are built by GitHub Actions on every `v*` tag or manual
+dispatch, see `.github/workflows/desktop-release.yml`:
+
+- **Windows installer** — a scene-style single-file `AVA-…-setup.exe` built
+  from our own Flutter installer app (`installer/`): frameless neon/pixel UI,
+  installs per-user (no UAC), Start-menu / desktop shortcuts and a proper
+  uninstall entry. Uninstalling never touches account data.
+- **Linux AppImage** — single-file `AVA-…-linux-x86_64.AppImage`.
 
 **Portable build (Windows):** a separate workflow
 (`.github/workflows/windows-portable.yml`) packs the whole app into one
 single-file `AVA-…-portable.exe` (Enigma Virtual Box). It runs from anywhere
 with nothing to install; account data is stored in the regular per-user data
-directory, same as the folder build.
+directory, same as the installed build.
 
 ## Fonts
 

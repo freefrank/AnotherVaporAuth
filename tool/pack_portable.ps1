@@ -7,7 +7,11 @@
 # Requires enigmavbconsole.exe on PATH or at the default install location.
 param(
     [Parameter(Mandatory = $true)][string]$ReleaseDir,
-    [Parameter(Mandatory = $true)][string]$Output
+    [Parameter(Mandatory = $true)][string]$Output,
+    [string]$ExeName = 'ava.exe',
+    # Off: the process image stays the outer packed exe, so the app can copy
+    # Platform.resolvedExecutable to reproduce itself (installer → uninstaller).
+    [switch]$NoTempMap
 )
 $ErrorActionPreference = 'Stop'
 
@@ -27,8 +31,9 @@ else {
 }
 if (-not $console) { throw 'enigmavbconsole.exe not found (install Enigma Virtual Box)' }
 
-$exe = Join-Path $ReleaseDir 'ava.exe'
-if (-not (Test-Path $exe)) { throw "ava.exe not found in $ReleaseDir" }
+$exe = Join-Path $ReleaseDir $ExeName
+if (-not (Test-Path $exe)) { throw "$ExeName not found in $ReleaseDir" }
+$mapTemp = if ($NoTempMap) { 'False' } else { 'True' }
 
 function Get-FileXml([string]$path) {
     $name = [System.Security.SecurityElement]::Escape((Split-Path -Leaf $path))
@@ -96,7 +101,7 @@ $entries
   </Packaging>
   <Options>
     <ShareVirtualSystem>False</ShareVirtualSystem>
-    <MapExecutableWithTemporaryFile>True</MapExecutableWithTemporaryFile>
+    <MapExecutableWithTemporaryFile>$mapTemp</MapExecutableWithTemporaryFile>
     <TemporaryFileMask/>
     <AllowRunningOfVirtualExeFiles>True</AllowRunningOfVirtualExeFiles>
     <ProcessesOfAnyPlatforms>False</ProcessesOfAnyPlatforms>
