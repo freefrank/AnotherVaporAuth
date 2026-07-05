@@ -9,10 +9,13 @@ import 'fx.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
-  final uninstall = args.contains('--uninstall') ||
+  final staged = InstallEngine.isStaged;
+  final uninstall = staged ||
+      args.contains('--uninstall') ||
       p.basename(Platform.resolvedExecutable).toLowerCase() ==
           'uninstall.exe';
-  final auto = args.contains('--auto');
+  final auto =
+      args.contains('--auto') || (staged && InstallEngine.stagedAuto);
   await windowManager.ensureInitialized();
   const options = WindowOptions(
     size: Size(760, 460),
@@ -26,14 +29,18 @@ void main(List<String> args) async {
     await windowManager.show();
     await windowManager.focus();
   });
-  runApp(InstallerApp(uninstall: uninstall, auto: auto));
+  runApp(InstallerApp(uninstall: uninstall, auto: auto, staged: staged));
 }
 
 class InstallerApp extends StatelessWidget {
   const InstallerApp(
-      {super.key, required this.uninstall, required this.auto});
+      {super.key,
+      required this.uninstall,
+      required this.auto,
+      required this.staged});
   final bool uninstall;
   final bool auto;
+  final bool staged;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -42,7 +49,8 @@ class InstallerApp extends StatelessWidget {
             brightness: Brightness.dark,
             scaffoldBackgroundColor: Fx.bg,
             fontFamily: Fx.font),
-        home: InstallerScreen(uninstall: uninstall, auto: auto),
+        home: InstallerScreen(
+            uninstall: uninstall, auto: auto, staged: staged),
       );
 }
 
@@ -50,9 +58,13 @@ enum Phase { ready, working, done, error }
 
 class InstallerScreen extends StatefulWidget {
   const InstallerScreen(
-      {super.key, required this.uninstall, required this.auto});
+      {super.key,
+      required this.uninstall,
+      required this.auto,
+      required this.staged});
   final bool uninstall;
   final bool auto;
+  final bool staged;
 
   @override
   State<InstallerScreen> createState() => _InstallerScreenState();
@@ -82,7 +94,9 @@ class _InstallerScreenState extends State<InstallerScreen>
   @override
   void initState() {
     super.initState();
-    if (widget.auto) {
+    // The staged cleanup copy always starts immediately — the user already
+    // confirmed in stage 1.
+    if (widget.auto || widget.staged) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _start());
     }
   }
@@ -113,9 +127,16 @@ class _InstallerScreenState extends State<InstallerScreen>
       _logs.clear();
     });
     try {
-      if (widget.uninstall) {
-        await InstallEngine.uninstall(
+      if (widget.staged) {
+        await InstallEngine.uninstallExecute(
             log: _log, progress: (v) => setState(() => _progress = v));
+      } else if (widget.uninstall) {
+        InstallEngine.autoHandover = widget.auto;
+        await InstallEngine.uninstallPrepare(
+            log: _log, progress: (v) => setState(() => _progress = v));
+        // Stage 2 (the %TEMP% copy) takes over from here, with its own
+        // window; this instance must release its file lock right away.
+        exit(0);
       } else {
         await InstallEngine.install(
           dir: _path.text.trim(),

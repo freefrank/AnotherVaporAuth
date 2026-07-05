@@ -81,7 +81,37 @@ class InstallEngine {
 
   static String get selfDir => p.dirname(Platform.resolvedExecutable);
 
-  static Future<void> uninstall({
+  // ---- two-stage uninstall ----
+  // The uninstaller can't clean the install dir while running from it: it
+  // can't delete its own exe, and the Enigma box overlays its virtual files
+  // (data/, flutter_windows.dll, …) onto the real dir, so deletes on the
+  // shadowed names fail. Classic solution (same as Inno Setup): copy self to
+  // %TEMP%, relaunch from there, and let the staged copy do the real work.
+  // The handover uses a sidecar file, not argv — command lines have proven
+  // unreliable across the Enigma boundary.
+
+  static const _stageExe = 'ava_uninstall_stage.exe';
+  static String get _tempDir =>
+      Platform.environment['TEMP'] ?? r'C:\Windows\Temp';
+  static String get _markerPath => p.join(_tempDir, 'ava_uninstall_job.txt');
+
+  /// True when this process is the staged copy running from %TEMP%.
+  static bool get isStaged =>
+      p.basename(Platform.resolvedExecutable).toLowerCase() == _stageExe;
+
+  /// Auto flag recorded by the first stage for the staged copy.
+  static bool get stagedAuto {
+    try {
+      return File(_markerPath).readAsLinesSync().contains('auto');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Stage 1, runs from the install dir: removes shortcuts + registry, then
+  /// hands over to a copy of itself in %TEMP% and returns so the caller can
+  /// exit immediately.
+  static Future<void> uninstallPrepare({
     required void Function(String line) log,
     required void Function(double p01) progress,
   }) async {
@@ -92,7 +122,7 @@ class InstallEngine {
     log('closing running instances');
     await Process.run(
         'taskkill', ['/im', 'ava.exe', '/f', '/fi', 'STATUS eq RUNNING']);
-    progress(0.2);
+    progress(0.3);
     log('removing shortcuts');
     await _ps('''
 \$ws = New-Object -ComObject WScript.Shell
@@ -100,51 +130,59 @@ foreach (\$sf in @('Programs','Desktop')) {
   \$lnk = Join-Path \$ws.SpecialFolders(\$sf) 'AVA.lnk'
   if (Test-Path \$lnk) { Remove-Item \$lnk -Force }
 }''');
-    progress(0.5);
+    progress(0.6);
     log('removing registry entry');
     await Process.run('reg', ['delete', _regKey, '/f']);
-    progress(0.7);
-    // This exe can't delete itself while running, and nothing spawned from
-    // inside the Enigma box at exit time has proven reliable. So: delete
-    // everything else synchronously with plain Dart I/O right now, then
-    // register a RunOnce entry (reg.exe children DO work from the box) that
-    // clears the leftover uninstall.exe + empty dir at next logon. A WMI-
-    // launched sweeper is attempted too as a best effort for instant cleanup.
-    log('removing files');
-    await for (final e in Directory(dir).list()) {
-      if (p.basename(e.path).toLowerCase() == 'uninstall.exe') continue;
+    progress(0.8);
+    log('handing over to cleanup stage');
+    final stage = p.join(_tempDir, _stageExe);
+    await File(Platform.resolvedExecutable).copy(stage);
+    File(_markerPath).writeAsStringSync(
+        [dir, if (_autoHandover) 'auto'].join('\n'));
+    await Process.start(stage, const [], mode: ProcessStartMode.detached);
+    progress(1.0);
+  }
+
+  /// Set by main() so the staged copy knows to run unattended.
+  static bool _autoHandover = false;
+  static set autoHandover(bool v) => _autoHandover = v;
+
+  /// Stage 2, runs from %TEMP%: deletes the whole install dir (retrying
+  /// while stage 1 shuts down), then schedules its own removal via RunOnce.
+  static Future<void> uninstallExecute({
+    required void Function(String line) log,
+    required void Function(double p01) progress,
+  }) async {
+    final lines = File(_markerPath).readAsLinesSync();
+    final dir = lines.first.trim();
+    if (!looksLikeInstallDir(dir)) {
+      throw StateError('$dir does not look like an AVA install — aborting');
+    }
+    log('removing $dir');
+    var deleted = false;
+    for (var i = 0; i < 30 && !deleted; i++) {
       try {
-        await e.delete(recursive: true);
-      } catch (err) {
-        log('  ! could not remove ${p.basename(e.path)}: $err');
+        await Directory(dir).delete(recursive: true);
+        deleted = true;
+      } catch (_) {
+        // Stage 1 (uninstall.exe) may still be exiting and holding its lock.
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+        progress(0.1 + 0.7 * (i / 30));
       }
     }
-    progress(0.85);
-    log('registering leftover cleanup (next logon)');
+    if (!deleted) {
+      throw StateError('could not remove $dir (files still in use?)');
+    }
+    progress(0.9);
+    log('scheduling stage cleanup');
+    File(_markerPath).delete().ignore();
+    // This staged exe can't delete itself either; RunOnce sweeps it at the
+    // next logon (reg.exe from inside the box is proven reliable).
     await Process.run('reg', [
       'add', r'HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce',
-      '/v', 'AVACleanup', '/d', 'cmd.exe /c rd /s /q "$dir"', '/f',
+      '/v', 'AVAUninstallStageCleanup',
+      '/d', 'cmd.exe /c del /f /q "${p.join(_tempDir, _stageExe)}"', '/f',
     ]);
-    progress(0.95);
-    log('trying instant cleanup');
-    final script = p.join(Platform.environment['TEMP'] ?? r'C:\Windows\Temp',
-        'ava_uninstall_cleanup.ps1');
-    File(script).writeAsStringSync('''
-for (\$i = 0; \$i -lt 30; \$i++) {
-  Start-Sleep 1
-  try { Remove-Item -LiteralPath '${_q(dir)}' -Recurse -Force -ErrorAction Stop; break } catch {}
-}
-Remove-Item -LiteralPath \$MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
-''');
-    final wmi = await Process.run('powershell', [
-      '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
-      "(Invoke-CimMethod -ClassName Win32_Process -MethodName Create "
-          "-Arguments @{ CommandLine = 'powershell -NoProfile -WindowStyle "
-          "Hidden -ExecutionPolicy Bypass -File \"${_q(script)}\"' })"
-          '.ReturnValue',
-    ]);
-    log('  sweeper rv=${wmi.stdout.toString().trim()}'
-        '${wmi.exitCode != 0 ? ' err=${wmi.stderr.toString().trim()}' : ''}');
     progress(1.0);
     log('uninstalled — this window can be closed');
   }
