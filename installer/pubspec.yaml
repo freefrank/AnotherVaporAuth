@@ -1,0 +1,32 @@
+name: ava_installer
+description: "Scene-style installer for AVA (AnotherVaporAuth)"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  window_manager: ^0.4.3
+  archive: ^3.6.1
+  path: ^1.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  # CI overwrites assets/payload.zip with the real AVA Windows Release zip
+  # before building; the committed file is a tiny placeholder.
+  assets:
+    - assets/payload.zip
+
+  fonts:
+    - family: FusionPixel
+      fonts:
+        - asset: assets/fonts/FusionPixel.ttf
