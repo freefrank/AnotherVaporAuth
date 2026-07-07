@@ -10,8 +10,25 @@ import '../app/responsive.dart';
 import '../app/theme.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/qr_approval_client.dart';
+import '../services/auto_login.dart';
 import 'widgets/ava_panel.dart';
 import 'widgets/scanline_overlay.dart';
+
+/// The approval endpoints authenticate with the access token alone, and Steam
+/// access tokens are short-lived (~24 h JWTs) — anyone scanning a QR a day
+/// after their last session refresh would fail. Renew a stale token up front
+/// via the same fallback chain as checkPendingLogins (refresh token, then
+/// headless password re-login). Returns false when no usable session could be
+/// established; callers should send the user to re-login.
+Future<bool> _ensureUsableSession(
+    WidgetRef ref, SteamGuardAccount account) async {
+  if (!AutoLogin.accessTokenStale(account.session.accessToken)) return true;
+  final outcome = await ref.read(autoLoginProvider).ensureSession(account);
+  if (outcome != AutoLoginOutcome.ok) return false;
+  // Persist the renewed tokens so the next launch skips the dance.
+  await ref.read(appControllerProvider).value?.store.save();
+  return true;
+}
 
 /// Streamlined entry for the home screen's top-right scan button: on touch
 /// devices, jump straight into the camera for [account] and confirm from a
@@ -39,6 +56,14 @@ Future<void> quickApproveLogin(
         .showSnackBar(SnackBar(content: Text(l.approveBadCode)));
     return;
   }
+  if (!await _ensureUsableSession(ref, account)) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l.sessionExpired)));
+    }
+    return;
+  }
+  if (!context.mounted) return;
   final client = QrApprovalClient(ref.read(apiClientProvider));
   // Best-effort context (IP / location / device) for the confirm dialog —
   // the approval itself works without it.
@@ -149,6 +174,15 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
       return;
     }
     setState(() => _busy = true);
+    if (!await _ensureUsableSession(ref, account)) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _message = l.sessionExpired;
+      });
+      return;
+    }
+    if (!mounted) return;
     final client = QrApprovalClient(ref.read(apiClientProvider));
     var finalApprove = approve;
     if (approve) {
