@@ -280,6 +280,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Session expired — sign in again to refresh this account.';
 
   @override
+  String get confRejected =>
+      'Steam rejected the confirmation request. This usually means the maFile does not match the authenticator currently on the account (common with purchased accounts) — remove the authenticator and link it again, or import the right maFile. A large clock drift can also cause this.';
+
+  @override
   String get loginOrApprove => '…or just tap “Allow” in your Steam mobile app.';
 
   @override

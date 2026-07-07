@@ -69,6 +69,18 @@ class SteamTotp {
     return base64.encode(hmac);
   }
 
+  /// Deterministic SDA-style device id (`android:<uuid>`) derived from the
+  /// SteamID. Steam accepts any well-formed device id on `mobileconf` as long
+  /// as it is stable and non-empty; deriving it from the SteamID means a
+  /// maFile that lost its `device_id` field still confirms without needing to
+  /// persist a generated one.
+  static String generateDeviceId(int steamId) {
+    final h = sha1.convert(utf8.encode('android-uuid:$steamId'));
+    final s = h.toString().padRight(32, '0').substring(0, 32);
+    String seg(int a, int b) => s.substring(a, b);
+    return 'android:${seg(0, 8)}-${seg(8, 12)}-${seg(12, 16)}-${seg(16, 20)}-${seg(20, 32)}';
+  }
+
   /// Seconds remaining in the current 30s TOTP window for [time].
   static int secondsRemaining(int time) => 30 - (time % 30);
 }

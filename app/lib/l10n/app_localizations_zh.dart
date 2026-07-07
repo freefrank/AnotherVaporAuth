@@ -266,6 +266,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get confNeedsLogin => '会话已失效 —— 请重新登录该账户以刷新。';
 
   @override
+  String get confRejected =>
+      'Steam 拒绝了确认请求。这通常说明 maFile 与账户当前的验证器不匹配（购入账户较常见）——请移除验证器后重新绑定，或导入正确的 maFile；设备时间偏差过大也会导致此问题。';
+
+  @override
   String get loginOrApprove => '…或直接在 Steam 手机 App 点「允许」。';
 
   @override

@@ -30,7 +30,12 @@ class ConfirmationsClient {
       if (json['needauth'] == true || json['needsauth'] == true) {
         throw const ConfirmationAuthException();
       }
-      return const [];
+      // A signature-level rejection ("哦，不！" / "Oh no!") — the
+      // identity_secret/device_id doesn't match the account's registered
+      // authenticator, or the clock is far off. Returning [] here would
+      // render a hard rejection as "no pending confirmations".
+      throw ConfirmationRejectedException(
+          (json['message'] ?? json['detail'] ?? '').toString());
     }
     final list = (json['conf'] as List?) ?? const [];
     return list
@@ -113,8 +118,13 @@ class ConfirmationsClient {
       SteamGuardAccount account, int time, String tag) {
     final hash = SteamTotp.generateConfirmationHash(
         time, tag, account.identitySecret ?? '');
+    // An empty device id is always rejected; a maFile that lost its
+    // `device_id` field falls back to the deterministic SteamID-derived one.
+    final deviceId = account.deviceId;
     return <String, dynamic>{
-      'p': account.deviceId ?? '',
+      'p': (deviceId == null || deviceId.isEmpty)
+          ? SteamTotp.generateDeviceId(account.steamId)
+          : deviceId,
       'a': '${account.steamId}',
       'k': hash,
       't': '$time',
@@ -142,4 +152,16 @@ class ConfirmationAuthException implements Exception {
   const ConfirmationAuthException();
   @override
   String toString() => 'ConfirmationAuthException: session needs re-auth';
+}
+
+/// Steam answered a mobileconf call with `success=false` but no auth flag:
+/// the request reached Steam and was rejected at the signature level
+/// (mismatched identity_secret / device_id, or heavy clock drift) — retrying
+/// with the same secrets cannot succeed. [message] is Steam's own (localized)
+/// error text, when present.
+class ConfirmationRejectedException implements Exception {
+  final String message;
+  const ConfirmationRejectedException(this.message);
+  @override
+  String toString() => 'ConfirmationRejectedException: $message';
 }

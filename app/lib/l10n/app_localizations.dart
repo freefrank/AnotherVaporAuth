@@ -590,6 +590,12 @@ abstract class AppLocalizations {
   /// **'Session expired — sign in again to refresh this account.'**
   String get confNeedsLogin;
 
+  /// No description provided for @confRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam rejected the confirmation request. This usually means the maFile does not match the authenticator currently on the account (common with purchased accounts) — remove the authenticator and link it again, or import the right maFile. A large clock drift can also cause this.'**
+  String get confRejected;
+
   /// No description provided for @loginOrApprove.
   ///
   /// In en, this message translates to:

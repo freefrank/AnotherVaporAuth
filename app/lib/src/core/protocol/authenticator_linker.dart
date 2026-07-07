@@ -1,13 +1,12 @@
 import 'dart:convert';
 
-import 'package:crypto/crypto.dart' as crypto;
-
 import '../../services/debug_log.dart';
 import '../../services/steam_api_client.dart';
 import '../../services/steam_time.dart';
 import '../models/session_data.dart';
 import '../models/steam_guard_account.dart';
 import '../proto/protobuf_wire.dart';
+import '../steam_totp.dart';
 
 enum LinkResult {
   mustProvidePhoneNumber,
@@ -66,7 +65,8 @@ class AuthenticatorLinker {
   ///   2  -> the account needs a phone first
   ///   29 -> an authenticator is already present
   Future<LinkResult> addAuthenticator() async {
-    final deviceId = linkedAccount?.deviceId ?? _generateDeviceId(session.steamId);
+    final deviceId =
+        linkedAccount?.deviceId ?? SteamTotp.generateDeviceId(session.steamId);
 
     final req = ProtoWriter()
       ..writeFixed64(1, session.steamId) // steamid (fixed64!)
@@ -248,12 +248,4 @@ class AuthenticatorLinker {
     }
   }
 
-  /// Steam Android device id: `android:<uuid-like>` derived deterministically
-  /// from the steamid (matches SDA's GenerateDeviceID style).
-  static String _generateDeviceId(int steamId) {
-    final h = crypto.sha1.convert(utf8.encode('android-uuid:$steamId'));
-    final s = h.toString().padRight(32, '0').substring(0, 32);
-    String seg(int a, int b) => s.substring(a, b);
-    return 'android:${seg(0, 8)}-${seg(8, 12)}-${seg(12, 16)}-${seg(16, 20)}-${seg(20, 32)}';
-  }
 }

@@ -56,12 +56,20 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
     } catch (e) {
       if (!mounted) return;
       final needsLogin = e is ConfirmationAuthException;
+      final l = AppLocalizations.of(context);
       setState(() {
         _loading = false;
         _needsLogin = needsLogin;
         _error = needsLogin
-            ? AppLocalizations.of(context).confNeedsLogin
-            : '$e';
+            ? l.confNeedsLogin
+            // A signature-level rejection is a configuration problem, not a
+            // transient error — explain the likely causes instead of dumping
+            // the exception (Steam's own message is appended when present).
+            : e is ConfirmationRejectedException
+                ? (e.message.isEmpty
+                    ? l.confRejected
+                    : '${l.confRejected}\n\nSteam: ${e.message}')
+                : '$e';
       });
     }
   }
