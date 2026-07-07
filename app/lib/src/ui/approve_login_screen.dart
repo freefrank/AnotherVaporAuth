@@ -280,8 +280,18 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
   }
 }
 
-class _ScannerPage extends StatelessWidget {
+class _ScannerPage extends StatefulWidget {
   const _ScannerPage();
+
+  @override
+  State<_ScannerPage> createState() => _ScannerPageState();
+}
+
+class _ScannerPageState extends State<_ScannerPage> {
+  // MobileScanner keeps re-detecting the same code every frame while the pop
+  // animation plays; without this latch each extra detection pops another
+  // route *below* the scanner, leaving a blank Navigator.
+  bool _done = false;
 
   @override
   Widget build(BuildContext context) {
@@ -291,10 +301,13 @@ class _ScannerPage extends StatelessWidget {
       appBar: AppBar(title: Text(AppLocalizations.of(context).loginViaQr)),
       body: MobileScanner(
         onDetect: (capture) {
+          if (_done) return;
           final code = capture.barcodes
               .map((b) => b.rawValue)
               .firstWhere((v) => v != null && v.isNotEmpty, orElse: () => null);
-          if (code != null) Navigator.of(context).pop(code);
+          if (code == null) return;
+          _done = true;
+          Navigator.of(context).pop(code);
         },
       ),
     );
