@@ -357,7 +357,13 @@ MigrationBackup/
 .agents/
 skills-lock.json
 
-# Local working assets (store listing kit, posts, built artifacts)
+# Local working assets (store listing kit, built artifacts)
 /store/
-/posts/
 /dist/
+
+# posts/ is tracked (blog copy + screenshots), EXCEPT tester PII: the public
+# repo must never carry the beta testers' email lists, nor the invite script
+# that hard-codes a couple of them in its SKIP set.
+/posts/**/testers*.csv
+/posts/**/testers*.txt
+/posts/**/send_beta_invite.py
