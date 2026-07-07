@@ -519,6 +519,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get importSessionDeadTitle => 'Activate this account?';
+
+  @override
+  String get importSessionDeadBody =>
+      'The Steam session in this maFile has expired. Sign in now to enable confirmations and login approvals — the Steam Guard code will be filled in automatically.';
+
+  @override
+  String get importSessionLater => 'Later';
+
+  @override
+  String get importSessionLoginNow => 'Sign in now';
+
+  @override
   String get actionExport => 'Export maFile';
 
   @override

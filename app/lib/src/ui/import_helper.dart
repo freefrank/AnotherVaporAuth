@@ -10,6 +10,8 @@ import 'package:share_plus/share_plus.dart';
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
 import '../core/models/steam_guard_account.dart';
+import '../services/session_manager.dart';
+import 'login_screen.dart';
 
 /// Lets the user pick an existing unencrypted `*.maFile` and imports it into the
 /// current store (re-encrypting under the store's passkey if it is encrypted).
@@ -27,14 +29,22 @@ Future<void> importMaFileFlow(BuildContext context, WidgetRef ref) async {
     jsonDecode(contents);
     // The filename is a last-resort SteamID source (e.g. <steamid>.maFile) for
     // exports that drop the Session block.
-    await ref
+    final account = await ref
         .read(appControllerProvider.notifier)
         .importMaFile(contents, sourceName: file.name);
     if (context.mounted) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(l.importSuccess)));
     }
-    // One-time reminder to keep maFiles / revocation codes backed up.
+    // A maFile's session has usually already died on the source device by the
+    // time it's imported here — reactivate it now instead of leaving the user
+    // to stumble on the home screen's "refresh session" entry on their own.
+    if (context.mounted) {
+      await _activateImportedSession(context, ref, account);
+    }
+    // One-time reminder to keep maFiles / revocation codes backed up. Runs
+    // after the session dialog above (never both at once) so at most one
+    // dialog is ever on screen.
     if (context.mounted) await showBackupReminderOnce(context, ref);
   } catch (e) {
     if (context.mounted) {
@@ -44,6 +54,61 @@ Future<void> importMaFileFlow(BuildContext context, WidgetRef ref) async {
   }
 }
 
+/// Whether a freshly-imported account's session was reactivated silently —
+/// it had tokens *and* the refresh call succeeded — versus needing the user
+/// to sign in by hand. Split out from [_activateImportedSession] as a pure
+/// decision so the branching is unit-testable without mocking the network
+/// refresh call.
+@visibleForTesting
+bool sessionActivatedSilently(
+        {required bool hasTokens, required bool refreshSucceeded}) =>
+    hasTokens && refreshSucceeded;
+
+/// Tries to silently refresh [account]'s session right after import; when
+/// that isn't possible (no tokens in the maFile, or the refresh call failed)
+/// offers to sign in now instead, prefilling [LoginScreen] with the account.
+Future<void> _activateImportedSession(
+    BuildContext context, WidgetRef ref, SteamGuardAccount account) async {
+  final hasTokens = account.session.hasTokens;
+  // Short-circuits: refresh is only attempted (and awaited) when there is a
+  // token to refresh in the first place.
+  final refreshSucceeded = hasTokens &&
+      await SessionManager(ref.read(apiClientProvider))
+          .refresh(account.session);
+  if (sessionActivatedSilently(
+      hasTokens: hasTokens, refreshSucceeded: refreshSucceeded)) {
+    // Best-effort: the account is already on disk from the import itself, so
+    // a write failure here just means the refreshed token isn't persisted
+    // yet — not worth failing the (already successful) import over.
+    try {
+      await ref.read(appControllerProvider.notifier).persistAccount(account);
+    } catch (_) {}
+    return;
+  }
+  if (!context.mounted) return;
+  final l = AppLocalizations.of(context);
+  final signInNow = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l.importSessionDeadTitle),
+      content: Text(l.importSessionDeadBody),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text(l.importSessionLater),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(l.importSessionLoginNow),
+        ),
+      ],
+    ),
+  );
+  if (signInNow != true || !context.mounted) return;
+  await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) =>
+          LoginScreen(reason: LoginReason.refresh, account: account)));
+}
 
 /// One-time reminder that authenticator data lives on this device only —
 /// keep maFiles and revocation codes backed up. Shown after the first

@@ -542,13 +542,20 @@ class AppController extends AsyncNotifier<AppData> {
     state = AsyncData(data.copyWith(accounts: accounts));
   }
 
-  Future<void> importMaFile(String contents, {String? sourceName}) async {
+  /// Imports a maFile and returns the resulting account, so callers can act on
+  /// it right away (e.g. reactivating its session) without re-scanning the
+  /// freshly reloaded account list.
+  Future<SteamGuardAccount> importMaFile(String contents,
+      {String? sourceName}) async {
     final data = state.value;
-    if (data == null) return;
-    await data.store
+    if (data == null) {
+      throw StateError('importMaFile called before the store is ready');
+    }
+    final account = await data.store
         .importMaFileContents(contents, data.passKey, sourceName: sourceName);
     await reload();
     unawaited(refreshAvatars());
+    return account;
   }
 
   /// Drops a code-only account's synthetic-id placeholder entry after it has

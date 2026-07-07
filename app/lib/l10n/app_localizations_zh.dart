@@ -493,6 +493,19 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get importSessionDeadTitle => '激活该账户的会话？';
+
+  @override
+  String get importSessionDeadBody =>
+      '该 maFile 中的 Steam 会话已失效。现在登录即可使用交易确认与登录批准——令牌验证码会自动填写。';
+
+  @override
+  String get importSessionLater => '稍后';
+
+  @override
+  String get importSessionLoginNow => '立即登录';
+
+  @override
   String get actionExport => '导出 maFile';
 
   @override

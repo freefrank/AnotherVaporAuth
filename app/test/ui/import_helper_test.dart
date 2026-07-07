@@ -127,4 +127,27 @@ void main() {
     expect(fakeShare.sharedPath, isNotNull);
     expect(File(fakeShare.sharedPath!).existsSync(), isFalse);
   });
+
+  group('sessionActivatedSilently', () {
+    test('no tokens in the imported maFile needs a sign-in prompt', () {
+      expect(
+        sessionActivatedSilently(hasTokens: false, refreshSucceeded: false),
+        isFalse,
+      );
+    });
+
+    test('tokens present but the refresh call failed needs a prompt', () {
+      expect(
+        sessionActivatedSilently(hasTokens: true, refreshSucceeded: false),
+        isFalse,
+      );
+    });
+
+    test('tokens present and refreshed successfully is silent', () {
+      expect(
+        sessionActivatedSilently(hasTokens: true, refreshSucceeded: true),
+        isTrue,
+      );
+    });
+  });
 }

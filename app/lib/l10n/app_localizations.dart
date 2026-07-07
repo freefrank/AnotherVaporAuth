@@ -1016,6 +1016,30 @@ abstract class AppLocalizations {
   /// **'Failed to import: {error}'**
   String importFailed(String error);
 
+  /// No description provided for @importSessionDeadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate this account?'**
+  String get importSessionDeadTitle;
+
+  /// No description provided for @importSessionDeadBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The Steam session in this maFile has expired. Sign in now to enable confirmations and login approvals — the Steam Guard code will be filled in automatically.'**
+  String get importSessionDeadBody;
+
+  /// No description provided for @importSessionLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get importSessionLater;
+
+  /// No description provided for @importSessionLoginNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in now'**
+  String get importSessionLoginNow;
+
   /// No description provided for @actionExport.
   ///
   /// In en, this message translates to:

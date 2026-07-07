@@ -183,6 +183,10 @@
   "@importFailed": {
     "placeholders": { "error": { "type": "String" } }
   },
+  "importSessionDeadTitle": "Activate this account?",
+  "importSessionDeadBody": "The Steam session in this maFile has expired. Sign in now to enable confirmations and login approvals — the Steam Guard code will be filled in automatically.",
+  "importSessionLater": "Later",
+  "importSessionLoginNow": "Sign in now",
   "actionExport": "Export maFile",
   "actionLoginRequests": "Sign-in requests",
   "loginRequestTitle": "Approve sign-in?",

@@ -178,6 +178,10 @@
   "@importFailed": {
     "placeholders": { "error": { "type": "String" } }
   },
+  "importSessionDeadTitle": "激活该账户的会话？",
+  "importSessionDeadBody": "该 maFile 中的 Steam 会话已失效。现在登录即可使用交易确认与登录批准——令牌验证码会自动填写。",
+  "importSessionLater": "稍后",
+  "importSessionLoginNow": "立即登录",
   "actionExport": "导出 maFile",
   "actionLoginRequests": "登录请求",
   "loginRequestTitle": "批准登录？",
