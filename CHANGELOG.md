@@ -5,6 +5,40 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.79.0] — 2026-07-06
+
+### Fixed
+- **QR sign-in: half of all login QR codes were rejected as "not a Steam QR
+  code".** Steam's `client_id` is a random uint64; values above 2⁶³−1 (about
+  half of them) failed Dart's signed-int parsing. They are now parsed as full
+  64-bit values.
+- **Blank screen after scanning.** The scanner fired repeatedly for the same
+  code during the page-close animation, popping extra routes off the
+  navigator; it now latches on the first detection.
+- **Approving a login with an expired session no longer fails.** Steam access
+  tokens live ~24 h; the QR-approval flow now renews a stale token first
+  (refresh token, then headless re-login) — same as the pending-login check —
+  and clearly says "session expired, please sign in again" if neither works.
+- **Silent fake success on rejected approvals.** A Steam reply with no
+  `x-eresult` header and a non-2xx status (e.g. a bare 401 for an expired
+  token) was treated as OK, showing "approved" while the PC kept waiting; it
+  now surfaces as an error.
+
+—
+
+### 修复
+- **扫码登录:约一半的登录二维码被误判为“这不是 Steam 二维码”。**
+  Steam 的 `client_id` 是随机 uint64,超过 2⁶³−1 的值(约占一半)在 Dart
+  有符号整数解析下失败;现按完整 64 位解析。
+- **扫码后出现空白页。** 关闭扫码页的动画期间,同一个二维码会被重复识别,
+  多余的回调把导航栈里下面的页面也弹掉了;现在只响应第一次识别。
+- **会话过期时无法批准登录。** Steam 的 access token 约 24 小时过期;
+  扫码确认现在会先自动续期(refresh token 换新,不行则用存储密码无头重登,
+  与“待确认登录”检查一致),都失败时明确提示“会话已过期,请重新登录”。
+- **批准被拒时误显示成功。** Steam 返回不带 `x-eresult` 头的非 2xx 响应
+  (如过期 token 的裸 401)曾被当作成功,界面显示“已批准”而电脑端一直等待;
+  现在会正确报错。
+
 ## [v0.78.2] — 2026-07-05
 
 ### Added
