@@ -5,6 +5,22 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.80.0] — 2026-07-06
+
+### Added
+- **Activate the session right after importing a maFile.** Imports now try to
+  renew the file's Steam session silently; when it's already dead (the usual
+  case for files from another device) AVA offers to sign in on the spot —
+  username prefilled, Steam Guard code filled in automatically — instead of
+  leaving you to find the session-refresh entry on your own.
+
+—
+
+### 新增
+- **导入 maFile 后顺势激活会话。** 导入时会先尝试静默续期文件里的 Steam
+  会话;若已失效(来自其他设备的文件几乎都是),会当场询问是否登录——
+  用户名已预填、令牌验证码自动填写——不再需要自己去找“会话刷新”入口。
+
 ## [v0.79.0] — 2026-07-06
 
 ### Fixed
