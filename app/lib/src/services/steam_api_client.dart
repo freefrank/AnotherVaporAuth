@@ -103,14 +103,23 @@ class SteamApiClient {
         );
       }
 
-      final eresult = int.tryParse(resp.headers.value('x-eresult') ?? '') ?? 1;
+      final eresult = int.tryParse(resp.headers.value('x-eresult') ?? '');
       final bytes = resp.data?.length ?? 0;
       dlog('← $method  HTTP ${resp.statusCode}  '
-          'eresult=${eresultLabel(eresult)}  ${bytes}B');
-      if (eresult != 1) {
+          'eresult=${eresult == null ? 'none' : eresultLabel(eresult)}  ${bytes}B');
+      if (eresult != null && eresult != 1) {
         final msg = resp.headers.value('x-error_message');
         dlog('  ✗ $method error: ${msg ?? eresultLabel(eresult)}');
         throw SteamApiException(eresult, msg ?? eresultLabel(eresult), method);
+      }
+      // No x-eresult header at all: only a plain HTTP success may pass. An
+      // expired/invalid access token can come back as a bare 401 with no
+      // header — defaulting that to OK would fake a successful call whose
+      // empty body then parses as "accepted".
+      final status = resp.statusCode ?? 0;
+      if (eresult == null && (status < 200 || status >= 300)) {
+        dlog('  ✗ $method HTTP $status with no x-eresult');
+        throw SteamApiException(2 /* Fail */, 'HTTP $status', method);
       }
       return ProtoReader(Uint8List.fromList(resp.data ?? const []));
     } on DioException catch (e) {
