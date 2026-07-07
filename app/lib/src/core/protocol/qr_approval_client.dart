@@ -36,12 +36,23 @@ class QrChallenge {
     final qIdx = segs.indexOf('q');
     if (qIdx >= 0 && segs.length >= qIdx + 3) {
       final version = int.tryParse(segs[qIdx + 1]);
-      final clientId = int.tryParse(segs[qIdx + 2]);
+      final clientId = _parseUint64(segs[qIdx + 2]);
       if (version != null && clientId != null) {
         return QrChallenge(version, clientId);
       }
     }
     return null;
+  }
+
+  /// Steam client ids are random uint64s, so about half of them exceed the
+  /// signed 2^63-1 ceiling of `int.tryParse` — which silently turned half of
+  /// all real login QR codes into "not a Steam QR". Parse through BigInt and
+  /// keep the two's-complement (possibly negative) int; the wire layer
+  /// (varint / HMAC little-endian) treats ints as raw 64-bit patterns.
+  static int? _parseUint64(String s) {
+    final big = BigInt.tryParse(s);
+    if (big == null || big.isNegative || big.bitLength > 64) return null;
+    return big.toSigned(64).toInt();
   }
 }
 

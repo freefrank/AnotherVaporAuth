@@ -23,6 +23,27 @@ void main() {
       expect(c.clientId, 42);
     });
 
+    test('parses a client_id above 2^63-1 (random uint64 — half of them)',
+        () {
+      // Regression: int.tryParse rejects decimals beyond the signed-64 max,
+      // which made ~half of all real login QR codes read as "not a Steam QR".
+      final c = QrChallenge.tryParse(
+          'https://s.team/q/1/18446744073709551615'); // 2^64-1
+      expect(c, isNotNull);
+      expect(c!.clientId, BigInt.parse('18446744073709551615').toSigned(64).toInt());
+
+      final mid = QrChallenge.tryParse(
+          'https://s.team/q/1/9223372036854775808'); // 2^63
+      expect(mid, isNotNull);
+    });
+
+    test('rejects a client_id wider than 64 bits', () {
+      expect(
+          QrChallenge.tryParse('https://s.team/q/1/18446744073709551616'),
+          isNull); // 2^64
+      expect(QrChallenge.tryParse('https://s.team/q/1/-5'), isNull);
+    });
+
     test('returns null for unrelated text', () {
       expect(QrChallenge.tryParse('not a url'), isNull);
       expect(QrChallenge.tryParse('https://example.com/foo/bar'), isNull);
