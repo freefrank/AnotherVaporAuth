@@ -5,6 +5,26 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.80.1] — 2026-07-06
+
+### Fixed
+- **A rejected confirmation list no longer looks like "no pending trades".**
+  When Steam rejects `mobileconf` at the signature level (maFile doesn't match
+  the authenticator currently on the account — common with purchased accounts —
+  or heavy clock drift), the confirmations screen now explains the likely cause
+  and the way out, instead of silently showing an empty list.
+- **maFiles without a `device_id` can confirm again.** An empty device id is
+  always rejected by Steam; a stable SteamID-derived one is now used instead.
+
+—
+
+### 修复
+- **确认列表被 Steam 拒绝时不再伪装成“暂无待确认”。** 当 `mobileconf`
+  在签名层被拒（maFile 与账户当前验证器不匹配——购入账户较常见——或设备
+  时间偏差过大），确认页现在会说明可能原因与解决途径，而不是静默显示空列表。
+- **缺少 `device_id` 的 maFile 恢复可确认。** 空 device id 必被 Steam 拒绝；
+  现改用由 SteamID 派生的稳定值兜底。
+
 ## [v0.80.0] — 2026-07-06
 
 ### Added
