@@ -1,5 +1,15 @@
 /// A pending mobile confirmation as returned by `/mobileconf/getlist`.
-enum ConfirmationType { unknown, trade, marketListing, other }
+enum ConfirmationType {
+  unknown,
+  trade,
+  marketListing,
+  featureOptOut,
+  phoneChange,
+  accountRecovery,
+  apiKey,
+  familyJoin,
+  other,
+}
 
 class Confirmation {
   final String id;
@@ -39,16 +49,28 @@ class Confirmation {
     );
   }
 
-  // Steam confirmation type ids: 1 = generic, 2 = trade, 3 = market listing.
+  // Steam confirmation type ids (steamguard-cli ConfirmationType):
+  // 1 generic, 2 trade, 3 market listing, 4 feature opt-out,
+  // 5 phone number change, 6 account recovery, 9 web API key creation,
+  // 11 join Steam family.
   static ConfirmationType _mapType(dynamic raw) {
-    final t = _asInt(raw);
-    switch (t) {
+    switch (_asInt(raw)) {
+      case 1:
+        return ConfirmationType.other;
       case 2:
         return ConfirmationType.trade;
       case 3:
         return ConfirmationType.marketListing;
-      case 1:
-        return ConfirmationType.other;
+      case 4:
+        return ConfirmationType.featureOptOut;
+      case 5:
+        return ConfirmationType.phoneChange;
+      case 6:
+        return ConfirmationType.accountRecovery;
+      case 9:
+        return ConfirmationType.apiKey;
+      case 11:
+        return ConfirmationType.familyJoin;
       default:
         return ConfirmationType.unknown;
     }
