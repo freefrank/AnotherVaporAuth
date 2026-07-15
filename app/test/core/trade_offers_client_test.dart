@@ -1,5 +1,6 @@
 import 'package:ava/src/core/models/session_data.dart';
 import 'package:ava/src/core/models/steam_guard_account.dart';
+import 'package:ava/src/core/models/trade_offer.dart';
 import 'package:ava/src/core/protocol/qr_approval_client.dart'
     show MissingAccessTokenException;
 import 'package:ava/src/core/protocol/trade_offers_client.dart';
@@ -10,12 +11,14 @@ import 'package:flutter_test/flutter_test.dart';
 class _FakeApi extends SteamApiClient {
   Map<String, dynamic> apiResponse = const {};
   Map<String, dynamic> postResponse = const {};
+  Map<String, dynamic> getResponse = const {};
   String? lastMethod;
   Map<String, dynamic>? lastQuery;
   String? lastPostPath;
   Map<String, dynamic>? lastForm;
   Map<String, String>? lastCookies;
   String? lastReferer;
+  String? lastGetPath;
 
   @override
   Future<Map<String, dynamic>> apiGetJson(
@@ -42,6 +45,16 @@ class _FakeApi extends SteamApiClient {
     lastCookies = cookies;
     lastReferer = referer;
     return postResponse;
+  }
+
+  @override
+  Future<Map<String, dynamic>> communityGetJson(
+    String path,
+    Map<String, dynamic> query, {
+    Map<String, String>? cookies,
+  }) async {
+    lastGetPath = path;
+    return getResponse;
   }
 }
 
@@ -101,5 +114,75 @@ void main() {
                                     'new_received_count': 1}};
     expect(await TradeOffersClient(api).pendingReceivedCount(_account()), 3);
     expect(api.lastMethod, 'IEconService/GetTradeOffersSummary');
+  });
+
+  test('summary tolerates a double pending_received_count', () async {
+    final api = _FakeApi()
+      ..apiResponse = {'response': {'pending_received_count': 3.0}};
+    expect(await TradeOffersClient(api).pendingReceivedCount(_account()), 3);
+  });
+
+  group('miniProfile', () {
+    test('happy path parses persona and avatar', () async {
+      final api = _FakeApi()
+        ..getResponse = {
+          'persona_name': 'Bob',
+          'avatar_url': 'http://x/a.jpg',
+        };
+      final result = await TradeOffersClient(api).miniProfile(123);
+      expect(result, ('Bob', 'http://x/a.jpg'));
+      expect(api.lastGetPath, '/miniprofile/123/json');
+    });
+
+    test('malformed response falls back to empty strings', () async {
+      final api = _FakeApi()..getResponse = {};
+      final result = await TradeOffersClient(api).miniProfile(123);
+      expect(result, ('', ''));
+    });
+  });
+
+  group('write ops (community tradeoffer endpoints)', () {
+    test('accept posts sessionid+partner with referer, detects mobileconf', () async {
+      final api = _FakeApi()
+        ..postResponse = {'tradeid': '900', 'needs_mobile_confirmation': true};
+      final offer = TradeOffer(
+        id: '7001', partnerAccountId: 123, message: '',
+        state: TradeOfferState.active, isOurOffer: false,
+        itemsToGive: const [], itemsToReceive: const [],
+        timeCreated: 0, timeUpdated: 0, expirationTime: 0, escrowEndDate: 0,
+      );
+      final r = await TradeOffersClient(api).accept(_account(), offer);
+      expect(r.success, isTrue);
+      expect(r.needsMobileConfirmation, isTrue);
+      expect(api.lastPostPath, '/tradeoffer/7001/accept');
+      expect(api.lastForm!['tradeofferid'], '7001');
+      expect(api.lastForm!['partner'], '${76561197960265728 + 123}');
+      expect(api.lastForm!['serverid'], '1');
+      // sessionid 必须同时进 form 和 cookie 且一致。
+      expect(api.lastForm!['sessionid'], api.lastCookies!['sessionid']);
+      expect(api.lastReferer, 'https://steamcommunity.com/tradeoffer/7001/');
+    });
+
+    test('accept surfaces strError as failure', () async {
+      final api = _FakeApi()..postResponse = {'strError': 'trade banned'};
+      final offer = TradeOffer(
+        id: '1', partnerAccountId: 1, message: '',
+        state: TradeOfferState.active, isOurOffer: false,
+        itemsToGive: const [], itemsToReceive: const [],
+        timeCreated: 0, timeUpdated: 0, expirationTime: 0, escrowEndDate: 0,
+      );
+      final r = await TradeOffersClient(api).accept(_account(), offer);
+      expect(r.success, isFalse);
+      expect(r.message, 'trade banned');
+    });
+
+    test('decline and cancel post to their endpoints', () async {
+      final api = _FakeApi()..postResponse = {'tradeofferid': '7001'};
+      expect(await TradeOffersClient(api).decline(_account(), '7001'), isTrue);
+      expect(api.lastPostPath, '/tradeoffer/7001/decline');
+      expect(await TradeOffersClient(api).cancel(_account(), '7002'), isTrue);
+      expect(api.lastPostPath, '/tradeoffer/7002/cancel');
+      expect(api.lastForm!['sessionid'], isNotEmpty);
+    });
   });
 }
