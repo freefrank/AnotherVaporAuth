@@ -143,4 +143,24 @@ class SettingsStore {
     data['theme'] = variant;
     await _write(data);
   }
+
+  /// 长按确认开关（默认开）。关闭后单条接受退回普通点按；
+  /// 批量“全部接受”保留弹窗二次确认作为安全底线。
+  Future<bool> loadHoldConfirm() async =>
+      (await _read())['hold_confirm'] != false;
+
+  Future<void> saveHoldConfirm(bool enabled) async {
+    final data = await _read();
+    data['hold_confirm'] = enabled;
+    await _write(data);
+  }
+
+  /// 全局触觉反馈开关（默认开）：长按 tick/完成 impact 及现有触觉调用点。
+  Future<bool> loadHaptics() async => (await _read())['haptics'] != false;
+
+  Future<void> saveHaptics(bool enabled) async {
+    final data = await _read();
+    data['haptics'] = enabled;
+    await _write(data);
+  }
 }

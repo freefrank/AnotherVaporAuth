@@ -103,6 +103,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsBiometricEnabled => 'Biometric unlock enabled.';
 
   @override
+  String get settingsHoldConfirm => 'Hold to confirm';
+
+  @override
+  String get settingsHoldConfirmDesc =>
+      'Irreversible accepts (trades, confirmations) require press-and-hold. When off, a single tap acts immediately; batch actions still ask first.';
+
+  @override
+  String get settingsHaptics => 'Haptic feedback';
+
+  @override
+  String get settingsHapticsDesc =>
+      'Vibration ticks while holding to confirm and on completion.';
+
+  @override
   String get passkeyLabel => 'Passkey';
 
   @override

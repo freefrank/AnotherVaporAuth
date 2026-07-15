@@ -31,6 +31,10 @@
   "settingsBiometricNeedPasskey": "Set an encryption passkey first.",
   "settingsBiometricUnavailable": "No biometrics or device lock set up on this device.",
   "settingsBiometricEnabled": "Biometric unlock enabled.",
+  "settingsHoldConfirm": "Hold to confirm",
+  "settingsHoldConfirmDesc": "Irreversible accepts (trades, confirmations) require press-and-hold. When off, a single tap acts immediately; batch actions still ask first.",
+  "settingsHaptics": "Haptic feedback",
+  "settingsHapticsDesc": "Vibration ticks while holding to confirm and on completion.",
   "passkeyLabel": "Passkey",
 
   "accountsEmpty": "No accounts yet. Import a maFile or log in to add one.",

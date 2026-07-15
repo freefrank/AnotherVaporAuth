@@ -69,6 +69,26 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 // Biometric / device-credential unlock
                 const _BiometricCard(),
+                // Hold-to-confirm safety gate for irreversible accepts.
+                _Card(
+                  title: l.settingsHoldConfirm,
+                  description: l.settingsHoldConfirmDesc,
+                  trailing: Switch(
+                    value: ref.watch(holdConfirmProvider),
+                    onChanged: (v) =>
+                        ref.read(holdConfirmProvider.notifier).set(v),
+                  ),
+                ),
+                // Haptic feedback (hold-to-confirm ticks + other touch points).
+                _Card(
+                  title: l.settingsHaptics,
+                  description: l.settingsHapticsDesc,
+                  trailing: Switch(
+                    value: ref.watch(hapticsProvider),
+                    onChanged: (v) =>
+                        ref.read(hapticsProvider.notifier).set(v),
+                  ),
+                ),
                 // Auto-confirm. Only the market-listing default is wired up —
                 // the legacy SDA "periodic checking / check all / auto-confirm
                 // trades" toggles were file-format fields with no behaviour in

@@ -173,6 +173,40 @@ class LocaleController extends Notifier<Locale?> {
   }
 }
 
+/// 长按确认开关（默认开），持久化到 app_settings.json。
+final holdConfirmProvider =
+    NotifierProvider<HoldConfirmController, bool>(HoldConfirmController.new);
+
+class HoldConfirmController extends Notifier<bool> {
+  @override
+  bool build() {
+    ref.read(settingsStoreProvider).loadHoldConfirm().then((v) => state = v);
+    return true;
+  }
+
+  Future<void> set(bool enabled) async {
+    state = enabled;
+    await ref.read(settingsStoreProvider).saveHoldConfirm(enabled);
+  }
+}
+
+/// 全局触觉反馈开关（默认开）。
+final hapticsProvider =
+    NotifierProvider<HapticsController, bool>(HapticsController.new);
+
+class HapticsController extends Notifier<bool> {
+  @override
+  bool build() {
+    ref.read(settingsStoreProvider).loadHaptics().then((v) => state = v);
+    return true;
+  }
+
+  Future<void> set(bool enabled) async {
+    state = enabled;
+    await ref.read(settingsStoreProvider).saveHaptics(enabled);
+  }
+}
+
 /// The installed app version (from the platform package info).
 final appVersionProvider = FutureProvider<String>(
     (ref) async => (await PackageInfo.fromPlatform()).version);

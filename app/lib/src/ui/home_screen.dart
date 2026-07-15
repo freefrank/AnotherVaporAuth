@@ -222,7 +222,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (p == _pull) return;
     // Haptic "click" the moment the pull charges past the trigger threshold.
     if (_pull < _pullThreshold && p >= _pullThreshold) {
-      HapticFeedback.mediumImpact();
+      if (ref.read(hapticsProvider)) HapticFeedback.mediumImpact();
     }
     setState(() => _pull = p);
   }
@@ -288,6 +288,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             const <SteamGuardAccount>[];
     final tick =
         ref.watch(tickProvider).value ?? SteamTime.currentSteamTime;
+    final haptics = ref.watch(hapticsProvider);
     if (_selected >= accounts.length) _selected = 0;
     final hasAccounts = accounts.isNotEmpty;
 
@@ -338,6 +339,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     onAdd: () => _addMenu(context),
                     nameMode: _nameMode,
                     neon: neon,
+                    haptics: haptics,
                     // Per-account swipe actions (the old overflow menu).
                     onAction: (acc, action) => _onAction(context, acc, action),
                     // Custom pull drives the full-screen overlay below (neon fill
@@ -622,6 +624,7 @@ class _Sidebar extends StatelessWidget {
   final void Function(SteamGuardAccount account, String action) onAction;
   final _NameMode nameMode;
   final bool neon;
+  final bool haptics;
   final VoidCallback? onRefresh;
   final bool refreshing;
   final LayerLink? firstRowLink;
@@ -637,6 +640,7 @@ class _Sidebar extends StatelessWidget {
     required this.onAdd,
     required this.nameMode,
     required this.neon,
+    required this.haptics,
     required this.onAction,
     required this.onPullDelta,
     required this.onPullReset,
@@ -667,6 +671,7 @@ class _Sidebar extends StatelessWidget {
               selected: i == selected,
               nameMode: nameMode,
               neon: neon,
+              haptics: haptics,
               onTap: () => onSelect(i),
               onAction: onAction,
               controller: i == 0 ? demoSlidable : null,
@@ -707,6 +712,7 @@ class _Sidebar extends StatelessWidget {
               selected: i == selected,
               nameMode: nameMode,
               neon: neon,
+              haptics: haptics,
               onTap: () {},
               onAction: onAction,
             ),
@@ -898,6 +904,7 @@ class _SidebarRow extends StatelessWidget {
   final bool selected;
   final _NameMode nameMode;
   final bool neon;
+  final bool haptics;
   final VoidCallback onTap;
   final void Function(SteamGuardAccount account, String action) onAction;
   final SlidableController? controller;
@@ -907,6 +914,7 @@ class _SidebarRow extends StatelessWidget {
     required this.selected,
     required this.nameMode,
     required this.neon,
+    required this.haptics,
     required this.onTap,
     required this.onAction,
     this.controller,
@@ -969,7 +977,7 @@ class _SidebarRow extends StatelessWidget {
       backgroundColor: Colors.transparent,
       padding: EdgeInsets.zero,
       onPressed: (_) {
-        HapticFeedback.selectionClick();
+        if (haptics) HapticFeedback.selectionClick();
         onTap();
       },
       child: Container(

@@ -278,6 +278,30 @@ abstract class AppLocalizations {
   /// **'Biometric unlock enabled.'**
   String get settingsBiometricEnabled;
 
+  /// No description provided for @settingsHoldConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to confirm'**
+  String get settingsHoldConfirm;
+
+  /// No description provided for @settingsHoldConfirmDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Irreversible accepts (trades, confirmations) require press-and-hold. When off, a single tap acts immediately; batch actions still ask first.'**
+  String get settingsHoldConfirmDesc;
+
+  /// No description provided for @settingsHaptics.
+  ///
+  /// In en, this message translates to:
+  /// **'Haptic feedback'**
+  String get settingsHaptics;
+
+  /// No description provided for @settingsHapticsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibration ticks while holding to confirm and on completion.'**
+  String get settingsHapticsDesc;
+
   /// No description provided for @passkeyLabel.
   ///
   /// In en, this message translates to:

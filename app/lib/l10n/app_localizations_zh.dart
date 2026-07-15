@@ -100,6 +100,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsBiometricEnabled => '已启用指纹解锁。';
 
   @override
+  String get settingsHoldConfirm => '长按确认';
+
+  @override
+  String get settingsHoldConfirmDesc =>
+      '不可逆的接受类操作（交易、确认）需长按生效；关闭后单击立即生效，批量操作仍会弹窗确认。';
+
+  @override
+  String get settingsHaptics => '震动反馈';
+
+  @override
+  String get settingsHapticsDesc => '长按确认过程中与完成时的触觉反馈。';
+
+  @override
   String get passkeyLabel => '口令';
 
   @override
