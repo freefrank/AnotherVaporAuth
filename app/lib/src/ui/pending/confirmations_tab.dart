@@ -11,6 +11,7 @@ import '../../core/protocol/confirmations_client.dart';
 import '../../services/session_manager.dart';
 import '../login_screen.dart';
 import '../widgets/ava_panel.dart';
+import '../widgets/hold_button.dart';
 
 /// Design screen 06 — confirmations. Native JSON rendering (no WebView). Top
 /// batch bar (accept all / reject all) + per-item cards with type chip, title,
@@ -241,6 +242,12 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
       );
     }
 
+    // Watched here (inside build), not in the lazy itemBuilder closure —
+    // ref.watch is only legal during build, and the settings toggles must
+    // rebuild the cards when flipped.
+    final holdEnabled = ref.watch(holdConfirmProvider);
+    final hapticsEnabled = ref.watch(hapticsProvider);
+
     return Column(
       children: [
         // Batch bar
@@ -260,11 +267,21 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
                 label: Text(l.confRejectAll),
               ),
               SizedBox(width: context.r(8)),
-              FilledButton.icon(
-                onPressed: _busy ? null : () => _respondAll(confs, true),
-                icon: Icon(Icons.check, size: context.r(16)),
-                label: Text(l.confAcceptAll),
-              ),
+              // 长按开启时,长按本身就是二次确认 —— 直接执行,不再弹窗;
+              // 关闭长按则退回弹窗作为批量操作的安全底线。
+              holdEnabled
+                  ? HoldToConfirmButton(
+                      label: l.confAcceptAll,
+                      color: t.good,
+                      enabled: !_busy,
+                      hapticsEnabled: hapticsEnabled,
+                      onConfirmed: () => _respond(confs, true),
+                    )
+                  : FilledButton.icon(
+                      onPressed: _busy ? null : () => _respondAll(confs, true),
+                      icon: Icon(Icons.check, size: context.r(16)),
+                      label: Text(l.confAcceptAll),
+                    ),
             ],
           ),
         ),
@@ -278,6 +295,8 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
               conf: confs[i],
               index: i,
               busy: _busy,
+              holdEnabled: holdEnabled,
+              hapticsEnabled: hapticsEnabled,
               onAccept: () => _respond([confs[i]], true),
               onReject: () => _respond([confs[i]], false),
             ),
@@ -293,6 +312,8 @@ class _ConfCard extends StatefulWidget {
   final Confirmation conf;
   final int index;
   final bool busy;
+  final bool holdEnabled;
+  final bool hapticsEnabled;
   final VoidCallback onAccept;
   final VoidCallback onReject;
   const _ConfCard({
@@ -300,6 +321,8 @@ class _ConfCard extends StatefulWidget {
     required this.conf,
     required this.index,
     required this.busy,
+    required this.holdEnabled,
+    required this.hapticsEnabled,
     required this.onAccept,
     required this.onReject,
   });
@@ -425,18 +448,23 @@ class _ConfCardState extends State<_ConfCard>
                   ],
                 ),
               ),
-              // Gaps compensate the 5px of invisible hit-target padding on
-              // each side of _RoundAction (visually ~12 and ~10).
+              // Gaps compensate the invisible hit-target padding around the
+              // visuals (5px per side on _RoundAction 48/38, 6px on the hold
+              // button 48/36), keeping ~12 before and ~10 between visually.
               SizedBox(width: context.r(7)),
               _RoundAction(
                 icon: Icons.close,
                 color: t.bad,
                 onTap: widget.busy ? null : widget.onReject,
               ),
-              _RoundAction(
+              HoldToConfirmButton.round(
                 icon: Icons.check,
                 color: t.good,
-                onTap: widget.busy ? null : widget.onAccept,
+                enabled: !widget.busy,
+                holdEnabled: widget.holdEnabled,
+                hapticsEnabled: widget.hapticsEnabled,
+                semanticLabel: AppLocalizations.of(context).confAccept,
+                onConfirmed: widget.onAccept,
               ),
             ],
           ),

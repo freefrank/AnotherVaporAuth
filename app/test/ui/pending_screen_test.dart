@@ -6,6 +6,7 @@ import 'package:ava/src/core/models/steam_guard_account.dart';
 import 'package:ava/src/services/steam_api_client.dart';
 import 'package:ava/src/ui/pending/offer_card.dart';
 import 'package:ava/src/ui/pending/pending_screen.dart';
+import 'package:ava/src/ui/widgets/hold_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -113,6 +114,35 @@ class _FakeApiAcceptFlow extends _FakeApiWithOffer {
   }
 }
 
+/// Like [_FakeApi], but getlist returns one pending trade confirmation, so
+/// the confirmations tab renders a card with its accept/reject actions.
+class _FakeApiWithConf extends _FakeApi {
+  @override
+  Future<Map<String, dynamic>> communityGetJson(
+    String path,
+    Map<String, dynamic> query, {
+    Map<String, String>? cookies,
+  }) async {
+    if (path.contains('getlist')) getlistCalls++;
+    return {
+      'success': true,
+      'conf': [
+        {
+          'id': '10',
+          'nonce': '20',
+          'type': 2,
+          'type_name': 'Trade',
+          'creator_id': '1',
+          'headline': 'with friend_a',
+          'summary': ['item'],
+          'creation_time': 1752500000,
+          'icon': '',
+        }
+      ],
+    };
+  }
+}
+
 /// Keeps the skin spec null (plain look) so ScanlineOverlay renders no
 /// looping animation — otherwise pumpAndSettle would never settle.
 class _NoSkinSpec extends SkinSpecController {
@@ -205,6 +235,15 @@ void main() {
     expect(api.getlistCalls, greaterThan(baseline),
         reason: 'the handoff must re-fetch confirmations — the tab is '
             'keep-alive and would otherwise show stale data');
+  });
+
+  testWidgets('confirmation accept is a hold button by default',
+      (tester) async {
+    await tester.pumpWidget(_app(_FakeApiWithConf(), _account()));
+    await tester.pumpAndSettle();
+    // 单条卡片上出现 HoldToConfirmButton（round 接受），拒绝仍是普通图标钮；
+    // 批量栏"全部接受"也是 HoldToConfirmButton（pill）——共两个。
+    expect(find.byType(HoldToConfirmButton), findsNWidgets(2));
   });
 
   testWidgets('accept failure shows the error and stays on the offers tab',
