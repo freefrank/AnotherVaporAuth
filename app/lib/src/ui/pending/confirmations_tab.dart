@@ -25,10 +25,15 @@ class ConfirmationsTab extends ConsumerStatefulWidget {
   const ConfirmationsTab({super.key, required this.account, this.onCount});
 
   @override
-  ConsumerState<ConfirmationsTab> createState() => _ConfirmationsTabState();
+  ConsumerState<ConfirmationsTab> createState() => ConfirmationsTabState();
 }
 
-class _ConfirmationsTabState extends ConsumerState<ConfirmationsTab> {
+/// Public so PendingScreen can delegate the AppBar refresh action via a
+/// GlobalKey. Kept alive across tab switches: re-creating the state would
+/// re-sign and re-fetch from Steam mobileconf on every switch and drop
+/// scroll position / in-flight responses.
+class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
+    with AutomaticKeepAliveClientMixin {
   late final ConfirmationsClient _client;
   List<Confirmation>? _confs;
   bool _loading = true;
@@ -37,13 +42,16 @@ class _ConfirmationsTabState extends ConsumerState<ConfirmationsTab> {
   bool _needsLogin = false; // session needs interactive sign-in, not a retry
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void initState() {
     super.initState();
     _client = ConfirmationsClient(ref.read(apiClientProvider));
-    _refresh();
+    refresh();
   }
 
-  Future<void> _refresh() async {
+  Future<void> refresh() async {
     setState(() {
       _loading = true;
       _error = null;
@@ -84,7 +92,7 @@ class _ConfirmationsTabState extends ConsumerState<ConfirmationsTab> {
       builder: (_) =>
           LoginScreen(reason: LoginReason.refresh, account: widget.account),
     ));
-    if (mounted) _refresh();
+    if (mounted) refresh();
   }
 
   /// Fetches confirmations; on a stale session (`needauth`) it transparently
@@ -97,7 +105,11 @@ class _ConfirmationsTabState extends ConsumerState<ConfirmationsTab> {
       final refreshed = await SessionManager(ref.read(apiClientProvider))
           .refresh(widget.account.session);
       if (!refreshed) rethrow;
-      await ref.read(appControllerProvider).value?.store.save();
+      // Guard: the tab may have been disposed while the token refresh was in
+      // flight — reading a disposed ref throws and the save would be lost.
+      if (mounted) {
+        await ref.read(appControllerProvider).value?.store.save();
+      }
       return await _client.fetch(widget.account);
     }
   }
@@ -115,7 +127,7 @@ class _ConfirmationsTabState extends ConsumerState<ConfirmationsTab> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(l.confResult(result.ok, result.failed))),
     );
-    await _refresh();
+    await refresh();
   }
 
   /// Batch accept/reject with an explicit confirmation dialog — acting on
@@ -154,16 +166,33 @@ class _ConfirmationsTabState extends ConsumerState<ConfirmationsTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // AutomaticKeepAliveClientMixin contract.
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).extension<AvaTokens>()!;
     final confs = _confs ?? const <Confirmation>[];
 
-    // Pull-to-refresh replaces the old AppBar refresh button.
+    // Pull-to-refresh; desktop mouse users use the AppBar refresh action in
+    // PendingScreen, which delegates here via GlobalKey.
     return RefreshIndicator(
-      onRefresh: _refresh,
+      onRefresh: refresh,
       child: _buildBody(l, t, confs),
     );
   }
+
+  /// Wraps [child] in a scrollable that fills the viewport and centers it —
+  /// RefreshIndicator needs a scrollable to trigger, and the content must
+  /// stay vertically centered (and able to grow) on any screen height.
+  Widget _scrollableCentered(Widget child) => LayoutBuilder(
+        builder: (context, constraints) => ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(child: child),
+            ),
+          ],
+        ),
+      );
 
   Widget _buildBody(
       AppLocalizations l, AvaTokens t, List<Confirmation> confs) {
@@ -172,58 +201,40 @@ class _ConfirmationsTabState extends ConsumerState<ConfirmationsTab> {
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null) {
-      // Wrapped in a scrollable so RefreshIndicator can trigger.
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          SizedBox(
-            height: 320,
-            child: Center(
-              child: Padding(
-                padding: context.rInsets(all: 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.cloud_off, color: t.muted, size: context.r(40)),
-                    SizedBox(height: context.r(12)),
-                    Text(
-                      _needsLogin ? _error! : '${l.commonError}: $_error',
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: context.r(16)),
-                    _needsLogin
-                        ? FilledButton(
-                            onPressed: _signIn, child: Text(l.loginButton))
-                        : OutlinedButton(
-                            onPressed: _refresh, child: Text(l.commonRetry)),
-                  ],
-                ),
+      return _scrollableCentered(
+        Padding(
+          padding: context.rInsets(all: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.cloud_off, color: t.muted, size: context.r(40)),
+              SizedBox(height: context.r(12)),
+              Text(
+                _needsLogin ? _error! : '${l.commonError}: $_error',
+                textAlign: TextAlign.center,
               ),
-            ),
+              SizedBox(height: context.r(16)),
+              _needsLogin
+                  ? FilledButton(
+                      onPressed: _signIn, child: Text(l.loginButton))
+                  : OutlinedButton(
+                      onPressed: refresh, child: Text(l.commonRetry)),
+            ],
           ),
-        ],
+        ),
       );
     }
     if (confs.isEmpty) {
-      // Wrapped in a scrollable so RefreshIndicator can trigger.
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          SizedBox(
-            height: 320,
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.check_circle_outline,
-                      color: t.good, size: context.r(44)),
-                  SizedBox(height: context.r(12)),
-                  Text(l.confirmationsEmpty),
-                ],
-              ),
-            ),
-          ),
-        ],
+      return _scrollableCentered(
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.check_circle_outline,
+                color: t.good, size: context.r(44)),
+            SizedBox(height: context.r(12)),
+            Text(l.confirmationsEmpty),
+          ],
+        ),
       );
     }
 

@@ -10,14 +10,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// getlist 回空、GetTradeOffers 回空的 fake —— 冒烟只验证骨架渲染。
+/// [getlistCalls] 计数 mobileconf getlist 请求，用于断言 keep-alive 生效。
 class _FakeApi extends SteamApiClient {
+  int getlistCalls = 0;
+
   @override
   Future<Map<String, dynamic>> communityGetJson(
     String path,
     Map<String, dynamic> query, {
     Map<String, String>? cookies,
-  }) async =>
-      {'success': true, 'conf': []};
+  }) async {
+    if (path.contains('getlist')) getlistCalls++;
+    return {'success': true, 'conf': []};
+  }
 
   @override
   Future<Map<String, dynamic>> apiGetJson(
@@ -45,9 +50,10 @@ void main() {
       session: SessionData(
           steamId: 76561198000000123, accessToken: 't', refreshToken: 'r'),
     );
+    final api = _FakeApi();
     await tester.pumpWidget(ProviderScope(
       overrides: [
-        apiClientProvider.overrideWithValue(_FakeApi()),
+        apiClientProvider.overrideWithValue(api),
         skinSpecProvider.overrideWith(_NoSkinSpec.new),
       ],
       child: MaterialApp(
@@ -61,7 +67,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Confirmations'), findsOneWidget);
     expect(find.text('Trade offers'), findsOneWidget);
+    final baseline = api.getlistCalls;
+
+    // Switch away and back: the confirmations tab must be kept alive —
+    // a rebuilt state would re-fetch (and re-sign) against Steam mobileconf.
     await tester.tap(find.text('Trade offers'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirmations'));
+    await tester.pumpAndSettle();
+    expect(api.getlistCalls, baseline,
+        reason: 'tab switching must not re-fetch confirmations (keep-alive)');
   });
 }
