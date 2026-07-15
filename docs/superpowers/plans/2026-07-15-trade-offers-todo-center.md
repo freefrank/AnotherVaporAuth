@@ -32,7 +32,9 @@ Claude-Session: c6beebba-fcf7-4f55-b274-3afcea74e823
 | `app/lib/src/core/protocol/trade_offers_client.dart`（新） | 报价列表/计数/接受/拒绝/取消 + miniprofile |
 | `app/lib/src/services/steam_api_client.dart`（改） | 新增 `apiGetJson`（api.steampowered.com 的 JSON GET） |
 | `app/lib/src/app/providers.dart`（改） | `tradeOffersClientProvider` |
-| `app/lib/src/ui/widgets/hold_button.dart`（新） | 长按确认按钮（环形进度 + 加速震动） |
+| `app/lib/src/ui/widgets/hold_button.dart`（新） | 统一长按确认按钮（pill/round 两变体，环形进度 + 加速震动，受设置开关控制） |
+| `app/lib/src/app/settings_store.dart`（改） | `hold_confirm` / `haptics` 开关持久化 |
+| `app/lib/src/ui/settings_screen.dart`（改） | 两个开关行 |
 | `app/lib/src/ui/pending/pending_screen.dart`（新） | 待办中心 Tab 容器 + 角标 |
 | `app/lib/src/ui/pending/confirmations_tab.dart`（新） | 原确认页 body 迁移为页签 |
 | `app/lib/src/ui/pending/trade_offers_tab.dart`（新） | 报价页签：分段器 + 列表 |
@@ -43,7 +45,8 @@ Claude-Session: c6beebba-fcf7-4f55-b274-3afcea74e823
 | `app/test/core/confirmation_type_test.dart`（新） | 类型映射测试 |
 | `app/test/core/trade_offer_model_test.dart`（新） | 模型解析测试（内嵌 fixture） |
 | `app/test/core/trade_offers_client_test.dart`（新） | client 测试（fake api） |
-| `app/test/widget/hold_button_test.dart`（新） | 震动调度纯函数 + 组件测试 |
+| `app/test/widget/hold_button_test.dart`（新） | 震动调度纯函数 + 组件测试（含普通点按退化） |
+| `app/test/services/settings_store_test.dart`（新） | 开关默认值与持久化往返 |
 | `app/test/ui/pending_screen_test.dart`（新） | 待办中心冒烟 |
 
 ---
@@ -1066,6 +1069,44 @@ void main() {
       await tester.pumpAndSettle();
       expect(fired, 0);
     });
+
+    testWidgets('holdEnabled=false degrades to a plain tap', (tester) async {
+      var fired = 0;
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: HoldToConfirmButton(
+            label: 'accept',
+            color: Colors.green,
+            holdEnabled: false,
+            duration: const Duration(milliseconds: 300),
+            onConfirmed: () => fired++,
+          ),
+        ),
+      ));
+      await tester.tap(find.text('accept'));
+      await tester.pumpAndSettle();
+      expect(fired, 1);
+    });
+
+    testWidgets('round variant renders icon and holds like pill', (tester) async {
+      var fired = 0;
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: HoldToConfirmButton.round(
+            icon: Icons.check,
+            color: Colors.green,
+            duration: const Duration(milliseconds: 300),
+            onConfirmed: () => fired++,
+          ),
+        ),
+      ));
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.byIcon(Icons.check)));
+      await tester.pump(const Duration(milliseconds: 350));
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(fired, 1);
+    });
   });
 }
 ```
@@ -1082,26 +1123,47 @@ Expected: FAIL（文件不存在）。
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// A hold-to-confirm button: press and hold for [duration]; a progress ring
-/// fills up and haptic ticks fire at shrinking intervals (an accelerating
-/// "charging" feel), ending in a medium impact when the action commits.
-/// Early release cancels and resets. Used for irreversible accepts (trade
-/// offers, family joins) instead of a confirmation dialog.
+/// The app's single hold-to-confirm control for irreversible "accept"
+/// actions (trade accepts, family joins, mobileconf accepts): press and hold
+/// for [duration]; a progress ring fills and haptic ticks fire at shrinking
+/// intervals (an accelerating "charging" feel), ending in a medium impact
+/// when the action commits. Early release cancels and resets.
+///
+/// Two shapes: pill ([HoldToConfirmButton.new] with [label]) and round icon
+/// ([HoldToConfirmButton.round] — drop-in for the confirmation card's ✓).
+/// [holdEnabled] false (settings toggle) degrades to a plain tap;
+/// [hapticsEnabled] false mutes all haptics.
 class HoldToConfirmButton extends StatefulWidget {
-  final String label;
+  final String? label; // pill 变体
+  final IconData? icon; // round 变体
   final Color color;
   final Duration duration;
   final VoidCallback onConfirmed;
   final bool enabled;
+  final bool holdEnabled;
+  final bool hapticsEnabled;
 
   const HoldToConfirmButton({
     super.key,
-    required this.label,
+    required String this.label,
     required this.color,
     required this.onConfirmed,
     this.duration = const Duration(milliseconds: 900),
     this.enabled = true,
-  });
+    this.holdEnabled = true,
+    this.hapticsEnabled = true,
+  }) : icon = null;
+
+  const HoldToConfirmButton.round({
+    super.key,
+    required IconData this.icon,
+    required this.color,
+    required this.onConfirmed,
+    this.duration = const Duration(milliseconds: 900),
+    this.enabled = true,
+    this.holdEnabled = true,
+    this.hapticsEnabled = true,
+  }) : label = null;
 
   /// Haptic tick times (ms since press). Intervals shrink geometrically
   /// (factor 0.72, floor 45ms) so the pulse audibly accelerates. Pure and
@@ -1135,7 +1197,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
   void _onTick() {
     final elapsed = _c.value * widget.duration.inMilliseconds;
     while (_nextHaptic < _haptics.length && elapsed >= _haptics[_nextHaptic]) {
-      HapticFeedback.lightImpact();
+      if (widget.hapticsEnabled) HapticFeedback.lightImpact();
       _nextHaptic++;
     }
     setState(() {});
@@ -1143,7 +1205,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
 
   void _onStatus(AnimationStatus s) {
     if (s == AnimationStatus.completed) {
-      HapticFeedback.mediumImpact();
+      if (widget.hapticsEnabled) HapticFeedback.mediumImpact();
       _c.reset();
       _nextHaptic = 0;
       widget.onConfirmed();
@@ -1151,7 +1213,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
   }
 
   void _start(_) {
-    if (!widget.enabled) return;
+    if (!widget.enabled || !widget.holdEnabled) return;
     _nextHaptic = 0;
     _c.forward(from: 0);
   }
@@ -1173,40 +1235,59 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
   @override
   Widget build(BuildContext context) {
     final progress = _c.value;
-    return GestureDetector(
-      onTapDown: _start,
-      onTapUp: _cancel,
-      onTapCancel: _cancel,
-      child: Opacity(
-        opacity: widget.enabled ? 1 : 0.45,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: widget.color.withValues(alpha: 0.16),
-            border: Border.all(color: widget.color),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
+    final child = widget.icon != null
+        ? SizedBox(
+            width: 36,
+            height: 36,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
                   value: progress,
                   strokeWidth: 2.4,
                   color: widget.color,
                   backgroundColor: widget.color.withValues(alpha: 0.25),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(widget.label,
-                  style: TextStyle(
-                      color: widget.color, fontWeight: FontWeight.w600)),
-            ],
-          ),
-        ),
-      ),
+                Icon(widget.icon, color: widget.color, size: 18),
+              ],
+            ),
+          )
+        : Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: widget.color.withValues(alpha: 0.16),
+              border: Border.all(color: widget.color),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 2.4,
+                    color: widget.color,
+                    backgroundColor: widget.color.withValues(alpha: 0.25),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(widget.label!,
+                    style: TextStyle(
+                        color: widget.color, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          );
+
+    return GestureDetector(
+      // 长按关闭（设置开关）时退化为普通点按 —— 单条操作即点即行，
+      // 批量操作的安全底线由调用方保留弹窗（见 Task 10b）。
+      onTap: !widget.holdEnabled && widget.enabled ? widget.onConfirmed : null,
+      onTapDown: _start,
+      onTapUp: _cancel,
+      onTapCancel: _cancel,
+      child: Opacity(opacity: widget.enabled ? 1 : 0.45, child: child),
     );
   }
 }
@@ -1221,7 +1302,188 @@ Expected: PASS（测试环境里 `HapticFeedback` 走 mock 平台通道，静默
 
 ```bash
 git add app/lib/src/ui/widgets/hold_button.dart app/test/widget/hold_button_test.dart
-git commit -m "feat(ui): hold-to-confirm button with accelerating haptic ticks
+git commit -m "feat(ui): unified hold-to-confirm button (pill/round) with accelerating haptics
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: c6beebba-fcf7-4f55-b274-3afcea74e823"
+```
+
+---
+
+### Task 8b: 设置开关 — 长按确认 / 震动反馈
+
+**Files:**
+- Modify: `app/lib/src/app/settings_store.dart`
+- Modify: `app/lib/src/app/providers.dart`
+- Modify: `app/lib/src/ui/settings_screen.dart`
+- Modify: `app/lib/src/ui/home_screen.dart:225`、`home_screen.dart:972`（触觉调用点接开关）
+- Modify: `app/lib/l10n/app_en.arb`、`app_zh.arb`
+- Test: `app/test/services/settings_store_test.dart`
+
+- [ ] **Step 1: 写失败测试**
+
+```dart
+// app/test/services/settings_store_test.dart
+import 'dart:io';
+
+import 'package:ava/src/app/settings_store.dart';
+import 'package:ava/src/services/storage_provider.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
+
+/// SettingsStore 直接写真实文件（app_settings.json 在 maFiles 旁边），
+/// 用临时目录替身而非 MemoryStorageProvider。
+class _TmpStorage extends StorageProvider {
+  final String dir;
+  _TmpStorage(this.dir);
+  @override
+  Future<String> maFilesDir() async => p.join(dir, 'maFiles');
+}
+
+void main() {
+  test('hold-confirm and haptics default to true and persist', () async {
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      final store = SettingsStore(_TmpStorage(tmp.path));
+      expect(await store.loadHoldConfirm(), isTrue);
+      expect(await store.loadHaptics(), isTrue);
+      await store.saveHoldConfirm(false);
+      await store.saveHaptics(false);
+      expect(await store.loadHoldConfirm(), isFalse);
+      expect(await store.loadHaptics(), isFalse);
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
+}
+```
+
+- [ ] **Step 2: 跑测试确认失败**
+
+Run: `cd app && flutter test test/services/settings_store_test.dart`
+Expected: FAIL（`loadHoldConfirm` 不存在）。
+
+- [ ] **Step 3: SettingsStore 实现**（`loadTheme` 之后追加）
+
+```dart
+  /// 长按确认开关（默认开）。关闭后单条接受退回普通点按；
+  /// 批量"全部接受"保留弹窗二次确认作为安全底线。
+  Future<bool> loadHoldConfirm() async =>
+      (await _read())['hold_confirm'] != false;
+
+  Future<void> saveHoldConfirm(bool enabled) async {
+    final data = await _read();
+    data['hold_confirm'] = enabled;
+    await _write(data);
+  }
+
+  /// 全局触觉反馈开关（默认开）：长按 tick/完成 impact 及现有触觉调用点。
+  Future<bool> loadHaptics() async => (await _read())['haptics'] != false;
+
+  Future<void> saveHaptics(bool enabled) async {
+    final data = await _read();
+    data['haptics'] = enabled;
+    await _write(data);
+  }
+```
+
+- [ ] **Step 4: providers**（沿用 `SkinController` 的 Notifier 模式，`settingsStoreProvider` 之后追加）
+
+```dart
+/// 长按确认开关（默认开），持久化到 app_settings.json。
+final holdConfirmProvider =
+    NotifierProvider<HoldConfirmController, bool>(HoldConfirmController.new);
+
+class HoldConfirmController extends Notifier<bool> {
+  @override
+  bool build() {
+    ref.read(settingsStoreProvider).loadHoldConfirm().then((v) => state = v);
+    return true;
+  }
+
+  Future<void> set(bool enabled) async {
+    state = enabled;
+    await ref.read(settingsStoreProvider).saveHoldConfirm(enabled);
+  }
+}
+
+/// 全局触觉反馈开关（默认开）。
+final hapticsProvider =
+    NotifierProvider<HapticsController, bool>(HapticsController.new);
+
+class HapticsController extends Notifier<bool> {
+  @override
+  bool build() {
+    ref.read(settingsStoreProvider).loadHaptics().then((v) => state = v);
+    return true;
+  }
+
+  Future<void> set(bool enabled) async {
+    state = enabled;
+    await ref.read(settingsStoreProvider).saveHaptics(enabled);
+  }
+}
+```
+
+- [ ] **Step 5: ARB 字符串**
+
+`app_en.arb`：
+```json
+  "settingsHoldConfirm": "Hold to confirm",
+  "settingsHoldConfirmDesc": "Irreversible accepts (trades, confirmations) require press-and-hold. When off, a single tap acts immediately; batch actions still ask first.",
+  "settingsHaptics": "Haptic feedback",
+  "settingsHapticsDesc": "Vibration ticks while holding to confirm and on completion.",
+```
+`app_zh.arb`：
+```json
+  "settingsHoldConfirm": "长按确认",
+  "settingsHoldConfirmDesc": "不可逆的接受类操作（交易、确认）需长按生效；关闭后单击立即生效，批量操作仍会弹窗确认。",
+  "settingsHaptics": "震动反馈",
+  "settingsHapticsDesc": "长按确认过程中与完成时的触觉反馈。",
+```
+
+- [ ] **Step 6: 设置页两个开关行**
+
+在 `settings_screen.dart` 的生物识别开关行（`settings_screen.dart:685` 附近）同一分区下追加两行，
+**复用该行使用的同一 tile 封装组件与排版**（title/description/trailing Switch 结构）：
+
+```dart
+    // 长按确认
+    title: l.settingsHoldConfirm,
+    description: l.settingsHoldConfirmDesc,
+    trailing: Switch(
+      value: ref.watch(holdConfirmProvider),
+      onChanged: (v) => ref.read(holdConfirmProvider.notifier).set(v),
+    ),
+
+    // 震动反馈
+    title: l.settingsHaptics,
+    description: l.settingsHapticsDesc,
+    trailing: Switch(
+      value: ref.watch(hapticsProvider),
+      onChanged: (v) => ref.read(hapticsProvider.notifier).set(v),
+    ),
+```
+
+- [ ] **Step 7: 现有触觉调用点接开关**
+
+`home_screen.dart:225`（`HapticFeedback.mediumImpact()`）与 `home_screen.dart:972`
+（`HapticFeedback.selectionClick()`）改为先判 `hapticsProvider`；两处所在组件均可拿到
+`ref`（ConsumerWidget/ConsumerState）或由父级把布尔传入 —— 以各调用点现有的
+参数传递风格为准：
+
+```dart
+if (ref.read(hapticsProvider)) HapticFeedback.mediumImpact();
+```
+
+- [ ] **Step 8: 验证 + Commit**
+
+Run: `cd app && flutter analyze && flutter test`
+Expected: 零问题、全绿。
+
+```bash
+git add -A app/lib app/test
+git commit -m "feat(settings): hold-to-confirm and haptics toggles
 
 Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
 Claude-Session: c6beebba-fcf7-4f55-b274-3afcea74e823"
@@ -1625,6 +1887,8 @@ class OfferCard extends StatelessWidget {
   final VoidCallback? onAccept; // null → 不显示接受（发出/历史）
   final VoidCallback? onDeclineOrCancel;
   final String declineLabel;
+  final bool holdEnabled; // 设置开关（Task 8b）
+  final bool hapticsEnabled;
 
   const OfferCard({
     super.key,
@@ -1634,6 +1898,8 @@ class OfferCard extends StatelessWidget {
     required this.personaName,
     required this.onToggle,
     required this.declineLabel,
+    required this.holdEnabled,
+    required this.hapticsEnabled,
     this.onAccept,
     this.onDeclineOrCancel,
   });
@@ -1707,6 +1973,8 @@ class OfferCard extends StatelessWidget {
                         label: l.offerAcceptHold,
                         color: t.good,
                         enabled: !busy,
+                        holdEnabled: holdEnabled,
+                        hapticsEnabled: hapticsEnabled,
                         onConfirmed: onAccept!,
                       ),
                   ],
@@ -2008,6 +2276,8 @@ class _TradeOffersTabState extends ConsumerState<TradeOffersTab> {
             offer: o,
             expanded: _expandedId == o.id,
             busy: _busy,
+            holdEnabled: ref.watch(holdConfirmProvider),
+            hapticsEnabled: ref.watch(hapticsProvider),
             personaName: _personas[o.partnerAccountId] ?? '',
             onToggle: () =>
                 setState(() => _expandedId = _expandedId == o.id ? null : o.id),
@@ -2045,6 +2315,147 @@ Claude-Session: c6beebba-fcf7-4f55-b274-3afcea74e823"
 
 ---
 
+### Task 10b: 确认页交互统一（单条 ✓ 与"全部接受"改长按）
+
+**Files:**
+- Modify: `app/lib/src/ui/pending/confirmations_tab.dart`
+- Test: `app/test/ui/pending_screen_test.dart`（追加用例）
+
+**规则（spec 追加节）**：接受类 = 长按（开关关闭时单条退普通点按、批量退弹窗）；
+拒绝类（单条 ✕、"全部拒绝"弹窗）保持原样。
+
+- [ ] **Step 1: 追加失败测试**
+
+`_FakeApi` 的 `communityGetJson` 改为可配置一条确认（默认仍回空，避免影响既有用例）：
+
+```dart
+class _FakeApiWithConf extends _FakeApi {
+  @override
+  Future<Map<String, dynamic>> communityGetJson(
+    String path,
+    Map<String, dynamic> query, {
+    Map<String, String>? cookies,
+  }) async =>
+      {
+        'success': true,
+        'conf': [
+          {'id': '10', 'nonce': '20', 'type': 2, 'type_name': 'Trade',
+           'creator_id': '1', 'headline': 'with friend_a',
+           'summary': ['item'], 'creation_time': 1752500000, 'icon': ''}
+        ],
+      };
+}
+```
+
+追加用例：
+
+```dart
+  testWidgets('confirmation accept is a hold button by default', (tester) async {
+    final account = SteamGuardAccount(
+      accountName: 'acc',
+      identitySecret: 'YQ==',
+      session: SessionData(
+          steamId: 76561198000000123, accessToken: 't', refreshToken: 'r'),
+    );
+    await tester.pumpWidget(ProviderScope(
+      overrides: [apiClientProvider.overrideWithValue(_FakeApiWithConf())],
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: PendingScreen(account: account),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    // 单条卡片上出现圆形长按接受（HoldToConfirmButton），不再是即点 ✓。
+    expect(find.byType(HoldToConfirmButton), findsWidgets);
+  });
+```
+
+（顶部补 `import 'package:ava/src/ui/widgets/hold_button.dart';`。）
+
+- [ ] **Step 2: 跑测试确认失败**
+
+Run: `cd app && flutter test test/ui/pending_screen_test.dart`
+Expected: FAIL（确认卡仍是 `_RoundAction` ✓）。
+
+- [ ] **Step 3: 实现**
+
+`confirmations_tab.dart`：
+
+1. `_ConfCard` 加参数 `final bool holdEnabled; final bool hapticsEnabled;`（required），
+   构建处把接受按钮替换为：
+
+```dart
+              _RoundAction(
+                icon: Icons.close,
+                color: t.bad,
+                onTap: widget.busy ? null : widget.onReject,
+              ),
+              HoldToConfirmButton.round(
+                icon: Icons.check,
+                color: t.good,
+                enabled: !widget.busy,
+                holdEnabled: widget.holdEnabled,
+                hapticsEnabled: widget.hapticsEnabled,
+                onConfirmed: widget.onAccept,
+              ),
+```
+
+（`holdEnabled=false` 时组件自身退化为普通点按 —— 行为与原 ✓ 完全一致，
+无需在调用方分支。）
+
+2. 列表构建处传参：
+
+```dart
+            itemBuilder: (context, i) => _ConfCard(
+              key: ValueKey(confs[i].id),
+              conf: confs[i],
+              index: i,
+              busy: _busy,
+              holdEnabled: ref.watch(holdConfirmProvider),
+              hapticsEnabled: ref.watch(hapticsProvider),
+              onAccept: () => _respond([confs[i]], true),
+              onReject: () => _respond([confs[i]], false),
+            ),
+```
+
+3. 批量栏"全部接受"：长按开时直接长按执行（弹窗冗余，移除）；关闭时保留原弹窗路径：
+
+```dart
+              ref.watch(holdConfirmProvider)
+                  ? HoldToConfirmButton(
+                      label: l.confAcceptAll,
+                      color: t.good,
+                      enabled: !_busy,
+                      hapticsEnabled: ref.watch(hapticsProvider),
+                      onConfirmed: () => _respond(confs, true),
+                    )
+                  : FilledButton.icon(
+                      onPressed: _busy ? null : () => _respondAll(confs, true),
+                      icon: Icon(Icons.check, size: context.r(16)),
+                      label: Text(l.confAcceptAll),
+                    ),
+```
+
+"全部拒绝"按钮与 `_respondAll` 的弹窗逻辑保持不变（拒绝类不走长按）。
+
+- [ ] **Step 4: 跑全量验证**
+
+Run: `cd app && flutter analyze && flutter test`
+Expected: 零问题、全绿。
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add app/lib/src/ui/pending/confirmations_tab.dart app/test/ui/pending_screen_test.dart
+git commit -m "feat(conf): unify accepts behind hold-to-confirm (settings-aware)
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+Claude-Session: c6beebba-fcf7-4f55-b274-3afcea74e823"
+```
+
+---
+
 ### Task 11: 收尾 — 全量验证 + 真机联调清单
 
 - [ ] **Step 1: 全量 CI**
@@ -2057,7 +2468,9 @@ Expected: analyze 零问题；全部测试通过（原 167 + 新增 ≥ 12）。
 ```bash
 cd app && flutter run -d emulator-5554
 ```
-检查：右滑账户行 → 待办中心两页签渲染；报价页签分段器切换；空态/错误态正常。
+检查：右滑账户行 → 待办中心两页签渲染；报价页签分段器切换；空态/错误态正常；
+确认卡单条接受为长按（震动逐渐加速）；设置里关"长按确认"→ 单条退普通点按、
+"全部接受"退弹窗；关"震动反馈"→ 长按无震动、账户行手势无震动。
 
 - [ ] **Step 3: 真机联调清单**（登记为 issue/TODO，勿在真机确认页操作 —— CLAUDE.md 红线）
 
@@ -2077,6 +2490,7 @@ cd app && flutter run -d emulator-5554
 
 ## Self-Review 记录
 
-- **Spec 覆盖**：确认类型补全（Task 1-2）、待办中心（Task 9）、报价读写（Task 4-6）、长按+震动（Task 8）、分段器与联动（Task 10）、错误/边界（gift/one-sided/escrow banner、auth 刷新、页签级错误态）、i18n、测试、真机清单（Task 11）。家庭组邀请页签 = 计划 2（spec 允许分期）。spec 的 `GetTradeOffersSummary` 用于角标 —— 实现为 `pendingReceivedCount`（Task 5），页签内角标直接用列表长度（Task 10），Summary 留给主屏角标（计划 2 或后续）。
-- **占位符扫描**：Task 9 的 `trade_offers_tab.dart` 占位在 Task 10 被完整替换，非遗留。
-- **类型一致性**：`TradeOffersPage.fromResponse`（Task 4）↔ client（Task 5）；`OfferCard` 构造参数 ↔ Task 10 调用点；`onCount`/`onGoToConfirmations` 贯穿 Task 9-10 一致。
+- **Spec 覆盖**：确认类型补全（Task 1-2）、待办中心（Task 9）、报价读写（Task 4-6）、统一长按+震动组件（Task 8）、设置开关（Task 8b）、分段器与联动（Task 10）、确认页交互统一（Task 10b）、错误/边界（gift/one-sided/escrow banner、auth 刷新、页签级错误态）、i18n、测试、真机清单（Task 11）。家庭组邀请页签 = 计划 2（spec 允许分期）。spec 的 `GetTradeOffersSummary` 用于角标 —— 实现为 `pendingReceivedCount`（Task 5），页签内角标直接用列表长度（Task 10），Summary 留给主屏角标（计划 2 或后续）。
+- **占位符扫描**：Task 9 的 `trade_offers_tab.dart` 占位在 Task 10 被完整替换，非遗留。Task 8b Step 6/7 指向 settings_screen/home_screen 的既有封装组件（执行者按 `settings_screen.dart:685`、`home_screen.dart:225/972` 现场对齐），属"跟随现有模式"而非待定项。
+- **类型一致性**：`TradeOffersPage.fromResponse`（Task 4）↔ client（Task 5）；`OfferCard` 构造参数（含 `holdEnabled`/`hapticsEnabled`）↔ Task 10 调用点；`HoldToConfirmButton`/`HoldToConfirmButton.round` 签名 ↔ Task 8 测试、Task 10/10b 调用点；`holdConfirmProvider`/`hapticsProvider`（Task 8b）↔ Task 10/10b 的 `ref.watch`；`onCount`/`onGoToConfirmations` 贯穿 Task 9-10 一致。
+- **执行顺序依赖**：Task 8b（providers）必须先于 Task 10/10b（消费开关）；Task 8 先于 8b 无硬依赖但保持编号顺序执行即可。
