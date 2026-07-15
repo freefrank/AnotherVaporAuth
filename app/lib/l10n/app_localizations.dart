@@ -746,6 +746,12 @@ abstract class AppLocalizations {
   /// **'Offer accepted — confirm it in the Confirmations tab'**
   String get offerAccepted;
 
+  /// No description provided for @offerAcceptedNoConf.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer accepted.'**
+  String get offerAcceptedNoConf;
+
   /// No description provided for @offerActionFailed.
   ///
   /// In en, this message translates to:

@@ -121,6 +121,7 @@
   "offerReceiveLabel": "You receive",
   "offerGiveLabel": "You give",
   "offerAccepted": "Offer accepted — confirm it in the Confirmations tab",
+  "offerAcceptedNoConf": "Offer accepted.",
   "offerActionFailed": "Action failed: {msg}",
   "@offerActionFailed": { "placeholders": { "msg": { "type": "String" } } },
   "offerDeclined": "Offer declined.",

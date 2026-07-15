@@ -91,6 +91,28 @@ class _FakeApiWithOffer extends _FakeApi {
   }
 }
 
+/// [_FakeApiWithOffer] plus a scripted `communityPostJson` — records every
+/// POST path and replies with [acceptReply], so the hold-to-accept flow can
+/// be driven end to end without network.
+class _FakeApiAcceptFlow extends _FakeApiWithOffer {
+  final postPaths = <String>[];
+  Map<String, dynamic> acceptReply = {
+    'tradeid': '1',
+    'needs_mobile_confirmation': true,
+  };
+
+  @override
+  Future<Map<String, dynamic>> communityPostJson(
+    String path,
+    Map<String, dynamic> form, {
+    Map<String, String>? cookies,
+    String? referer,
+  }) async {
+    postPaths.add(path);
+    return acceptReply;
+  }
+}
+
 /// Keeps the skin spec null (plain look) so ScanlineOverlay renders no
 /// looping animation — otherwise pumpAndSettle would never settle.
 class _NoSkinSpec extends SkinSpecController {
@@ -151,5 +173,65 @@ void main() {
     expect(find.text('Hold to accept'), findsOneWidget);
     expect(find.text('Decline'), findsOneWidget);
     expect(find.text('Gift — you give nothing'), findsOneWidget);
+  });
+
+  testWidgets('hold-to-accept posts accept and hands off to confirmations',
+      (tester) async {
+    final api = _FakeApiAcceptFlow();
+    await tester.pumpWidget(_app(api, _account()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trade offers'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(OfferCard));
+    await tester.pumpAndSettle();
+    final baseline = api.getlistCalls;
+
+    // Drive the 900ms hold past completion.
+    final gesture = await tester
+        .startGesture(tester.getCenter(find.text('Hold to accept')));
+    // The tap recognizer only fires onTapDown after its ~100ms arena
+    // deadline (the card sits in a scrollable), so give it a beat before
+    // elapsing the 900ms hold.
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pump(const Duration(milliseconds: 1000));
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(api.postPaths, contains('/tradeoffer/7001/accept'));
+    expect(find.text('Offer accepted — confirm it in the Confirmations tab'),
+        findsOneWidget);
+    // Landed back on the confirmations tab (offstage text is not found).
+    expect(find.text('No pending confirmations.'), findsOneWidget);
+    expect(api.getlistCalls, greaterThan(baseline),
+        reason: 'the handoff must re-fetch confirmations — the tab is '
+            'keep-alive and would otherwise show stale data');
+  });
+
+  testWidgets('accept failure shows the error and stays on the offers tab',
+      (tester) async {
+    final api = _FakeApiAcceptFlow()..acceptReply = {'strError': 'oops'};
+    await tester.pumpWidget(_app(api, _account()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trade offers'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(OfferCard));
+    await tester.pumpAndSettle();
+    final baseline = api.getlistCalls;
+
+    final gesture = await tester
+        .startGesture(tester.getCenter(find.text('Hold to accept')));
+    // The tap recognizer only fires onTapDown after its ~100ms arena
+    // deadline (the card sits in a scrollable), so give it a beat before
+    // elapsing the 900ms hold.
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pump(const Duration(milliseconds: 1000));
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(api.postPaths, contains('/tradeoffer/7001/accept'));
+    expect(find.text('Action failed: oops'), findsOneWidget);
+    // No tab switch, no confirmations refetch.
+    expect(find.text('No pending confirmations.'), findsNothing);
+    expect(api.getlistCalls, baseline);
   });
 }

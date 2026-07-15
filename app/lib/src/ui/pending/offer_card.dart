@@ -88,7 +88,10 @@ class OfferCard extends StatelessWidget {
                 if (offer.isGift) _banner(context, t.good, l.offerGift),
                 if (offer.isOneSidedGive)
                   _banner(context, t.bad, l.offerOneSided),
-                if (offer.escrowEndDate > 0)
+                // 只在报价确实处于暂挂状态时提示 —— history 段里已完成的
+                // 报价留着 escrow_end_date,横幅会误导。
+                if (offer.escrowEndDate > 0 &&
+                    offer.state == TradeOfferState.inEscrow)
                   _banner(context, t.accent2, l.offerEscrow),
                 SizedBox(height: context.r(10)),
                 Row(
@@ -146,7 +149,14 @@ class OfferCard extends StatelessWidget {
                     child: a.iconUrl.isEmpty
                         ? Icon(Icons.inventory_2_outlined,
                             color: t.muted, size: context.r(18))
-                        : Image.network(a.iconUrl, fit: BoxFit.contain),
+                        : Image.network(
+                            a.iconUrl,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, _, _) => Icon(
+                                Icons.inventory_2_outlined,
+                                color: t.muted,
+                                size: context.r(18)),
+                          ),
                   ),
                 ),
             ],

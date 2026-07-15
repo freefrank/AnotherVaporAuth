@@ -346,6 +346,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get offerAccepted => '已接受报价 — 请到「确认」页签完成确认';
 
   @override
+  String get offerAcceptedNoConf => '已接受报价。';
+
+  @override
   String offerActionFailed(String msg) {
     return '操作失败：$msg';
   }

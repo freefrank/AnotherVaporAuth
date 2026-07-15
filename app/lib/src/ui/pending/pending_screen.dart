@@ -85,6 +85,11 @@ class _PendingScreenState extends State<PendingScreen>
               onCount: (n) => setState(() => _offerCount = n),
               onGoToConfirmations: () {
                 _tabs.animateTo(0);
+                // The confirmations tab is keep-alive and never refetches on
+                // its own — without this the user lands on stale data (often
+                // the "all done" empty state) right after being told to
+                // confirm the accepted trade there.
+                _confTabKey.currentState?.refresh();
               },
             ),
           ],

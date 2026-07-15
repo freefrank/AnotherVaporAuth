@@ -7,7 +7,11 @@ import '../../app/responsive.dart';
 import '../../app/theme.dart';
 import '../../core/models/steam_guard_account.dart';
 import '../../core/models/trade_offer.dart';
+import '../../core/protocol/qr_approval_client.dart'
+    show MissingAccessTokenException;
 import '../../services/session_manager.dart';
+import '../../services/steam_api_client.dart' show SteamApiException;
+import '../login_screen.dart';
 import 'offer_card.dart';
 
 /// 报价页签：收到 / 发出 / 历史 三段。卡片可展开（双方物品 + 警示条），
@@ -47,6 +51,7 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
   bool _loading = false;
   bool _busy = false;
   String? _error;
+  bool _needsLogin = false; // session needs interactive sign-in, not a retry
 
   @override
   bool get wantKeepAlive => true;
@@ -62,6 +67,7 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
     setState(() {
       _loading = true;
       _error = null;
+      _needsLogin = false;
     });
     try {
       final historical = _seg == _Segment.history;
@@ -82,13 +88,39 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
             .length);
       }
       _loadPersonas(page);
+      // 拉取期间用户可能切到了另一个尚无缓存的分段——那次 refresh 被防重入
+      // 吞掉了,这里补拉一次,避免落在无 spinner 的假空态上。只在成功路径
+      // 补拉:错误路径展示错误 + 重试,不会静默循环。
+      final segMissing =
+          _seg == _Segment.history ? _history == null : _active == null;
+      if (segMissing) return refresh();
     } catch (e) {
       if (!mounted) return;
+      final needsLogin = _isAuthError(e);
+      final l = AppLocalizations.of(context);
       setState(() {
         _loading = false;
-        _error = '$e';
+        _needsLogin = needsLogin;
+        _error = needsLogin ? l.confNeedsLogin : '$e';
       });
     }
+  }
+
+  /// True for the error shapes that mean "the session is dead and only an
+  /// interactive sign-in can fix it": no access token at all, or Steam
+  /// answering the (already token-refreshed) retry with a bare 401/403.
+  static bool _isAuthError(Object e) =>
+      e is MissingAccessTokenException ||
+      (e is SteamApiException &&
+          (e.message.contains('HTTP 401') || e.message.contains('HTTP 403')));
+
+  /// Opens sign-in for this account, then re-fetches on return.
+  Future<void> _signIn() async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) =>
+          LoginScreen(reason: LoginReason.refresh, account: widget.account),
+    ));
+    if (mounted) refresh();
   }
 
   /// Fetches offers; on failure it refreshes the access token from the
@@ -160,7 +192,12 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
     if (!mounted) return;
     setState(() => _busy = false);
     if (r.success) {
-      messenger.showSnackBar(SnackBar(content: Text(l.offerAccepted)));
+      // Only point the user at the confirmations tab when a mobileconf
+      // actually follows — otherwise they'd hunt for one that doesn't exist.
+      messenger.showSnackBar(SnackBar(
+          content: Text(r.needsMobileConfirmation
+              ? l.offerAccepted
+              : l.offerAcceptedNoConf)));
       if (r.needsMobileConfirmation) widget.onGoToConfirmations?.call();
       await refresh();
     } else {
@@ -266,9 +303,16 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
             children: [
               Icon(Icons.cloud_off, color: t.muted, size: context.r(40)),
               SizedBox(height: context.r(12)),
-              Text('${l.commonError}: $_error', textAlign: TextAlign.center),
+              Text(
+                _needsLogin ? _error! : '${l.commonError}: $_error',
+                textAlign: TextAlign.center,
+              ),
               SizedBox(height: context.r(16)),
-              OutlinedButton(onPressed: refresh, child: Text(l.commonRetry)),
+              _needsLogin
+                  ? FilledButton(
+                      onPressed: _signIn, child: Text(l.loginButton))
+                  : OutlinedButton(
+                      onPressed: refresh, child: Text(l.commonRetry)),
             ],
           ),
         ),
@@ -304,8 +348,12 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
           personaName: _personas[offer.partnerAccountId] ?? '',
           onToggle: () => setState(() =>
               _expandedId = _expandedId == offer.id ? null : offer.id),
-          onAccept:
-              _seg == _Segment.received ? () => _accept(offer) : null,
+          // inEscrow 报价已被接受(物品暂挂中),再接受必失败 —— 只有
+          // active 才给长按接受;拒绝保留(取消暂挂是合法操作)。
+          onAccept: _seg == _Segment.received &&
+                  offer.state == TradeOfferState.active
+              ? () => _accept(offer)
+              : null,
           onDeclineOrCancel:
               actionable ? () => _declineOrCancel(offer) : null,
           declineLabel:

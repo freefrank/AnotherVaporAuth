@@ -362,6 +362,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Offer accepted — confirm it in the Confirmations tab';
 
   @override
+  String get offerAcceptedNoConf => 'Offer accepted.';
+
+  @override
   String offerActionFailed(String msg) {
     return 'Action failed: $msg';
   }
