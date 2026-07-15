@@ -1539,6 +1539,28 @@ Claude-Session: c6beebba-fcf7-4f55-b274-3afcea74e823"
 
 ---
 
+## 执行后记（2026-07-15，全分支终审后）
+
+**结果**：Task 1-7 由实施工作流完成（每任务双审并行，全部首轮通过，零修复轮）；
+12 条 Minor 中 9 条已在清理提交（`8a99a0a`/`e1e16f8`）修复；终审两项合并前修正
+（zh `famInviteSlots` 语义、本后记）已落。251/251 测试全绿，analyze 零问题。
+
+**Spec 收窄（最终确认）**：谢绝邀请（收件人侧 RPC 未确认）、共享游戏数
+（`GetSharedLibraryApps` 超范围）、账户菜单入口始终显示、"已加入"卡片转换需
+手动刷新、只读页无退出按钮、购买审批仅占位。
+
+**遗留清单（非阻塞）**：
+1. 邀请详情缓存（预检/组名/昵称）跨刷新不失效——瞬时网络错误会让卡片降级
+   直到重开待办中心；可在 `refresh()` 里清三个 guard 集合
+2. "长按加入"的 AT 语义激活直达 `_join`（单条操作先例一致，但 join 带一年
+   冷却且 `two_factor_method=0` 时立即生效——考虑批量 pill 的弹窗处理）
+3. 已加入空态与 awaiting_2fa 卡片文案无 widget 测试
+4. 昵称查询无负缓存（空结果每次刷新重拉）
+5. `home_screen` `case 'family'` 未 await push（同级 case 有，纯风格）
+
+**本功能在真机验证前应视为实验性**——协议层最大的赌注是 nonce=invite_id 与
+ePrivilege=5 降级，见下方清单。
+
 ## Self-Review 记录
 
 - **Spec 覆盖**：邀请发现/预检/长按加入/确认联动（Task 5-6）、信息页（Task 7）、provider（Task 3）、l10n（Task 4）、协议层含 ConfirmJoinFamilyGroup 备用实现（Task 2）。收窄三条显式记录于头部。

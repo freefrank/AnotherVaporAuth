@@ -382,7 +382,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String famInviteSlots(int used, int total) {
-    return '空位 $used/$total';
+    return '成员 $used/$total';
   }
 
   @override

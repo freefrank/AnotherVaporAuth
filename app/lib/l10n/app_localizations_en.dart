@@ -398,7 +398,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String famInviteSlots(int used, int total) {
-    return 'Slots $used/$total';
+    return 'Members $used/$total';
   }
 
   @override

@@ -134,7 +134,7 @@
   "@famInviteFrom": {"placeholders": {"inviter": {"type": "String"}}},
   "famInviteRole": "角色：{role}",
   "@famInviteRole": {"placeholders": {"role": {"type": "String"}}},
-  "famInviteSlots": "空位 {used}/{total}",
+  "famInviteSlots": "成员 {used}/{total}",
   "@famInviteSlots": {"placeholders": {"used": {"type": "int"}, "total": {"type": "int"}}},
   "famRoleAdult": "成人",
   "famRoleChild": "儿童",

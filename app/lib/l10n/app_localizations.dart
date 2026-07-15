@@ -803,7 +803,7 @@ abstract class AppLocalizations {
   /// No description provided for @famInviteSlots.
   ///
   /// In en, this message translates to:
-  /// **'Slots {used}/{total}'**
+  /// **'Members {used}/{total}'**
   String famInviteSlots(int used, int total);
 
   /// No description provided for @famRoleAdult.

@@ -134,7 +134,7 @@
   "@famInviteFrom": {"placeholders": {"inviter": {"type": "String"}}},
   "famInviteRole": "Role: {role}",
   "@famInviteRole": {"placeholders": {"role": {"type": "String"}}},
-  "famInviteSlots": "Slots {used}/{total}",
+  "famInviteSlots": "Members {used}/{total}",
   "@famInviteSlots": {"placeholders": {"used": {"type": "int"}, "total": {"type": "int"}}},
   "famRoleAdult": "Adult",
   "famRoleChild": "Child",
