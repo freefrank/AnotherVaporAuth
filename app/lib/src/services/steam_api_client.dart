@@ -128,6 +128,40 @@ class SteamApiClient {
     }
   }
 
+  /// GET against api.steampowered.com returning decoded JSON (non-protobuf
+  /// Web API endpoints, e.g. IEconService). [accessToken] is appended as the
+  /// `access_token` query param. Returns the decoded top-level object; a
+  /// bare 401/403 (expired token) throws [SteamApiException] so callers can
+  /// trigger a session refresh, mirroring [callProtobuf]'s contract.
+  Future<Map<String, dynamic>> apiGetJson(
+    String iface,
+    String method,
+    Map<String, dynamic> query, {
+    String? accessToken,
+    int version = 1,
+  }) async {
+    final url = '$apiBase/$iface/$method/v$version/';
+    dlog('→ GET $iface/$method (json)');
+    try {
+      final resp = await _dio.get<String>(
+        url,
+        queryParameters: {'access_token': ?accessToken, ...query},
+        options: Options(responseType: ResponseType.plain),
+      );
+      final status = resp.statusCode ?? 0;
+      final body = resp.data ?? '';
+      dlog('← $method  HTTP $status  ${body.length}B');
+      if (status < 200 || status >= 300) {
+        throw SteamApiException(2 /* Fail */, 'HTTP $status', method);
+      }
+      final decoded = body.isEmpty ? const <String, dynamic>{} : jsonDecode(body);
+      return decoded is Map<String, dynamic> ? decoded : const {};
+    } on DioException catch (e) {
+      dlog('  ✗ $method network: ${e.type.name} ${e.response?.statusCode ?? ''}');
+      rethrow;
+    }
+  }
+
   /// GET against steamcommunity.com (mobileconf), returning decoded JSON.
   Future<Map<String, dynamic>> communityGetJson(
     String path,
