@@ -5,6 +5,57 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.81.0] — 2026-07-15
+
+### Added
+- **Trade offers, in the app.** The confirmations screen is now a tabbed
+  **Pending center** (swipe right on an account, as before): alongside
+  mobileconf confirmations there is a **Trade offers** tab — received / sent /
+  history segments, expandable cards showing both sides' items (rarity-colored
+  borders, disk-cached icons), and explicit banners for gift offers ("you give
+  nothing"), one-sided giveaways and escrow holds. Accept an offer and AVA
+  jumps straight to the Confirmations tab with the fresh mobileconf entry
+  loaded; decline/cancel works from the card. Reads use Valve's documented
+  IEconService API; accepting only ever reports success on Steam's positive
+  confirmation.
+- **Hold-to-confirm, everywhere.** Irreversible accepts — a trade offer, a
+  single confirmation's ✓, "Accept all" — now share one control: press and
+  hold while a progress ring fills, with haptic ticks that speed up until the
+  action commits ("Accept all" no longer needs its extra dialog; the hold *is*
+  the second confirmation). Two new Settings toggles: **Hold to confirm**
+  (off = single tap, batch actions keep the dialog) and **Haptic feedback**.
+  Screen-reader users get an equivalent activation path, with batch accepts
+  still routed through the dialog.
+- **Confirmation types, properly labeled.** Steam Family invites, web API key
+  creation, phone-number changes and account recovery now show their own
+  labels and warning colors instead of a generic "Confirm" chip.
+
+### Fixed
+- Rapid toggling of two settings no longer loses one of the writes
+  (`app_settings.json` updates are serialized).
+
+—
+
+### 新增
+- **应用内交易报价。** 确认页升级为带页签的**待办中心**（入口不变：账户右
+  滑）：mobileconf 确认旁新增**报价**页签——收到 / 发出 / 历史三个分段，
+  可展开卡片显示双方物品（稀有度边框、图标走磁盘缓存），并对赠送（"你无
+  需给出物品"）、只给不收、暂挂交付显示醒目警示条。接受报价后 AVA 直接
+  跳到确认页签并加载新出现的 mobileconf 确认；拒绝/取消在卡片上就地完成。
+  读取走 Valve 文档化的 IEconService API；接受只在收到 Steam 的正向确认
+  时才报告成功。
+- **全局统一的长按确认。** 所有不可逆的接受操作——交易报价、单条确认的
+  ✓、"全部接受"——共用同一个控件：按住不放，进度环填满、震动节奏逐渐加
+  快直到操作生效（"全部接受"不再额外弹窗，长按本身就是二次确认）。设置
+  新增两个开关：**长按确认**（关闭后单击生效，批量操作保留弹窗）与
+  **震动反馈**。读屏用户有等效的激活路径，批量接受仍会经过弹窗确认。
+- **确认类型有了明确标签。** 家庭组邀请、Web API 密钥创建、更换手机号、
+  账户恢复不再显示为笼统的"确认"，而是各自的标签与警示配色。
+
+### 修复
+- 快速连拨两个设置开关不再丢失其中一个的写入（`app_settings.json`
+  更新已串行化）。
+
 ## [v0.80.1] — 2026-07-06
 
 ### Fixed
