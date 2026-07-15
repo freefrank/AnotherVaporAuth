@@ -36,65 +36,65 @@ class SettingsStore {
     }
   }
 
+  // Serializes every read-modify-write against app_settings.json: two quick
+  // toggles (e.g. the adjacent hold-confirm / haptics switches) must not
+  // interleave their read and write phases, or the second write silently
+  // drops the first one's value.
+  Future<void> _chain = Future.value();
+
+  Future<void> _update(void Function(Map<String, dynamic> data) mutate) {
+    final task = _chain.then((_) async {
+      final data = await _read();
+      mutate(data);
+      await _write(data);
+    });
+    // Keep the chain alive even if this update fails.
+    _chain = task.catchError((_) {});
+    return task;
+  }
+
   Future<String?> loadLocale() async => (await _read())['locale'] as String?;
 
-  Future<void> saveLocale(String? code) async {
-    final data = await _read();
-    if (code == null) {
-      data.remove('locale');
-    } else {
-      data['locale'] = code;
-    }
-    await _write(data);
-  }
+  Future<void> saveLocale(String? code) => _update((data) {
+        if (code == null) {
+          data.remove('locale');
+        } else {
+          data['locale'] = code;
+        }
+      });
 
   /// Whether the user has accepted the Privacy Policy (first-run gate).
   Future<bool> loadPrivacyAccepted() async =>
       (await _read())['privacy_accepted'] == true;
 
-  Future<void> savePrivacyAccepted(bool accepted) async {
-    final data = await _read();
-    data['privacy_accepted'] = accepted;
-    await _write(data);
-  }
+  Future<void> savePrivacyAccepted(bool accepted) =>
+      _update((data) => data['privacy_accepted'] = accepted);
 
   /// Whether the one-time post-import backup reminder has been shown.
   Future<bool> loadBackupReminderShown() async =>
       (await _read())['backup_reminder_shown'] == true;
 
-  Future<void> saveBackupReminderShown() async {
-    final data = await _read();
-    data['backup_reminder_shown'] = true;
-    await _write(data);
-  }
+  Future<void> saveBackupReminderShown() =>
+      _update((data) => data['backup_reminder_shown'] = true);
 
   /// Whether the user has agreed to the debug-log attachment notice (the
   /// one-time prompt shown when first ticking "attach debug log" in feedback).
   Future<bool> loadLogConsentShown() async =>
       (await _read())['log_consent_shown'] == true;
 
-  Future<void> saveLogConsentShown() async {
-    final data = await _read();
-    data['log_consent_shown'] = true;
-    await _write(data);
-  }
+  Future<void> saveLogConsentShown() =>
+      _update((data) => data['log_consent_shown'] = true);
 
   /// Whether the first-run gesture tutorial has been shown (home screen).
   Future<bool> loadTutorialSeen() async =>
       (await _read())['tutorial_seen'] == true;
 
-  Future<void> saveTutorialSeen() async {
-    final data = await _read();
-    data['tutorial_seen'] = true;
-    await _write(data);
-  }
+  Future<void> saveTutorialSeen() =>
+      _update((data) => data['tutorial_seen'] = true);
 
   /// Clears the seen flag so the tutorial replays (settings → replay).
-  Future<void> resetTutorialSeen() async {
-    final data = await _read();
-    data.remove('tutorial_seen');
-    await _write(data);
-  }
+  Future<void> resetTutorialSeen() =>
+      _update((data) => data.remove('tutorial_seen'));
 
   /// Styled skin: 'none' | 'neon' | 'pixel'. Falls back to the legacy
   /// single 'theme' key ('neon'/'pixel'/'dark'/'light') for older installs.
@@ -110,11 +110,7 @@ class SettingsStore {
     };
   }
 
-  Future<void> saveSkin(String skin) async {
-    final data = await _read();
-    data['skin'] = skin;
-    await _write(data);
-  }
+  Future<void> saveSkin(String skin) => _update((data) => data['skin'] = skin);
 
   /// Plain-look brightness: 'system' | 'dark' | 'light'. Migrates the legacy
   /// 'theme' key the same way as [loadSkin].
@@ -129,38 +125,26 @@ class SettingsStore {
     };
   }
 
-  Future<void> saveBrightnessMode(String mode) async {
-    final data = await _read();
-    data['brightness_mode'] = mode;
-    await _write(data);
-  }
+  Future<void> saveBrightnessMode(String mode) =>
+      _update((data) => data['brightness_mode'] = mode);
 
   /// UI theme variant: 'neon' (default) or 'pixel'.
   Future<String?> loadTheme() async => (await _read())['theme'] as String?;
 
-  Future<void> saveTheme(String variant) async {
-    final data = await _read();
-    data['theme'] = variant;
-    await _write(data);
-  }
+  Future<void> saveTheme(String variant) =>
+      _update((data) => data['theme'] = variant);
 
   /// 长按确认开关（默认开）。关闭后单条接受退回普通点按；
   /// 批量“全部接受”保留弹窗二次确认作为安全底线。
   Future<bool> loadHoldConfirm() async =>
       (await _read())['hold_confirm'] != false;
 
-  Future<void> saveHoldConfirm(bool enabled) async {
-    final data = await _read();
-    data['hold_confirm'] = enabled;
-    await _write(data);
-  }
+  Future<void> saveHoldConfirm(bool enabled) =>
+      _update((data) => data['hold_confirm'] = enabled);
 
   /// 全局触觉反馈开关（默认开）：长按 tick/完成 impact 及现有触觉调用点。
   Future<bool> loadHaptics() async => (await _read())['haptics'] != false;
 
-  Future<void> saveHaptics(bool enabled) async {
-    final data = await _read();
-    data['haptics'] = enabled;
-    await _write(data);
-  }
+  Future<void> saveHaptics(bool enabled) =>
+      _update((data) => data['haptics'] = enabled);
 }

@@ -29,4 +29,17 @@ void main() {
       await tmp.delete(recursive: true);
     }
   });
+
+  test('concurrent saves of different keys do not lose updates', () async {
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      final store = SettingsStore(_TmpStorage(tmp.path));
+      await Future.wait(
+          [store.saveHoldConfirm(false), store.saveHaptics(false)]);
+      expect(await store.loadHoldConfirm(), isFalse);
+      expect(await store.loadHaptics(), isFalse);
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
 }
