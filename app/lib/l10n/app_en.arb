@@ -68,6 +68,9 @@
   "copied": "Copied to clipboard",
   "copySteamId": "Copy SteamID",
 
+  "pendingTitle": "Pending",
+  "pendingTabConfirmations": "Confirmations",
+  "pendingTabOffers": "Trade offers",
   "confirmationsTitle": "Confirmations",
   "confirmationsEmpty": "No pending confirmations.",
   "confirmationsRefresh": "Refresh",
@@ -308,7 +311,7 @@
   "aboutCreditsBody": "Inspired by Steam Desktop Authenticator and compatible with its maFile format. Independently built with Flutter, Riverpod, Dio, PointyCastle, mobile_scanner, image and other open-source libraries.",
 
   "actionLogin": "Log in / refresh session",
-  "actionConfirmations": "Confirmations",
+  "actionConfirmations": "Pending",
   "actionRemove": "Remove account",
   "actionImport": "Import",
   "actionAddAuthenticator": "Add authenticator",

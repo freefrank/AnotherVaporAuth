@@ -482,6 +482,24 @@ abstract class AppLocalizations {
   /// **'Copy SteamID'**
   String get copySteamId;
 
+  /// No description provided for @pendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get pendingTitle;
+
+  /// No description provided for @pendingTabConfirmations.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmations'**
+  String get pendingTabConfirmations;
+
+  /// No description provided for @pendingTabOffers.
+  ///
+  /// In en, this message translates to:
+  /// **'Trade offers'**
+  String get pendingTabOffers;
+
   /// No description provided for @confirmationsTitle.
   ///
   /// In en, this message translates to:
@@ -1679,7 +1697,7 @@ abstract class AppLocalizations {
   /// No description provided for @actionConfirmations.
   ///
   /// In en, this message translates to:
-  /// **'Confirmations'**
+  /// **'Pending'**
   String get actionConfirmations;
 
   /// No description provided for @actionRemove.

@@ -1,31 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../l10n/app_localizations.dart';
-import '../app/providers.dart';
-import '../app/responsive.dart';
-import '../app/theme.dart';
-import '../core/models/confirmation.dart';
-import '../core/models/steam_guard_account.dart';
-import '../core/protocol/confirmations_client.dart';
-import '../services/session_manager.dart';
-import 'login_screen.dart';
-import 'widgets/ava_panel.dart';
-import 'widgets/scanline_overlay.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../app/providers.dart';
+import '../../app/responsive.dart';
+import '../../app/theme.dart';
+import '../../core/models/confirmation.dart';
+import '../../core/models/steam_guard_account.dart';
+import '../../core/protocol/confirmations_client.dart';
+import '../../services/session_manager.dart';
+import '../login_screen.dart';
+import '../widgets/ava_panel.dart';
 
 /// Design screen 06 — confirmations. Native JSON rendering (no WebView). Top
 /// batch bar (accept all / reject all) + per-item cards with type chip, title,
 /// summary and accept/reject. Items stagger in; acted items slide out.
-class ConfirmationsScreen extends ConsumerStatefulWidget {
+/// Hosted as a tab inside PendingScreen, which owns the Scaffold/AppBar.
+class ConfirmationsTab extends ConsumerStatefulWidget {
   final SteamGuardAccount account;
-  const ConfirmationsScreen({super.key, required this.account});
+
+  /// Reports the pending count to the parent after a successful fetch, so the
+  /// pending center can badge this tab.
+  final ValueChanged<int>? onCount;
+  const ConfirmationsTab({super.key, required this.account, this.onCount});
 
   @override
-  ConsumerState<ConfirmationsScreen> createState() =>
-      _ConfirmationsScreenState();
+  ConsumerState<ConfirmationsTab> createState() => _ConfirmationsTabState();
 }
 
-class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
+class _ConfirmationsTabState extends ConsumerState<ConfirmationsTab> {
   late final ConfirmationsClient _client;
   List<Confirmation>? _confs;
   bool _loading = true;
@@ -53,6 +56,7 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
         _confs = list;
         _loading = false;
       });
+      widget.onCount?.call(list.length);
     } catch (e) {
       if (!mounted) return;
       final needsLogin = e is ConfirmationAuthException;
@@ -154,62 +158,72 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
     final t = Theme.of(context).extension<AvaTokens>()!;
     final confs = _confs ?? const <Confirmation>[];
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l.confirmationsTitle),
-        actions: [
-          IconButton(
-            tooltip: l.confirmationsRefresh,
-            icon: const Icon(Icons.refresh),
-            onPressed: _loading ? null : _refresh,
-          ),
-        ],
-      ),
-      body: ScanlineOverlay(
-        child: _buildBody(l, t, confs),
-      ),
+    // Pull-to-refresh replaces the old AppBar refresh button.
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: _buildBody(l, t, confs),
     );
   }
 
   Widget _buildBody(
       AppLocalizations l, AvaTokens t, List<Confirmation> confs) {
     if (_loading) {
+      // Non-scrollable on purpose: pull-to-refresh is pointless mid-load.
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: context.rInsets(all: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.cloud_off, color: t.muted, size: context.r(40)),
-              SizedBox(height: context.r(12)),
-              Text(
-                _needsLogin ? _error! : '${l.commonError}: $_error',
-                textAlign: TextAlign.center,
+      // Wrapped in a scrollable so RefreshIndicator can trigger.
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: 320,
+            child: Center(
+              child: Padding(
+                padding: context.rInsets(all: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.cloud_off, color: t.muted, size: context.r(40)),
+                    SizedBox(height: context.r(12)),
+                    Text(
+                      _needsLogin ? _error! : '${l.commonError}: $_error',
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: context.r(16)),
+                    _needsLogin
+                        ? FilledButton(
+                            onPressed: _signIn, child: Text(l.loginButton))
+                        : OutlinedButton(
+                            onPressed: _refresh, child: Text(l.commonRetry)),
+                  ],
+                ),
               ),
-              SizedBox(height: context.r(16)),
-              _needsLogin
-                  ? FilledButton(
-                      onPressed: _signIn, child: Text(l.loginButton))
-                  : OutlinedButton(
-                      onPressed: _refresh, child: Text(l.commonRetry)),
-            ],
+            ),
           ),
-        ),
+        ],
       );
     }
     if (confs.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.check_circle_outline, color: t.good, size: context.r(44)),
-            SizedBox(height: context.r(12)),
-            Text(l.confirmationsEmpty),
-          ],
-        ),
+      // Wrapped in a scrollable so RefreshIndicator can trigger.
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: 320,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_circle_outline,
+                      color: t.good, size: context.r(44)),
+                  SizedBox(height: context.r(12)),
+                  Text(l.confirmationsEmpty),
+                ],
+              ),
+            ),
+          ),
+        ],
       );
     }
 
@@ -242,6 +256,7 @@ class _ConfirmationsScreenState extends ConsumerState<ConfirmationsScreen> {
         ),
         Expanded(
           child: ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: context.rInsets(left: 16, top: 4, right: 16, bottom: 16),
             itemCount: confs.length,
             itemBuilder: (context, i) => _ConfCard(

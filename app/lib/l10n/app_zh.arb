@@ -68,6 +68,9 @@
   "copied": "已复制到剪贴板",
   "copySteamId": "复制 SteamID",
 
+  "pendingTitle": "待办",
+  "pendingTabConfirmations": "确认",
+  "pendingTabOffers": "报价",
   "confirmationsTitle": "确认",
   "confirmationsEmpty": "没有待处理的确认。",
   "confirmationsRefresh": "刷新",
@@ -303,7 +306,7 @@
   "aboutCreditsBody": "灵感来自 Steam Desktop Authenticator，兼容其 maFile 格式。基于 Flutter、Riverpod、Dio、PointyCastle、mobile_scanner、image 等开源库独立构建。",
 
   "actionLogin": "登录 / 刷新会话",
-  "actionConfirmations": "交易确认",
+  "actionConfirmations": "待办",
   "actionRemove": "移除账户",
   "actionImport": "导入",
   "actionAddAuthenticator": "添加验证器",

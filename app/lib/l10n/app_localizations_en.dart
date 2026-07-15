@@ -215,6 +215,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get copySteamId => 'Copy SteamID';
 
   @override
+  String get pendingTitle => 'Pending';
+
+  @override
+  String get pendingTabConfirmations => 'Confirmations';
+
+  @override
+  String get pendingTabOffers => 'Trade offers';
+
+  @override
   String get confirmationsTitle => 'Confirmations';
 
   @override
@@ -879,7 +888,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionLogin => 'Log in / refresh session';
 
   @override
-  String get actionConfirmations => 'Confirmations';
+  String get actionConfirmations => 'Pending';
 
   @override
   String get actionRemove => 'Remove account';

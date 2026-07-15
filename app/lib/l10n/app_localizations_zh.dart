@@ -203,6 +203,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get copySteamId => '复制 SteamID';
 
   @override
+  String get pendingTitle => '待办';
+
+  @override
+  String get pendingTabConfirmations => '确认';
+
+  @override
+  String get pendingTabOffers => '报价';
+
+  @override
   String get confirmationsTitle => '确认';
 
   @override
@@ -839,7 +848,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get actionLogin => '登录 / 刷新会话';
 
   @override
-  String get actionConfirmations => '交易确认';
+  String get actionConfirmations => '待办';
 
   @override
   String get actionRemove => '移除账户';

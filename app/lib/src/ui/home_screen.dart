@@ -22,7 +22,7 @@ import '../skins/skin_spec.dart';
 import 'widgets/scanline_overlay.dart';
 import 'widgets/steam_image_provider.dart';
 import 'approve_login_screen.dart';
-import 'confirmations_screen.dart';
+import 'pending/pending_screen.dart';
 import 'import_helper.dart';
 import 'pending_login.dart';
 import 'login_screen.dart';
@@ -559,7 +559,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     switch (value) {
       case 'confirm':
         Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => ConfirmationsScreen(account: account)));
+            builder: (_) => PendingScreen(account: account)));
         break;
       case 'login':
         Navigator.of(context).push(MaterialPageRoute(
@@ -1031,7 +1031,7 @@ class _SidebarRow extends StatelessWidget {
       child: Slidable(
         key: ValueKey(account.steamId),
         controller: controller,
-        // Swipe RIGHT → enter trade confirmations (full swipe enters directly).
+        // Swipe RIGHT → enter the pending center (full swipe enters directly).
         startActionPane: ActionPane(
           motion: const BehindMotion(),
           extentRatio: 0.34,
