@@ -62,8 +62,9 @@ ProtoReader _forUserResp() {
   return ProtoReader(w.toBytes());
 }
 
-/// 构造 GetFamilyGroup 响应：组名 + 两个成员 + 空位。
-ProtoReader _groupResp() {
+/// 构造 GetFamilyGroup 响应体（writer 形态，可整体嵌进 forUser 的字段 8）：
+/// 组名 + 两个成员 + 空位。
+ProtoWriter _groupWriter() {
   final m1 = ProtoWriter()
     ..writeFixed64(1, 76561198000000456)
     ..writeVarint(2, 1)
@@ -72,15 +73,16 @@ ProtoReader _groupResp() {
     ..writeFixed64(1, 76561198000000123)
     ..writeVarint(2, 2)
     ..writeVarint(3, 1752100000);
-  final w = ProtoWriter()
+  return ProtoWriter()
     ..writeString(1, 'Wang 家')
     ..writeMessage(2, m1)
     ..writeMessage(2, m2)
     ..writeVarint(4, 4) // free_spots
     ..writeString(5, 'CN')
     ..writeVarint(6, 3600);
-  return ProtoReader(w.toBytes());
 }
+
+ProtoReader _groupResp() => ProtoReader(_groupWriter().toBytes());
 
 void main() {
   group('forUser', () {
@@ -103,6 +105,23 @@ void main() {
       final req = ProtoReader(api.lastRequest!.toBytes()).parse();
       expect(req[1]?.varint, 76561198000000123);
       expect(req[2]?.asBool, isTrue); // include_family_group_response
+    });
+
+    test('parses member state: groupid/role/cooldown + nested group (field 8)',
+        () async {
+      final w = ProtoWriter()
+        ..writeUint64(1, 9001) // family_groupid
+        ..writeVarint(6, 1) // role
+        ..writeVarint(7, 86400) // cooldown_seconds_remaining
+        ..writeMessage(8, _groupWriter()); // include_family_group_response
+      final api = _FakeApi([ProtoReader(w.toBytes())]);
+      final s = await FamilyGroupsClient(api).forUser(_account());
+      expect(s.isMember, isTrue);
+      expect(s.familyGroupId, 9001);
+      expect(s.role, 1);
+      expect(s.cooldownSecondsRemaining, 86400);
+      expect(s.group?.name, 'Wang 家');
+      expect(s.pendingInvites, isEmpty);
     });
 
     test('missing access token throws before any call', () async {

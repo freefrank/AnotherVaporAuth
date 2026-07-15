@@ -326,13 +326,34 @@ void main() {
     // GetFamilyGroup 失败 → 通用标题;GetInviteCheckResults 拒绝 → 降级。
     expect(find.text('Family group invite'), findsOneWidget);
     expect(find.text('Hold to join'), findsOneWidget);
+    // 页签角标 = 未挂起 2FA 的邀请数(这里 1 条)。
+    expect(find.widgetWithText(Badge, '1'), findsOneWidget);
     // 静态冷却警告不依赖预检端点,始终显示。
     expect(
         find.textContaining('Joining locks family-group switching'),
         findsOneWidget);
-    // 降级生效:钱包/IP 预检行都不出现。
+    // 降级生效:钱包/IP 预检行都不出现(精确匹配渲染串,含 ✓/⚠ 前缀)。
     expect(find.textContaining('Wallet region'), findsNothing);
-    expect(find.textContaining('IP'), findsNothing);
+    expect(find.text('✓ Usual IP matches'), findsNothing);
+    expect(find.text("⚠ IP doesn't match your usual location"), findsNothing);
+  });
+
+  testWidgets('AppBar refresh dispatches to the active invites tab',
+      (tester) async {
+    final api = _FakeApi();
+    await tester.pumpWidget(_app(api, _account()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Invites'));
+    await tester.pumpAndSettle();
+    final familyBaseline = api.familyCalls;
+    final confBaseline = api.getlistCalls;
+
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+    expect(api.familyCalls, familyBaseline + 1,
+        reason: 'refresh must dispatch to the active (invites) tab');
+    expect(api.getlistCalls, confBaseline,
+        reason: 'refresh must not hit the inactive confirmations tab');
   });
 
   testWidgets('wallet country mismatch disables the join button',

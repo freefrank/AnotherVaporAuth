@@ -14,9 +14,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
-/// GetFamilyGroup 返回「Wang 家」两成员组（family_groups_client_test 的
-/// _groupResp 等价物），GetFamilyGroupForUser 返回空（非成员）。
-/// miniProfile 走 communityGetJson 回空 —— 成员名退回 steamid64 字符串。
+/// 「Wang 家」两成员组的响应体(family_groups_client_test 的 _groupResp
+/// 等价物;writer 形态,可整体嵌进 forUser 的字段 8)。
+ProtoWriter _wangGroup() {
+  final m1 = ProtoWriter()
+    ..writeFixed64(1, 76561198000000456)
+    ..writeVarint(2, 1)
+    ..writeVarint(3, 1752000000);
+  final m2 = ProtoWriter()
+    ..writeFixed64(1, 76561198000000123)
+    ..writeVarint(2, 2)
+    ..writeVarint(3, 1752100000);
+  return ProtoWriter()
+    ..writeString(1, 'Wang 家')
+    ..writeMessage(2, m1)
+    ..writeMessage(2, m2)
+    ..writeVarint(4, 4) // free_spots
+    ..writeString(5, 'CN')
+    ..writeVarint(6, 3600);
+}
+
+/// GetFamilyGroup 返回「Wang 家」两成员组，GetFamilyGroupForUser 返回空
+/// （非成员）。miniProfile 走 communityGetJson 回空 —— 成员名退回
+/// steamid64 字符串。
 class _FakeApi extends SteamApiClient {
   @override
   Future<ProtoReader> callProtobuf(
@@ -28,24 +48,45 @@ class _FakeApi extends SteamApiClient {
     int version = 1,
   }) async {
     if (method == 'GetFamilyGroup') {
-      final m1 = ProtoWriter()
-        ..writeFixed64(1, 76561198000000456)
-        ..writeVarint(2, 1)
-        ..writeVarint(3, 1752000000);
-      final m2 = ProtoWriter()
-        ..writeFixed64(1, 76561198000000123)
-        ..writeVarint(2, 2)
-        ..writeVarint(3, 1752100000);
-      final w = ProtoWriter()
-        ..writeString(1, 'Wang 家')
-        ..writeMessage(2, m1)
-        ..writeMessage(2, m2)
-        ..writeVarint(4, 4) // free_spots
-        ..writeString(5, 'CN')
-        ..writeVarint(6, 3600);
-      return ProtoReader(w.toBytes());
+      return ProtoReader(_wangGroup().toBytes());
     }
     return ProtoReader(Uint8List(0)); // GetFamilyGroupForUser: 非成员
+  }
+
+  @override
+  Future<Map<String, dynamic>> communityGetJson(
+    String path,
+    Map<String, dynamic> query, {
+    Map<String, String>? cookies,
+  }) async =>
+      {};
+}
+
+/// 成员路径:GetFamilyGroupForUser 已带回嵌套组(字段 8),
+/// GetFamilyGroup 不应再被调用 —— 计数器证明短路生效。
+class _FakeApiMemberNestedGroup extends SteamApiClient {
+  int getFamilyGroupCalls = 0;
+
+  @override
+  Future<ProtoReader> callProtobuf(
+    String iface,
+    String method, {
+    required ProtoWriter request,
+    String? accessToken,
+    bool useGet = false,
+    int version = 1,
+  }) async {
+    if (method == 'GetFamilyGroup') {
+      getFamilyGroupCalls++;
+      return ProtoReader(_wangGroup().toBytes());
+    }
+    if (method == 'GetFamilyGroupForUser') {
+      final w = ProtoWriter()
+        ..writeUint64(1, 9001) // family_groupid → 成员
+        ..writeMessage(8, _wangGroup()); // include_family_group_response
+      return ProtoReader(w.toBytes());
+    }
+    return ProtoReader(Uint8List(0));
   }
 
   @override
@@ -101,8 +142,9 @@ void main() {
     expect(find.text('76561198000000123 (you)'), findsOneWidget);
     expect(find.text('Adult'), findsOneWidget);
     expect(find.text('Child'), findsOneWidget);
-    // 摘要:2 成员 + 4 空位 = 6 槽位。
+    // 摘要:2 成员 + 4 空位 = 6 槽位;3600s 冷却上取整为 1 天。
     expect(find.text('Members 2/6'), findsOneWidget);
+    expect(find.text('Cooldown 1d'), findsOneWidget);
     // 购买审批占位。
     expect(find.text('Purchase approval is coming in a future update.'),
         findsOneWidget);
@@ -118,5 +160,18 @@ void main() {
 
     expect(find.text("This account isn't in a family group."), findsOneWidget);
     expect(find.text('Wang 家'), findsNothing);
+  });
+
+  testWidgets(
+      'null groupId member path uses the nested field-8 group without '
+      'calling GetFamilyGroup', (tester) async {
+    final api = _FakeApiMemberNestedGroup();
+    await tester.pumpWidget(_app(api, _account()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Wang 家'), findsOneWidget);
+    expect(api.getFamilyGroupCalls, 0,
+        reason: 'the field-8 group must short-circuit the GetFamilyGroup '
+            'follow-up call');
   });
 }
