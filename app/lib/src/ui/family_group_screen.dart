@@ -9,6 +9,11 @@ import '../app/theme.dart';
 import '../core/models/family_group.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/models/trade_offer.dart' show TradeOffer;
+import '../core/protocol/qr_approval_client.dart'
+    show MissingAccessTokenException;
+import '../services/session_manager.dart';
+import '../services/steam_api_client.dart' show SteamApiException;
+import 'login_screen.dart';
 import 'widgets/ava_panel.dart';
 import 'widgets/scanline_overlay.dart';
 
@@ -29,6 +34,7 @@ class _FamilyGroupScreenState extends ConsumerState<FamilyGroupScreen> {
   bool _notInGroup = false;
   bool _loading = true;
   String? _error;
+  bool _needsLogin = false;
   final _personas = <int, String>{};
 
   @override
@@ -42,38 +48,74 @@ class _FamilyGroupScreenState extends ConsumerState<FamilyGroupScreen> {
       _loading = true;
       _error = null;
       _notInGroup = false;
+      _needsLogin = false;
     });
     try {
       final client = ref.read(familyGroupsClientProvider);
-      var groupId = widget.familyGroupId;
-      FamilyGroupInfo? group;
-      if (groupId == null) {
-        final s = await client.forUser(widget.account);
-        if (!s.isMember) {
-          if (!mounted) return;
-          setState(() {
-            _notInGroup = true;
-            _loading = false;
-          });
-          return;
+      // null = 非成员（forUser 判定），与网络失败区分开。
+      final group = await _withAutoRefresh<FamilyGroupInfo?>(() async {
+        var groupId = widget.familyGroupId;
+        FamilyGroupInfo? g;
+        if (groupId == null) {
+          final s = await client.forUser(widget.account);
+          if (!s.isMember) return null;
+          groupId = s.familyGroupId;
+          g = s.group; // include_family_group_response 可能已带回
         }
-        groupId = s.familyGroupId;
-        group = s.group; // include_family_group_response 可能已带回
-      }
-      group ??= await client.groupInfo(widget.account, groupId);
+        return g ?? await client.groupInfo(widget.account, groupId);
+      });
       if (!mounted) return;
+      if (group == null) {
+        setState(() {
+          _notInGroup = true;
+          _loading = false;
+        });
+        return;
+      }
       setState(() {
         _group = group;
         _loading = false;
       });
-      _loadPersonas(group); // 此处 group 已被流程提升为非空，勿加 `!`
+      _loadPersonas(group);
     } catch (e) {
       if (!mounted) return;
+      final needsLogin = _isAuthError(e);
+      final l = AppLocalizations.of(context);
       setState(() {
         _loading = false;
-        _error = '$e';
+        _needsLogin = needsLogin;
+        _error = needsLogin ? l.confNeedsLogin : '$e';
       });
     }
+  }
+
+  /// 会话过期时自动续期并重试一次——与待办三页签同款模式
+  /// （family_invites_tab 的 _fetchWithAutoRefresh）。
+  Future<T> _withAutoRefresh<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } catch (_) {
+      final refreshed = await SessionManager(ref.read(apiClientProvider))
+          .refresh(widget.account.session);
+      if (!refreshed) rethrow;
+      if (mounted) {
+        await ref.read(appControllerProvider).value?.store.save();
+      }
+      return await run();
+    }
+  }
+
+  static bool _isAuthError(Object e) =>
+      e is MissingAccessTokenException ||
+      (e is SteamApiException &&
+          (e.message.contains('HTTP 401') || e.message.contains('HTTP 403')));
+
+  Future<void> _signIn() async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) =>
+          LoginScreen(reason: LoginReason.refresh, account: widget.account),
+    ));
+    if (mounted) _load();
   }
 
   Future<void> _loadPersonas(FamilyGroupInfo group) async {
@@ -131,9 +173,14 @@ class _FamilyGroupScreenState extends ConsumerState<FamilyGroupScreen> {
             children: [
               Icon(Icons.cloud_off, color: t.muted, size: context.r(40)),
               SizedBox(height: context.r(12)),
-              Text('${l.commonError}: $_error', textAlign: TextAlign.center),
+              Text(_needsLogin ? _error! : '${l.commonError}: $_error',
+                  textAlign: TextAlign.center),
               SizedBox(height: context.r(16)),
-              OutlinedButton(onPressed: _load, child: Text(l.commonRetry)),
+              _needsLogin
+                  ? FilledButton(
+                      onPressed: _signIn, child: Text(l.loginButton))
+                  : OutlinedButton(
+                      onPressed: _load, child: Text(l.commonRetry)),
             ],
           ),
         ),

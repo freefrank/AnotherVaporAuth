@@ -4,7 +4,7 @@
 /// (FamilyGroupPendingInviteForUser).
 class FamilyInvite {
   final int familyGroupId;
-  final int role; // opaque Steam role id; see [familyRoleLabelKey]
+  final int role; // opaque Steam role id; the UI maps known values (1/2) to labels
   final int inviterSteamId; // steamid64
   final bool awaiting2fa;
   final int inviteId;

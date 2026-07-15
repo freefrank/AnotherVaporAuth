@@ -41,6 +41,7 @@ class FamilyInvitesTabState extends ConsumerState<FamilyInvitesTab>
   final _checks = <int, InviteChecks?>{}; // familyGroupId -> checks (null=降级)
   final _checksLoaded = <int>{};
   final _groupNames = <int, FamilyGroupInfo>{}; // 邀请组的名称/空位（可失败）
+  final _groupInfoRequested = <int>{}; // in-flight/已请求守卫，防并发重复拉取
   final _personas = <int, String>{}; // inviter accountid -> persona
   bool _loading = false;
   bool _busy = false;
@@ -120,15 +121,16 @@ class FamilyInvitesTabState extends ConsumerState<FamilyInvitesTab>
     final trade = ref.read(tradeOffersClientProvider);
     for (final invite in s.pendingInvites) {
       if (!_checksLoaded.contains(invite.familyGroupId)) {
+        // await 前登记，防并发 _loadDetails 重复拉取（纯簿记，无需 setState）。
+        _checksLoaded.add(invite.familyGroupId);
         final c = await client.inviteChecks(widget.account, invite.familyGroupId)
             .catchError((_) => null);
         if (!mounted) return;
-        setState(() {
-          _checksLoaded.add(invite.familyGroupId);
-          _checks[invite.familyGroupId] = c;
-        });
+        setState(() => _checks[invite.familyGroupId] = c);
       }
-      if (!_groupNames.containsKey(invite.familyGroupId)) {
+      if (!_groupNames.containsKey(invite.familyGroupId) &&
+          !_groupInfoRequested.contains(invite.familyGroupId)) {
+        _groupInfoRequested.add(invite.familyGroupId);
         try {
           final g = await client.groupInfo(widget.account, invite.familyGroupId);
           if (!mounted) return;
@@ -304,7 +306,8 @@ class FamilyInvitesTabState extends ConsumerState<FamilyInvitesTab>
             SizedBox(height: context.r(4)),
             Text(
               [
-                l.famInviteFrom(inviter),
+                // 邀请人 steamid 缺失（0）时整段省略，不渲染字面 '0'。
+                if (invite.inviterSteamId != 0) l.famInviteFrom(inviter),
                 l.famInviteRole(_roleLabel(l, invite.role)),
                 if (group != null)
                   l.famInviteSlots(group.members.length, group.totalSlots),
