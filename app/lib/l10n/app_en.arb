@@ -86,6 +86,11 @@
   "confTypeTrade": "Trade",
   "confTypeMarket": "Market listing",
   "confTypeOther": "Confirmation",
+  "confTypeFamilyJoin": "Family invite",
+  "confTypeApiKey": "API key",
+  "confTypePhoneChange": "Phone change",
+  "confTypeAccountRecovery": "Account recovery",
+  "confTypeFeatureOptOut": "Feature opt-out",
   "confProcessing": "Processing {count} confirmation(s)…",
   "@confProcessing": {
     "placeholders": { "count": { "type": "int" } }

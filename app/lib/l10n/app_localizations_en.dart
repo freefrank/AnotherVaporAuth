@@ -266,6 +266,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confTypeOther => 'Confirmation';
 
   @override
+  String get confTypeFamilyJoin => 'Family invite';
+
+  @override
+  String get confTypeApiKey => 'API key';
+
+  @override
+  String get confTypePhoneChange => 'Phone change';
+
+  @override
+  String get confTypeAccountRecovery => 'Account recovery';
+
+  @override
+  String get confTypeFeatureOptOut => 'Feature opt-out';
+
+  @override
   String confProcessing(int count) {
     return 'Processing $count confirmation(s)…';
   }

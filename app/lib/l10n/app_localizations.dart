@@ -572,6 +572,36 @@ abstract class AppLocalizations {
   /// **'Confirmation'**
   String get confTypeOther;
 
+  /// No description provided for @confTypeFamilyJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Family invite'**
+  String get confTypeFamilyJoin;
+
+  /// No description provided for @confTypeApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get confTypeApiKey;
+
+  /// No description provided for @confTypePhoneChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone change'**
+  String get confTypePhoneChange;
+
+  /// No description provided for @confTypeAccountRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Account recovery'**
+  String get confTypeAccountRecovery;
+
+  /// No description provided for @confTypeFeatureOptOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature opt-out'**
+  String get confTypeFeatureOptOut;
+
   /// No description provided for @confProcessing.
   ///
   /// In en, this message translates to:

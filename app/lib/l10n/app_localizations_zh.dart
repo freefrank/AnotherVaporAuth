@@ -253,6 +253,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get confTypeOther => '确认';
 
   @override
+  String get confTypeFamilyJoin => '家庭组邀请';
+
+  @override
+  String get confTypeApiKey => 'API 密钥';
+
+  @override
+  String get confTypePhoneChange => '更换手机号';
+
+  @override
+  String get confTypeAccountRecovery => '账户恢复';
+
+  @override
+  String get confTypeFeatureOptOut => '功能退出';
+
+  @override
   String confProcessing(int count) {
     return '正在处理 $count 条确认…';
   }

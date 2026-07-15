@@ -86,6 +86,11 @@
   "confTypeTrade": "交易",
   "confTypeMarket": "市场上架",
   "confTypeOther": "确认",
+  "confTypeFamilyJoin": "家庭组邀请",
+  "confTypeApiKey": "API 密钥",
+  "confTypePhoneChange": "更换手机号",
+  "confTypeAccountRecovery": "账户恢复",
+  "confTypeFeatureOptOut": "功能退出",
   "confProcessing": "正在处理 {count} 条确认…",
   "@confProcessing": {
     "placeholders": { "count": { "type": "int" } }

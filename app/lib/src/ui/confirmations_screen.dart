@@ -307,8 +307,34 @@ class _ConfCardState extends State<_ConfCard>
         return l.confTypeTrade;
       case ConfirmationType.marketListing:
         return l.confTypeMarket;
+      case ConfirmationType.familyJoin:
+        return l.confTypeFamilyJoin;
+      case ConfirmationType.apiKey:
+        return l.confTypeApiKey;
+      case ConfirmationType.phoneChange:
+        return l.confTypePhoneChange;
+      case ConfirmationType.accountRecovery:
+        return l.confTypeAccountRecovery;
+      case ConfirmationType.featureOptOut:
+        return l.confTypeFeatureOptOut;
       default:
         return l.confTypeOther;
+    }
+  }
+
+  /// 安全敏感类型（改手机号/账户恢复/API key）用警示色，家庭组用正向色。
+  Color _chipColor(AvaTokens t) {
+    switch (widget.conf.type) {
+      case ConfirmationType.trade:
+        return t.accent;
+      case ConfirmationType.familyJoin:
+        return t.good;
+      case ConfirmationType.apiKey:
+      case ConfirmationType.phoneChange:
+      case ConfirmationType.accountRecovery:
+        return t.bad;
+      default:
+        return t.accent2;
     }
   }
 
@@ -317,8 +343,7 @@ class _ConfCardState extends State<_ConfCard>
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).extension<AvaTokens>()!;
     final c = widget.conf;
-    final isTrade = c.type == ConfirmationType.trade;
-    final chipColor = isTrade ? t.accent : t.accent2;
+    final chipColor = _chipColor(t);
 
     return AnimatedBuilder(
       animation: _c,
