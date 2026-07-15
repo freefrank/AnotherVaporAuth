@@ -367,3 +367,6 @@ skills-lock.json
 /posts/**/testers*.csv
 /posts/**/testers*.txt
 /posts/**/send_beta_invite.py
+
+# brainstorm visual companion sessions
+.superpowers/
