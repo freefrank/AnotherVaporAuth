@@ -99,6 +99,7 @@ class _FakeApiWithOffer extends _FakeApi {
 /// be driven end to end without network.
 class _FakeApiAcceptFlow extends _FakeApiWithOffer {
   final postPaths = <String>[];
+  bool throwOnPost = false;
   Map<String, dynamic> acceptReply = {
     'tradeid': '1',
     'needs_mobile_confirmation': true,
@@ -112,6 +113,7 @@ class _FakeApiAcceptFlow extends _FakeApiWithOffer {
     String? referer,
   }) async {
     postPaths.add(path);
+    if (throwOnPost) throw Exception('network down');
     return acceptReply;
   }
 }
@@ -324,5 +326,35 @@ void main() {
     // No tab switch, no confirmations refetch.
     expect(find.text('No pending confirmations.'), findsNothing);
     expect(api.getlistCalls, baseline);
+  });
+
+  testWidgets('accept exception shows error and does not wedge the tab',
+      (tester) async {
+    final api = _FakeApiAcceptFlow()..throwOnPost = true;
+    await tester.pumpWidget(_app(api, _account()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trade offers'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(OfferCard));
+    await tester.pumpAndSettle();
+
+    Future<void> hold() async {
+      final gesture = await tester
+          .startGesture(tester.getCenter(find.text('Hold to accept')));
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.pump(const Duration(milliseconds: 1000));
+      await gesture.up();
+      await tester.pumpAndSettle();
+    }
+
+    await hold();
+    expect(api.postPaths, hasLength(1));
+    expect(find.textContaining('Action failed:'), findsOneWidget);
+
+    // _busy must have been reset by the finally — a second hold must fire a
+    // second POST instead of hitting a permanently disabled button.
+    await hold();
+    expect(api.postPaths, hasLength(2),
+        reason: 'an accept exception must not leave _busy stuck at true');
   });
 }

@@ -6,6 +6,7 @@ import '../../app/theme.dart';
 import '../../core/models/trade_offer.dart';
 import '../widgets/ava_panel.dart';
 import '../widgets/hold_button.dart';
+import '../widgets/steam_image_provider.dart';
 
 /// 可展开的报价卡（spec 方案 C）：收起 = 对方 + 时间 + 摘要行；
 /// 展开 = 双方物品缩略图 + 警示条 + 拒绝/长按接受。
@@ -149,8 +150,10 @@ class OfferCard extends StatelessWidget {
                     child: a.iconUrl.isEmpty
                         ? Icon(Icons.inventory_2_outlined,
                             color: t.muted, size: context.r(18))
-                        : Image.network(
-                            a.iconUrl,
+                        // 走 SteamImageProvider 的磁盘缓存:Steam 资产 URL
+                        // 内容寻址,同一 URL 的字节永不变,重启零网络。
+                        : Image(
+                            image: SteamImageProvider(a.iconUrl),
                             fit: BoxFit.contain,
                             errorBuilder: (_, _, _) => Icon(
                                 Icons.inventory_2_outlined,

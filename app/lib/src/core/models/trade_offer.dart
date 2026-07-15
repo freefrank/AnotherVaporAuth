@@ -54,7 +54,11 @@ class TradeAsset {
 
   factory TradeAsset.fromJson(Map<String, dynamic> json,
       Map<String, Map<String, dynamic>> descByKey) {
-    final d = descByKey['${json['classid']}_${json['instanceid']}'];
+    // classid 只在单个 app 内唯一——跨游戏报价(CS2+TF2 混合很常见)必须带
+    // appid 关联,否则可能渲染错物品名/图标/稀有度(node-steam-
+    // tradeoffer-manager 同款键)。
+    final d = descByKey[
+        '${json['appid']}_${json['classid']}_${json['instanceid']}'];
     return TradeAsset(
       appid: _asInt(json['appid']),
       contextId: '${json['contextid']}',
@@ -143,7 +147,7 @@ class TradeOffersPage {
     final descByKey = <String, Map<String, dynamic>>{};
     for (final d in (response['descriptions'] as List?) ?? const []) {
       final m = d as Map<String, dynamic>;
-      descByKey['${m['classid']}_${m['instanceid']}'] = m;
+      descByKey['${m['appid']}_${m['classid']}_${m['instanceid']}'] = m;
     }
     List<TradeOffer> offers(String key) =>
         ((response[key] as List?) ?? const [])

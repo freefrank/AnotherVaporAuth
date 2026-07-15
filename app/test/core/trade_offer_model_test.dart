@@ -64,6 +64,30 @@ void main() {
     expect(page.sent.single.escrowEndDate, 1753000000);
   });
 
+  test('descriptions join by appid too — same classid across apps', () {
+    // classid 只在单个 app 内唯一:跨游戏报价里 CS2 和 TF2 的物品可以撞
+    // classid/instanceid,关联键必须带 appid,否则渲染错物品。
+    final page = TradeOffersPage.fromResponse(jsonDecode('''
+      {"trade_offers_received": [{"tradeofferid": "1", "accountid_other": 1,
+        "trade_offer_state": 2,
+        "items_to_receive": [
+          {"appid": 730, "contextid": "2", "assetid": "1",
+           "classid": "9", "instanceid": "0", "amount": "1"},
+          {"appid": 440, "contextid": "2", "assetid": "2",
+           "classid": "9", "instanceid": "0", "amount": "1"}
+        ]}],
+       "descriptions": [
+         {"appid": 730, "classid": "9", "instanceid": "0",
+          "icon_url": "a", "name": "CS2 Item"},
+         {"appid": 440, "classid": "9", "instanceid": "0",
+          "icon_url": "b", "name": "TF2 Item"}
+       ]}
+    ''') as Map<String, dynamic>);
+    final items = page.received.single.itemsToReceive;
+    expect(items[0].name, 'CS2 Item');
+    expect(items[1].name, 'TF2 Item');
+  });
+
   test('missing description keeps asset with empty name', () {
     final noDesc = TradeOffersPage.fromResponse(jsonDecode('''
       {"trade_offers_received": [{"tradeofferid": "1", "accountid_other": 1,

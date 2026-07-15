@@ -183,50 +183,67 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
   }
 
   Future<void> _accept(TradeOffer offer) async {
+    if (_busy) return; // 同帧双发守卫(同 confirmations_tab._respond)
     final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _busy = true);
-    final r = await ref
-        .read(tradeOffersClientProvider)
-        .accept(widget.account, offer);
-    if (!mounted) return;
-    setState(() => _busy = false);
-    if (r.success) {
-      // Only point the user at the confirmations tab when a mobileconf
-      // actually follows — otherwise they'd hunt for one that doesn't exist.
-      messenger.showSnackBar(SnackBar(
-          content: Text(r.needsMobileConfirmation
-              ? l.offerAccepted
-              : l.offerAcceptedNoConf)));
-      if (r.needsMobileConfirmation) widget.onGoToConfirmations?.call();
-      await refresh();
-    } else {
-      messenger.showSnackBar(SnackBar(
-        content: Text(r.message == 'needauth'
-            ? l.confNeedsLogin
-            : l.offerActionFailed(r.message ?? '?')),
-      ));
+    // accept 会抛异常(无 token、网络掉线、HTML 响应体解析失败)——不兜住
+    // 的话 _busy 卡在 true,keep-alive 状态下整个页签的按钮永久死掉。
+    try {
+      final r = await ref
+          .read(tradeOffersClientProvider)
+          .accept(widget.account, offer);
+      if (!mounted) return;
+      if (r.success) {
+        // Only point the user at the confirmations tab when a mobileconf
+        // actually follows — otherwise they'd hunt for one that doesn't exist.
+        messenger.showSnackBar(SnackBar(
+            content: Text(r.needsMobileConfirmation
+                ? l.offerAccepted
+                : l.offerAcceptedNoConf)));
+        if (r.needsMobileConfirmation) widget.onGoToConfirmations?.call();
+        await refresh();
+      } else {
+        messenger.showSnackBar(SnackBar(
+          content: Text(r.message == 'needauth'
+              ? l.confNeedsLogin
+              : l.offerActionFailed(r.message ?? '?')),
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        messenger
+            .showSnackBar(SnackBar(content: Text(l.offerActionFailed('$e'))));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _declineOrCancel(TradeOffer offer) async {
+    if (_busy) return; // 同帧双发守卫(同 confirmations_tab._respond)
     final l = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final client = ref.read(tradeOffersClientProvider);
     final isSent = _seg == _Segment.sent;
     setState(() => _busy = true);
-    final ok = isSent
-        ? await client.cancel(widget.account, offer.id)
-        : await client.decline(widget.account, offer.id);
-    if (!mounted) return;
-    setState(() => _busy = false);
-    if (ok) {
-      messenger.showSnackBar(SnackBar(
-          content: Text(isSent ? l.offerCanceled : l.offerDeclined)));
-      await refresh();
-    } else {
-      messenger
-          .showSnackBar(SnackBar(content: Text(l.offerActionFailed('?'))));
+    try {
+      // decline/cancel 自吞异常返回 false,try/finally 只为与 _accept 统一
+      // 姿势,保证 _busy 无论如何都复位。
+      final ok = isSent
+          ? await client.cancel(widget.account, offer.id)
+          : await client.decline(widget.account, offer.id);
+      if (!mounted) return;
+      if (ok) {
+        messenger.showSnackBar(SnackBar(
+            content: Text(isSent ? l.offerCanceled : l.offerDeclined)));
+        await refresh();
+      } else {
+        messenger
+            .showSnackBar(SnackBar(content: Text(l.offerActionFailed('?'))));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
