@@ -11,6 +11,7 @@ import '../core/models/steam_guard_account.dart';
 import '../core/protocol/confirmations_client.dart';
 import '../core/protocol/inventory_client.dart';
 import '../core/protocol/market_client.dart';
+import '../core/protocol/trade_offers_client.dart';
 import '../services/account_store.dart';
 import '../services/launcher_icon.dart';
 import '../skins/skin_spec.dart';
@@ -61,6 +62,10 @@ final inventoryClientProvider =
 /// Steam Community Market operations (price, sell, listings).
 final marketClientProvider =
     Provider<MarketClient>((ref) => MarketClient(ref.read(apiClientProvider)));
+
+/// Steam trade offers (list, accept, decline, cancel) client.
+final tradeOffersClientProvider = Provider<TradeOffersClient>(
+    (ref) => TradeOffersClient(ref.read(apiClientProvider)));
 
 /// Mobile confirmations (trade / market listing) client.
 final confirmationsClientProvider = Provider<ConfirmationsClient>(
