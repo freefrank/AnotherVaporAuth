@@ -4,9 +4,10 @@ import '../../../l10n/app_localizations.dart';
 import '../../core/models/steam_guard_account.dart';
 import '../widgets/scanline_overlay.dart';
 import 'confirmations_tab.dart';
+import 'family_invites_tab.dart';
 import 'trade_offers_tab.dart';
 
-/// 待办中心：确认 / 报价 双页签（家庭组邀请页签由计划 2 加入）。
+/// 待办中心：确认 / 报价 / 家庭组邀请三页签。
 /// 页签角标 = 各 tab 拉取成功后上报的待处理数。
 class PendingScreen extends StatefulWidget {
   final SteamGuardAccount account;
@@ -18,13 +19,15 @@ class PendingScreen extends StatefulWidget {
 
 class _PendingScreenState extends State<PendingScreen>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabs = TabController(length: 2, vsync: this);
+  late final TabController _tabs = TabController(length: 3, vsync: this);
   // Lets the AppBar refresh action delegate to the active tab —
   // desktop mouse users can't trigger the drag-only RefreshIndicator.
   final _confTabKey = GlobalKey<ConfirmationsTabState>();
   final _offersTabKey = GlobalKey<TradeOffersTabState>();
+  final _familyTabKey = GlobalKey<FamilyInvitesTabState>();
   int? _confCount;
   int? _offerCount;
+  int? _familyCount;
 
   @override
   void dispose() {
@@ -59,6 +62,7 @@ class _PendingScreenState extends State<PendingScreen>
             onPressed: () {
               if (_tabs.index == 0) _confTabKey.currentState?.refresh();
               if (_tabs.index == 1) _offersTabKey.currentState?.refresh();
+              if (_tabs.index == 2) _familyTabKey.currentState?.refresh();
             },
           ),
         ],
@@ -67,6 +71,7 @@ class _PendingScreenState extends State<PendingScreen>
           tabs: [
             _tab(l.pendingTabConfirmations, _confCount),
             _tab(l.pendingTabOffers, _offerCount),
+            _tab(l.pendingTabInvites, _familyCount),
           ],
         ),
       ),
@@ -89,6 +94,17 @@ class _PendingScreenState extends State<PendingScreen>
                 // its own — without this the user lands on stale data (often
                 // the "all done" empty state) right after being told to
                 // confirm the accepted trade there.
+                _confTabKey.currentState?.refresh();
+              },
+            ),
+            FamilyInvitesTab(
+              key: _familyTabKey,
+              account: widget.account,
+              onCount: (n) => setState(() => _familyCount = n),
+              onGoToConfirmations: () {
+                _tabs.animateTo(0);
+                // keep-alive 的确认页签不会自己重拉——不刷新的话用户会落在
+                // 旧数据上（同报价页签的既有教训）。
                 _confTabKey.currentState?.refresh();
               },
             ),

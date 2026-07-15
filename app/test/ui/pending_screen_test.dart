@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:ava/l10n/app_localizations.dart';
 import 'package:ava/src/app/providers.dart';
 import 'package:ava/src/app/theme.dart';
 import 'package:ava/src/core/models/session_data.dart';
 import 'package:ava/src/core/models/steam_guard_account.dart';
+import 'package:ava/src/core/proto/protobuf_wire.dart';
 import 'package:ava/src/services/steam_api_client.dart';
 import 'package:ava/src/ui/pending/offer_card.dart';
 import 'package:ava/src/ui/pending/pending_screen.dart';
@@ -13,10 +16,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
-/// getlist 回空、GetTradeOffers 回空的 fake —— 冒烟只验证骨架渲染。
-/// [getlistCalls] 计数 mobileconf getlist 请求，用于断言 keep-alive 生效。
+/// getlist 回空、GetTradeOffers 回空、protobuf 回空的 fake —— 冒烟只验证
+/// 骨架渲染。[getlistCalls] 计数 mobileconf getlist 请求、[familyCalls] 计数
+/// GetFamilyGroupForUser 请求，用于断言 keep-alive 生效。
 class _FakeApi extends SteamApiClient {
   int getlistCalls = 0;
+  int familyCalls = 0;
+
+  @override
+  Future<ProtoReader> callProtobuf(
+    String iface,
+    String method, {
+    required ProtoWriter request,
+    String? accessToken,
+    bool useGet = false,
+    int version = 1,
+  }) async {
+    if (method == 'GetFamilyGroupForUser') familyCalls++;
+    return ProtoReader(Uint8List(0)); // 空响应 = 无邀请、非成员
+  }
 
   @override
   Future<Map<String, dynamic>> communityGetJson(
@@ -147,6 +165,75 @@ class _FakeApiWithConf extends _FakeApi {
   }
 }
 
+/// Like [_FakeApi], but GetFamilyGroupForUser returns one pending invite.
+/// GetInviteCheckResults throws AccessDenied (ePrivilege=5 降级路径),
+/// GetFamilyGroup throws Fail (通用标题路径), JoinFamilyGroup replies with
+/// two_factor_method=1 so the join flow hands off to the confirmations tab.
+class _FakeApiWithInvite extends _FakeApi {
+  @override
+  Future<ProtoReader> callProtobuf(
+    String iface,
+    String method, {
+    required ProtoWriter request,
+    String? accessToken,
+    bool useGet = false,
+    int version = 1,
+  }) async {
+    if (method == 'GetFamilyGroupForUser') {
+      familyCalls++;
+      // 单邀请版 _forUserResp(photocopy 自 family_groups_client_test)。
+      final invite = ProtoWriter()
+        ..writeUint64(1, 9001) // family_groupid
+        ..writeVarint(2, 1) // role
+        ..writeFixed64(3, 76561198000000456) // inviter_steamid (fixed64!)
+        ..writeBool(4, false) // awaiting_2fa
+        ..writeUint64(5, 555001); // invite_id
+      final w = ProtoWriter()
+        ..writeBool(2, true) // is_not_member_of_any_group
+        ..writeMessage(5, invite);
+      return ProtoReader(w.toBytes());
+    }
+    if (method == 'GetInviteCheckResults') {
+      throw SteamApiException(15, 'denied', 'GetInviteCheckResults');
+    }
+    if (method == 'GetFamilyGroup') {
+      throw SteamApiException(2, 'fail', 'GetFamilyGroup');
+    }
+    if (method == 'JoinFamilyGroup') {
+      final w = ProtoWriter()..writeVarint(2, 1); // two_factor_method=1
+      return ProtoReader(w.toBytes());
+    }
+    return ProtoReader(Uint8List(0));
+  }
+}
+
+/// [_FakeApiWithInvite] variant whose preflight succeeds but reports a wallet
+/// country mismatch — the join button must come out disabled (spec 承诺).
+class _FakeApiWalletMismatch extends _FakeApiWithInvite {
+  @override
+  Future<ProtoReader> callProtobuf(
+    String iface,
+    String method, {
+    required ProtoWriter request,
+    String? accessToken,
+    bool useGet = false,
+    int version = 1,
+  }) async {
+    if (method == 'GetInviteCheckResults') {
+      final w = ProtoWriter()
+        ..writeBool(1, false) // wallet_country_matches
+        ..writeBool(2, true) // ip_match
+        ..writeVarint(3, 0); // join_restriction
+      return ProtoReader(w.toBytes());
+    }
+    return super.callProtobuf(iface, method,
+        request: request,
+        accessToken: accessToken,
+        useGet: useGet,
+        version: version);
+  }
+}
+
 /// Keeps the skin spec null (plain look) so ScanlineOverlay renders no
 /// looping animation — otherwise pumpAndSettle would never settle.
 class _NoSkinSpec extends SkinSpecController {
@@ -185,12 +272,14 @@ Widget _app(SteamApiClient api, SteamGuardAccount account,
     );
 
 void main() {
-  testWidgets('pending screen renders both tabs and switches', (tester) async {
+  testWidgets('pending screen renders all three tabs and switches',
+      (tester) async {
     final api = _FakeApi();
     await tester.pumpWidget(_app(api, _account()));
     await tester.pumpAndSettle();
     expect(find.text('Confirmations'), findsOneWidget);
     expect(find.text('Trade offers'), findsOneWidget);
+    expect(find.text('Invites'), findsOneWidget);
     final baseline = api.getlistCalls;
 
     // Switch away and back: the confirmations tab must be kept alive —
@@ -201,6 +290,95 @@ void main() {
     await tester.pumpAndSettle();
     expect(api.getlistCalls, baseline,
         reason: 'tab switching must not re-fetch confirmations (keep-alive)');
+  });
+
+  testWidgets('invites tab is kept alive across tab switches', (tester) async {
+    final api = _FakeApi();
+    await tester.pumpWidget(_app(api, _account()));
+    await tester.pumpAndSettle();
+
+    // TabBarView 懒构建：先切到 Invites 一次触发 initState 首拉,
+    // 然后才取基线——基线取早了会把首拉误判为 keep-alive 失效。
+    await tester.tap(find.text('Invites'));
+    await tester.pumpAndSettle();
+    expect(api.familyCalls, 1);
+    final confBaseline = api.getlistCalls;
+    final familyBaseline = api.familyCalls;
+
+    await tester.tap(find.text('Confirmations'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Invites'));
+    await tester.pumpAndSettle();
+    expect(api.getlistCalls, confBaseline,
+        reason: 'tab switching must not re-fetch confirmations (keep-alive)');
+    expect(api.familyCalls, familyBaseline,
+        reason: 'tab switching must not re-fetch invites (keep-alive)');
+  });
+
+  testWidgets(
+      'invite card renders degraded (no preflight rows) with generic title',
+      (tester) async {
+    await tester.pumpWidget(_app(_FakeApiWithInvite(), _account()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Invites'));
+    await tester.pumpAndSettle();
+
+    // GetFamilyGroup 失败 → 通用标题;GetInviteCheckResults 拒绝 → 降级。
+    expect(find.text('Family group invite'), findsOneWidget);
+    expect(find.text('Hold to join'), findsOneWidget);
+    // 静态冷却警告不依赖预检端点,始终显示。
+    expect(
+        find.textContaining('Joining locks family-group switching'),
+        findsOneWidget);
+    // 降级生效:钱包/IP 预检行都不出现。
+    expect(find.textContaining('Wallet region'), findsNothing);
+    expect(find.textContaining('IP'), findsNothing);
+  });
+
+  testWidgets('wallet country mismatch disables the join button',
+      (tester) async {
+    await tester.pumpWidget(_app(_FakeApiWalletMismatch(), _account()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Invites'));
+    await tester.pumpAndSettle();
+
+    expect(
+        find.textContaining("Wallet region doesn't match"), findsOneWidget);
+    expect(
+        tester
+            .widget<HoldToConfirmButton>(find.byType(HoldToConfirmButton))
+            .enabled,
+        isFalse,
+        reason: 'a wallet-region mismatch must disable the join button');
+  });
+
+  testWidgets('hold-to-join sends join and hands off to confirmations',
+      (tester) async {
+    final api = _FakeApiWithInvite();
+    await tester.pumpWidget(_app(api, _account()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Invites'));
+    await tester.pumpAndSettle();
+    final baseline = api.getlistCalls;
+
+    // Drive the 900ms hold past completion.
+    final gesture =
+        await tester.startGesture(tester.getCenter(find.text('Hold to join')));
+    // The tap recognizer only fires onTapDown after its ~100ms arena
+    // deadline (the card sits in a scrollable), so give it a beat before
+    // elapsing the 900ms hold.
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pump(const Duration(milliseconds: 1000));
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Join requested — confirm it in the Confirmations tab'),
+        findsOneWidget);
+    // Landed back on the confirmations tab (offstage text is not found).
+    expect(find.text('No pending confirmations.'), findsOneWidget);
+    expect(api.getlistCalls, greaterThan(baseline),
+        reason: 'the handoff must re-fetch confirmations — the tab is '
+            'keep-alive and would otherwise show stale data');
   });
 
   testWidgets('offer card renders, expands, shows gift banner', (tester) async {
