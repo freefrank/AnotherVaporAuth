@@ -4,6 +4,7 @@ import 'package:ava/src/app/theme.dart';
 import 'package:ava/src/core/models/session_data.dart';
 import 'package:ava/src/core/models/steam_guard_account.dart';
 import 'package:ava/src/services/steam_api_client.dart';
+import 'package:ava/src/ui/pending/offer_card.dart';
 import 'package:ava/src/ui/pending/pending_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +36,61 @@ class _FakeApi extends SteamApiClient {
       {'response': {}};
 }
 
+/// Like [_FakeApi], but GetTradeOffers returns one received gift offer with a
+/// joined description (empty icon_url → the card renders the no-image branch,
+/// so the test never issues a network image request).
+class _FakeApiWithOffer extends _FakeApi {
+  @override
+  Future<Map<String, dynamic>> apiGetJson(
+    String iface,
+    String method,
+    Map<String, dynamic> query, {
+    String? accessToken,
+    int version = 1,
+  }) async {
+    if (method == 'GetTradeOffers') {
+      return {
+        'response': {
+          'trade_offers_received': [
+            {
+              'tradeofferid': '7001',
+              'accountid_other': 123,
+              'trade_offer_state': 2,
+              'items_to_receive': [
+                {
+                  'appid': 730,
+                  'contextid': '2',
+                  'assetid': '111',
+                  'classid': '9',
+                  'instanceid': '0',
+                  'amount': '1',
+                }
+              ],
+              'items_to_give': [],
+              'time_created': 1752500000,
+              'time_updated': 1752500000,
+            }
+          ],
+          'descriptions': [
+            {
+              'appid': 730,
+              'classid': '9',
+              'instanceid': '0',
+              'icon_url': '',
+              'name': 'AK-47 | Redline',
+              'market_hash_name': 'AK-47',
+              'name_color': 'D2D2D2',
+              'type': 'Rifle',
+              'tradable': 1,
+            }
+          ],
+        },
+      };
+    }
+    return {'response': {}};
+  }
+}
+
 /// Keeps the skin spec null (plain look) so ScanlineOverlay renders no
 /// looping animation — otherwise pumpAndSettle would never settle.
 class _NoSkinSpec extends SkinSpecController {
@@ -42,16 +98,14 @@ class _NoSkinSpec extends SkinSpecController {
   build() => null;
 }
 
-void main() {
-  testWidgets('pending screen renders both tabs and switches', (tester) async {
-    final account = SteamGuardAccount(
+SteamGuardAccount _account() => SteamGuardAccount(
       accountName: 'acc',
       identitySecret: 'YQ==',
       session: SessionData(
           steamId: 76561198000000123, accessToken: 't', refreshToken: 'r'),
     );
-    final api = _FakeApi();
-    await tester.pumpWidget(ProviderScope(
+
+Widget _app(SteamApiClient api, SteamGuardAccount account) => ProviderScope(
       overrides: [
         apiClientProvider.overrideWithValue(api),
         skinSpecProvider.overrideWith(_NoSkinSpec.new),
@@ -63,7 +117,12 @@ void main() {
         locale: const Locale('en'),
         home: PendingScreen(account: account),
       ),
-    ));
+    );
+
+void main() {
+  testWidgets('pending screen renders both tabs and switches', (tester) async {
+    final api = _FakeApi();
+    await tester.pumpWidget(_app(api, _account()));
     await tester.pumpAndSettle();
     expect(find.text('Confirmations'), findsOneWidget);
     expect(find.text('Trade offers'), findsOneWidget);
@@ -77,5 +136,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(api.getlistCalls, baseline,
         reason: 'tab switching must not re-fetch confirmations (keep-alive)');
+  });
+
+  testWidgets('offer card renders, expands, shows gift banner', (tester) async {
+    await tester.pumpWidget(_app(_FakeApiWithOffer(), _account()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trade offers'));
+    await tester.pumpAndSettle();
+    // 收起态：操作按钮不可见。
+    expect(find.text('Hold to accept'), findsNothing);
+    // 点卡片展开。
+    await tester.tap(find.byType(OfferCard));
+    await tester.pumpAndSettle();
+    expect(find.text('Hold to accept'), findsOneWidget);
+    expect(find.text('Decline'), findsOneWidget);
+    expect(find.text('Gift — you give nothing'), findsOneWidget);
   });
 }

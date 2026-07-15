@@ -19,9 +19,10 @@ class PendingScreen extends StatefulWidget {
 class _PendingScreenState extends State<PendingScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabs = TabController(length: 2, vsync: this);
-  // Lets the AppBar refresh action delegate to the confirmations tab —
+  // Lets the AppBar refresh action delegate to the active tab —
   // desktop mouse users can't trigger the drag-only RefreshIndicator.
   final _confTabKey = GlobalKey<ConfirmationsTabState>();
+  final _offersTabKey = GlobalKey<TradeOffersTabState>();
   int? _confCount;
   int? _offerCount;
 
@@ -54,10 +55,10 @@ class _PendingScreenState extends State<PendingScreen>
           IconButton(
             tooltip: l.confirmationsRefresh,
             icon: const Icon(Icons.refresh),
-            // Always enabled; dispatches to the active tab. The offers tab
-            // delegation lands with Task 10.
+            // Always enabled; dispatches to the active tab.
             onPressed: () {
               if (_tabs.index == 0) _confTabKey.currentState?.refresh();
+              if (_tabs.index == 1) _offersTabKey.currentState?.refresh();
             },
           ),
         ],
@@ -79,6 +80,7 @@ class _PendingScreenState extends State<PendingScreen>
               onCount: (n) => setState(() => _confCount = n),
             ),
             TradeOffersTab(
+              key: _offersTabKey,
               account: widget.account,
               onCount: (n) => setState(() => _offerCount = n),
               onGoToConfirmations: () {

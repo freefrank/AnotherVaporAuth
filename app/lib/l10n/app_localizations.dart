@@ -668,6 +668,102 @@ abstract class AppLocalizations {
   /// **'Steam rejected the confirmation request. This usually means the maFile does not match the authenticator currently on the account (common with purchased accounts) — remove the authenticator and link it again, or import the right maFile. A large clock drift can also cause this.'**
   String get confRejected;
 
+  /// No description provided for @offersSegReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'Received'**
+  String get offersSegReceived;
+
+  /// No description provided for @offersSegSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get offersSegSent;
+
+  /// No description provided for @offersSegHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get offersSegHistory;
+
+  /// No description provided for @offersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No trade offers.'**
+  String get offersEmpty;
+
+  /// No description provided for @offerGift.
+  ///
+  /// In en, this message translates to:
+  /// **'Gift — you give nothing'**
+  String get offerGift;
+
+  /// No description provided for @offerOneSided.
+  ///
+  /// In en, this message translates to:
+  /// **'You give items and receive nothing'**
+  String get offerOneSided;
+
+  /// No description provided for @offerEscrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Items will be held by Steam before delivery'**
+  String get offerEscrow;
+
+  /// No description provided for @offerAcceptHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to accept'**
+  String get offerAcceptHold;
+
+  /// No description provided for @offerDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get offerDecline;
+
+  /// No description provided for @offerCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel offer'**
+  String get offerCancel;
+
+  /// No description provided for @offerReceiveLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'You receive'**
+  String get offerReceiveLabel;
+
+  /// No description provided for @offerGiveLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'You give'**
+  String get offerGiveLabel;
+
+  /// No description provided for @offerAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer accepted — confirm it in the Confirmations tab'**
+  String get offerAccepted;
+
+  /// No description provided for @offerActionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Action failed: {msg}'**
+  String offerActionFailed(String msg);
+
+  /// No description provided for @offerDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer declined.'**
+  String get offerDeclined;
+
+  /// No description provided for @offerCanceled.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer canceled.'**
+  String get offerCanceled;
+
   /// No description provided for @loginOrApprove.
   ///
   /// In en, this message translates to:

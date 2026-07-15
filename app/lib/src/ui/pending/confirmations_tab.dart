@@ -36,7 +36,9 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
     with AutomaticKeepAliveClientMixin {
   late final ConfirmationsClient _client;
   List<Confirmation>? _confs;
-  bool _loading = true;
+  // false so the initState refresh passes its own re-entrancy guard;
+  // refresh() flips it to true before the first frame builds.
+  bool _loading = false;
   bool _busy = false;
   String? _error;
   bool _needsLogin = false; // session needs interactive sign-in, not a retry
@@ -52,6 +54,7 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
   }
 
   Future<void> refresh() async {
+    if (_loading) return; // AppBar 按钮 + 下拉可并发触发,防重入
     setState(() {
       _loading = true;
       _error = null;

@@ -307,6 +307,56 @@ class AppLocalizationsZh extends AppLocalizations {
       'Steam 拒绝了确认请求。这通常说明 maFile 与账户当前的验证器不匹配（购入账户较常见）——请移除验证器后重新绑定，或导入正确的 maFile；设备时间偏差过大也会导致此问题。';
 
   @override
+  String get offersSegReceived => '收到';
+
+  @override
+  String get offersSegSent => '发出';
+
+  @override
+  String get offersSegHistory => '历史';
+
+  @override
+  String get offersEmpty => '没有交易报价。';
+
+  @override
+  String get offerGift => '赠送 — 你无需给出物品';
+
+  @override
+  String get offerOneSided => '你给出物品但一无所获';
+
+  @override
+  String get offerEscrow => '物品将被 Steam 暂挂后交付';
+
+  @override
+  String get offerAcceptHold => '长按接受';
+
+  @override
+  String get offerDecline => '拒绝';
+
+  @override
+  String get offerCancel => '取消报价';
+
+  @override
+  String get offerReceiveLabel => '你收到';
+
+  @override
+  String get offerGiveLabel => '你给出';
+
+  @override
+  String get offerAccepted => '已接受报价 — 请到「确认」页签完成确认';
+
+  @override
+  String offerActionFailed(String msg) {
+    return '操作失败：$msg';
+  }
+
+  @override
+  String get offerDeclined => '已拒绝报价。';
+
+  @override
+  String get offerCanceled => '已取消报价。';
+
+  @override
   String get loginOrApprove => '…或直接在 Steam 手机 App 点「允许」。';
 
   @override

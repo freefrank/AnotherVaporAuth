@@ -322,6 +322,57 @@ class AppLocalizationsEn extends AppLocalizations {
       'Steam rejected the confirmation request. This usually means the maFile does not match the authenticator currently on the account (common with purchased accounts) — remove the authenticator and link it again, or import the right maFile. A large clock drift can also cause this.';
 
   @override
+  String get offersSegReceived => 'Received';
+
+  @override
+  String get offersSegSent => 'Sent';
+
+  @override
+  String get offersSegHistory => 'History';
+
+  @override
+  String get offersEmpty => 'No trade offers.';
+
+  @override
+  String get offerGift => 'Gift — you give nothing';
+
+  @override
+  String get offerOneSided => 'You give items and receive nothing';
+
+  @override
+  String get offerEscrow => 'Items will be held by Steam before delivery';
+
+  @override
+  String get offerAcceptHold => 'Hold to accept';
+
+  @override
+  String get offerDecline => 'Decline';
+
+  @override
+  String get offerCancel => 'Cancel offer';
+
+  @override
+  String get offerReceiveLabel => 'You receive';
+
+  @override
+  String get offerGiveLabel => 'You give';
+
+  @override
+  String get offerAccepted =>
+      'Offer accepted — confirm it in the Confirmations tab';
+
+  @override
+  String offerActionFailed(String msg) {
+    return 'Action failed: $msg';
+  }
+
+  @override
+  String get offerDeclined => 'Offer declined.';
+
+  @override
+  String get offerCanceled => 'Offer canceled.';
+
+  @override
   String get loginOrApprove => '…or just tap “Allow” in your Steam mobile app.';
 
   @override
