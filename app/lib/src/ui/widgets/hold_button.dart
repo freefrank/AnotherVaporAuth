@@ -19,10 +19,17 @@ import 'package:flutter/services.dart';
 /// to the scheduler's frame clock, which only advances on painted frames, so
 /// a single `pump(duration)` after starting a hold would not reliably drive
 /// it to completion in widget tests. A wall-clock timer advances correctly
-/// under `tester.pump(duration)`'s fake-async elapse.
+/// under `tester.pump(duration)`'s fake-async elapse. Elapsed time is counted
+/// in whole ticks, so UI jank can only stretch a hold, never shorten it —
+/// timing drift errs on the safe side for an irreversible action.
+///
+/// Accessibility: assistive technologies cannot perform a timed hold, so the
+/// control exposes standard button semantics whose activation confirms
+/// directly (the pill's [label], or [semanticLabel] for the round variant).
 class HoldToConfirmButton extends StatefulWidget {
   final String? label; // pill 变体
   final IconData? icon; // round 变体
+  final String? semanticLabel; // round 变体的无障碍标签
   final Color color;
   final Duration duration;
   final VoidCallback onConfirmed;
@@ -39,13 +46,15 @@ class HoldToConfirmButton extends StatefulWidget {
     this.enabled = true,
     this.holdEnabled = true,
     this.hapticsEnabled = true,
-  }) : icon = null;
+  })  : icon = null,
+        semanticLabel = null;
 
   const HoldToConfirmButton.round({
     super.key,
     required IconData this.icon,
     required this.color,
     required this.onConfirmed,
+    this.semanticLabel = 'confirm',
     this.duration = const Duration(milliseconds: 900),
     this.enabled = true,
     this.holdEnabled = true,
@@ -93,6 +102,11 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton> {
 
   void _onTick() {
     if (!mounted) return;
+    // 长按进行中被禁用（busy 状态、设置切换）必须立即作废,绝不补触发。
+    if (!widget.enabled || !widget.holdEnabled) {
+      _cancel();
+      return;
+    }
     _elapsedMs += _tick.inMilliseconds;
     while (_nextHaptic < _haptics.length && _elapsedMs >= _haptics[_nextHaptic]) {
       if (widget.hapticsEnabled) HapticFeedback.lightImpact();
@@ -123,8 +137,10 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton> {
   @override
   void didUpdateWidget(covariant HoldToConfirmButton oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!widget.enabled || !widget.holdEnabled) _cancel();
     if (oldWidget.duration != widget.duration) {
       _haptics = HoldToConfirmButton.hapticTimesMs(widget.duration.inMilliseconds);
+      if (_timer != null) _cancel(); // haptic 索引已错位,作废本次长按
     }
   }
 
@@ -138,20 +154,27 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton> {
   Widget build(BuildContext context) {
     final progress = _progress;
     final child = widget.icon != null
+        // 48dp 命中区域包住 36dp 视觉(a11y 触摸目标,同 _RoundAction 先例)。
         ? SizedBox(
-            width: 36,
-            height: 36,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 2.4,
-                  color: widget.color,
-                  backgroundColor: widget.color.withValues(alpha: 0.25),
+            width: 48,
+            height: 48,
+            child: Center(
+              child: SizedBox(
+                width: 36,
+                height: 36,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: progress,
+                      strokeWidth: 2.4,
+                      color: widget.color,
+                      backgroundColor: widget.color.withValues(alpha: 0.25),
+                    ),
+                    Icon(widget.icon, color: widget.color, size: 18),
+                  ],
                 ),
-                Icon(widget.icon, color: widget.color, size: 18),
-              ],
+              ),
             ),
           )
         : Container(
@@ -182,14 +205,26 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton> {
             ),
           );
 
-    return GestureDetector(
-      // 长按关闭（设置开关）时退化为普通点按 —— 单条操作即点即行，
-      // 批量操作的安全底线由调用方保留弹窗（见 Task 10b）。
-      onTap: !widget.holdEnabled && widget.enabled ? widget.onConfirmed : null,
-      onTapDown: _start,
-      onTapUp: _cancel,
-      onTapCancel: _cancel,
-      child: Opacity(opacity: widget.enabled ? 1 : 0.45, child: child),
+    // 辅助技术做不了计时手势(合成点按 = 立即 down→up,永不触发),
+    // 所以暴露标准按钮语义:语义激活直接确认。
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      button: true,
+      enabled: widget.enabled,
+      label: widget.label ?? widget.semanticLabel ?? 'confirm',
+      onTap: widget.enabled ? widget.onConfirmed : null,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        // 长按关闭（设置开关）时退化为普通点按 —— 单条操作即点即行，
+        // 批量操作的安全底线由调用方保留弹窗（见 Task 10b）。
+        onTap:
+            !widget.holdEnabled && widget.enabled ? widget.onConfirmed : null,
+        onTapDown: _start,
+        onTapUp: _cancel,
+        onTapCancel: _cancel,
+        child: Opacity(opacity: widget.enabled ? 1 : 0.45, child: child),
+      ),
     );
   }
 }
