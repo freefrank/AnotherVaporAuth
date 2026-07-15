@@ -119,6 +119,8 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
   }
 
   Future<void> _respond(List<Confirmation> confs, bool accept) async {
+    // 多点触控下卡片 ✓ 与批量 pill 的长按可在同一帧完成 —— 防双发。
+    if (_busy) return;
     if (confs.isEmpty) return;
     final l = AppLocalizations.of(context);
     setState(() => _busy = true);
@@ -135,7 +137,12 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
   }
 
   /// Batch accept/reject with an explicit confirmation dialog — acting on
-  /// every pending confirmation must never be a single tap.
+  /// every pending confirmation must never be a single tap. Serves the reject
+  /// path (always dialog-gated) and accept-all when the hold-to-confirm
+  /// toggle is off; with hold enabled, accept-all's long press is itself the
+  /// second confirmation and calls [_respond] directly — except for assistive
+  /// tech, whose semantic activation is routed back here (see the batch
+  /// pill's `onSemanticConfirmed`).
   Future<void> _respondAll(List<Confirmation> confs, bool accept) async {
     if (confs.isEmpty) return;
     final l = AppLocalizations.of(context);
@@ -276,6 +283,9 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
                       enabled: !_busy,
                       hapticsEnabled: hapticsEnabled,
                       onConfirmed: () => _respond(confs, true),
+                      // 辅助技术做不了计时长按,语义激活是直接触发 —— 批量
+                      // 操作必须把这条通道引回弹窗二次确认,不能一次双击全收。
+                      onSemanticConfirmed: () => _respondAll(confs, true),
                     )
                   : FilledButton.icon(
                       onPressed: _busy ? null : () => _respondAll(confs, true),
@@ -463,7 +473,7 @@ class _ConfCardState extends State<_ConfCard>
                 enabled: !widget.busy,
                 holdEnabled: widget.holdEnabled,
                 hapticsEnabled: widget.hapticsEnabled,
-                semanticLabel: AppLocalizations.of(context).confAccept,
+                semanticLabel: l.confAccept,
                 onConfirmed: widget.onAccept,
               ),
             ],

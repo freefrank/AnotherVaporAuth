@@ -26,6 +26,9 @@ import 'package:flutter/services.dart';
 /// Accessibility: assistive technologies cannot perform a timed hold, so the
 /// control exposes standard button semantics whose activation confirms
 /// directly (the pill's [label], or [semanticLabel] for the round variant).
+/// When that direct activation would skip a safety gate the hold provides
+/// (e.g. batch "accept all"), pass [onSemanticConfirmed] to give AT users an
+/// alternative confirmed path (typically a dialog) instead of [onConfirmed].
 class HoldToConfirmButton extends StatefulWidget {
   final String? label; // pill 变体
   final IconData? icon; // round 变体
@@ -33,6 +36,11 @@ class HoldToConfirmButton extends StatefulWidget {
   final Color color;
   final Duration duration;
   final VoidCallback onConfirmed;
+
+  /// Fired instead of [onConfirmed] on semantic (assistive-tech) activation.
+  /// AT 的合成点按没有长按这道门槛 —— 批量等高危操作在这里改走带二次确认的
+  /// 路径(如弹窗),避免一次双击就直接提交。null 时语义激活仍走 [onConfirmed]。
+  final VoidCallback? onSemanticConfirmed;
   final bool enabled;
   final bool holdEnabled;
   final bool hapticsEnabled;
@@ -42,6 +50,7 @@ class HoldToConfirmButton extends StatefulWidget {
     required String this.label,
     required this.color,
     required this.onConfirmed,
+    this.onSemanticConfirmed,
     this.duration = const Duration(milliseconds: 900),
     this.enabled = true,
     this.holdEnabled = true,
@@ -54,6 +63,7 @@ class HoldToConfirmButton extends StatefulWidget {
     required IconData this.icon,
     required this.color,
     required this.onConfirmed,
+    this.onSemanticConfirmed,
     this.semanticLabel = 'confirm',
     this.duration = const Duration(milliseconds: 900),
     this.enabled = true,
@@ -213,7 +223,9 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton> {
       button: true,
       enabled: widget.enabled,
       label: widget.label ?? widget.semanticLabel ?? 'confirm',
-      onTap: widget.enabled ? widget.onConfirmed : null,
+      onTap: widget.enabled
+          ? (widget.onSemanticConfirmed ?? widget.onConfirmed)
+          : null,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         // 长按关闭（设置开关）时退化为普通点按 —— 单条操作即点即行，

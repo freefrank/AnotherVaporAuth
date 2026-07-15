@@ -9,6 +9,8 @@ import 'package:ava/src/ui/pending/pending_screen.dart';
 import 'package:ava/src/ui/widgets/hold_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// Override(provider 覆写基类)在 riverpod 3 移到了 misc 入口。
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
 /// getlist 回空、GetTradeOffers 回空的 fake —— 冒烟只验证骨架渲染。
@@ -150,6 +152,12 @@ class _NoSkinSpec extends SkinSpecController {
   build() => null;
 }
 
+/// Hold-to-confirm toggle forced off (skips the settings-store load).
+class _HoldOff extends HoldConfirmController {
+  @override
+  bool build() => false;
+}
+
 SteamGuardAccount _account() => SteamGuardAccount(
       accountName: 'acc',
       identitySecret: 'YQ==',
@@ -157,10 +165,13 @@ SteamGuardAccount _account() => SteamGuardAccount(
           steamId: 76561198000000123, accessToken: 't', refreshToken: 'r'),
     );
 
-Widget _app(SteamApiClient api, SteamGuardAccount account) => ProviderScope(
+Widget _app(SteamApiClient api, SteamGuardAccount account,
+        {List<Override> overrides = const []}) =>
+    ProviderScope(
       overrides: [
         apiClientProvider.overrideWithValue(api),
         skinSpecProvider.overrideWith(_NoSkinSpec.new),
+        ...overrides,
       ],
       child: MaterialApp(
         theme: buildAvaTheme(AvaThemeVariant.neon),
@@ -244,6 +255,47 @@ void main() {
     // 单条卡片上出现 HoldToConfirmButton（round 接受），拒绝仍是普通图标钮；
     // 批量栏"全部接受"也是 HoldToConfirmButton（pill）——共两个。
     expect(find.byType(HoldToConfirmButton), findsNWidgets(2));
+  });
+
+  testWidgets('hold toggle off: accept-all falls back to the dialog',
+      (tester) async {
+    await tester.pumpWidget(_app(_FakeApiWithConf(), _account(),
+        overrides: [holdConfirmProvider.overrideWith(_HoldOff.new)]));
+    await tester.pumpAndSettle();
+    // 批量栏退回普通按钮(pill 消失);卡片的 round 接受钮仍是
+    // HoldToConfirmButton,但组件自身退化为普通点按 —— 故剩一个。
+    expect(find.widgetWithText(HoldToConfirmButton, 'Accept all'),
+        findsNothing);
+    expect(find.byType(HoldToConfirmButton), findsOneWidget);
+    // 点"全部接受"必须弹出确认弹窗(安全底线)。
+    await tester.tap(find.text('Accept all'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+  });
+
+  testWidgets('batch pill semantic activation routes through the dialog',
+      (tester) async {
+    final api = _FakeApiWithConf();
+    await tester.pumpWidget(_app(api, _account()));
+    await tester.pumpAndSettle();
+    final handle = tester.ensureSemantics();
+    final baseline = api.getlistCalls;
+
+    // 辅助技术的合成点按没有长按门槛 —— 语义激活必须走弹窗二次确认,
+    // 而不是直接执行(直接执行会在完成后 refresh,推高 getlistCalls)。
+    tester.semantics.tap(find.semantics.byLabel('Accept all'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(api.getlistCalls, baseline,
+        reason: 'semantic activation must not execute the batch directly');
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(api.getlistCalls, baseline);
+    handle.dispose();
   });
 
   testWidgets('accept failure shows the error and stays on the offers tab',

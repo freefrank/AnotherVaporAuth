@@ -134,6 +134,37 @@ void main() {
       handle.dispose();
     });
 
+    testWidgets('semantic activation prefers onSemanticConfirmed',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+      var direct = 0, semantic = 0;
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: HoldToConfirmButton(
+            label: 'accept',
+            color: Colors.green,
+            duration: const Duration(milliseconds: 300),
+            onConfirmed: () => direct++,
+            onSemanticConfirmed: () => semantic++,
+          ),
+        ),
+      ));
+      // 语义激活走替代路径(批量场景 = 弹窗二次确认),不直接提交。
+      tester.semantics.tap(find.semantics.byLabel('accept'));
+      await tester.pumpAndSettle();
+      expect(semantic, 1);
+      expect(direct, 0);
+      // 真实长按仍走 onConfirmed。
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.text('accept')));
+      await tester.pump(const Duration(milliseconds: 350));
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(direct, 1);
+      expect(semantic, 1);
+      handle.dispose();
+    });
+
     testWidgets('round variant hit target is at least 48dp', (tester) async {
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
