@@ -770,6 +770,198 @@ abstract class AppLocalizations {
   /// **'Offer canceled.'**
   String get offerCanceled;
 
+  /// No description provided for @pendingTabInvites.
+  ///
+  /// In en, this message translates to:
+  /// **'Invites'**
+  String get pendingTabInvites;
+
+  /// No description provided for @famInviteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'「{groupName}」 invited you to join'**
+  String famInviteTitle(String groupName);
+
+  /// No description provided for @famInviteTitleGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Family group invite'**
+  String get famInviteTitleGeneric;
+
+  /// No description provided for @famInviteFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited by {inviter}'**
+  String famInviteFrom(String inviter);
+
+  /// No description provided for @famInviteRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Role: {role}'**
+  String famInviteRole(String role);
+
+  /// No description provided for @famInviteSlots.
+  ///
+  /// In en, this message translates to:
+  /// **'Slots {used}/{total}'**
+  String famInviteSlots(int used, int total);
+
+  /// No description provided for @famRoleAdult.
+  ///
+  /// In en, this message translates to:
+  /// **'Adult'**
+  String get famRoleAdult;
+
+  /// No description provided for @famRoleChild.
+  ///
+  /// In en, this message translates to:
+  /// **'Child'**
+  String get famRoleChild;
+
+  /// No description provided for @famRoleUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Role #{n}'**
+  String famRoleUnknown(int n);
+
+  /// No description provided for @famPreflightTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Join checks'**
+  String get famPreflightTitle;
+
+  /// No description provided for @famCheckWalletMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet region matches'**
+  String get famCheckWalletMatch;
+
+  /// No description provided for @famCheckWalletMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet region doesn\'t match — Steam restricts joining'**
+  String get famCheckWalletMismatch;
+
+  /// No description provided for @famCheckIpMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Usual IP matches'**
+  String get famCheckIpMatch;
+
+  /// No description provided for @famCheckIpMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'IP doesn\'t match your usual location'**
+  String get famCheckIpMismatch;
+
+  /// No description provided for @famCheckCooldown.
+  ///
+  /// In en, this message translates to:
+  /// **'Joining locks family-group switching for 1 year (Steam cooldown)'**
+  String get famCheckCooldown;
+
+  /// No description provided for @famJoinRestricted.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam blocked this join (restriction {code})'**
+  String famJoinRestricted(int code);
+
+  /// No description provided for @famInviteJoinHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to join'**
+  String get famInviteJoinHold;
+
+  /// No description provided for @famInviteAwaiting2fa.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for confirmation — check the Confirmations tab'**
+  String get famInviteAwaiting2fa;
+
+  /// No description provided for @famInviteJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined ✓'**
+  String get famInviteJoined;
+
+  /// No description provided for @famInviteViewGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'View family group ›'**
+  String get famInviteViewGroup;
+
+  /// No description provided for @famJoinSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Join requested — confirm it in the Confirmations tab'**
+  String get famJoinSent;
+
+  /// No description provided for @famJoinDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined the family group.'**
+  String get famJoinDone;
+
+  /// No description provided for @famJoinFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Join failed: {msg}'**
+  String famJoinFailed(String msg);
+
+  /// No description provided for @famInvitesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending family invites.'**
+  String get famInvitesEmpty;
+
+  /// No description provided for @famAccountAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Family group'**
+  String get famAccountAction;
+
+  /// No description provided for @famNotInGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'This account isn\'t in a family group.'**
+  String get famNotInGroup;
+
+  /// No description provided for @famSummaryMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members {used}/{total}'**
+  String famSummaryMembers(int used, int total);
+
+  /// No description provided for @famSummaryCooldown.
+  ///
+  /// In en, this message translates to:
+  /// **'Cooldown {days}d'**
+  String famSummaryCooldown(int days);
+
+  /// No description provided for @famSectionMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get famSectionMembers;
+
+  /// No description provided for @famMemberYou.
+  ///
+  /// In en, this message translates to:
+  /// **'(you)'**
+  String get famMemberYou;
+
+  /// No description provided for @famSectionPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get famSectionPending;
+
+  /// No description provided for @famPendingComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase approval is coming in a future update.'**
+  String get famPendingComingSoon;
+
   /// No description provided for @loginOrApprove.
   ///
   /// In en, this message translates to:

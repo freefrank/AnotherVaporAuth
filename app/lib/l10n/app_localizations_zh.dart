@@ -360,6 +360,120 @@ class AppLocalizationsZh extends AppLocalizations {
   String get offerCanceled => '已取消报价。';
 
   @override
+  String get pendingTabInvites => '邀请';
+
+  @override
+  String famInviteTitle(String groupName) {
+    return '「$groupName」邀请你加入家庭组';
+  }
+
+  @override
+  String get famInviteTitleGeneric => '家庭组邀请';
+
+  @override
+  String famInviteFrom(String inviter) {
+    return '邀请人：$inviter';
+  }
+
+  @override
+  String famInviteRole(String role) {
+    return '角色：$role';
+  }
+
+  @override
+  String famInviteSlots(int used, int total) {
+    return '空位 $used/$total';
+  }
+
+  @override
+  String get famRoleAdult => '成人';
+
+  @override
+  String get famRoleChild => '儿童';
+
+  @override
+  String famRoleUnknown(int n) {
+    return '角色 #$n';
+  }
+
+  @override
+  String get famPreflightTitle => '加入前预检';
+
+  @override
+  String get famCheckWalletMatch => '钱包地区一致';
+
+  @override
+  String get famCheckWalletMismatch => '钱包地区不一致 —— Steam 限制加入';
+
+  @override
+  String get famCheckIpMatch => '常用 IP 匹配';
+
+  @override
+  String get famCheckIpMismatch => 'IP 与常用地点不符';
+
+  @override
+  String get famCheckCooldown => '加入后 1 年内不能更换家庭组（官方冷却）';
+
+  @override
+  String famJoinRestricted(int code) {
+    return 'Steam 阻止了此次加入（限制码 $code）';
+  }
+
+  @override
+  String get famInviteJoinHold => '加入（长按）';
+
+  @override
+  String get famInviteAwaiting2fa => '等待确认 —— 请到「确认」页签处理';
+
+  @override
+  String get famInviteJoined => '已加入 ✓';
+
+  @override
+  String get famInviteViewGroup => '查看家庭组 ›';
+
+  @override
+  String get famJoinSent => '已发起加入 —— 请到「确认」页签完成确认';
+
+  @override
+  String get famJoinDone => '已加入家庭组。';
+
+  @override
+  String famJoinFailed(String msg) {
+    return '加入失败：$msg';
+  }
+
+  @override
+  String get famInvitesEmpty => '没有待处理的家庭组邀请。';
+
+  @override
+  String get famAccountAction => '家庭组';
+
+  @override
+  String get famNotInGroup => '该账户不在任何家庭组中。';
+
+  @override
+  String famSummaryMembers(int used, int total) {
+    return '成员 $used/$total';
+  }
+
+  @override
+  String famSummaryCooldown(int days) {
+    return '冷却 $days 天';
+  }
+
+  @override
+  String get famSectionMembers => '成员';
+
+  @override
+  String get famMemberYou => '（你）';
+
+  @override
+  String get famSectionPending => '待处理';
+
+  @override
+  String get famPendingComingSoon => '购买审批将在后续版本推出。';
+
+  @override
   String get loginOrApprove => '…或直接在 Steam 手机 App 点「允许」。';
 
   @override

@@ -376,6 +376,125 @@ class AppLocalizationsEn extends AppLocalizations {
   String get offerCanceled => 'Offer canceled.';
 
   @override
+  String get pendingTabInvites => 'Invites';
+
+  @override
+  String famInviteTitle(String groupName) {
+    return '「$groupName」 invited you to join';
+  }
+
+  @override
+  String get famInviteTitleGeneric => 'Family group invite';
+
+  @override
+  String famInviteFrom(String inviter) {
+    return 'Invited by $inviter';
+  }
+
+  @override
+  String famInviteRole(String role) {
+    return 'Role: $role';
+  }
+
+  @override
+  String famInviteSlots(int used, int total) {
+    return 'Slots $used/$total';
+  }
+
+  @override
+  String get famRoleAdult => 'Adult';
+
+  @override
+  String get famRoleChild => 'Child';
+
+  @override
+  String famRoleUnknown(int n) {
+    return 'Role #$n';
+  }
+
+  @override
+  String get famPreflightTitle => 'Join checks';
+
+  @override
+  String get famCheckWalletMatch => 'Wallet region matches';
+
+  @override
+  String get famCheckWalletMismatch =>
+      'Wallet region doesn\'t match — Steam restricts joining';
+
+  @override
+  String get famCheckIpMatch => 'Usual IP matches';
+
+  @override
+  String get famCheckIpMismatch => 'IP doesn\'t match your usual location';
+
+  @override
+  String get famCheckCooldown =>
+      'Joining locks family-group switching for 1 year (Steam cooldown)';
+
+  @override
+  String famJoinRestricted(int code) {
+    return 'Steam blocked this join (restriction $code)';
+  }
+
+  @override
+  String get famInviteJoinHold => 'Hold to join';
+
+  @override
+  String get famInviteAwaiting2fa =>
+      'Waiting for confirmation — check the Confirmations tab';
+
+  @override
+  String get famInviteJoined => 'Joined ✓';
+
+  @override
+  String get famInviteViewGroup => 'View family group ›';
+
+  @override
+  String get famJoinSent =>
+      'Join requested — confirm it in the Confirmations tab';
+
+  @override
+  String get famJoinDone => 'Joined the family group.';
+
+  @override
+  String famJoinFailed(String msg) {
+    return 'Join failed: $msg';
+  }
+
+  @override
+  String get famInvitesEmpty => 'No pending family invites.';
+
+  @override
+  String get famAccountAction => 'Family group';
+
+  @override
+  String get famNotInGroup => 'This account isn\'t in a family group.';
+
+  @override
+  String famSummaryMembers(int used, int total) {
+    return 'Members $used/$total';
+  }
+
+  @override
+  String famSummaryCooldown(int days) {
+    return 'Cooldown ${days}d';
+  }
+
+  @override
+  String get famSectionMembers => 'Members';
+
+  @override
+  String get famMemberYou => '(you)';
+
+  @override
+  String get famSectionPending => 'Pending';
+
+  @override
+  String get famPendingComingSoon =>
+      'Purchase approval is coming in a future update.';
+
+  @override
   String get loginOrApprove => '…or just tap “Allow” in your Steam mobile app.';
 
   @override
