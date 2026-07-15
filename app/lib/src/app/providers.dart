@@ -9,6 +9,7 @@ import '../core/crypto/vault_crypto.dart';
 import '../core/models/manifest.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/confirmations_client.dart';
+import '../core/protocol/family_groups_client.dart';
 import '../core/protocol/inventory_client.dart';
 import '../core/protocol/market_client.dart';
 import '../core/protocol/trade_offers_client.dart';
@@ -70,6 +71,10 @@ final tradeOffersClientProvider = Provider<TradeOffersClient>(
 /// Mobile confirmations (trade / market listing) client.
 final confirmationsClientProvider = Provider<ConfirmationsClient>(
     (ref) => ConfirmationsClient(ref.read(apiClientProvider)));
+
+/// Steam family groups (invites, join, read-only group info) client.
+final familyGroupsClientProvider = Provider<FamilyGroupsClient>(
+    (ref) => FamilyGroupsClient(ref.read(apiClientProvider)));
 
 /// Time alignment hook (overridable in tests to avoid network).
 final timeAlignerProvider =
