@@ -120,7 +120,17 @@ class TradeOffersClient {
       cookies: _cookies(account, sid),
       referer: '${SteamApiClient.communityBase}/tradeoffer/${offer.id}/',
     );
+    // An expired session surfaces as needauth/needsauth — return a
+    // recognizable message so the UI can route to re-login.
+    if (json['needauth'] == true || json['needsauth'] == true) {
+      dlog('tradeoffer accept ${offer.id} -> needauth');
+      return const TradeAcceptResult(success: false, message: 'needauth');
+    }
     final err = json['strError'] as String?;
+    // Success requires a positive marker: tradeid echo or the mobileconf
+    // flag. (Steam can also reply `needs_email_confirmation` for accounts
+    // without a mobile authenticator — near-theoretical for AVA users, so
+    // it's not handled, but noting the shape here for posterity.)
     final ok = err == null &&
         (json.containsKey('tradeid') ||
             json['needs_mobile_confirmation'] == true);
@@ -132,9 +142,11 @@ class TradeOffersClient {
     );
   }
 
-  /// Declines a received offer / cancels a sent one. Steam echoes the
-  /// offer id on success; an empty body (decoded as {}) also counts —
-  /// same contract as [MarketClient.isCancelSuccess].
+  /// Declines a received offer / cancels a sent one. Success must be
+  /// positively confirmed by Steam echoing `{"tradeofferid": "..."}` — an
+  /// empty body (expired session decoded as {}) must NOT read as "declined":
+  /// telling the user a still-active phishing offer was declined is the
+  /// worst failure mode for an authenticator app.
   Future<bool> decline(SteamGuardAccount account, String offerId) =>
       _writeOp(account, offerId, 'decline');
 
@@ -154,8 +166,13 @@ class TradeOffersClient {
       );
       if (json['needauth'] == true || json['needsauth'] == true) return false;
       if (json['strError'] != null) return false;
-      dlog('tradeoffer $op $offerId -> ok');
-      return true;
+      if (json.containsKey('success') && json['success'] != true) return false;
+      // Success must be positively confirmed by the offer-id echo — an empty
+      // body (expired session decoded as {}) must NOT read as "declined".
+      final ok = json['tradeofferid'] != null;
+      dlog('tradeoffer $op $offerId -> '
+          '${ok ? 'ok' : 'no confirmation in reply'}');
+      return ok;
     } catch (e) {
       dlog('tradeoffer $op $offerId failed: $e');
       return false;

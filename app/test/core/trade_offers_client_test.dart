@@ -33,6 +33,8 @@ class _FakeApi extends SteamApiClient {
     return apiResponse;
   }
 
+  bool throwOnPost = false;
+
   @override
   Future<Map<String, dynamic>> communityPostJson(
     String path,
@@ -44,6 +46,7 @@ class _FakeApi extends SteamApiClient {
     lastForm = form;
     lastCookies = cookies;
     lastReferer = referer;
+    if (throwOnPost) throw Exception('network down');
     return postResponse;
   }
 
@@ -183,6 +186,54 @@ void main() {
       expect(await TradeOffersClient(api).cancel(_account(), '7002'), isTrue);
       expect(api.lastPostPath, '/tradeoffer/7002/cancel');
       expect(api.lastForm!['sessionid'], isNotEmpty);
+    });
+
+    test('decline treats an empty body (expired session) as failure', () async {
+      // 401/302 → 空 body → communityPostJson 解码为 {}。没有 tradeofferid
+      // 回显就不能宣称"已拒绝"——钓鱼报价可能仍然活跃。
+      final api = _FakeApi()..postResponse = {};
+      expect(await TradeOffersClient(api).decline(_account(), '7001'), isFalse);
+    });
+
+    test('decline treats explicit success:false as failure', () async {
+      final api = _FakeApi()..postResponse = {'success': false};
+      expect(await TradeOffersClient(api).decline(_account(), '7001'), isFalse);
+    });
+
+    test('decline treats needauth as failure', () async {
+      final api = _FakeApi()
+        ..postResponse = {'needauth': true, 'tradeofferid': '7001'};
+      expect(await TradeOffersClient(api).decline(_account(), '7001'), isFalse);
+    });
+
+    test('decline returns false when the request throws', () async {
+      final api = _FakeApi()..throwOnPost = true;
+      expect(await TradeOffersClient(api).decline(_account(), '7001'), isFalse);
+    });
+
+    test('accept treats an empty body (expired session) as failure', () async {
+      final api = _FakeApi()..postResponse = {};
+      final offer = TradeOffer(
+        id: '1', partnerAccountId: 1, message: '',
+        state: TradeOfferState.active, isOurOffer: false,
+        itemsToGive: const [], itemsToReceive: const [],
+        timeCreated: 0, timeUpdated: 0, expirationTime: 0, escrowEndDate: 0,
+      );
+      final r = await TradeOffersClient(api).accept(_account(), offer);
+      expect(r.success, isFalse);
+    });
+
+    test('accept surfaces needauth as a recognizable failure', () async {
+      final api = _FakeApi()..postResponse = {'needauth': true};
+      final offer = TradeOffer(
+        id: '1', partnerAccountId: 1, message: '',
+        state: TradeOfferState.active, isOurOffer: false,
+        itemsToGive: const [], itemsToReceive: const [],
+        timeCreated: 0, timeUpdated: 0, expirationTime: 0, escrowEndDate: 0,
+      );
+      final r = await TradeOffersClient(api).accept(_account(), offer);
+      expect(r.success, isFalse);
+      expect(r.message, 'needauth');
     });
   });
 }
