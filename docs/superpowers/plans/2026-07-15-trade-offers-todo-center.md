@@ -2474,13 +2474,35 @@ cd app && flutter run -d emulator-5554
 
 - [ ] **Step 3: 真机联调清单**（登记为 issue/TODO，勿在真机确认页操作 —— CLAUDE.md 红线）
 
-- [ ] `GetTradeOffers` 真实响应解析（含 icon 渲染、name_color 边框）
+- [ ] `GetTradeOffers` 真实响应解析（含 icon 渲染、name_color 边框、**跨游戏报价的 appid+classid+instanceid 描述关联**）
 - [ ] 接受赠送报价 → `needs_mobile_confirmation` → 自动切确认页签 → type 2 确认出现
-- [ ] 拒绝收到 / 取消发出 → 状态刷新
+- [ ] 拒绝收到 / 取消发出 → 状态刷新；**验证真实 decline/cancel 响应体含 `tradeofferid` 回显**（成功判定依赖它；模拟器 mock 账户操作，勿动真机报价）
 - [ ] 历史分段有数据
 - [ ] miniprofile 昵称显示
-- [ ] access_token 过期路径（等 token 过期后进入页签 → 自动刷新成功）
+- [ ] access_token 过期路径（等 token 过期后进入页签 → 自动刷新成功）；**接受时 needauth 的提示路径**
 - [ ] type 11 家庭组邀请确认显示为"家庭组邀请"chip（配合计划 2 验证）
+
+## 执行后记（2026-07-15，全分支终审后）
+
+**Spec 收窄记录**（终审要求显式登记，避免静默偏离）：
+- **接受前的 escrow 暂挂警告未实现**：spec 承诺"接受前提示对方无令牌守护、物品将暂挂 N 天"，但
+  `GetTradeOffers` 的 `escrow_end_date` 只在接受后才有值——实现只在 `state == inEscrow` 时显示
+  横幅（接受后语义）。完整的接受前警告需要 `IEconService/GetTradeHoldDurations`，列为后续项。
+- 历史分段用 `GetTradeOffers historical_only=1`（计划头部已记录），计划 2 不要假设
+  `GetTradeHistory` 已接入。
+
+**遗留清单**（终审确认均不高于 Minor，非阻塞）：
+1. pill 版长按钮触摸目标 ~35dp 高（round 版有 48dp 包裹，pill 缺）
+2. `_asInt` 在 core/ 里重复 9 处，值得抽公共 helper
+3. `TradeOfferState.values[v-1]` 位置映射依赖枚举顺序（有范围守卫，但重排即坏）
+4. `_loadPersonas` 无 in-flight 去重（仅带宽浪费）
+5. 历史卡片无结果标签（accepted/declined/expired 渲染相同）
+6. `_age` 对未来时间戳输出负值
+7. Notifier `build()` 的裸 `.then((v) => state = v)`（5 个 controller 共有的既有 wart，统一修）
+8. `pendingReceivedCount`/`GetTradeOffersSummary` 暂无生产调用方（留给计划 2 主屏角标，有测试）
+9. 接受时 `needauth` 只有 SnackBar 没有直达登录按钮（拉取路径有）
+10. pill 的语义标签"长按接受"对 AT 直接激活路径措辞不准
+11. decline/cancel 失败不透出 Steam 的 strError 原因（`_writeOp` 返回 bool）
 
 - [ ] **Step 4: 版本与 CHANGELOG**
 
