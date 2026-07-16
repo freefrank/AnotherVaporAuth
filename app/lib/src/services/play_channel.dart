@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../core/channel.dart';
@@ -15,9 +16,20 @@ const kPlaySubscriptionProductId = 'ava_pro_monthly';
 /// with 'not_configured' while empty.
 const kGoogleServerClientId = '';
 
-// Official AdMob TEST ad units — replace with real ones before release.
-const kBannerAdUnitId = 'ca-app-pub-3940256099942544/9214589741';
-const kRewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
+// Ad units: real IDs serve only in release builds; debug/profile always use
+// Google's official TEST units — clicking real ads while developing counts
+// as invalid traffic and endangers the AdMob account.
+const _bannerAdUnitReal = 'ca-app-pub-7483086272428635/4617262774';
+const _bannerAdUnitTest = 'ca-app-pub-3940256099942544/9214589741';
+// NOTE: the rewarded unit still needs its SSV callback configured in AdMob
+// (高级设置 → 服务器端验证) once the worker is live at api.ava.dotslash.pro.
+const _rewardedAdUnitReal = 'ca-app-pub-7483086272428635/2892549348';
+const _rewardedAdUnitTest = 'ca-app-pub-3940256099942544/5224354917';
+
+const kBannerAdUnitId =
+    kReleaseMode ? _bannerAdUnitReal : _bannerAdUnitTest;
+const kRewardedAdUnitId =
+    kReleaseMode ? _rewardedAdUnitReal : _rewardedAdUnitTest;
 
 class PlayChannelUnavailable implements Exception {}
 
@@ -44,6 +56,23 @@ class PlayChannel {
 
   /// UMP consent gate; must run before any ad loads. True = ads may load.
   Future<bool> ensureConsent() => _call<bool>('consent.ensure');
+
+  /// Whether UMP requires a privacy-options re-entry point (GDPR regions).
+  Future<bool> privacyOptionsRequired() async {
+    if (!available) return false;
+    try {
+      return await channel
+              .invokeMethod<bool>('consent.privacyOptionsRequired') ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  /// Reopens the UMP privacy-options form (change an earlier consent choice).
+  Future<void> showPrivacyOptions() => _call<bool>('consent.privacyOptions');
 
   /// Google sign-in returning an id_token for the entitlement worker.
   Future<String> signInIdToken() => _call<String>(

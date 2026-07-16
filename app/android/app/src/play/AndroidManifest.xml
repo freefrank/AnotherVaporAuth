@@ -2,10 +2,11 @@
     <!-- Play-flavor-only declarations (AdMob APPLICATION_ID meta-data etc.)
          merge in from here; the cn flavor never sees them. -->
     <application>
-        <!-- AdMob application ID. This is Google's official TEST App ID —
-             上线前替换为真实 ID(AdMob 后台的 ca-app-pub-xxx~yyy)。 -->
+        <!-- AdMob application ID (real, "AVA - Another Vapor Auth"). Keeping
+             the real app ID in debug builds is fine — test traffic is steered
+             by the ad *unit* IDs, which switch on kReleaseMode in Dart. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-7483086272428635~3221254770" />
     </application>
 </manifest>

@@ -10,8 +10,9 @@ import '../core/channel.dart';
 import '../core/entitlement.dart';
 import '../services/pro_actions.dart';
 
-/// Afdian sponsor page (cn channel). Placeholder until the page is live.
-const kAfdianPageUrl = 'https://afdian.com/a/dotslash';
+/// Afdian sponsor page (cn channel; ifdian.net is Afdian's
+/// mainland-reachable domain).
+const kAfdianPageUrl = 'https://ifdian.net/a/anothervaporauth';
 
 /// AVA Pro paywall: status, perks, and the channel's unlock paths.
 class PaywallScreen extends ConsumerStatefulWidget {

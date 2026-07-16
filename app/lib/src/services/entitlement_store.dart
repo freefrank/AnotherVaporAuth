@@ -13,11 +13,10 @@ import 'debug_log.dart';
 /// Base URL of the deployed worker. Placeholder until the worker goes live.
 const kEntitlementApiBase = 'https://api.ava.dotslash.pro';
 
-/// Ed25519 public key (base64, 32 bytes) matching the worker's signing key.
-/// Placeholder until the production keypair is generated at deploy time —
-/// while empty, every stored token fails verification and the app stays
-/// free-tier, which is the safe direction.
-const kEntitlementPublicKeyB64 = '';
+/// Ed25519 public key (base64, 32 bytes) matching the worker's signing key
+/// (deployed 2026-07-16; private key lives only in worker secrets + the
+/// ava-entitlement-signing.pem backup next to the upload keystore).
+const kEntitlementPublicKeyB64 = 'xBGC2NnMMjKlH8slzvXT9auGApPNTlUTBvw/tsLCrz8=';
 
 Uint8List entitlementPublicKeyBytes() {
   try {
