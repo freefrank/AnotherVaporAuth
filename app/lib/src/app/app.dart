@@ -44,7 +44,9 @@ class _AvaAppState extends ConsumerState<AvaApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      LauncherIcon.apply(ref.read(skinProvider));
+      // Effective (Pro-gated) skin: a paywalled selection must not leak
+      // through the launcher icon either.
+      LauncherIcon.apply(ref.read(effectiveSkinProvider));
     }
   }
 
@@ -53,7 +55,9 @@ class _AvaAppState extends ConsumerState<AvaApp> with WidgetsBindingObserver {
     final locale = ref.watch(localeProvider);
     final textSize = ref.watch(textSizeProvider);
     final variant = resolveThemeVariant(
-      ref.watch(skinProvider),
+      // The effective skin, not the stored selection: neon/pixel fall back
+      // to the plain look for free users (0.90 paywall).
+      ref.watch(effectiveSkinProvider),
       ref.watch(brightnessModeProvider),
       WidgetsBinding.instance.platformDispatcher.platformBrightness,
     );

@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:ava/src/app/app.dart';
 import 'package:ava/src/app/providers.dart';
 import 'package:ava/src/app/theme.dart';
 import 'package:ava/src/services/entitlement_store.dart';
 import 'package:ava/src/services/storage_provider.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -106,5 +109,39 @@ void main() {
     c.read(skinPaywallNoticeProvider);
     await Future<void>.delayed(const Duration(milliseconds: 20));
     expect(c.read(skinPaywallNoticeProvider), isFalse);
+  });
+
+  testWidgets(
+      'REGRESSION: the rendered theme (not just the spec) falls back to '
+      'plain for a free user with a stored Pro skin', (tester) async {
+    // The 0.90.0 bug: effectiveSkinProvider existed but app.dart still fed
+    // the raw selection into resolveThemeVariant, so neon kept rendering.
+    final dir = Directory.systemTemp.createTempSync('ava_skin_theme');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    File(p.join(dir.path, 'app_settings.json')).writeAsStringSync(
+        jsonEncode({'skin': 'neon', 'privacy_accepted': true}));
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        storageProvider.overrideWithValue(
+            MemoryStorageProvider(p.join(dir.path, 'maFiles'))),
+        entitlementApiProvider.overrideWithValue(_NoApi()),
+        clockProvider.overrideWithValue(() => now),
+        timeAlignerProvider.overrideWithValue(() async {}),
+        tickProvider.overrideWith((ref) => Stream<int>.value(1700000000)),
+      ],
+      child: const AvaApp(),
+    ));
+    // Settings load does real file IO — let it complete outside FakeAsync.
+    await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final theme =
+        tester.widget<MaterialApp>(find.byType(MaterialApp).first).theme!;
+    final variant = theme.extension<AvaTokens>()!.variant;
+    expect(variant, isNot(AvaThemeVariant.neon));
+    expect(variant, isNot(AvaThemeVariant.pixel));
   });
 }
