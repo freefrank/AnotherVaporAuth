@@ -5,6 +5,18 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.84.0] — 2026-07-15
+
+### Added
+- **Text size setting.** Settings → Text size: Small (the previous default),
+  Medium, Large. The chosen step applies on top of your system font size.
+
+—
+
+### 新增
+- **字号设置。** 设置 → 字号:小(即此前的默认大小)、中、大,
+  所选档位在系统字体大小的基础上叠加。
+
 ## [v0.83.0] — 2026-07-15
 
 ### Changed
