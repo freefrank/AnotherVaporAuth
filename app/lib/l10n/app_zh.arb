@@ -418,6 +418,7 @@
   "proErrNoVip": "奖励尚未到账，请稍后重试。",
   "proErrGeneric": "失败：{code}",
   "@proErrGeneric": { "placeholders": { "code": {} } },
+  "privacyOptions": "隐私选项",
   "skinProNotice": "Neon 与 Pixel 皮肤现为 Pro 权益；你的选择已保留，解锁 Pro 即恢复。",
   "skinProNoticeDismiss": "知道了"
 }

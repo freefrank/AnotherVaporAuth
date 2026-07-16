@@ -2288,6 +2288,12 @@ abstract class AppLocalizations {
   /// **'Failed: {code}'**
   String proErrGeneric(Object code);
 
+  /// No description provided for @privacyOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy options'**
+  String get privacyOptions;
+
   /// No description provided for @skinProNotice.
   ///
   /// In en, this message translates to:

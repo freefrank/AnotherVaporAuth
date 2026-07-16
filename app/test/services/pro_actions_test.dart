@@ -20,6 +20,12 @@ class _FakePlay implements PlayChannel {
   Future<bool> ensureConsent() async => consent;
 
   @override
+  Future<bool> privacyOptionsRequired() async => false;
+
+  @override
+  Future<void> showPrivacyOptions() async {}
+
+  @override
   Future<String> signInIdToken() async => 'id-token-1';
 
   @override

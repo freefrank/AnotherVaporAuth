@@ -1224,6 +1224,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get privacyOptions => 'Privacy options';
+
+  @override
   String get skinProNotice =>
       'Neon & Pixel skins are now Pro perks. Your selection is kept and comes back with Pro.';
 

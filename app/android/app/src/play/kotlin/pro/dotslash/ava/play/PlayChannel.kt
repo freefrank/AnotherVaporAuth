@@ -42,6 +42,12 @@ object PlayChannel {
                 "consent.ensure" ->
                     consent.ensure(activity, result)
 
+                "consent.privacyOptionsRequired" ->
+                    consent.privacyOptionsRequired(activity, result)
+
+                "consent.privacyOptions" ->
+                    consent.showPrivacyOptions(activity, result)
+
                 "signin.idToken" ->
                     signIn.idToken(activity, call.argument<String>("serverClientId"), result)
 

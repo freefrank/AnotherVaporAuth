@@ -1171,6 +1171,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get privacyOptions => '隐私选项';
+
+  @override
   String get skinProNotice => 'Neon 与 Pixel 皮肤现为 Pro 权益；你的选择已保留，解锁 Pro 即恢复。';
 
   @override

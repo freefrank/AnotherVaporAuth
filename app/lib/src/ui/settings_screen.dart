@@ -119,6 +119,16 @@ class SettingsScreen extends ConsumerWidget {
                       _choice(context, t, l.proOpen, false,
                           () => Navigator.of(context).push(MaterialPageRoute(
                               builder: (_) => const PaywallScreen()))),
+                      // UMP compliance: consent re-entry, shown only where
+                      // the SDK says it is required (GDPR regions, play).
+                      if (ref.watch(privacyOptionsRequiredProvider).value ??
+                          false)
+                        _choice(context, t, l.privacyOptions, false, () {
+                          ref
+                              .read(playChannelProvider)
+                              .showPrivacyOptions()
+                              .catchError((_) => true);
+                        }),
                     ],
                   ),
                 ),

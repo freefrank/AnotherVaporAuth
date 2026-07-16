@@ -423,6 +423,7 @@
   "proErrNoVip": "Reward not confirmed yet — try again in a minute.",
   "proErrGeneric": "Failed: {code}",
   "@proErrGeneric": { "placeholders": { "code": {} } },
+  "privacyOptions": "Privacy options",
   "skinProNotice": "Neon & Pixel skins are now Pro perks. Your selection is kept and comes back with Pro.",
   "skinProNoticeDismiss": "Got it"
 }

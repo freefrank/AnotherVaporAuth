@@ -272,6 +272,11 @@ final proStatusProvider = Provider<ProStatus>((ref) {
 /// Native play-flavor layer (billing / ads / sign-in).
 final playChannelProvider = Provider<PlayChannel>((ref) => const PlayChannel());
 
+/// Whether settings must expose the UMP privacy-options re-entry point
+/// (play flavor, GDPR regions after a consent choice). Always false on cn.
+final privacyOptionsRequiredProvider = FutureProvider<bool>(
+    (ref) => ref.read(playChannelProvider).privacyOptionsRequired());
+
 /// Purchase / redeem / rewarded orchestration for the paywall UI.
 final proActionsProvider = Provider<ProActions>((ref) => ProActions(
       api: ref.read(entitlementApiProvider),

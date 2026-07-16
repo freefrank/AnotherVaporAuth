@@ -1,6 +1,7 @@
 package pro.dotslash.ava.play
 
 import android.app.Activity
+import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
 
@@ -13,6 +14,31 @@ import com.google.android.ump.UserMessagingPlatform
  * still gets ads instead of an error.
  */
 class ConsentHandler {
+    /** `consent.privacyOptionsRequired` → Boolean: whether UMP wants us to
+     * expose a re-open entry (GDPR regions after a consent choice). */
+    fun privacyOptionsRequired(activity: Activity, result: GuardedResult) {
+        val info = UserMessagingPlatform.getConsentInformation(activity)
+        result.success(
+            info.privacyOptionsRequirementStatus ==
+                ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED,
+        )
+    }
+
+    /** `consent.privacyOptions` → Boolean(true): shows the UMP privacy
+     * options form so the user can change an earlier consent choice. */
+    fun showPrivacyOptions(activity: Activity, result: GuardedResult) {
+        UserMessagingPlatform.showPrivacyOptionsForm(activity) { formError ->
+            if (formError != null) {
+                result.error(
+                    "consent_failed",
+                    "privacyOptions: ${formError.errorCode} ${formError.message}",
+                )
+            } else {
+                result.success(true)
+            }
+        }
+    }
+
     fun ensure(activity: Activity, result: GuardedResult) {
         val info = UserMessagingPlatform.getConsentInformation(activity)
         val params = ConsentRequestParameters.Builder().build()
