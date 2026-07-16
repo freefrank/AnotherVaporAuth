@@ -1,0 +1,128 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
+
+import 'debug_log.dart';
+import 'entitlement_store.dart';
+import 'play_channel.dart';
+
+/// Outcome of a paywall action, mapped to UI copy by error [code]:
+/// 'canceled' | 'not_configured' | 'no_credential' | 'billing_unavailable' |
+/// 'unavailable' | 'no_subscription' | 'consent' | 'not_earned' | 'no_vip' |
+/// 'order_bound' | 'order_not_found' | 'plan_mismatch' | 'device_revoked' |
+/// 'bad_token' | 'network' | worker codes…
+class ProResult {
+  final bool ok;
+  final String? code;
+  const ProResult.success()
+      : ok = true,
+        code = null;
+  const ProResult.fail(this.code) : ok = false;
+}
+
+/// Orchestrates purchase / redeem / rewarded flows: native play channel →
+/// entitlement worker → token adoption. Pure DI, no riverpod imports.
+class ProActions {
+  final EntitlementApi api;
+  final PlayChannel play;
+  final Future<String> Function() deviceId;
+
+  /// EntitlementTokenController.adopt — false when the token fails to verify.
+  final Future<bool> Function(String raw) adopt;
+  final String deviceClass;
+
+  /// Wait between claimVip polls (SSV callback may lag the client reward).
+  final Duration vipClaimDelay;
+  final int vipClaimAttempts;
+
+  ProActions({
+    required this.api,
+    required this.play,
+    required this.deviceId,
+    required this.adopt,
+    this.deviceClass = 'android',
+    this.vipClaimDelay = const Duration(seconds: 2),
+    this.vipClaimAttempts = 6,
+  });
+
+  Future<ProResult> _guard(Future<ProResult> Function() body) async {
+    try {
+      return await body();
+    } on PlayChannelUnavailable {
+      return const ProResult.fail('unavailable');
+    } on PlatformException catch (e) {
+      return ProResult.fail(e.code);
+    } on EntitlementApiException catch (e) {
+      return ProResult.fail(e.code);
+    } catch (e) {
+      dlog('pro: action failed: $e');
+      return const ProResult.fail('network');
+    }
+  }
+
+  Future<ProResult> _adoptFrom(String raw) async =>
+      await adopt(raw) ? const ProResult.success() : const ProResult.fail('bad_token');
+
+  /// Play: buy the subscription, then bind it to the Google account.
+  Future<ProResult> subscribeViaPlay() => _guard(() async {
+        final purchaseToken = await play.subscribe();
+        final idToken = await play.signInIdToken();
+        return _adoptFrom(await api.verifyPlay(
+          idToken: idToken,
+          purchaseToken: purchaseToken,
+          deviceId: await deviceId(),
+          deviceClass: deviceClass,
+        ));
+      });
+
+  /// Play: restore an existing subscription on this device.
+  Future<ProResult> restoreViaPlay() => _guard(() async {
+        final purchaseToken = await play.restore();
+        if (purchaseToken == null) return const ProResult.fail('no_subscription');
+        final idToken = await play.signInIdToken();
+        return _adoptFrom(await api.verifyPlay(
+          idToken: idToken,
+          purchaseToken: purchaseToken,
+          deviceId: await deviceId(),
+          deviceClass: deviceClass,
+        ));
+      });
+
+  /// cn: unlock with an Afdian order number.
+  Future<ProResult> redeemAfdian(String orderNo) => _guard(() async {
+        return _adoptFrom(await api.redeemAfdian(
+          orderNo: orderNo.trim(),
+          deviceId: await deviceId(),
+          deviceClass: deviceClass,
+        ));
+      });
+
+  /// Beta lifetime code (both channels).
+  Future<ProResult> redeemBeta(String code) => _guard(() async {
+        return _adoptFrom(await api.redeemBeta(
+          code: code.trim(),
+          deviceId: await deviceId(),
+          deviceClass: deviceClass,
+        ));
+      });
+
+  /// Play: rewarded ad → 3-day VIP. The reward lands server-side via SSV,
+  /// so after the ad we poll claimVip until the entitlement shows up.
+  Future<ProResult> watchRewarded() => _guard(() async {
+        if (!await play.ensureConsent()) return const ProResult.fail('consent');
+        final dev = await deviceId();
+        if (!await play.showRewarded(dev)) {
+          return const ProResult.fail('not_earned');
+        }
+        for (var i = 0; i < vipClaimAttempts; i++) {
+          try {
+            return _adoptFrom(
+                await api.claimVip(deviceId: dev, deviceClass: deviceClass));
+          } on EntitlementApiException catch (e) {
+            if (e.status != 404) rethrow;
+            await Future<void>.delayed(vipClaimDelay);
+          }
+        }
+        return const ProResult.fail('no_vip');
+      });
+}

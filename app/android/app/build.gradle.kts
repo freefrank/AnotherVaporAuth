@@ -104,3 +104,17 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Play-channel-only Google services. Every entry below MUST stay
+    // `playImplementation`: the hard requirement is that the cn flavor's APK
+    // physically contains no GMS/billing/ads classes. The matching Kotlin
+    // sources live in src/play/kotlin/ and are reached from src/main only via
+    // one reflection probe in MainActivity.
+    "playImplementation"("com.android.billingclient:billing-ktx:8.0.0")
+    "playImplementation"("com.google.android.gms:play-services-ads:24.4.0")
+    "playImplementation"("com.google.android.ump:user-messaging-platform:3.2.0")
+    "playImplementation"("androidx.credentials:credentials:1.5.0")
+    "playImplementation"("androidx.credentials:credentials-play-services-auth:1.5.0")
+    "playImplementation"("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+}
