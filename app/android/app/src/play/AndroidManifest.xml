@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Play-flavor-only declarations (AdMob APPLICATION_ID meta-data etc.)
          merge in from here; the cn flavor never sees them. -->
     <application>
@@ -8,5 +9,24 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-7483086272428635~3221254770" />
+
+        <!-- Kill WorkManager's startup auto-init (pulled in by
+             play-services-ads; we never use it ourselves). Its first run
+             after every install rewrites its own component enabled-state
+             (SetEnabledSetting on SystemJobService), and ColorOS reacts by
+             force-stopping the app — users saw a crash-loop on the unlock
+             screen after each update. GMA guards its optional WorkManager
+             usage internally, so losing auto-init only disables offline ad
+             prefetch. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
     </application>
 </manifest>
