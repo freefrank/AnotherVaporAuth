@@ -6,7 +6,7 @@ Android** from a single codebase (iOS is planned). **maFiles are fully
 compatible** with the legacy Steam Desktop Authenticator format for zero-cost
 migration.
 
-See the design spec: `../docs/superpowers/specs/2026-06-29-flutter-rewrite-design.md`
+See the design spec: `../docs/specs/2026-06-29-flutter-rewrite-design.md`
 
 ## Architecture
 

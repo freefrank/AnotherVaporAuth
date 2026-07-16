@@ -1,6 +1,6 @@
 # 实施计划 — SDA Flutter 重写（目标 0.90）
 
-依据 spec：`docs/superpowers/specs/2026-06-29-flutter-rewrite-design.md`
+依据 spec：`docs/specs/2026-06-29-flutter-rewrite-design.md`
 
 ## 阶段 & 进度
 

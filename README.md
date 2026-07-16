@@ -68,7 +68,7 @@
 
 ```
 app/      Flutter application (see app/README.md)
-docs/     design spec (docs/superpowers/specs/)
+docs/     design spec (docs/specs/)
 ```
 
 The original .NET WinForms implementation is preserved on the **`legacy`** branch.

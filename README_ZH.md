@@ -46,7 +46,7 @@
 
 ```
 app/      Flutter 应用（详见 app/README.md）
-docs/     设计文档（docs/superpowers/specs/）
+docs/     设计文档（docs/specs/）
 ```
 
 原 .NET WinForms 实现保留在 **`legacy`** 分支。

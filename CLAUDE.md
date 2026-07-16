@@ -29,6 +29,10 @@
     不要用 pull(rsync 写入的未提交内容会让 pull 因"本地改动将被
     覆盖"而中止)。
 
+## 文档位置
+
+- 设计文档（spec）在 `docs/specs/`，实施计划在 `docs/plans/`（原 `docs/superpowers/` 已并入）。
+
 ## 硬性约束
 
 - **绝不使用 `flutter install`**(它会先卸载应用,清空 maFiles/keystore 数据)。

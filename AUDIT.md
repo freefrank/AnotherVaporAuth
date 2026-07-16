@@ -87,7 +87,7 @@ Suggested acceptance criteria:
 > Update: fixed. The at-rest scheme now uses a random 256-bit DEK with
 > AES-256-GCM; the DEK is held in Android Keystore-backed storage, PIN-wrapped
 > (`VaultCrypto`/`VaultKeyStore`, spec:
-> `docs/superpowers/specs/2026-07-01-at-rest-encryption-dek-design.md`). The PIN
+> `docs/specs/2026-07-01-at-rest-encryption-dek-design.md`). The PIN
 > no longer derives the file key, so copied maFiles are useless off-device and
 > the 1e6 PIN space no longer bounds at-rest strength. Legacy stores migrate
 > automatically on first unlock (crash-safe: new `.v2.maFile` files + atomic
