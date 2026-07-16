@@ -5,6 +5,48 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.90.0] — 2026-07-16
+
+### Added
+- **AVA Pro.** A subscription now funds development — and the promise from
+  the beta recruitment post stands: **codes, confirmations, login approvals
+  and maFile import/export stay free forever**, and every beta tester gets
+  lifetime Pro (redeem codes go out separately). Pro currently covers the
+  Neon & Pixel theme packs (new installs default to the plain black/white
+  look) and, on the Play build, removes the banner ad; cloud sync and trade
+  notifications will join later. Unlocking is per channel: Google Play
+  subscription at $0.99/month with a rewarded-video option (one ad = 3-day
+  VIP), or Afdian at ¥5/month for the direct build — enter the order number
+  in the app, no account needed. One subscription activates one device per
+  platform class (phone / Windows / Linux / macOS). The cn APK contains no
+  Google ads/billing code at all.
+- **Settings → AVA Pro** shows your status and hosts restore / unlock entry
+  points.
+
+### Changed
+- If you were using the Neon or Pixel skin, it is now a Pro perk: the app
+  falls back to the plain look (your dark/light preference is kept, and the
+  selection returns the moment Pro unlocks). A one-time notice explains this
+  after upgrading.
+
+—
+
+### 新增
+- **AVA Pro。** 订阅制正式落地——招募帖的承诺不变:**令牌验证码、交易确认、
+  登录批准、maFile 导入导出永久免费**,内测用户人人终身 Pro(兑换码将另行
+  发放)。Pro 当前包含 Neon 与 Pixel 主题包(新安装默认黑/白基础外观),
+  Play 版另享去横幅广告;云同步、交易通知等在线功能后续加入。解锁按渠道:
+  Google Play 订阅 $0.99/月,或看一条激励视频得 3 天 VIP;国内直发版走爱发电
+  ¥5/月,在 app 内输入订单号即可,无需注册账户。一份订阅在手机 / Windows /
+  Linux / macOS 四类端各可激活一台设备。cn 版 APK 完全不含 Google 广告与
+  计费代码。
+- **设置 → AVA Pro**:查看状态、恢复购买、各类解锁入口。
+
+### 变更
+- 正在使用 Neon / Pixel 皮肤的用户:皮肤已成为 Pro 权益,应用回落到黑/白
+  基础外观(深浅色偏好保留,解锁 Pro 后所选皮肤立即恢复),升级后会有一次性
+  说明提示。
+
 ## [v0.84.0] — 2026-07-15
 
 ### Added
