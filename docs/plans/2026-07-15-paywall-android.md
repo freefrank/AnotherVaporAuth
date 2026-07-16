@@ -147,6 +147,34 @@
 - 真机联调清单:play 沙盒订阅购买/退订降级、rewarded SSV 到账、cn 订单号
   真实小额验证、同类设备互踢、断网宽限、恢复购买。
 
+## 执行记录(2026-07-16,并行开发)
+
+**已完成**:Task 0(渠道拆分,已随 0.83.0 发布)、Task 1(worker:63 vitest
+全绿、tsc 零错、dry-run 校验通过,未部署)、Task 2(entitlement 核心,15 测)、
+Task 3(store/provider,8 测)、Task 4/5(原生 Kotlin + Dart 封装)、Task 6
+(paywall 页、设置 Pro 卡、皮肤锁标 + 迁移横幅、主屏 banner 槽)、Task 7(l10n)。
+Task 9 部分完成:双 flavor 编译通过 + cn 纯净性验收通过(billing/ads/ump/
+credentials/googleid 全 0;残留 gms 引用系 mobile_scanner 的 ML Kit,与
+pre-flavor 基线持平)。
+
+**与计划的偏离(登记)**:
+1. pointycastle 4.0 无 Ed25519 → 新增 `ed25519_edwards ^0.3.1`(纯 Dart,零传递依赖);
+2. 弃用 Flutter 插件(google_mobile_ads/in_app_purchase/google_sign_in)——插件原生代码
+   会进两个 flavor;改为 flavor 隔离 gradle 依赖 + 自写 MethodChannel(`ava/play`、
+   `ava/banner`),src/main 仅一处反射探测;
+3. 新增契约端点 `/v1/vip/claim`(SSV 服务端到账后设备领取 VIP token,客户端轮询);
+4. worker:entitlements 加列 `play_purchase_token`(refresh 重查订阅所需);beta 码
+   绑定首个兑换设备(跨设备类不可第二台);爱发电月长按 30 天折算;
+5. 激励视频 VIP 时长已定 3 天(KV 可配)。
+
+**上线前待办**(除计划"前置事项"外):worker 部署(填 D1/KV id、生成 Ed25519
+密钥对、set secrets、自定义域)→ 客户端回填 `kEntitlementPublicKeyB64` 与
+`kGoogleServerClientId`、真实 AdMob App/版位 ID、`kAfdianPageUrl`;爱发电
+sign 拼接与 query-order 字段对照官方文档核验;Play subscriptionsv2 状态与
+acknowledge 语义核验(客户端已 ack,worker 侧 TODO);模拟器/真机冒烟
+(测试广告位、Play 沙盒订阅);cn 若要绝对零 gms 需换掉 mobile_scanner(ML
+Kit)——超范围,仅登记。
+
 ## 执行顺序与依赖
 
 Task 0 → 2 → 3 →(1 与 2/3 可并行)→ 4/5(依赖 1、3;彼此独立)→ 6(依赖
