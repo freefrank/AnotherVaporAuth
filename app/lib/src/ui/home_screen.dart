@@ -22,7 +22,9 @@ import '../skins/skin_spec.dart';
 import 'widgets/scanline_overlay.dart';
 import 'widgets/steam_image_provider.dart';
 import 'approve_login_screen.dart';
+import 'paywall_screen.dart';
 import 'pending/pending_screen.dart';
+import 'widgets/ava_banner.dart';
 import 'import_helper.dart';
 import 'pending_login.dart';
 import 'family_group_screen.dart';
@@ -309,7 +311,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
     if (hasAccounts) _maybeShowTutorial();
 
+    // One-time 0.90 migration notice: the stored skin moved behind Pro.
+    ref.listen(skinPaywallNoticeProvider, (_, active) {
+      if (active != true) return;
+      final messenger = ScaffoldMessenger.of(context);
+      void close() {
+        messenger.hideCurrentMaterialBanner();
+        ref.read(skinPaywallNoticeProvider.notifier).dismiss();
+      }
+
+      messenger.showMaterialBanner(MaterialBanner(
+        content: Text(l.skinProNotice),
+        actions: [
+          TextButton(
+            onPressed: () {
+              close();
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const PaywallScreen()));
+            },
+            child: Text(l.proOpen),
+          ),
+          TextButton(onPressed: close, child: Text(l.skinProNoticeDismiss)),
+        ],
+      ));
+    });
+
     return Scaffold(
+      // Banner ad slot: play flavor, free tier only; collapses to nothing
+      // everywhere else. Never rendered on screens with confirm actions.
+      bottomNavigationBar: const AvaBannerSlot(),
       // Header removed — settings is a floating button in the bottom-right.
       floatingActionButton: _SettingsFab(
         label: l.navSettings,

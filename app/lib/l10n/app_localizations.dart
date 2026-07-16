@@ -2083,6 +2083,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove this account from this device? Make sure you have your maFile backed up.'**
   String get removeConfirm;
+
+  /// No description provided for @settingsPro.
+  ///
+  /// In en, this message translates to:
+  /// **'AVA Pro'**
+  String get settingsPro;
+
+  /// No description provided for @proOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'View AVA Pro'**
+  String get proOpen;
+
+  /// No description provided for @proStatusFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Free plan'**
+  String get proStatusFree;
+
+  /// No description provided for @proStatusPro.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro · until {date}'**
+  String proStatusPro(Object date);
+
+  /// No description provided for @proStatusVip.
+  ///
+  /// In en, this message translates to:
+  /// **'VIP · until {date}'**
+  String proStatusVip(Object date);
+
+  /// No description provided for @proStatusLifetime.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro · lifetime'**
+  String get proStatusLifetime;
+
+  /// No description provided for @paywallTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AVA Pro'**
+  String get paywallTitle;
+
+  /// No description provided for @paywallPerksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro perks — core security features stay free forever.'**
+  String get paywallPerksTitle;
+
+  /// No description provided for @paywallPerkSkins.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme packs: Neon & Pixel skins'**
+  String get paywallPerkSkins;
+
+  /// No description provided for @paywallPerkNoAds.
+  ///
+  /// In en, this message translates to:
+  /// **'No banner ads'**
+  String get paywallPerkNoAds;
+
+  /// No description provided for @paywallPerkFuture.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming later: cloud sync, trade notifications'**
+  String get paywallPerkFuture;
+
+  /// No description provided for @paywallPlayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock via Google Play'**
+  String get paywallPlayTitle;
+
+  /// No description provided for @paywallSubscribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe · \$0.99/mo'**
+  String get paywallSubscribe;
+
+  /// No description provided for @paywallWatchAd.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch an ad · 3-day VIP'**
+  String get paywallWatchAd;
+
+  /// No description provided for @paywallRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore purchase'**
+  String get paywallRestore;
+
+  /// No description provided for @paywallCnTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock via Afdian'**
+  String get paywallCnTitle;
+
+  /// No description provided for @paywallAfdianIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Sponsor ¥5/month on Afdian, then enter the order number here to unlock.'**
+  String get paywallAfdianIntro;
+
+  /// No description provided for @paywallOpenAfdian.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Afdian'**
+  String get paywallOpenAfdian;
+
+  /// No description provided for @paywallOrderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Afdian order number'**
+  String get paywallOrderHint;
+
+  /// No description provided for @paywallRedeem.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get paywallRedeem;
+
+  /// No description provided for @paywallBetaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Beta thank-you'**
+  String get paywallBetaTitle;
+
+  /// No description provided for @paywallBetaIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Beta testers get lifetime Pro — enter your code.'**
+  String get paywallBetaIntro;
+
+  /// No description provided for @paywallBetaHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifetime code'**
+  String get paywallBetaHint;
+
+  /// No description provided for @paywallBetaRedeem.
+  ///
+  /// In en, this message translates to:
+  /// **'Redeem'**
+  String get paywallBetaRedeem;
+
+  /// No description provided for @proResultSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocked — thank you!'**
+  String get proResultSuccess;
+
+  /// No description provided for @proErrCanceled.
+  ///
+  /// In en, this message translates to:
+  /// **'Canceled.'**
+  String get proErrCanceled;
+
+  /// No description provided for @proErrNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error — try again later.'**
+  String get proErrNetwork;
+
+  /// No description provided for @proErrNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Not available in this build yet.'**
+  String get proErrNotConfigured;
+
+  /// No description provided for @proErrNoSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'No active subscription found.'**
+  String get proErrNoSubscription;
+
+  /// No description provided for @proErrOrderBound.
+  ///
+  /// In en, this message translates to:
+  /// **'This order is already bound to another user.'**
+  String get proErrOrderBound;
+
+  /// No description provided for @proErrOrderNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Order not found or plan mismatch.'**
+  String get proErrOrderNotFound;
+
+  /// No description provided for @proErrDeviceRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'This device\'s slot was taken by a newer activation.'**
+  String get proErrDeviceRevoked;
+
+  /// No description provided for @proErrNoVip.
+  ///
+  /// In en, this message translates to:
+  /// **'Reward not confirmed yet — try again in a minute.'**
+  String get proErrNoVip;
+
+  /// No description provided for @proErrGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed: {code}'**
+  String proErrGeneric(Object code);
+
+  /// No description provided for @skinProNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Neon & Pixel skins are now Pro perks. Your selection is kept and comes back with Pro.'**
+  String get skinProNotice;
+
+  /// No description provided for @skinProNoticeDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get skinProNoticeDismiss;
 }
 
 class _AppLocalizationsDelegate

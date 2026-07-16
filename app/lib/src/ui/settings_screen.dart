@@ -6,9 +6,11 @@ import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
 import '../app/responsive.dart';
 import '../app/theme.dart';
+import '../core/entitlement.dart';
 import '../services/feedback_service.dart';
 import '../services/debug_log.dart';
 import 'debug_log_screen.dart';
+import 'paywall_screen.dart';
 import 'widgets/pin_field.dart';
 import 'widgets/scanline_overlay.dart';
 import 'widgets/ava_panel.dart';
@@ -107,6 +109,19 @@ class SettingsScreen extends ConsumerWidget {
                     },
                   ),
                 ),
+                // AVA Pro (subscription status + paywall entry)
+                _Card(
+                  title: l.settingsPro,
+                  description: _proStatusLine(l, ref),
+                  child: Wrap(
+                    spacing: context.r(8),
+                    children: [
+                      _choice(context, t, l.proOpen, false,
+                          () => Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => const PaywallScreen()))),
+                    ],
+                  ),
+                ),
                 // Appearance (light/dark for the plain look)
                 _Card(
                   title: l.settingsAppearance,
@@ -168,14 +183,20 @@ class SettingsScreen extends ConsumerWidget {
                           () => ref
                               .read(skinProvider.notifier)
                               .setSkin(AvaSkin.none)),
-                      _choice(context, t, l.themeNeon, skin == AvaSkin.neon,
-                          () => ref
-                              .read(skinProvider.notifier)
-                              .setSkin(AvaSkin.neon)),
-                      _choice(context, t, l.themePixel, skin == AvaSkin.pixel,
-                          () => ref
-                              .read(skinProvider.notifier)
-                              .setSkin(AvaSkin.pixel)),
+                      // neon/pixel are Pro perks since 0.90: free users see a
+                      // lock and land on the paywall instead of selecting.
+                      _choice(
+                          context,
+                          t,
+                          _skinLabel(l.themeNeon, ref),
+                          skin == AvaSkin.neon,
+                          () => _pickProSkin(context, ref, AvaSkin.neon)),
+                      _choice(
+                          context,
+                          t,
+                          _skinLabel(l.themePixel, ref),
+                          skin == AvaSkin.pixel,
+                          () => _pickProSkin(context, ref, AvaSkin.pixel)),
                     ],
                   ),
                 ),
@@ -354,6 +375,36 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+
+  String _proStatusLine(AppLocalizations l, WidgetRef ref) {
+    final token = ref.watch(entitlementTokenProvider);
+    String date(DateTime? d) {
+      if (d == null) return '—';
+      final v = d.toLocal();
+      String two(int x) => x.toString().padLeft(2, '0');
+      return '${v.year}-${two(v.month)}-${two(v.day)}';
+    }
+
+    return switch (ref.watch(proStatusProvider)) {
+      ProStatus.free => l.proStatusFree,
+      ProStatus.vip => l.proStatusVip(date(token?.proUntil)),
+      ProStatus.pro => token?.proUntil == null
+          ? l.proStatusLifetime
+          : l.proStatusPro(date(token?.proUntil)),
+    };
+  }
+
+  String _skinLabel(String name, WidgetRef ref) =>
+      ref.watch(proStatusProvider) == ProStatus.free ? '🔒 $name' : name;
+
+  void _pickProSkin(BuildContext context, WidgetRef ref, AvaSkin skin) {
+    if (ref.read(proStatusProvider) == ProStatus.free) {
+      Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const PaywallScreen()));
+    } else {
+      ref.read(skinProvider.notifier).setSkin(skin);
+    }
+  }
 
   Widget _choice(BuildContext context, AvaTokens t, String label, bool selected,
       VoidCallback onTap) {

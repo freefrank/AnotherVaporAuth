@@ -1061,4 +1061,118 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get removeConfirm => '从本设备移除该账户？请确保已备份 maFile。';
+
+  @override
+  String get settingsPro => 'AVA Pro';
+
+  @override
+  String get proOpen => '查看 AVA Pro';
+
+  @override
+  String get proStatusFree => '免费版';
+
+  @override
+  String proStatusPro(Object date) {
+    return 'Pro · 有效至 $date';
+  }
+
+  @override
+  String proStatusVip(Object date) {
+    return 'VIP · 有效至 $date';
+  }
+
+  @override
+  String get proStatusLifetime => 'Pro · 终身';
+
+  @override
+  String get paywallTitle => 'AVA Pro';
+
+  @override
+  String get paywallPerksTitle => 'Pro 权益——核心安全功能永久免费。';
+
+  @override
+  String get paywallPerkSkins => '主题包：Neon 与 Pixel 皮肤';
+
+  @override
+  String get paywallPerkNoAds => '去横幅广告';
+
+  @override
+  String get paywallPerkFuture => '后续：云同步、交易通知';
+
+  @override
+  String get paywallPlayTitle => '通过 Google Play 解锁';
+
+  @override
+  String get paywallSubscribe => '订阅 · \$0.99/月';
+
+  @override
+  String get paywallWatchAd => '看广告 · 得 3 天 VIP';
+
+  @override
+  String get paywallRestore => '恢复购买';
+
+  @override
+  String get paywallCnTitle => '通过爱发电解锁';
+
+  @override
+  String get paywallAfdianIntro => '在爱发电以 ¥5/月赞助，然后在此输入订单号解锁。';
+
+  @override
+  String get paywallOpenAfdian => '打开爱发电';
+
+  @override
+  String get paywallOrderHint => '爱发电订单号';
+
+  @override
+  String get paywallRedeem => '解锁';
+
+  @override
+  String get paywallBetaTitle => '内测回礼';
+
+  @override
+  String get paywallBetaIntro => '内测用户享终身 Pro——输入你的兑换码。';
+
+  @override
+  String get paywallBetaHint => '终身兑换码';
+
+  @override
+  String get paywallBetaRedeem => '兑换';
+
+  @override
+  String get proResultSuccess => '已解锁，感谢支持！';
+
+  @override
+  String get proErrCanceled => '已取消。';
+
+  @override
+  String get proErrNetwork => '网络错误，稍后再试。';
+
+  @override
+  String get proErrNotConfigured => '当前构建尚未开通此功能。';
+
+  @override
+  String get proErrNoSubscription => '未找到有效订阅。';
+
+  @override
+  String get proErrOrderBound => '该订单已被其他用户绑定。';
+
+  @override
+  String get proErrOrderNotFound => '订单不存在或方案不符。';
+
+  @override
+  String get proErrDeviceRevoked => '本设备名额已被新设备占用。';
+
+  @override
+  String get proErrNoVip => '奖励尚未到账，请稍后重试。';
+
+  @override
+  String proErrGeneric(Object code) {
+    return '失败：$code';
+  }
+
+  @override
+  String get skinProNotice => 'Neon 与 Pixel 皮肤现为 Pro 权益；你的选择已保留，解锁 Pro 即恢复。';
+
+  @override
+  String get skinProNoticeDismiss => '知道了';
 }

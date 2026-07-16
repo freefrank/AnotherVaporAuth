@@ -1109,4 +1109,124 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get removeConfirm =>
       'Remove this account from this device? Make sure you have your maFile backed up.';
+
+  @override
+  String get settingsPro => 'AVA Pro';
+
+  @override
+  String get proOpen => 'View AVA Pro';
+
+  @override
+  String get proStatusFree => 'Free plan';
+
+  @override
+  String proStatusPro(Object date) {
+    return 'Pro · until $date';
+  }
+
+  @override
+  String proStatusVip(Object date) {
+    return 'VIP · until $date';
+  }
+
+  @override
+  String get proStatusLifetime => 'Pro · lifetime';
+
+  @override
+  String get paywallTitle => 'AVA Pro';
+
+  @override
+  String get paywallPerksTitle =>
+      'Pro perks — core security features stay free forever.';
+
+  @override
+  String get paywallPerkSkins => 'Theme packs: Neon & Pixel skins';
+
+  @override
+  String get paywallPerkNoAds => 'No banner ads';
+
+  @override
+  String get paywallPerkFuture =>
+      'Coming later: cloud sync, trade notifications';
+
+  @override
+  String get paywallPlayTitle => 'Unlock via Google Play';
+
+  @override
+  String get paywallSubscribe => 'Subscribe · \$0.99/mo';
+
+  @override
+  String get paywallWatchAd => 'Watch an ad · 3-day VIP';
+
+  @override
+  String get paywallRestore => 'Restore purchase';
+
+  @override
+  String get paywallCnTitle => 'Unlock via Afdian';
+
+  @override
+  String get paywallAfdianIntro =>
+      'Sponsor ¥5/month on Afdian, then enter the order number here to unlock.';
+
+  @override
+  String get paywallOpenAfdian => 'Open Afdian';
+
+  @override
+  String get paywallOrderHint => 'Afdian order number';
+
+  @override
+  String get paywallRedeem => 'Unlock';
+
+  @override
+  String get paywallBetaTitle => 'Beta thank-you';
+
+  @override
+  String get paywallBetaIntro =>
+      'Beta testers get lifetime Pro — enter your code.';
+
+  @override
+  String get paywallBetaHint => 'Lifetime code';
+
+  @override
+  String get paywallBetaRedeem => 'Redeem';
+
+  @override
+  String get proResultSuccess => 'Unlocked — thank you!';
+
+  @override
+  String get proErrCanceled => 'Canceled.';
+
+  @override
+  String get proErrNetwork => 'Network error — try again later.';
+
+  @override
+  String get proErrNotConfigured => 'Not available in this build yet.';
+
+  @override
+  String get proErrNoSubscription => 'No active subscription found.';
+
+  @override
+  String get proErrOrderBound => 'This order is already bound to another user.';
+
+  @override
+  String get proErrOrderNotFound => 'Order not found or plan mismatch.';
+
+  @override
+  String get proErrDeviceRevoked =>
+      'This device\'s slot was taken by a newer activation.';
+
+  @override
+  String get proErrNoVip => 'Reward not confirmed yet — try again in a minute.';
+
+  @override
+  String proErrGeneric(Object code) {
+    return 'Failed: $code';
+  }
+
+  @override
+  String get skinProNotice =>
+      'Neon & Pixel skins are now Pro perks. Your selection is kept and comes back with Pro.';
+
+  @override
+  String get skinProNoticeDismiss => 'Got it';
 }
