@@ -134,6 +134,32 @@ class SettingsStore {
   Future<void> saveTheme(String variant) =>
       _update((data) => data['theme'] = variant);
 
+  /// The stored entitlement JWT (Pro/VIP), verbatim. Not a secret: it is
+  /// signature-protected and device-bound, so plain app_settings.json is fine.
+  Future<String?> loadEntitlementToken() async =>
+      (await _read())['entitlement_token'] as String?;
+
+  Future<void> saveEntitlementToken(String raw) =>
+      _update((data) => data['entitlement_token'] = raw);
+
+  Future<void> clearEntitlementToken() =>
+      _update((data) => data.remove('entitlement_token'));
+
+  /// Whether the one-time "your skin is now a Pro perk" migration notice
+  /// has been shown (0.90 upgrade path).
+  Future<bool> loadSkinProNoticeShown() async =>
+      (await _read())['skin_pro_notice_shown'] == true;
+
+  Future<void> saveSkinProNoticeShown() =>
+      _update((data) => data['skin_pro_notice_shown'] = true);
+
+  /// Stable per-install device id used for entitlement device binding.
+  Future<String?> loadDeviceId() async =>
+      (await _read())['device_id'] as String?;
+
+  Future<void> saveDeviceId(String id) =>
+      _update((data) => data['device_id'] = id);
+
   /// UI text size step: 'small' (default) | 'medium' | 'large'.
   Future<String?> loadTextSize() async =>
       (await _read())['text_size'] as String?;

@@ -53,6 +53,7 @@ dependencies:
   # Fast pure-Dart hashes; pointycastle's PBKDF2 is ~4.5x slower (measured),
   # which made the 100k-iteration vault unlock take seconds on flagships.
   hashlib: ^1.21.0
+  ed25519_edwards: ^0.3.1
 
 dev_dependencies:
   flutter_test:

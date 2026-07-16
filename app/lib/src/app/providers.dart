@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -20,7 +21,11 @@ import '../services/auto_login.dart';
 import '../services/avatar_service.dart';
 import '../services/biometric_unlock.dart';
 import '../services/credential_store.dart';
+import '../core/entitlement.dart';
 import '../services/debug_log.dart';
+import '../services/entitlement_store.dart';
+import '../services/play_channel.dart';
+import '../services/pro_actions.dart';
 import '../services/session_manager.dart';
 import '../services/steam_api_client.dart';
 import '../services/steam_time.dart';
@@ -92,15 +97,22 @@ class SkinController extends Notifier<AvaSkin> {
   @override
   AvaSkin build() {
     ref.read(settingsStoreProvider).loadSkin().then((v) {
+      if (!ref.mounted) return;
       for (final skin in AvaSkin.values) {
         if (v == skin.name) state = skin;
       }
       // Reconcile the launcher icon on startup — the icon follows the skin
       // but the swap is deferred to app launch / background so it never
       // disrupts the running task (see [LauncherIcon] and app lifecycle).
-      LauncherIcon.apply(state);
+      // Pro gating computed inline: reading effectiveSkinProvider from in
+      // here would be a circular dependency (it watches this provider).
+      final gated = ref.read(proStatusProvider) == ProStatus.free
+          ? AvaSkin.none
+          : state;
+      LauncherIcon.apply(gated);
     });
-    return AvaSkin.neon;
+    // Default is the plain look since 0.90 (neon moved behind the paywall).
+    return AvaSkin.none;
   }
 
   Future<void> setSkin(AvaSkin skin) async {
@@ -120,7 +132,7 @@ final skinSpecProvider =
 class SkinSpecController extends Notifier<SkinSpec?> {
   @override
   SkinSpec? build() {
-    final skin = ref.watch(skinProvider);
+    final skin = ref.watch(effectiveSkinProvider);
     if (skin != AvaSkin.none) _load(skin);
     return null;
   }
@@ -129,7 +141,7 @@ class SkinSpecController extends Notifier<SkinSpec?> {
     try {
       final text = await rootBundle.loadString('assets/skins/${skin.name}.json');
       // Guard against a skin switch racing the asset load.
-      if (ref.read(skinProvider) == skin) state = SkinSpec.parse(text);
+      if (ref.read(effectiveSkinProvider) == skin) state = SkinSpec.parse(text);
     } catch (e) {
       dlog('skin: failed to load ${skin.name}.json: $e');
     }
@@ -155,6 +167,161 @@ class BrightnessModeController extends Notifier<AvaBrightnessMode> {
   Future<void> setMode(AvaBrightnessMode mode) async {
     state = mode;
     await ref.read(settingsStoreProvider).saveBrightnessMode(mode.name);
+  }
+}
+
+/// Wall clock, injectable for entitlement tests.
+final clockProvider = Provider<DateTime Function()>(
+    (ref) => () => DateTime.now().toUtc());
+
+/// Entitlement worker HTTP client (overridden with a fake in tests).
+final entitlementApiProvider =
+    Provider<EntitlementApi>((ref) => DioEntitlementApi());
+
+/// Ed25519 public key the app verifies entitlement tokens against.
+final entitlementPublicKeyProvider =
+    Provider<Uint8List>((ref) => entitlementPublicKeyBytes());
+
+/// The stored, signature-checked entitlement token (null = none/invalid).
+final entitlementTokenProvider =
+    NotifierProvider<EntitlementTokenController, EntitlementToken?>(
+        EntitlementTokenController.new);
+
+class EntitlementTokenController extends Notifier<EntitlementToken?> {
+  Timer? _refreshTimer;
+
+  @override
+  EntitlementToken? build() {
+    ref.onDispose(() => _refreshTimer?.cancel());
+    _load();
+    return null;
+  }
+
+  Future<void> _load() async {
+    final raw = await ref.read(settingsStoreProvider).loadEntitlementToken();
+    if (!ref.mounted || raw == null) return;
+    final token = EntitlementToken.tryParse(raw,
+        publicKey: ref.read(entitlementPublicKeyProvider));
+    state = token;
+    if (token == null) return;
+    final eval = evaluateEntitlement(token, ref.read(clockProvider)());
+    if (eval.needsRefresh) {
+      await refreshNow();
+    }
+    _scheduleDailyRefresh();
+  }
+
+  /// Adopts a token freshly issued by the worker (purchase / redeem /
+  /// refresh flows). Returns false when it does not verify — the worker
+  /// sent garbage or the embedded public key is out of date; the previous
+  /// token stays in place.
+  Future<bool> adopt(String raw) async {
+    final token = EntitlementToken.tryParse(raw,
+        publicKey: ref.read(entitlementPublicKeyProvider));
+    if (token == null) return false;
+    state = token;
+    await ref.read(settingsStoreProvider).saveEntitlementToken(raw);
+    _scheduleDailyRefresh();
+    return true;
+  }
+
+  /// Rotates the current token against the worker. Terminal rejections
+  /// (403: revoked / kicked device / subscription ended) drop the token;
+  /// network failures keep it — the offline grace window covers those.
+  Future<void> refreshNow() async {
+    final token = state;
+    if (token == null) return;
+    try {
+      final fresh = await ref
+          .read(entitlementApiProvider)
+          .refresh(token.raw, token.deviceId);
+      await adopt(fresh);
+    } on EntitlementApiException catch (e) {
+      if (e.isTerminal) {
+        state = null;
+        await ref.read(settingsStoreProvider).clearEntitlementToken();
+      }
+    } catch (e) {
+      dlog('entitlement: refresh failed, staying in grace: $e');
+    }
+  }
+
+  void _scheduleDailyRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer =
+        Timer.periodic(const Duration(hours: 24), (_) => refreshNow());
+  }
+}
+
+/// Stable per-install device id for entitlement binding (created lazily).
+final deviceIdProvider = FutureProvider<String>((ref) async {
+  final settings = ref.read(settingsStoreProvider);
+  final existing = await settings.loadDeviceId();
+  if (existing != null && existing.isNotEmpty) return existing;
+  final id = newDeviceId();
+  await settings.saveDeviceId(id);
+  return id;
+});
+
+/// What the UI gates Pro features on.
+final proStatusProvider = Provider<ProStatus>((ref) {
+  final token = ref.watch(entitlementTokenProvider);
+  return evaluateEntitlement(token, ref.read(clockProvider)()).status;
+});
+
+/// Native play-flavor layer (billing / ads / sign-in).
+final playChannelProvider = Provider<PlayChannel>((ref) => const PlayChannel());
+
+/// Purchase / redeem / rewarded orchestration for the paywall UI.
+final proActionsProvider = Provider<ProActions>((ref) => ProActions(
+      api: ref.read(entitlementApiProvider),
+      play: ref.read(playChannelProvider),
+      deviceId: () => ref.read(deviceIdProvider.future),
+      adopt: (raw) => ref.read(entitlementTokenProvider.notifier).adopt(raw),
+    ));
+
+/// The skin actually rendered: neon/pixel are Pro perks since 0.90, so free
+/// users fall back to the plain look. The stored selection is deliberately
+/// kept — subscribing brings the chosen skin straight back.
+final effectiveSkinProvider = Provider<AvaSkin>((ref) {
+  final selected = ref.watch(skinProvider);
+  if (selected == AvaSkin.none) return selected;
+  return ref.watch(proStatusProvider) == ProStatus.free
+      ? AvaSkin.none
+      : selected;
+});
+
+/// One-time migration notice: the stored skin is a Pro perk this install
+/// can no longer render (post-0.90 upgrade, no entitlement). Home shows a
+/// banner while true; [SkinPaywallNoticeController.dismiss] persists.
+final skinPaywallNoticeProvider =
+    NotifierProvider<SkinPaywallNoticeController, bool>(
+        SkinPaywallNoticeController.new);
+
+class SkinPaywallNoticeController extends Notifier<bool> {
+  bool _flagLoaded = false;
+  bool _shownBefore = true; // pessimistic until the persisted flag loads
+
+  @override
+  bool build() {
+    final degraded = ref.watch(skinProvider) != AvaSkin.none &&
+        ref.watch(proStatusProvider) == ProStatus.free;
+    if (!_flagLoaded) {
+      _flagLoaded = true;
+      ref.read(settingsStoreProvider).loadSkinProNoticeShown().then((shown) {
+        if (!ref.mounted) return;
+        _shownBefore = shown;
+        ref.invalidateSelf();
+      });
+      return false;
+    }
+    return degraded && !_shownBefore;
+  }
+
+  Future<void> dismiss() async {
+    _shownBefore = true;
+    state = false;
+    await ref.read(settingsStoreProvider).saveSkinProNoticeShown();
   }
 }
 
