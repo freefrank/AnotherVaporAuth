@@ -68,5 +68,14 @@
   绝不在真机确认页点击接受/拒绝(含报价长按接受、家庭组长按加入等一切写操作)。
 - 签名密钥:`~/ava-upload.jks`(备份在 ownCloud 根),密码只存在
   `app/android/key.properties`(git 忽略)——不进仓库、不进对话。
+- **发布物必须 `flutter clean` 后构建**:2026-07-16 曾发生增量构建把过期的
+  Dart AOT(libapp.so)打进"新"APK,导致连续多轮修复"装上没效果"——出
+  dist 产物、以及排查"改了但行为没变"时,先 clean;真机验证要验**行为**,
+  不能只看安装成功。
+- **绝不在应用前台运行时改写自身组件状态**(setComponentEnabledSetting,
+  含桌面图标 activity-alias 切换):ColorOS 会就地强停,表现为解锁页闪退
+  循环。桌面图标跟随皮肤的功能因此于 0.90.1 整体下线,回归须找到运行中
+  零组件写入的方案;新增会自动初始化的依赖(如 WorkManager)要检查其
+  启动期组件写入行为。
 - 模拟器测试用官方 AVD `ava_test`(emulator-5554),数据可随意处置;
   mock 账户 PIN 123456。

@@ -11,17 +11,38 @@ automated releases.
 - **Play build crashed at launch** (release-only): R8 stripped a class the
   ads dependency creates reflectively at process start. The v0.90.0
   internal-testing build is superseded — update immediately.
+- **Launch crash-loop on ColorOS/OPPO devices.** Two separate mechanisms
+  rewrote the app's own component states while it was in the foreground
+  (WorkManager's first run after every install, and the launcher-icon
+  switcher reacting to the new skin gating), and ColorOS force-stops an app
+  whose components change — reliably killing AVA on the unlock screen.
+  WorkManager's startup auto-init is removed and launcher-icon switching is
+  retired entirely.
 - **Neon/Pixel skins now actually fall back to the plain look** for free
   users: the 0.90.0 paywall gated the skin effects but missed the theme
   colors, so a previously selected Pro skin kept rendering.
+
+### Changed
+- The home-screen icon no longer follows the skin; it stays as it is. The
+  feature will only return with a mechanism that cannot toggle components
+  while the app is running.
 
 —
 
 ### 修复
 - **Play 版启动即闪退**(仅 release 构建):R8 剥除了广告依赖在进程启动时
   反射创建的类。0.90.0 内测包已作废,请立即更新。
+- **ColorOS/OPPO 设备上的启动闪退循环。** 两个独立机制会在应用前台运行时
+  改写自身组件状态(WorkManager 每次安装后的首次运行,以及桌面图标切换
+  对新皮肤门禁的反应),而 ColorOS 会对组件变更的应用就地强停——AVA 在
+  解锁页被稳定杀死。现已移除 WorkManager 的启动自动初始化,并整体下线
+  图标切换功能。
 - **Neon / Pixel 皮肤现在会真正回落到黑/白基础外观**:0.90.0 的付费墙拦住了
   皮肤特效层却漏了主题配色层,已选过 Pro 皮肤的免费用户此前仍会渲染原皮肤。
+
+### 变更
+- 桌面图标不再跟随皮肤变化,保持现状。该功能只会在找到"运行中绝不切换
+  组件"的实现方式后回归。
 
 ## [v0.90.0] — 2026-07-16
 
