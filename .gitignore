@@ -370,3 +370,10 @@ skills-lock.json
 
 # brainstorm visual companion sessions
 .superpowers/
+
+# Android debug sourceset. The `[Dd]ebug/` rule near the top of this file is a
+# leftover from the Visual Studio era (bin/Debug build output) and predates the
+# Flutter rewrite — it silently swallows this real source directory, so the
+# debug manifest never reaches the repo. Must re-include the directory itself:
+# git cannot re-include a file whose parent directory is excluded.
+!app/android/app/src/debug/

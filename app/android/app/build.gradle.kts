@@ -63,6 +63,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Installs side-by-side with a store build instead of colliding
+            // with it. The Play APK owns `pro.dotslash.ava` and is signed by
+            // Play App Signing, so a locally-signed APK can never replace it —
+            // `install -r` fails, and the only way through would be an
+            // uninstall, which wipes the user's maFiles/keystore. A suffixed
+            // id sidesteps that entirely: the dev copy is its own app with its
+            // own (empty) data. Release builds keep the real id untouched.
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+        }
         release {
             // Use the real upload key when key.properties is present; otherwise
             // fall back to debug signing so release builds still run locally/CI.

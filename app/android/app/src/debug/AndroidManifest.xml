@@ -1,0 +1,17 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- The INTERNET permission is required for development. Specifically,
+         the Flutter tool needs it to communicate with the running application
+         to allow setting breakpoints, to provide hot reload, etc.
+    -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- A dev build installs alongside the store build (see applicationIdSuffix
+         in build.gradle.kts), so the two icons sit next to each other. They must
+         not both read "AVA": the store copy holds real Steam accounts, and
+         picking the wrong icon is how an irreversible action lands on the wrong
+         data. -->
+    <application
+        android:label="AVA dev"
+        tools:replace="android:label" />
+</manifest>
