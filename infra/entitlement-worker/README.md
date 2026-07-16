@@ -48,7 +48,7 @@ npx wrangler secret put AFDIAN_TOKEN
 npx wrangler secret put AFDIAN_PLAN_ID
 npx wrangler secret put GOOGLE_SA_EMAIL
 npx wrangler secret put GOOGLE_SA_KEY             # service account 私钥(PEM 原文即可)
-npx wrangler secret put PLAY_PACKAGE_NAME         # app.ava.authenticator
+npx wrangler secret put PLAY_PACKAGE_NAME         # pro.dotslash.ava
 # 可选:npx wrangler secret put GOOGLE_CLIENT_ID  # 锁定 id_token 的 aud
 
 # 5. 可选 KV 配置

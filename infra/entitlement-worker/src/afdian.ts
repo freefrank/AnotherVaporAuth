@@ -9,8 +9,9 @@ const API_QUERY_ORDER = 'https://afdian.com/api/open/query-order';
 /**
  * Request signature: md5 of `token` + the request's kv pairs concatenated in
  * alphabetical key order as `key + value` — i.e. md5("{token}params{params}ts{ts}user_id{user_id}").
- * TODO(launch): verify against the current Afdian open-platform docs
- * (https://afdian.com/p/open-api) before go-live.
+ * Verified against the live API 2026-07-16 (ping → ec:200 pong, query-order
+ * → ec:200) with the production credentials; the error debug.kv_string also
+ * echoes exactly this concatenation.
  */
 export function afdianSign(token: string, userId: string, params: string, ts: number): string {
   return md5Hex(`${token}params${params}ts${ts}user_id${userId}`);

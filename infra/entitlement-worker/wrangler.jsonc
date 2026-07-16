@@ -11,27 +11,28 @@
 //   AFDIAN_PLAN_ID           the Pro plan's plan_id
 //   GOOGLE_SA_EMAIL          Play service-account client_email
 //   GOOGLE_SA_KEY            Play service-account private key (PEM or base64 PKCS#8)
-//   PLAY_PACKAGE_NAME        app.ava.authenticator
+//   PLAY_PACKAGE_NAME        pro.dotslash.ava
 //   GOOGLE_CLIENT_ID         (optional) OAuth client id to pin id_token aud
 {
   "name": "ava-entitlement",
   "main": "src/index.ts",
   "compatibility_date": "2026-06-01",
-  // NOTE: workers.dev serving is broken on this account (see feedback-worker) —
-  // add a custom-domain route before launch, e.g.:
-  // "routes": [{ "pattern": "ava-entitlement.dotslash.pro", "custom_domain": true }],
+  // workers.dev serving is broken on this account (see feedback-worker), so
+  // the API lives on a custom domain instead:
+  "workers_dev": false,
+  "routes": [{ "pattern": "api.ava.dotslash.pro", "custom_domain": true }],
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "ava-entitlement",
-      "database_id": "00000000-0000-0000-0000-000000000000", // placeholder
+      "database_id": "6f949ca5-90b5-46d2-8db0-abce6f3eeb19",
       "migrations_dir": "migrations"
     }
   ],
   "kv_namespaces": [
     {
       "binding": "CONFIG",
-      "id": "PLACEHOLDER_KV_NAMESPACE_ID" // placeholder
+      "id": "448b3b50a1e4469e99d20ff058f44486"
     }
   ]
 }

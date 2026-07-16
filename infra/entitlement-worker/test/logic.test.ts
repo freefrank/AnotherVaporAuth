@@ -335,7 +335,7 @@ describe('afdian webhook', () => {
     expect(ctx.store.ents[0].proUntil).toBe(NOW + 2 * MONTH_SECONDS);
   });
 
-  it('is idempotent per order and refuses unverifiable pushes', async () => {
+  it('is idempotent per order and acks-but-ignores unverifiable pushes', async () => {
     const ctx = await setup();
     ctx.afdianOrders.set('ord-1', {
       outTradeNo: 'ord-1',
@@ -359,9 +359,11 @@ describe('afdian webhook', () => {
     await handleAfdianWebhook(push('ord-2'), ctx.deps); // duplicate
     expect(ctx.store.ents[0].proUntil).toBe(NOW + 2 * MONTH_SECONDS);
 
-    // Not verifiable through query-order → 400, nothing recorded.
+    // Not verifiable through query-order (e.g. the dev console's test push):
+    // acknowledged with Afdian's required {ec:200} shape, nothing recorded.
     const bad = await handleAfdianWebhook(push('ord-fake'), ctx.deps);
-    expect(bad.status).toBe(400);
+    expect(bad.status).toBe(200);
+    expect(bad.body).toEqual({ ec: 200 });
     expect(await ctx.store.getOrder('ord-fake')).toBeNull();
   });
 
@@ -427,6 +429,25 @@ describe('admob ssv + vip claim', () => {
       `https://w.example/v1/admob/ssv?ad_network=1&ad_unit=2&reward_amount=1&reward_item=vip` +
         `&timestamp=1&transaction_id=${txn}&user_id=dev-A&signature=sig&key_id=1`,
     );
+
+  it('answers console validation requests (no user_id) with 200, granting nothing', async () => {
+    const ctx = await setup();
+    // Bare connectivity ping.
+    expect(
+      await handleAdmobSsv(new URL('https://w.example/v1/admob/ssv'), ctx.deps),
+    ).toEqual({ status: 200, body: null });
+    // Signed test callback without user_id (what the console actually sends).
+    expect(
+      await handleAdmobSsv(
+        new URL(
+          'https://w.example/v1/admob/ssv?ad_network=1&ad_unit=2&reward_amount=1' +
+            '&reward_item=vip&timestamp=1&transaction_id=test&signature=sig&key_id=1',
+        ),
+        ctx.deps,
+      ),
+    ).toEqual({ status: 200, body: null });
+    expect(await ctx.store.getEntitlement('play', 'dev-A')).toBeNull();
+  });
 
   it('creates a 3-day vip entitlement and returns an empty 200', async () => {
     const ctx = await setup();

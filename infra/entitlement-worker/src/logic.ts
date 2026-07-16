@@ -224,9 +224,13 @@ export async function handleAfdianWebhook(body: unknown, deps: Deps): Promise<Re
 
   // Afdian webhook pushes carry no signature, so authenticate by re-querying
   // the order through the signed open API — that both proves the source and
-  // gives us canonical order data.
+  // gives us canonical order data. Unverifiable pushes (including the dev
+  // console's "发送测试" fake order) are acknowledged and ignored: Afdian
+  // requires an {ec:200} JSON reply or it marks the webhook as failing, and
+  // nothing is granted from the push body anyway — grants only ever use the
+  // re-queried canonical data.
   const verified = await deps.afdian.queryOrder(outTradeNo);
-  if (!verified) return err(400, 'order_unverified');
+  if (!verified) return ok({ ec: 200 });
 
   // Order for some other plan/creation: acknowledge so Afdian stops retrying.
   if (verified.planId !== deps.config.afdianPlanId()) return ok({ ec: 200 });
@@ -320,7 +324,13 @@ export async function handleVipClaim(body: unknown, deps: Deps): Promise<Res> {
  * callback for rewarded ads. `user_id` carries the client's device_id. */
 export async function handleAdmobSsv(url: URL, deps: Deps): Promise<Res> {
   const deviceId = url.searchParams.get('user_id');
-  if (!deviceId) return BAD_REQUEST;
+  // Saving the callback URL in the AdMob console fires a validation request
+  // — observed both as a bare ping and as a signed test callback WITHOUT
+  // user_id — and rejects the URL unless it sees a 2xx. Without a user_id
+  // nothing can be granted, so 200 is always safe here; every request that
+  // actually claims a reward carries user_id and goes through signature
+  // verification below.
+  if (!deviceId) return { status: 200, body: null };
 
   if (!(await deps.admob.verify(url))) return err(403, 'invalid_signature');
 
