@@ -5,6 +5,29 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.91.0] — 2026-07-16
+
+### Added
+- **Move an existing authenticator to this device.** Signing in to an account
+  that already has a Steam Guard authenticator elsewhere no longer dead-ends
+  in "go remove it on the website first". AVA can now move it over directly:
+  Steam emails a code, you enter it, done — and unlike removing the
+  authenticator on the website, this incurs **no 15-day trade hold**. The old
+  phone's authenticator stops working the moment you confirm, and your
+  revocation code is replaced by a new one, so write the new one down. The
+  old "remove it elsewhere" instructions are still there as a fallback for
+  accounts whose email is out of reach.
+
+—
+
+### 新增
+- **把已有的验证器移到本设备。** 登录一个在别处已绑定 Steam 令牌的账户时,
+  不再只能卡在"请先去网页移除"。AVA 现在可以直接把它移过来:Steam 发一封
+  带验证码的邮件,输入即完成——而且与在网页上移除验证器不同,这条路
+  **不会挂 15 天交易冷却**。确认的瞬间旧手机上的验证器就会失效,撤销代码
+  (R 码)也会换成新的,请把新的记下来。原来那套"去别处移除"的引导仍然保留,
+  供邮箱无法访问的账户兜底。
+
 ## [v0.90.1] — 2026-07-16
 
 ### Fixed
