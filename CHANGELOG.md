@@ -5,6 +5,38 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.82.0] — 2026-07-15
+
+### Added
+- **Steam Family groups.** The Pending center gains an **Invites** tab:
+  family-group invites are discovered automatically, each card runs pre-join
+  checks where Steam allows it (wallet region, usual IP — a region mismatch
+  disables joining) and always warns about the 1-year switching cooldown.
+  Joining is the same hold-to-confirm gesture as everywhere else; AVA then
+  jumps to the Confirmations tab where the family-join confirmation (properly
+  labeled since 0.81.0) is waiting. A read-only **family group page** (account
+  menu → Family group) shows members with roles, slot usage and the slot
+  cooldown. Built on Valve's own client API surface; treat as experimental
+  until it has seen more real-world accounts.
+
+### Fixed
+- API errors now show a short reason (e.g. "HTTP 405") instead of a raw
+  exception dump on the Pending tabs and the family page.
+
+—
+
+### 新增
+- **Steam 家庭组。** 待办中心新增**邀请**页签：自动发现家庭组邀请，每张邀请卡
+  在 Steam 允许的范围内做加入前预检（钱包地区、常用 IP——地区不符会禁用加入），
+  并始终提示一年冷却。加入使用与全应用一致的长按确认手势；随后 AVA 自动跳到
+  确认页签，那里等着的正是 0.81.0 起有了专属标签的"家庭组邀请"确认。新增只读
+  的**家庭组信息页**（账户菜单 → 家庭组）：成员及角色、空位占用、空位冷却。
+  基于 Valve 官方客户端的接口面构建；在经历更多真实账户前请视为实验性功能。
+
+### 修复
+- 待办页签与家庭组页的接口错误现在显示简短原因（如 "HTTP 405"），
+  不再输出原始异常串。
+
 ## [v0.81.0] — 2026-07-15
 
 ### Added
