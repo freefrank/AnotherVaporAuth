@@ -1,0 +1,37 @@
+// AVA entitlement service: Pro-subscription backend (Play / Afdian / beta
+// codes / AdMob rewarded VIP) issuing Ed25519-signed 24h JWTs.
+//
+// Placeholder ids below — fill in after `wrangler d1 create` /
+// `wrangler kv namespace create` (see README.md).
+//
+// Secrets (npx wrangler secret put <NAME>):
+//   ENTITLEMENT_SIGNING_KEY  base64 PKCS#8 Ed25519 private key
+//   AFDIAN_USER_ID           Afdian open-platform user_id
+//   AFDIAN_TOKEN             Afdian open-platform API token
+//   AFDIAN_PLAN_ID           the Pro plan's plan_id
+//   GOOGLE_SA_EMAIL          Play service-account client_email
+//   GOOGLE_SA_KEY            Play service-account private key (PEM or base64 PKCS#8)
+//   PLAY_PACKAGE_NAME        app.ava.authenticator
+//   GOOGLE_CLIENT_ID         (optional) OAuth client id to pin id_token aud
+{
+  "name": "ava-entitlement",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-01",
+  // NOTE: workers.dev serving is broken on this account (see feedback-worker) —
+  // add a custom-domain route before launch, e.g.:
+  // "routes": [{ "pattern": "ava-entitlement.dotslash.pro", "custom_domain": true }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ava-entitlement",
+      "database_id": "00000000-0000-0000-0000-000000000000", // placeholder
+      "migrations_dir": "migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CONFIG",
+      "id": "PLACEHOLDER_KV_NAMESPACE_ID" // placeholder
+    }
+  ]
+}
