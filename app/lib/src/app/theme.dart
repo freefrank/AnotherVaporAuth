@@ -12,6 +12,35 @@ enum AvaSkin { none, neon, pixel }
 /// Light/dark preference for the plain look (ignored while a skin is active).
 enum AvaBrightnessMode { system, dark, light }
 
+/// User text-size step. `small` is the pre-0.84 baseline (factor 1.0);
+/// the step multiplies on top of the OS font-size setting.
+enum AvaTextSize {
+  small(1.0),
+  medium(1.15),
+  large(1.3);
+
+  const AvaTextSize(this.factor);
+  final double factor;
+}
+
+/// Composes the user's text-size step with the ambient (OS) text scaler.
+/// `small` returns [base] untouched so the default stays pixel-identical
+/// to pre-0.84 rendering.
+TextScaler applyTextSize(TextScaler base, AvaTextSize size) =>
+    size == AvaTextSize.small ? base : _SteppedTextScaler(base, size.factor);
+
+class _SteppedTextScaler extends TextScaler {
+  const _SteppedTextScaler(this._base, this._factor);
+  final TextScaler _base;
+  final double _factor;
+
+  @override
+  double scale(double fontSize) => _base.scale(fontSize) * _factor;
+
+  @override
+  double get textScaleFactor => scale(1.0);
+}
+
 /// Resolves the two user settings (+ the OS brightness) into the concrete
 /// theme variant the widget tree renders.
 AvaThemeVariant resolveThemeVariant(

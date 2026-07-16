@@ -51,6 +51,7 @@ class _AvaAppState extends ConsumerState<AvaApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
+    final textSize = ref.watch(textSizeProvider);
     final variant = resolveThemeVariant(
       ref.watch(skinProvider),
       ref.watch(brightnessModeProvider),
@@ -65,9 +66,17 @@ class _AvaAppState extends ConsumerState<AvaApp> with WidgetsBindingObserver {
       theme: buildAvaTheme(variant),
       debugShowCheckedModeBanner: false,
       navigatorObservers: [routeObserver],
-      builder: (context, child) => _SteamLanguageSync(
-        child: _Backdrop(child: child ?? const SizedBox()),
-      ),
+      builder: (context, child) {
+        // User text-size step stacks on the OS scaler (small = untouched).
+        final mq = MediaQuery.of(context);
+        return MediaQuery(
+          data: mq.copyWith(
+              textScaler: applyTextSize(mq.textScaler, textSize)),
+          child: _SteamLanguageSync(
+            child: _Backdrop(child: child ?? const SizedBox()),
+          ),
+        );
+      },
       home: const _Root(),
     );
   }

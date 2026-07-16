@@ -134,6 +134,13 @@ class SettingsStore {
   Future<void> saveTheme(String variant) =>
       _update((data) => data['theme'] = variant);
 
+  /// UI text size step: 'small' (default) | 'medium' | 'large'.
+  Future<String?> loadTextSize() async =>
+      (await _read())['text_size'] as String?;
+
+  Future<void> saveTextSize(String size) =>
+      _update((data) => data['text_size'] = size);
+
   /// 长按确认开关（默认开）。关闭后单条接受退回普通点按；
   /// 批量“全部接受”保留弹窗二次确认作为安全底线。
   Future<bool> loadHoldConfirm() async =>

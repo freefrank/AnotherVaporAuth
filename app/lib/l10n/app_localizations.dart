@@ -1658,6 +1658,36 @@ abstract class AppLocalizations {
   /// **'Light or dark for the standard look. A skin overrides this while active.'**
   String get settingsAppearanceDesc;
 
+  /// No description provided for @settingsTextSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get settingsTextSize;
+
+  /// No description provided for @settingsTextSizeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies on top of the system font size.'**
+  String get settingsTextSizeDesc;
+
+  /// No description provided for @textSizeSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get textSizeSmall;
+
+  /// No description provided for @textSizeMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get textSizeMedium;
+
+  /// No description provided for @textSizeLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get textSizeLarge;
+
   /// No description provided for @settingsSkin.
   ///
   /// In en, this message translates to:

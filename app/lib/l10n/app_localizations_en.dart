@@ -888,6 +888,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Light or dark for the standard look. A skin overrides this while active.';
 
   @override
+  String get settingsTextSize => 'Text size';
+
+  @override
+  String get settingsTextSizeDesc => 'Applies on top of the system font size.';
+
+  @override
+  String get textSizeSmall => 'Small';
+
+  @override
+  String get textSizeMedium => 'Medium';
+
+  @override
+  String get textSizeLarge => 'Large';
+
+  @override
   String get settingsSkin => 'Skins';
 
   @override

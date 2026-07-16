@@ -33,6 +33,7 @@ class SettingsScreen extends ConsumerWidget {
     final manifest = data?.store.manifest;
     final skin = ref.watch(skinProvider);
     final mode = ref.watch(brightnessModeProvider);
+    final textSize = ref.watch(textSizeProvider);
     final locale = ref.watch(localeProvider);
 
     if (manifest == null) {
@@ -128,6 +129,31 @@ class SettingsScreen extends ConsumerWidget {
                           () => ref
                               .read(brightnessModeProvider.notifier)
                               .setMode(AvaBrightnessMode.light)),
+                    ],
+                  ),
+                ),
+                // Text size (small = the pre-0.84 baseline)
+                _Card(
+                  title: l.settingsTextSize,
+                  description: l.settingsTextSizeDesc,
+                  child: Wrap(
+                    spacing: context.r(8),
+                    children: [
+                      _choice(context, t, l.textSizeSmall,
+                          textSize == AvaTextSize.small,
+                          () => ref
+                              .read(textSizeProvider.notifier)
+                              .setSize(AvaTextSize.small)),
+                      _choice(context, t, l.textSizeMedium,
+                          textSize == AvaTextSize.medium,
+                          () => ref
+                              .read(textSizeProvider.notifier)
+                              .setSize(AvaTextSize.medium)),
+                      _choice(context, t, l.textSizeLarge,
+                          textSize == AvaTextSize.large,
+                          () => ref
+                              .read(textSizeProvider.notifier)
+                              .setSize(AvaTextSize.large)),
                     ],
                   ),
                 ),

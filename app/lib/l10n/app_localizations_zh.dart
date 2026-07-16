@@ -845,6 +845,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAppearanceDesc => '标准外观的亮暗模式；启用皮肤时以皮肤为准。';
 
   @override
+  String get settingsTextSize => '字号';
+
+  @override
+  String get settingsTextSizeDesc => '在系统字体大小基础上叠加。';
+
+  @override
+  String get textSizeSmall => '小';
+
+  @override
+  String get textSizeMedium => '中';
+
+  @override
+  String get textSizeLarge => '大';
+
+  @override
   String get settingsSkin => '皮肤';
 
   @override

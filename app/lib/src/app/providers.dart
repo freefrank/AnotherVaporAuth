@@ -158,6 +158,27 @@ class BrightnessModeController extends Notifier<AvaBrightnessMode> {
   }
 }
 
+/// User text-size step (small = pre-0.84 baseline), persisted.
+final textSizeProvider =
+    NotifierProvider<TextSizeController, AvaTextSize>(TextSizeController.new);
+
+class TextSizeController extends Notifier<AvaTextSize> {
+  @override
+  AvaTextSize build() {
+    ref.read(settingsStoreProvider).loadTextSize().then((v) {
+      for (final size in AvaTextSize.values) {
+        if (v == size.name) state = size;
+      }
+    });
+    return AvaTextSize.small;
+  }
+
+  Future<void> setSize(AvaTextSize size) async {
+    state = size;
+    await ref.read(settingsStoreProvider).saveTextSize(size.name);
+  }
+}
+
 /// The active UI locale (null = follow system).
 final localeProvider =
     NotifierProvider<LocaleController, Locale?>(LocaleController.new);
