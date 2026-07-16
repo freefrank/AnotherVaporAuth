@@ -15,7 +15,6 @@ import '../core/protocol/inventory_client.dart';
 import '../core/protocol/market_client.dart';
 import '../core/protocol/trade_offers_client.dart';
 import '../services/account_store.dart';
-import '../services/launcher_icon.dart';
 import '../skins/skin_spec.dart';
 import '../services/auto_login.dart';
 import '../services/avatar_service.dart';
@@ -101,15 +100,12 @@ class SkinController extends Notifier<AvaSkin> {
       for (final skin in AvaSkin.values) {
         if (v == skin.name) state = skin;
       }
-      // Reconcile the launcher icon on startup — the icon follows the skin
-      // but the swap is deferred to app launch / background so it never
-      // disrupts the running task (see [LauncherIcon] and app lifecycle).
-      // Pro gating computed inline: reading effectiveSkinProvider from in
-      // here would be a circular dependency (it watches this provider).
-      final gated = ref.read(proStatusProvider) == ProStatus.free
-          ? AvaSkin.none
-          : state;
-      LauncherIcon.apply(gated);
+      // Deliberately NO launcher-icon reconcile here. Toggling the alias the
+      // current task was launched from removes the task on some OEMs
+      // (ColorOS killed the app at every launch when 0.90's paywall gating
+      // first made the startup value differ from the active alias). The icon
+      // reconciles only when the app backgrounds — see the paused handler in
+      // app.dart, the single place allowed to call LauncherIcon.apply.
     });
     // Default is the plain look since 0.90 (neon moved behind the paywall).
     return AvaSkin.none;
