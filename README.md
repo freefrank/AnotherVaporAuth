@@ -36,7 +36,15 @@
   tap-to-copy; tap a name to cycle username / persona / id.
 - **In-app sign-in approval** — approve or deny Steam logins from a dialog inside
   AVA (device + location shown), just like the official app — by polling, no push.
-- **Trade / market confirmations** — batch accept/reject (native JSON, no WebView).
+- **Pending center** — one tabbed screen (swipe right on an account) for everything
+  awaiting a decision: **Confirmations** (trade / market, batch accept/reject, native
+  JSON, no WebView), **Trade offers** (received / sent / history, expandable cards
+  with both sides' items, gift / one-sided / escrow banners, accept then hand off to
+  the matching mobileconf), and **Invites** (Steam Family invites with pre-join checks;
+  read-only family group page from the account menu). *(family flow is experimental)*
+- **Hold-to-confirm** — every irreversible accept (a trade offer, a confirmation, a
+  family join) is one press-and-hold with accelerating haptics; toggle it and the
+  haptics off in Settings.
 - **Inventory & Market** — browse an account's Steam inventory (Steam-style game
   picker, identical items stacked) and list items on the Community Market with
   live Steam fees, a high/low price trend, linked "you receive ⇄ buyer pays"
@@ -80,7 +88,7 @@ Requires the Flutter SDK (3.44.x). See `app/README.md` for details.
 ```sh
 cd app
 flutter pub get
-flutter test                       # 167 tests
+flutter test                       # 251 tests
 flutter run -d linux               # or windows / macos
 flutter build apk --release --split-per-abi
 ```

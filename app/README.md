@@ -26,7 +26,7 @@ lib/src/
 l10n/                   # ARB localizations (en, zh)
 ```
 
-## Status (0.90)
+## Status (0.82.0)
 
 Implemented and statically verified end-to-end:
 
@@ -34,22 +34,34 @@ Implemented and statically verified end-to-end:
 - TOTP codes + countdown, copy, account list/reorder
 - Encryption: unlock, set/change/remove passkey
 - Import existing `.maFile`
-- Trade/market confirmations with **batch** accept/reject (native JSON, no WebView)
+- **Pending center** (tabbed): trade/market confirmations with **batch**
+  accept/reject; **trade offers** (received/sent/history, expandable cards,
+  accept via `IEconService` + community endpoints); **family-group invites**
+  (discovery, pre-join checks, hold-to-join, `IFamilyGroupsService`)
+- **Hold-to-confirm** control (settings-aware) for every irreversible accept,
+  with accelerating haptics; **Hold to confirm** / **Haptic feedback** toggles
+- Read-only **family group** page (members, roles, slots, cooldown)
+- Inventory browse + Community Market list/cancel with live fees
 - Login (username/password + **QR login**), Steam Guard code, session refresh
 - Add authenticator (phone → SMS → revocation confirm)
 - **QR approve** external sign-ins (direction B; scan on mobile / paste on desktop)
 - i18n (English + 简体中文), system or manual language
 
-Verification: `flutter analyze` clean, **167 tests pass** (crypto RFC vectors,
-TOTP/confirmation cross-impl vectors, protobuf round-trip, lossless model JSON,
-AccountStore end-to-end, app smoke render).
+Verification: `flutter analyze` clean, **251 tests pass** (crypto RFC vectors,
+TOTP/confirmation cross-impl vectors, protobuf round-trip incl. family-groups
+codec, trade-offer/model JSON, hold-button haptics, AccountStore end-to-end,
+pending-center + family-screen widget tests, app smoke render).
 
 ### Not yet verifiable here
 
-Network flows (login, confirmations, linking, QR-approve) are implemented to the
-documented Steam protocol but require **live Steam credentials** to integration
-test. The QR-approve (direction B) signature scheme in particular should be
-checked against a live capture before production use.
+Network flows (login, confirmations, trade offers, linking, QR-approve,
+family groups) are implemented to the documented Steam protocol but require
+**live Steam credentials** to integration test. Two surfaces are still
+protocol-speculative until validated on a real account (see
+`docs/plans/2026-07-15-family-groups.md` 执行后记): the family **join** nonce
+(sent as `invite_id`) and the ePrivilege=5 pre-join **check** endpoint's
+availability to ordinary user tokens. The QR-approve (direction B) signature
+scheme should likewise be checked against a live capture before production use.
 
 Both **Linux desktop and Android release builds are verified**:
 
@@ -59,7 +71,7 @@ Both **Linux desktop and Android release builds are verified**:
 
 ```sh
 flutter pub get
-flutter test                       # 167 tests
+flutter test                       # 251 tests
 flutter build linux --release      # build/linux/x64/release/bundle (~27MB)
 flutter run -d linux               # or windows / macos
 flutter build apk --release                  # universal APK

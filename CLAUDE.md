@@ -29,6 +29,17 @@
     不要用 pull(rsync 写入的未提交内容会让 pull 因"本地改动将被
     覆盖"而中止)。
 
+## 工作树
+
+- **编译正本是 WSL 原生盘 `~/SteamDesktopAuthenticator`**(目录沿用旧名,remote 已指
+  向 AnotherVaporAuth)。开发、`flutter analyze/test/build` 都在这里做——比镜像快得多
+  (analyze 约 9s vs 20s+)。
+- 会话默认 cwd 常是 **Windows 侧镜像**
+  `/mnt/c/Users/freefrank/ownCloud/Git/AnotherVaporAuth`(9P 挂载,慢);它只由 s
+  同步流程更新,不在上面编译。
+- 处理代码任务前先核对两棵树是否分歧
+  (`git -C ~/SteamDesktopAuthenticator log --oneline -1` vs 镜像 HEAD),有分歧先对齐。
+
 ## 文档位置
 
 - 设计文档（spec）在 `docs/specs/`，实施计划在 `docs/plans/`（原 `docs/superpowers/` 已并入）。
@@ -37,9 +48,10 @@
 
 - **绝不使用 `flutter install`**(它会先卸载应用,清空 maFiles/keystore 数据)。
   部署真机只用 `flutter run` 或 `adb -s <设备> install -r`。
-- 用户折叠屏(如 192.168.1.83:36529)装有**真实 Steam 账户数据**:
+- 用户折叠屏(192.168.1.83)装有**真实 Steam 账户数据**:
+  无线调试端口每次重开都会轮换——**每次真机操作前问用户当前端口**,不要复用旧值;
   任何 adb 命令必须显式 `-s` 指定设备;绝不卸载旧包 `app.ava.authenticator`;
-  绝不在真机确认页点击接受/拒绝。
+  绝不在真机确认页点击接受/拒绝(含报价长按接受、家庭组长按加入等一切写操作)。
 - 签名密钥:`~/ava-upload.jks`(备份在 ownCloud 根),密码只存在
   `app/android/key.properties`(git 忽略)——不进仓库、不进对话。
 - 模拟器测试用官方 AVD `ava_test`(emulator-5554),数据可随意处置;
