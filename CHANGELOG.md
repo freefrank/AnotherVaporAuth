@@ -5,6 +5,24 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.90.1] — 2026-07-16
+
+### Fixed
+- **Play build crashed at launch** (release-only): R8 stripped a class the
+  ads dependency creates reflectively at process start. The v0.90.0
+  internal-testing build is superseded — update immediately.
+- **Neon/Pixel skins now actually fall back to the plain look** for free
+  users: the 0.90.0 paywall gated the skin effects but missed the theme
+  colors, so a previously selected Pro skin kept rendering.
+
+—
+
+### 修复
+- **Play 版启动即闪退**(仅 release 构建):R8 剥除了广告依赖在进程启动时
+  反射创建的类。0.90.0 内测包已作废,请立即更新。
+- **Neon / Pixel 皮肤现在会真正回落到黑/白基础外观**:0.90.0 的付费墙拦住了
+  皮肤特效层却漏了主题配色层,已选过 Pro 皮肤的免费用户此前仍会渲染原皮肤。
+
 ## [v0.90.0] — 2026-07-16
 
 ### Added
