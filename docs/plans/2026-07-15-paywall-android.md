@@ -167,13 +167,30 @@ pre-flavor 基线持平)。
    绑定首个兑换设备(跨设备类不可第二台);爱发电月长按 30 天折算;
 5. 激励视频 VIP 时长已定 3 天(KV 可配)。
 
-**上线前待办**(除计划"前置事项"外):worker 部署(填 D1/KV id、生成 Ed25519
-密钥对、set secrets、自定义域)→ 客户端回填 `kEntitlementPublicKeyB64` 与
-`kGoogleServerClientId`、真实 AdMob App/版位 ID、`kAfdianPageUrl`;爱发电
-sign 拼接与 query-order 字段对照官方文档核验;Play subscriptionsv2 状态与
-acknowledge 语义核验(客户端已 ack,worker 侧 TODO);模拟器/真机冒烟
-(测试广告位、Play 沙盒订阅);cn 若要绝对零 gms 需换掉 mobile_scanner(ML
-Kit)——超范围,仅登记。
+**上线前待办**(除计划"前置事项"外):~~worker 部署~~、~~客户端回填公钥/
+AdMob ID/爱发电 URL~~、~~爱发电 sign 核验~~(均已于 2026-07-16 完成,见下);
+Play subscriptionsv2 状态与 acknowledge 语义核验(客户端已 ack,worker 侧
+TODO);模拟器/真机冒烟(测试广告位、Play 沙盒订阅);cn 若要绝对零 gms 需
+换掉 mobile_scanner(ML Kit)——超范围,仅登记。
+
+## 部署记录(2026-07-16)
+
+- **worker 上线**:`api.ava.dotslash.pro`(自定义域,workers.dev 故障绕开);
+  D1/KV 建库、migration 执行、Ed25519 密钥对生成(私钥仅存 worker secrets +
+  ownCloud 根 `ava-entitlement-signing.pem` 备份);beta 码**全链路验签冒烟
+  通过**(D1 插码 → redeem → openssl 用生产公钥验签成功 → 数据清理);
+- **secrets 就位**:签名私钥、`PLAY_PACKAGE_NAME`、爱发电三件套(sign 算法已
+  用生产凭据实测:ping/query-order 均 `ec:200`);仅缺 GOOGLE_* 三个;
+- **线上修复两处**(均带测试,worker 64 测全绿):AdMob SSV 校验请求无
+  `user_id` → 200 零发放(修 AdMob 后台保存 400);爱发电 webhook 测试推送
+  无法核验 → `{ec:200}` 确认但零发放(修"发送测试"失败);
+- **客户端回填**:生产公钥、真实 AdMob App/单元 ID(release 才用真实位,
+  debug 恒走测试位)、爱发电主页 URL;新增 UMP"隐私选项"设置入口(GDPR
+  required 时显示);298 测全绿,双 flavor 编译通过;
+- **发布物**:AAB v0.90.0+34 已上传 Play 内测轨道并发布;
+- **周边**:app-ads.txt 上线 `dotslash.pro` + `ava.dotslash.pro` 双域;隐私
+  政策更新 v2026-07-16(仓库双语 + 站点页);站点新增爱发电赞助区块(点击
+  加载)。剩余用户侧事项见 `2026-07-16-paywall-prerequisites.md` 状态表。
 
 ## 执行顺序与依赖
 

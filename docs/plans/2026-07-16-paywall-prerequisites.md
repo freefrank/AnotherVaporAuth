@@ -1,21 +1,22 @@
 # Paywall 前置事项 — 详细操作指南
 
-日期:2026-07-16 · 面向:用户(全部需要账号权限,代码侧已就绪) ·
+日期:2026-07-16(当日进展已回填,见状态列) · 面向:用户 ·
 对应计划:`2026-07-15-paywall-android.md`
 
-## 总览:六件事、产出什么、回填到哪
+## 总览:六件事、产出什么、状态
 
-| # | 事项 | 产出 | 回填位置 |
+| # | 事项 | 产出 | 状态(2026-07-16) |
 |---|---|---|---|
-| 1 | Play Console 订阅商品 | 商品 ID(已定 `ava_pro_monthly`) | 无需改代码(与 `play_channel.dart` 常量一致即可) |
-| 2 | Google Cloud SA + OAuth | SA 邮箱/JSON 密钥、Web client_id | worker secrets;`kGoogleServerClientId` |
-| 3 | AdMob | App ID、横幅/激励视频两个单元 ID、SSV 回调 | `src/play/AndroidManifest.xml`;`play_channel.dart` |
-| 4 | 爱发电 | user_id、API token、plan_id、主页 URL | worker secrets;`paywall_screen.dart` 的 `kAfdianPageUrl` |
-| 5 | Cloudflare worker 部署 | D1/KV id、Ed25519 公钥、api 子域 | `wrangler.jsonc`;`kEntitlementPublicKeyB64` |
-| 6 | 内测名单 | 终身码清单(入 D1) | 无需改代码 |
+| 1 | Play Console 订阅商品 | 商品 ID(已定 `ava_pro_monthly`) | 🔶 AAB v34(0.90.0)已发内测轨道,建品入口已解锁;**商品待创建** |
+| 2 | Google Cloud SA + OAuth | SA 邮箱/JSON 密钥、Web client_id | ⏳ **未开始**(订阅购买链路的唯一阻塞项) |
+| 3 | AdMob | App ID、两个单元 ID、SSV 回调 | ✅ 开户+建应用+双单元完成,真实 ID 已回填;app-ads.txt 双域上线;SSV 回调探测已修(worker 侧),后台保存待确认 |
+| 4 | 爱发电 | user_id、token、plan_id、主页 URL | ✅ secrets 已入 worker,sign 算法已实测核验,主页 URL 已回填;webhook 测试推送已修通,**后台保存待确认**;首笔真实订单联调待做 |
+| 5 | Cloudflare worker 部署 | D1/KV id、Ed25519 公钥、api 子域 | ✅ **已上线** `api.ava.dotslash.pro`,beta 码全链路验签通过;私钥备份于 ownCloud 根 `ava-entitlement-signing.pem` |
+| 6 | 内测名单 | 终身码清单(入 D1) | ⏳ 待名单导出后一条 SQL 插入 |
 
-**建议顺序**:3(AdMob,审核最慢,当天就提)→ 2(SA 授权生效有滞后)→
-1、4 随时 → 5(依赖 2/4 的密钥,且要在 3 的 SSV 回调配置前上线)→ 6(依赖 5)。
+**剩余关键路径**:2(Google SA + OAuth)→ 回填 `kGoogleServerClientId` +
+worker 三个 GOOGLE secrets → Play 沙盒联调订阅;1(建订阅商品)随时可做;
+4 的 webhook 在爱发电后台点"发送测试"通过后保存即可。
 
 ---
 
@@ -68,10 +69,16 @@ worker 验 purchaseToken 和 Google 登录都靠这一步。
 
 ## 3. AdMob
 
+**时序说明(与应用发布状态的关系)**:开户、建应用、拿真实 ID **现在就能做**
+("未上架"模式);但 AdMob 的应用审核、商店条目关联、app-ads.txt 验证要求
+Play 商店页**公开可见**——内部/封闭测试不公开,**公开测试(open testing)
+即可满足**,不必等正式发布。审核通过前真实单元 ID 无填充(横幅会自动收敛
+为 0 高),功能联调不受影响。
+
 1. [admob.google.com](https://admob.google.com) 用同一 Google 账号开户;
-   新账号有审核期(数天),**先提交,期间客户端继续用测试 ID 开发**。
-2. 应用 → 添加应用 → Android → "是,已在应用商店上架" → 搜 AVA 关联
-   (内测轨道搜不到就选"未上架",上架后再关联)。
+   身份验证/付款信息审核最慢,**现在就提交**。
+2. 应用 → 添加应用 → Android → 选 **"未上架"** 先注册,立刻获得真实
+   App ID 与单元 ID 提前回填;转公测后回来关联商店条目(触发应用审核)。
 3. 拿到 **App ID**(`ca-app-pub-XXXXXXXX~YYYYYYY`,注意是波浪号)→ 替换
    `app/android/app/src/play/AndroidManifest.xml` 里的测试 App ID。
 4. 建**两个广告单元**(应用 → 广告单元 → 添加):
@@ -145,16 +152,27 @@ worker 验 purchaseToken 和 Google 登录都靠这一步。
 
 ## 全部占位符回填清单(代码侧)
 
-| 常量 | 文件 | 来源 |
+| 常量 | 文件 | 状态 |
 |---|---|---|
-| `kEntitlementPublicKeyB64` | `app/lib/src/services/entitlement_store.dart` | 第 5 步密钥对 |
-| `kEntitlementApiBase` | 同上(已填 `api.ava.dotslash.pro`,如换域名要改) | 第 5 步 |
-| `kGoogleServerClientId` | `app/lib/src/services/play_channel.dart` | 第 2 步 Web client |
-| `kBannerAdUnitId` / `kRewardedAdUnitId` | 同上 | 第 3 步 |
-| AdMob `APPLICATION_ID` | `app/android/app/src/play/AndroidManifest.xml` | 第 3 步 |
-| `kAfdianPageUrl` | `app/lib/src/ui/paywall_screen.dart` | 第 4 步 |
-| `wrangler.jsonc` D1/KV id | `infra/entitlement-worker/` | 第 5 步 |
+| `kEntitlementPublicKeyB64` | `app/lib/src/services/entitlement_store.dart` | ✅ 已回填(生产公钥,2026-07-16) |
+| `kEntitlementApiBase` | 同上 | ✅ `api.ava.dotslash.pro` 已上线 |
+| `kGoogleServerClientId` | `app/lib/src/services/play_channel.dart` | ⏳ **待第 2 步 Web client** |
+| `kBannerAdUnitId` / `kRewardedAdUnitId` | 同上 | ✅ 真实 ID 已回填;**release 构建才用真实位,debug 恒走官方测试位**(防误点封号) |
+| AdMob `APPLICATION_ID` | `app/android/app/src/play/AndroidManifest.xml` | ✅ 已回填 |
+| `kAfdianPageUrl` | `app/lib/src/ui/paywall_screen.dart` | ✅ `ifdian.net/a/anothervaporauth` |
+| `wrangler.jsonc` D1/KV id | `infra/entitlement-worker/` | ✅ 已填并部署 |
 
-回填全部完成前,app 的行为是安全降级:公钥为空 → 所有 token 验签失败 →
-永远免费版;Google client 为空 → 订阅流程报"该构建尚未配置";广告走
-Google 官方测试位。也就是说**可以随时发 0.90 内测,后端就绪一项亮一项**。
+唯一剩余占位符是 `kGoogleServerClientId`:为空时订阅/恢复购买报"该构建尚未
+配置",其余功能(含爱发电解锁、beta 码、激励视频)不受影响——安全降级仍然
+成立,0.90 内测可以随时铺开。
+
+## 关联完成项(2026-07-16,超出原六项范围)
+
+- 隐私政策更新到 v2026-07-16(仓库 `PRIVACY*.md` + 站点 `/privacy`):新增
+  AVA Pro(第 4 节)与广告(第 5 节)两节;
+- 站点新增爱发电赞助区块(点击加载,守住零第三方请求承诺);
+- 设置页新增 UMP"隐私选项"重开入口(仅 GDPR 地区且 required 时显示);
+- worker 两处线上修复:AdMob SSV 校验请求(无 user_id → 200 零发放)、爱发电
+  webhook 测试推送(无法核验 → `{ec:200}` 确认但零发放);
+- Play Console 仍需(转公测前):应用内容 → 广告 / 广告 ID 两项声明、Data
+  safety 表单更新、商店描述去掉"无广告"表述。

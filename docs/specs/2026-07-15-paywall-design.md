@@ -163,7 +163,8 @@ entitlement 服务);④ 对外承诺的核对与必须随发布更新的公开�
 ## 风险登记
 
 - **爱发电开放平台**的 API 配额/稳定性、webhook 可靠性——首发即备"手输最新
-  订单号"兜底路径;
+  订单号"兜底路径;(2026-07-16:sign 算法与 ping/query-order 已用生产凭据
+  实测核验通过;webhook 测试推送兼容已修)
 - Play Developer API 需要 service account 与 Play Console 授权,提前办;
 - 激励视频经济性:单次 $0.01–0.04 vs 订阅 $0.99/月,3 天/次是收益与转化
   摩擦的折中——时长
