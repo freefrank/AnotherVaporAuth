@@ -5,6 +5,22 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.83.0] — 2026-07-15
+
+### Changed
+- **Two distribution channels.** Android now builds as two flavors under the
+  same package name: `play` (Google Play) and `cn` (direct APK on GitHub
+  Releases). Groundwork for the upcoming Pro subscription: Play-only
+  dependencies (billing, ads) will live in the play flavor only — the cn
+  build will never contain them. No user-visible changes in this release.
+
+—
+
+### 变更
+- **双分发渠道。** Android 现以同一包名构建两个 flavor:`play`(Google
+  Play)与 `cn`(GitHub Release 直发 APK)。为后续 Pro 订阅铺路:计费、
+  广告等 Play 专属依赖只会进 play flavor,cn 包永远不含。本版无用户可见变化。
+
 ## [v0.82.0] — 2026-07-15
 
 ### Added
