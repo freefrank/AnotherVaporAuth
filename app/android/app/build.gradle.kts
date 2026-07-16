@@ -41,6 +41,16 @@ android {
         versionName = flutter.versionName
     }
 
+    // Distribution channels. Same applicationId on purpose: play and cn have
+    // always shipped under one package name and upgrades must keep working
+    // in both directions. Play-only dependencies (ads/billing/sign-in) hook
+    // into the `play` flavor; the cn APK must never contain them.
+    flavorDimensions += "channel"
+    productFlavors {
+        create("play") { dimension = "channel" }
+        create("cn") { dimension = "channel" }
+    }
+
     signingConfigs {
         create("release") {
             if (hasReleaseSigning) {

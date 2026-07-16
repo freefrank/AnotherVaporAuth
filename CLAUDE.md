@@ -40,6 +40,20 @@
 - 处理代码任务前先核对两棵树是否分歧
   (`git -C ~/SteamDesktopAuthenticator log --oneline -1` vs 镜像 HEAD),有分歧先对齐。
 
+## 构建渠道(Android 已拆 flavor)
+
+- Android 有两个 flavor:`play` / `cn`(同包名 `pro.dotslash.ava`)。Android
+  构建/运行必须同时给 `--flavor` 与 `--dart-define=AVA_CHANNEL=`(两者一致,
+  define 缺省回落 cn):
+  - 日常开发/模拟器:`flutter run --flavor cn --dart-define=AVA_CHANNEL=cn`
+  - 发布 play:`flutter build appbundle --flavor play
+    --dart-define=AVA_CHANNEL=play` → `dist/AVA-v<版本>-play.aab`
+  - 发布 cn:`flutter build apk --flavor cn --dart-define=AVA_CHANNEL=cn`
+    → `dist/AVA-v<版本>-cn.apk`
+- 不带 `--flavor` 的 Android 构建会直接失败;`flutter test/analyze` 与桌面
+  构建不受影响。cn 包绝不允许包含 ads/billing/GMS 依赖(发布前用
+  `apkanalyzer` 验收)。
+
 ## 文档位置
 
 - 设计文档（spec）在 `docs/specs/`，实施计划在 `docs/plans/`（原 `docs/superpowers/` 已并入）。
