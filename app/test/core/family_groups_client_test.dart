@@ -16,6 +16,7 @@ class _FakeApi extends SteamApiClient {
   String? lastMethod;
   ProtoWriter? lastRequest;
   String? lastAccessToken;
+  bool? lastUseGet;
   _FakeApi(this.responses, {this.throwOnCall});
 
   @override
@@ -30,6 +31,7 @@ class _FakeApi extends SteamApiClient {
     lastMethod = '$iface/$method';
     lastRequest = request;
     lastAccessToken = accessToken;
+    lastUseGet = useGet;
     if (throwOnCall != null) throw throwOnCall!;
     return responses.removeAt(0);
   }
@@ -90,6 +92,8 @@ void main() {
       final api = _FakeApi([_forUserResp()]);
       final s = await FamilyGroupsClient(api).forUser(_account());
       expect(api.lastMethod, 'IFamilyGroupsService/GetFamilyGroupForUser');
+      // bConstMethod=true → 必须 GET（POST 被 405 拒，真机验证）。
+      expect(api.lastUseGet, isTrue);
       expect(api.lastAccessToken, 'tok');
       expect(s.isNotMemberOfAnyGroup, isTrue);
       expect(s.isMember, isFalse);
@@ -138,6 +142,7 @@ void main() {
     final api = _FakeApi([_groupResp()]);
     final g = await FamilyGroupsClient(api).groupInfo(_account(), 9001);
     expect(api.lastMethod, 'IFamilyGroupsService/GetFamilyGroup');
+    expect(api.lastUseGet, isTrue); // bConstMethod=true → GET
     expect(g.name, 'Wang 家');
     expect(g.members, hasLength(2));
     expect(g.members.first.steamId, 76561198000000456);
@@ -158,6 +163,7 @@ void main() {
         ..writeVarint(3, 0);
       final api = _FakeApi([ProtoReader(w.toBytes())]);
       final c = await FamilyGroupsClient(api).inviteChecks(_account(), 9001);
+      expect(api.lastUseGet, isTrue); // bConstMethod=true → GET
       expect(c, isNotNull);
       expect(c!.walletCountryMatches, isTrue);
       expect(c.ipMatch, isFalse);
@@ -192,6 +198,7 @@ void main() {
           inviteId: 555001);
       final r = await FamilyGroupsClient(api).join(_account(), invite);
       expect(api.lastMethod, 'IFamilyGroupsService/JoinFamilyGroup');
+      expect(api.lastUseGet, isFalse); // 非 const 方法 → POST
       expect(r.needsTwoFactor, isTrue);
       expect(r.inviteAlreadyAccepted, isFalse);
       final req = ProtoReader(api.lastRequest!.toBytes()).parse();
@@ -218,6 +225,7 @@ void main() {
     await FamilyGroupsClient(api)
         .confirmJoin(_account(), familyGroupId: 9001, inviteId: 555001);
     expect(api.lastMethod, 'IFamilyGroupsService/ConfirmJoinFamilyGroup');
+    expect(api.lastUseGet, isFalse); // 非 const 方法 → POST
     final req = ProtoReader(api.lastRequest!.toBytes()).parse();
     expect(req[1]?.varint, 9001);
     expect(req[2]?.varint, 555001);

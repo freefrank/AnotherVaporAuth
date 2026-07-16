@@ -34,6 +34,9 @@ class FamilyGroupsClient {
       'GetFamilyGroupForUser',
       request: req,
       accessToken: token,
+      // bConstMethod=true — POST 会被 api.steampowered.com 以 HTTP 405 拒绝
+      // （真机验证发现），const 方法必须 GET，同 GetAuthSessionsForAccount。
+      useGet: true,
     );
     final invites = <FamilyInvite>[];
     var familyGroupId = 0;
@@ -79,6 +82,7 @@ class FamilyGroupsClient {
       'GetFamilyGroup',
       request: req,
       accessToken: token,
+      useGet: true, // bConstMethod=true（同上，POST → 405）
     );
     return _groupFromReader(reader);
   }
@@ -98,6 +102,7 @@ class FamilyGroupsClient {
         'GetInviteCheckResults',
         request: req,
         accessToken: token,
+        useGet: true, // bConstMethod=true（同上，POST → 405）
       ))
           .parse();
       return InviteChecks(

@@ -101,7 +101,11 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
       setState(() {
         _loading = false;
         _needsLogin = needsLogin;
-        _error = needsLogin ? l.confNeedsLogin : '$e';
+        _error = needsLogin
+            ? l.confNeedsLogin
+            // SteamApiException 的完整 toString 对用户像未捕获的崩溃 ——
+            // 只显示其 message（如 "HTTP 405"），其余异常保持原样。
+            : (e is SteamApiException ? e.message : '$e');
       });
     }
   }

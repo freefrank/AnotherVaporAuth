@@ -1558,6 +1558,12 @@ Claude-Session: c6beebba-fcf7-4f55-b274-3afcea74e823"
 4. 昵称查询无负缓存（空结果每次刷新重拉）
 5. `home_screen` `case 'family'` 未 await push（同级 case 有，纯风格）
 
+**真机首轮反馈（2026-07-15，折叠屏 192.168.1.83）**：邀请页签报 HTTP 405——
+`GetFamilyGroupForUser`/`GetFamilyGroup`/`GetInviteCheckResults` 均为
+`bConstMethod=true`，必须 GET（proto 侦察已引用该标注但未连接到 `useGet`，
+三层审查亦未捕获——已修复并以测试钉住 GET/POST 语义）。确认页签真机可正常查看。
+错误展示同时改为只显示 `SteamApiException.message`。
+
 **本功能在真机验证前应视为实验性**——协议层最大的赌注是 nonce=invite_id 与
 ePrivilege=5 降级，见下方清单。
 
