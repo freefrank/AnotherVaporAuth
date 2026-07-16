@@ -8,7 +8,7 @@ import '../ui/privacy_consent_screen.dart';
 import '../ui/setup_pin_screen.dart';
 import '../ui/unlock_screen.dart';
 import '../ui/welcome_screen.dart';
-import '../services/launcher_icon.dart';
+
 import 'providers.dart';
 import 'route_observer.dart';
 import 'theme.dart';
@@ -44,9 +44,15 @@ class _AvaAppState extends ConsumerState<AvaApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      // Effective (Pro-gated) skin: a paywalled selection must not leak
-      // through the launcher icon either.
-      LauncherIcon.apply(ref.read(effectiveSkinProvider));
+      // Launcher-icon switching is RETIRED as of 0.90.1. Every variant of
+      // reconciling the alias at runtime (startup, paused, guarded by
+      // loaded-state) ended the same way on ColorOS: changing the enabled
+      // state of the alias the task was launched from makes the system
+      // force-stop the app — including mid-fingerprint on the unlock screen,
+      // which users experience as a launch crash-loop. The icon now simply
+      // stays whatever alias is currently enabled. If the feature returns it
+      // must use a mechanism that cannot toggle components while the app has
+      // a foreground task (see docs/plans/2026-07-15-paywall-android.md).
     }
   }
 

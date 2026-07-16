@@ -93,10 +93,19 @@ final skinProvider = NotifierProvider<SkinController, AvaSkin>(
     SkinController.new);
 
 class SkinController extends Notifier<AvaSkin> {
+  /// True once the persisted selection has been read. The launcher-icon
+  /// reconcile in app.dart MUST NOT act before this: acting on the interim
+  /// default toggles the alias the running task was launched from, and
+  /// ColorOS removes the task on the spot (0.90.1 flash-quit at unlock —
+  /// the biometric prompt pauses the app within milliseconds of launch,
+  /// well before this file read completes).
+  bool loaded = false;
+
   @override
   AvaSkin build() {
     ref.read(settingsStoreProvider).loadSkin().then((v) {
       if (!ref.mounted) return;
+      loaded = true;
       for (final skin in AvaSkin.values) {
         if (v == skin.name) state = skin;
       }
