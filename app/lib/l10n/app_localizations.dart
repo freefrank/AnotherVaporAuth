@@ -1598,6 +1598,78 @@ abstract class AppLocalizations {
   /// **'Link copied'**
   String get addPresentCopiedUrl;
 
+  /// No description provided for @addPresentFallbackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t receive the email?'**
+  String get addPresentFallbackTitle;
+
+  /// No description provided for @addMoveInButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the authenticator to this device'**
+  String get addMoveInButton;
+
+  /// No description provided for @addMoveInBlurb.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam will email this account a code. No 15-day trade hold.'**
+  String get addMoveInBlurb;
+
+  /// No description provided for @addMoveInSending.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending the code…'**
+  String get addMoveInSending;
+
+  /// No description provided for @addMoveInCodePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code Steam emailed you'**
+  String get addMoveInCodePrompt;
+
+  /// No description provided for @addMoveInWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'Once you confirm: the authenticator on your old phone stops working immediately, and your old revocation code (Rxxxxx) is replaced by a new one. This cannot be undone.'**
+  String get addMoveInWarn;
+
+  /// No description provided for @addMoveInConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Move it here'**
+  String get addMoveInConfirm;
+
+  /// No description provided for @addMoveInDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Authenticator moved to this device.'**
+  String get addMoveInDone;
+
+  /// No description provided for @addErrBadChallengeCode.
+  ///
+  /// In en, this message translates to:
+  /// **'That code isn\'t right. Check the email and try again.'**
+  String get addErrBadChallengeCode;
+
+  /// No description provided for @addMoveInSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The authenticator moved to this account, but AVA could NOT save it to this device. Your old authenticator is already dead, so these are the only copies — write them down NOW before closing this screen.\n\nRevocation code: {code}\n\nSecret: {secret}'**
+  String addMoveInSaveFailed(String code, String secret);
+
+  /// No description provided for @addMoveInCopySecrets.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get addMoveInCopySecrets;
+
+  /// No description provided for @addMoveInCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get addMoveInCopied;
+
   /// No description provided for @commonRetry.
   ///
   /// In en, this message translates to:

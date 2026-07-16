@@ -296,6 +296,22 @@
   "addPresentStep3": "两者都无法访问？通过 Steam 客服 → 帮助 → Steam 令牌手机验证器。",
   "addPresentManageUrl": "store.steampowered.com/twofactor/manage",
   "addPresentCopiedUrl": "链接已复制",
+  "addPresentFallbackTitle": "收不到邮件？",
+
+  "addMoveInButton": "把验证器移到本设备",
+  "addMoveInBlurb": "Steam 会向该账户邮箱发送验证码，无需 15 天交易冷却。",
+  "addMoveInSending": "正在发送验证码…",
+  "addMoveInCodePrompt": "请输入 Steam 发到你邮箱的验证码",
+  "addMoveInWarn": "确认后：旧手机上的验证器会立即失效，旧的撤销代码（Rxxxxx）作废并换发新的。此操作不可撤销。",
+  "addMoveInConfirm": "移到本设备",
+  "addMoveInDone": "验证器已移到本设备。",
+  "addErrBadChallengeCode": "验证码不正确，请核对邮件后重试。",
+  "addMoveInSaveFailed": "验证器已迁移成功，但 AVA 未能把它保存到本设备。旧验证器已失效，以下是仅有的副本——关闭本页前请立即抄写。\n\n撤销代码：{code}\n\n密钥：{secret}",
+  "@addMoveInSaveFailed": {
+    "placeholders": { "code": { "type": "String" }, "secret": { "type": "String" } }
+  },
+  "addMoveInCopySecrets": "复制",
+  "addMoveInCopied": "已复制",
   "commonRetry": "重试",
   "commonCopy": "复制链接",
   "commonRefresh": "刷新",

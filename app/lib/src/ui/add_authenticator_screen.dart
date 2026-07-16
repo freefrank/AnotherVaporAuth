@@ -22,7 +22,7 @@ class AddAuthenticatorScreen extends ConsumerStatefulWidget {
       _AddAuthenticatorScreenState();
 }
 
-enum _Step { working, needPhone, finalize, done, failed, present }
+enum _Step { working, needPhone, finalize, done, failed, present, challengeCode }
 
 class _AddAuthenticatorScreenState
     extends ConsumerState<AddAuthenticatorScreen> {
@@ -30,10 +30,24 @@ class _AddAuthenticatorScreenState
   final _phone = TextEditingController();
   final _sms = TextEditingController();
   final _revocation = TextEditingController();
+  final _challenge = TextEditingController();
 
   _Step _step = _Step.working;
   String? _message;
   bool _busy = false;
+
+  /// True once the account arrived via move-in rather than a fresh link —
+  /// only changes which "success" wording the done step shows.
+  bool _movedIn = false;
+
+  /// Set only when a move-in succeeded on Steam's side but the local save
+  /// failed. The old authenticator is already dead and these are the only
+  /// copies of the new one, so the failed step must show them verbatim
+  /// instead of a plain error. See [_moveInSubmit].
+  ({String code, String secret})? _fatalSecrets;
+
+  /// Whether the "remove it elsewhere" fallback is expanded on [_Step.present].
+  bool _showFallback = false;
 
   @override
   void initState() {
@@ -51,6 +65,7 @@ class _AddAuthenticatorScreenState
     _phone.dispose();
     _sms.dispose();
     _revocation.dispose();
+    _challenge.dispose();
     super.dispose();
   }
 
@@ -112,6 +127,13 @@ class _AddAuthenticatorScreenState
         case LinkResult.generalFailure:
           _failWith(l.addErrFailed);
           break;
+        case LinkResult.challengeEmailSent:
+        case LinkResult.movedIn:
+        case LinkResult.badChallengeCode:
+          // Move-in outcomes: only moveInStart/moveInContinue produce these,
+          // never addAuthenticator. Handled in _moveInStart/_moveInSubmit.
+          _failWith(l.addErrFailed);
+          break;
       }
     } catch (e) {
       _failWith('$e');
@@ -121,6 +143,103 @@ class _AddAuthenticatorScreenState
   Future<void> _submitPhone() async {
     _linker.phoneNumber = _phone.text.trim();
     await _add();
+  }
+
+  /// Asks Steam to mail the move-in challenge code. Read-only account-side —
+  /// nothing is revoked until [_moveInSubmit].
+  Future<void> _moveInStart() async {
+    final l = AppLocalizations.of(context);
+    setState(() {
+      _busy = true;
+      _message = null;
+    });
+    try {
+      final result = await _linker.moveInStart();
+      if (!mounted) return;
+      switch (result) {
+        case LinkResult.challengeEmailSent:
+          setState(() {
+            _busy = false;
+            _step = _Step.challengeCode;
+          });
+          break;
+        case LinkResult.accountLocked:
+          _failWith(l.addErrLocked);
+          break;
+        case LinkResult.rateLimited:
+          _failWith(l.addErrRateLimited);
+          break;
+        default:
+          _failWith(l.addErrFailed);
+          break;
+      }
+    } catch (e) {
+      _failWith('$e');
+    }
+  }
+
+  /// Submits the mailed code. On success Steam has ALREADY swapped the token —
+  /// the old authenticator is dead, there is no finalize step and no rollback,
+  /// so the save must happen right here and a failed save is a data-loss
+  /// emergency, not an ordinary error.
+  Future<void> _moveInSubmit() async {
+    final l = AppLocalizations.of(context);
+    setState(() {
+      _busy = true;
+      _message = null;
+    });
+    try {
+      final result = await _linker.moveInContinue(_challenge.text.trim());
+      if (!mounted) return;
+      switch (result) {
+        case LinkResult.movedIn:
+          final account = _linker.linkedAccount!;
+          if (widget.password != null && widget.password!.isNotEmpty) {
+            account.password = widget.password;
+          }
+          final saved = await ref
+              .read(appControllerProvider.notifier)
+              .persistAccount(account);
+          if (!mounted) return;
+          if (!saved) {
+            // Nothing to undo — the old token is gone either way. All we can
+            // do is put the only surviving copies on screen.
+            setState(() {
+              _busy = false;
+              _step = _Step.failed;
+              _message = null;
+              _fatalSecrets = (
+                code: account.revocationCode ?? '—',
+                secret: account.sharedSecret ?? '—',
+              );
+            });
+            break;
+          }
+          setState(() {
+            _busy = false;
+            _movedIn = true;
+            _step = _Step.done;
+          });
+          break;
+        case LinkResult.badChallengeCode:
+          setState(() {
+            _busy = false;
+            _message = l.addErrBadChallengeCode;
+          });
+          break;
+        case LinkResult.accountLocked:
+          _failWith(l.addErrLocked);
+          break;
+        case LinkResult.rateLimited:
+          _failWith(l.addErrRateLimited);
+          break;
+        default:
+          _failWith(l.addErrFailed);
+          break;
+      }
+    } catch (e) {
+      _failWith('$e');
+    }
   }
 
   Future<void> _finalize() async {
@@ -183,7 +302,8 @@ class _AddAuthenticatorScreenState
     final l = AppLocalizations.of(context);
     final showStepper = _step != _Step.working &&
         _step != _Step.failed &&
-        _step != _Step.present;
+        _step != _Step.present &&
+        _step != _Step.challengeCode;
     return Scaffold(
       appBar: AppBar(title: Text(l.addAuthTitle)),
       body: ScanlineOverlay(
@@ -311,7 +431,8 @@ class _AddAuthenticatorScreenState
             Icon(Icons.check_circle_outline,
                 size: context.r(48), color: Colors.green),
             SizedBox(height: context.r(12)),
-            Text(l.addAuthLinked, textAlign: TextAlign.center),
+            Text(_movedIn ? l.addMoveInDone : l.addAuthLinked,
+                textAlign: TextAlign.center),
             SizedBox(height: context.r(16)),
             FilledButton(
               onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
@@ -361,43 +482,70 @@ class _AddAuthenticatorScreenState
             SizedBox(height: context.r(10)),
             Text(l.addPresentIntro, textAlign: TextAlign.center),
             SizedBox(height: context.r(20)),
-            step(1, l.addPresentStep1),
-            step(2, l.addPresentStep2),
-            // The 2FA management page + a copy button (no external browser dep).
-            Padding(
-              padding: context.rInsets(left: 36, bottom: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SelectableText(
-                      l.addPresentManageUrl,
-                      style: TextStyle(
-                          color: t.accent,
-                          decoration: TextDecoration.underline),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: l.commonCopy,
-                    icon: Icon(Icons.copy, size: context.r(18)),
-                    onPressed: () async {
-                      await Clipboard.setData(
-                          ClipboardData(text: 'https://${l.addPresentManageUrl}'));
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l.addPresentCopiedUrl)),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            step(3, l.addPresentStep3),
-            SizedBox(height: context.r(8)),
+            // Preferred path: move the token here in-app. Removing it via the
+            // website (the fallback below) costs the user a 15-day trade hold.
             FilledButton.icon(
-              onPressed: _busy ? null : _add,
-              icon: const Icon(Icons.refresh),
-              label: Text(l.commonRetry),
+              onPressed: _busy ? null : _moveInStart,
+              icon: const Icon(Icons.move_down),
+              label: Text(l.addMoveInButton),
             ),
+            SizedBox(height: context.r(8)),
+            Text(
+              _busy ? l.addMoveInSending : l.addMoveInBlurb,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: context.r(12), color: t.muted),
+            ),
+            SizedBox(height: context.r(20)),
+            // Fallback for users whose account email is unreachable — they can
+            // only remove it elsewhere and come back.
+            TextButton.icon(
+              onPressed: () => setState(() => _showFallback = !_showFallback),
+              icon: Icon(_showFallback
+                  ? Icons.expand_less
+                  : Icons.expand_more),
+              label: Text(l.addPresentFallbackTitle),
+            ),
+            if (!_showFallback) SizedBox(height: context.r(4)),
+            if (_showFallback) ...[
+              SizedBox(height: context.r(12)),
+              step(1, l.addPresentStep1),
+              step(2, l.addPresentStep2),
+              // The 2FA management page + a copy button (no external browser dep).
+              Padding(
+                padding: context.rInsets(left: 36, bottom: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: SelectableText(
+                        l.addPresentManageUrl,
+                        style: TextStyle(
+                            color: t.accent,
+                            decoration: TextDecoration.underline),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: l.commonCopy,
+                      icon: Icon(Icons.copy, size: context.r(18)),
+                      onPressed: () async {
+                        await Clipboard.setData(ClipboardData(
+                            text: 'https://${l.addPresentManageUrl}'));
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(l.addPresentCopiedUrl)),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              step(3, l.addPresentStep3),
+              SizedBox(height: context.r(8)),
+              OutlinedButton.icon(
+                onPressed: _busy ? null : _add,
+                icon: const Icon(Icons.refresh),
+                label: Text(l.commonRetry),
+              ),
+            ],
             SizedBox(height: context.r(8)),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -405,7 +553,91 @@ class _AddAuthenticatorScreenState
             ),
           ],
         );
+      case _Step.challengeCode:
+        final t = Theme.of(context).extension<AvaTokens>()!;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // The point of no return — say so before the input, not after.
+            Container(
+              padding: context.rInsets(all: 14),
+              decoration: BoxDecoration(
+                color: t.warn.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(t.radius),
+                border: Border.all(color: t.warn.withValues(alpha: 0.6)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber_rounded,
+                      color: t.warn, size: context.r(20)),
+                  SizedBox(width: context.r(10)),
+                  Expanded(
+                    child:
+                        Text(l.addMoveInWarn, style: TextStyle(color: t.text)),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: context.r(16)),
+            Text(l.addMoveInCodePrompt),
+            SizedBox(height: context.r(8)),
+            TextField(
+              controller: _challenge,
+              autocorrect: false,
+              decoration: const InputDecoration(border: OutlineInputBorder()),
+            ),
+            if (_message != null) ...[
+              SizedBox(height: context.r(8)),
+              Text(_message!, style: TextStyle(color: t.warn)),
+            ],
+            SizedBox(height: context.r(16)),
+            FilledButton(
+              onPressed: _busy ? null : _moveInSubmit,
+              child: Text(l.addMoveInConfirm),
+            ),
+            SizedBox(height: context.r(8)),
+            TextButton(
+              onPressed: _busy ? null : () => setState(() {
+                    _message = null;
+                    _step = _Step.present;
+                  }),
+              child: Text(l.commonCancel),
+            ),
+          ],
+        );
       case _Step.failed:
+        // Move-in saved nowhere: the text on screen is the only copy of the
+        // account's new secret, so it must be selectable, copyable, and must
+        // not sit behind a "Close" the user can reflexively tap.
+        final fatal = _fatalSecrets;
+        if (fatal != null) {
+          final body = l.addMoveInSaveFailed(fatal.code, fatal.secret);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Icon(Icons.report_problem_outlined,
+                  size: context.r(48), color: Colors.redAccent),
+              SizedBox(height: context.r(12)),
+              SelectableText(body,
+                  style: TextStyle(color: Colors.redAccent.shade100)),
+              SizedBox(height: context.r(16)),
+              FilledButton.icon(
+                icon: const Icon(Icons.copy),
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: body));
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l.addMoveInCopied)),
+                  );
+                },
+                label: Text(l.addMoveInCopySecrets),
+              ),
+            ],
+          );
+        }
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [

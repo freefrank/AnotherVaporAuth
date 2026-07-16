@@ -814,6 +814,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addPresentCopiedUrl => '链接已复制';
 
   @override
+  String get addPresentFallbackTitle => '收不到邮件？';
+
+  @override
+  String get addMoveInButton => '把验证器移到本设备';
+
+  @override
+  String get addMoveInBlurb => 'Steam 会向该账户邮箱发送验证码，无需 15 天交易冷却。';
+
+  @override
+  String get addMoveInSending => '正在发送验证码…';
+
+  @override
+  String get addMoveInCodePrompt => '请输入 Steam 发到你邮箱的验证码';
+
+  @override
+  String get addMoveInWarn =>
+      '确认后：旧手机上的验证器会立即失效，旧的撤销代码（Rxxxxx）作废并换发新的。此操作不可撤销。';
+
+  @override
+  String get addMoveInConfirm => '移到本设备';
+
+  @override
+  String get addMoveInDone => '验证器已移到本设备。';
+
+  @override
+  String get addErrBadChallengeCode => '验证码不正确，请核对邮件后重试。';
+
+  @override
+  String addMoveInSaveFailed(String code, String secret) {
+    return '验证器已迁移成功，但 AVA 未能把它保存到本设备。旧验证器已失效，以下是仅有的副本——关闭本页前请立即抄写。\n\n撤销代码：$code\n\n密钥：$secret';
+  }
+
+  @override
+  String get addMoveInCopySecrets => '复制';
+
+  @override
+  String get addMoveInCopied => '已复制';
+
+  @override
   String get commonRetry => '重试';
 
   @override

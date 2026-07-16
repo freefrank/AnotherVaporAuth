@@ -301,6 +301,22 @@
   "addPresentStep3": "Lost access to both? Use Steam Support → Help → Steam Guard Mobile Authenticator.",
   "addPresentManageUrl": "store.steampowered.com/twofactor/manage",
   "addPresentCopiedUrl": "Link copied",
+  "addPresentFallbackTitle": "Can't receive the email?",
+
+  "addMoveInButton": "Move the authenticator to this device",
+  "addMoveInBlurb": "Steam will email this account a code. No 15-day trade hold.",
+  "addMoveInSending": "Sending the code…",
+  "addMoveInCodePrompt": "Enter the code Steam emailed you",
+  "addMoveInWarn": "Once you confirm: the authenticator on your old phone stops working immediately, and your old revocation code (Rxxxxx) is replaced by a new one. This cannot be undone.",
+  "addMoveInConfirm": "Move it here",
+  "addMoveInDone": "Authenticator moved to this device.",
+  "addErrBadChallengeCode": "That code isn't right. Check the email and try again.",
+  "addMoveInSaveFailed": "The authenticator moved to this account, but AVA could NOT save it to this device. Your old authenticator is already dead, so these are the only copies — write them down NOW before closing this screen.\n\nRevocation code: {code}\n\nSecret: {secret}",
+  "@addMoveInSaveFailed": {
+    "placeholders": { "code": { "type": "String" }, "secret": { "type": "String" } }
+  },
+  "addMoveInCopySecrets": "Copy",
+  "addMoveInCopied": "Copied",
   "commonRetry": "Retry",
   "commonCopy": "Copy link",
   "commonRefresh": "Refresh",

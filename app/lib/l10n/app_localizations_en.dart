@@ -856,6 +856,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addPresentCopiedUrl => 'Link copied';
 
   @override
+  String get addPresentFallbackTitle => 'Can\'t receive the email?';
+
+  @override
+  String get addMoveInButton => 'Move the authenticator to this device';
+
+  @override
+  String get addMoveInBlurb =>
+      'Steam will email this account a code. No 15-day trade hold.';
+
+  @override
+  String get addMoveInSending => 'Sending the code…';
+
+  @override
+  String get addMoveInCodePrompt => 'Enter the code Steam emailed you';
+
+  @override
+  String get addMoveInWarn =>
+      'Once you confirm: the authenticator on your old phone stops working immediately, and your old revocation code (Rxxxxx) is replaced by a new one. This cannot be undone.';
+
+  @override
+  String get addMoveInConfirm => 'Move it here';
+
+  @override
+  String get addMoveInDone => 'Authenticator moved to this device.';
+
+  @override
+  String get addErrBadChallengeCode =>
+      'That code isn\'t right. Check the email and try again.';
+
+  @override
+  String addMoveInSaveFailed(String code, String secret) {
+    return 'The authenticator moved to this account, but AVA could NOT save it to this device. Your old authenticator is already dead, so these are the only copies — write them down NOW before closing this screen.\n\nRevocation code: $code\n\nSecret: $secret';
+  }
+
+  @override
+  String get addMoveInCopySecrets => 'Copy';
+
+  @override
+  String get addMoveInCopied => 'Copied';
+
+  @override
   String get commonRetry => 'Retry';
 
   @override
