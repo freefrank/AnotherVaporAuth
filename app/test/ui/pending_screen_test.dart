@@ -1,12 +1,15 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:ava/l10n/app_localizations.dart';
 import 'package:ava/src/app/providers.dart';
 import 'package:ava/src/app/theme.dart';
+import 'package:ava/src/core/models/manifest.dart';
 import 'package:ava/src/core/models/session_data.dart';
 import 'package:ava/src/core/models/steam_guard_account.dart';
 import 'package:ava/src/core/proto/protobuf_wire.dart';
 import 'package:ava/src/services/steam_api_client.dart';
+import 'package:ava/src/services/storage_provider.dart';
 import 'package:ava/src/ui/pending/offer_card.dart';
 import 'package:ava/src/ui/pending/pending_screen.dart';
 import 'package:ava/src/ui/widgets/hold_button.dart';
@@ -224,6 +227,52 @@ class _FakeApiWalletMismatch extends _FakeApiWithInvite {
         ..writeBool(1, false) // wallet_country_matches
         ..writeBool(2, true) // ip_match
         ..writeVarint(3, 0); // join_restriction
+      return ProtoReader(w.toBytes());
+    }
+    return super.callProtobuf(iface, method,
+        request: request,
+        accessToken: accessToken,
+        useGet: useGet,
+        version: version);
+  }
+}
+
+/// First getlist replies needauth (→ ConfirmationAuthException), later calls
+/// succeed; GenerateAccessTokenForApp hands out rotated tokens — drives the
+/// confirmations tab's silent-refresh path end to end.
+class _FakeApiNeedAuthOnce extends _FakeApi {
+  bool _authFailed = false;
+
+  @override
+  Future<Map<String, dynamic>> communityGetJson(
+    String path,
+    Map<String, dynamic> query, {
+    Map<String, String>? cookies,
+  }) async {
+    if (path.contains('getlist')) {
+      getlistCalls++;
+      if (!_authFailed) {
+        _authFailed = true;
+        return {'success': false, 'needauth': true};
+      }
+    }
+    return {'success': true, 'conf': []};
+  }
+
+  @override
+  Future<ProtoReader> callProtobuf(
+    String iface,
+    String method, {
+    required ProtoWriter request,
+    String? accessToken,
+    bool useGet = false,
+    int version = 1,
+  }) async {
+    if (method == 'GenerateAccessTokenForApp') {
+      // Field numbers per session_manager.dart: 1=access, 2=refresh.
+      final w = ProtoWriter()
+        ..writeString(1, 'new-access')
+        ..writeString(2, 'new-refresh');
       return ProtoReader(w.toBytes());
     }
     return super.callProtobuf(iface, method,
@@ -525,6 +574,76 @@ void main() {
     // No tab switch, no confirmations refetch.
     expect(find.text('No pending confirmations.'), findsNothing);
     expect(api.getlistCalls, baseline);
+  });
+
+  testWidgets(
+      'silent token refresh persists the rotated tokens into the maFile',
+      (tester) async {
+    final api = _FakeApiNeedAuthOnce();
+    final account = _account();
+    final storage = MemoryStorageProvider();
+    // A valid empty store, so the app controller bootstraps loaded (plain,
+    // unencrypted) and persistSession has a store to write through.
+    storage.files['manifest.json'] = jsonEncode(Manifest().toJson());
+
+    final container = ProviderContainer(overrides: [
+      apiClientProvider.overrideWithValue(api),
+      skinSpecProvider.overrideWith(_NoSkinSpec.new),
+      storageProvider.overrideWithValue(storage),
+      timeAlignerProvider.overrideWithValue(() async {}),
+      tickProvider.overrideWith((ref) => Stream<int>.value(1700000000)),
+    ]);
+    addTearDown(container.dispose);
+    // Bootstrap BEFORE the tab's initState fetch: the settings read is real
+    // IO, and persistSession is a no-op while the store is still loading.
+    // Seed the account into the store too — persistSession only writes
+    // accounts that still exist (a removed account must not be resurrected
+    // by a late token refresh), and the tab's standalone instance exercises
+    // the graft-onto-loaded-instance path.
+    await tester.runAsync(() async {
+      await container.read(appControllerProvider.future);
+      await container
+          .read(appControllerProvider.notifier)
+          .importMaFile(jsonEncode(account.toJson()));
+    });
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          theme: buildAvaTheme(AvaThemeVariant.neon),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: PendingScreen(account: account),
+        ),
+      ),
+    );
+    // Bounded settle loop instead of pumpAndSettle: the bootstrapped app
+    // controller never fully settles, and the store's write-lock future was
+    // created in the runAsync (real) zone — its completion only propagates
+    // on real event-loop turns, so interleave real waits with pumps.
+    final maFileName = '${account.session.steamId}.maFile';
+    for (var i = 0;
+        i < 10 &&
+            !(storage.files[maFileName]?.contains('new-refresh') ?? false);
+        i++) {
+      await tester.pump();
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)));
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+
+    // needauth → token exchange → retry succeeded.
+    expect(api.getlistCalls, 2);
+    expect(account.session.refreshToken, 'new-refresh');
+    // The regression: store.save() wrote only manifest.json — the renewed
+    // (rotated!) tokens must land in the account payload itself.
+    final maFile = storage.files['${account.session.steamId}.maFile'];
+    expect(maFile, isNotNull,
+        reason: 'the token renewal must persist the account payload');
+    expect(maFile, contains('new-refresh'));
+    expect(maFile, contains('new-access'));
   });
 
   testWidgets('accept exception shows error and does not wedge the tab',

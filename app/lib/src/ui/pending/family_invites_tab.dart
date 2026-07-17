@@ -91,6 +91,10 @@ class FamilyInvitesTabState extends ConsumerState<FamilyInvitesTab>
   }
 
   Future<FamilyUserState> _fetchWithAutoRefresh() async {
+    // Captured up front: `ref` on a disposed State throws, and the renewed
+    // (possibly rotated) refresh token must be persisted even if this tab is
+    // gone by the time the exchange returns.
+    final controller = ref.read(appControllerProvider.notifier);
     final client = ref.read(familyGroupsClientProvider);
     try {
       return await client.forUser(widget.account);
@@ -98,9 +102,7 @@ class FamilyInvitesTabState extends ConsumerState<FamilyInvitesTab>
       final refreshed = await SessionManager(ref.read(apiClientProvider))
           .refresh(widget.account.session);
       if (!refreshed) rethrow;
-      if (mounted) {
-        await ref.read(appControllerProvider).value?.store.save();
-      }
+      await controller.persistSession(widget.account);
       return await client.forUser(widget.account);
     }
   }

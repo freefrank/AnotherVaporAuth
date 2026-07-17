@@ -49,6 +49,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get resetVaultConfirm => '全部删除并重置';
 
   @override
+  String get storeErrorTitle => '本地数据无法读取';
+
+  @override
+  String get storeErrorBody =>
+      'AVA 的本地账户数据库（manifest.json）缺失或损坏。写入被中断或恢复不完整都可能导致此问题。请先重试；若持续失败，可重置后重新导入你的 maFile 备份。';
+
+  @override
+  String get storeRepair => '尝试修复';
+
+  @override
+  String storeActionFailed(String error) {
+    return '操作失败：$error';
+  }
+
+  @override
   String get pinSetupTitle => '设置解锁 PIN';
 
   @override
@@ -701,6 +716,22 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get importDuplicateTitle => '账户已存在';
+
+  @override
+  String importDuplicateBody(String name) {
+    return '该 maFile 对应的账户 $name 已在本设备上。要用导入的文件覆盖现有账户吗？文件中未包含的缓存头像、已存密码与现有会话会被保留。';
+  }
+
+  @override
+  String importDuplicateBodyUnreadable(String name) {
+    return '该 maFile 对应的账户 $name 已在本设备上，但其本地数据已无法读取。导入将完全替换它。';
+  }
+
+  @override
+  String get importDuplicateOverwrite => '覆盖';
+
+  @override
   String get importSessionDeadTitle => '激活该账户的会话？';
 
   @override
@@ -839,6 +870,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addMoveInDone => '验证器已移到本设备。';
 
   @override
+  String get addMoveInPopBlocked => '正在迁移令牌，请稍候。';
+
+  @override
   String get addErrBadChallengeCode => '验证码不正确，请核对邮件后重试。';
 
   @override
@@ -851,6 +885,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get addMoveInCopied => '已复制';
+
+  @override
+  String get moveInRescueDismiss => '我已保存——关闭';
+
+  @override
+  String get moveInRescueDismissTitle => '丢弃这些密钥？';
+
+  @override
+  String get moveInRescueDismissBody => 'AVA 没有其他副本。若尚未抄下撤销代码与密钥，你将永久失去这个验证器。';
+
+  @override
+  String get moveInRescueDismissConfirm => '我已保存';
 
   @override
   String get commonRetry => '重试';
@@ -1030,6 +1076,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get marketListedDone => '已上架并确认。';
 
   @override
+  String marketListedPartial(int listed, int total) {
+    return '已上架 $listed/$total 件（其余失败）——如有待确认项请在确认页完成。';
+  }
+
+  @override
+  String marketListedSessionExpired(int listed, int total) {
+    return '已上架 $listed/$total 件后会话过期——请重新登录并完成确认。';
+  }
+
+  @override
+  String marketConfirmPartial(int ok, int total) {
+    return '已上架——已确认 $ok/$total，其余请在确认页完成。';
+  }
+
+  @override
   String get marketAutoConfirm => '上架后自动确认';
 
   @override
@@ -1042,6 +1103,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String marketListFailed(String error) {
     return '上架失败：$error';
   }
+
+  @override
+  String get marketInvalidPrice => '请输入有效价格。';
 
   @override
   String get marketCancel => '撤销在售';

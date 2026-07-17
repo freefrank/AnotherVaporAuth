@@ -14,15 +14,26 @@ import 'widgets/stepper3.dart';
 class AddAuthenticatorScreen extends ConsumerStatefulWidget {
   final SessionData session;
   final String? password; // saved to the new account for auto-refresh, if given
-  const AddAuthenticatorScreen(
-      {super.key, required this.session, this.password});
+  const AddAuthenticatorScreen({
+    super.key,
+    required this.session,
+    this.password,
+  });
 
   @override
   ConsumerState<AddAuthenticatorScreen> createState() =>
       _AddAuthenticatorScreenState();
 }
 
-enum _Step { working, needPhone, finalize, done, failed, present, challengeCode }
+enum _Step {
+  working,
+  needPhone,
+  finalize,
+  done,
+  failed,
+  present,
+  challengeCode,
+}
 
 class _AddAuthenticatorScreenState
     extends ConsumerState<AddAuthenticatorScreen> {
@@ -35,6 +46,12 @@ class _AddAuthenticatorScreenState
   _Step _step = _Step.working;
   String? _message;
   bool _busy = false;
+
+  /// True only while [_moveInSubmit]'s moveInContinue call is in flight — the
+  /// one window where Steam may already have swapped the token, so popping
+  /// would orphan it. Every other step's request persists via pre-captured
+  /// notifiers and stays backable.
+  bool _lockPop = false;
 
   /// True once the account arrived via move-in rather than a fresh link —
   /// only changes which "success" wording the done step shows.
@@ -71,6 +88,9 @@ class _AddAuthenticatorScreenState
 
   Future<void> _add() async {
     final l = AppLocalizations.of(context);
+    // Captured before any await: reading `ref` on a disposed State throws,
+    // and the immediate save below must not depend on it.
+    final controller = ref.read(appControllerProvider.notifier);
     setState(() {
       _busy = true;
       _step = _Step.working;
@@ -89,16 +109,20 @@ class _AddAuthenticatorScreenState
           if (widget.password != null && widget.password!.isNotEmpty) {
             _linker.linkedAccount!.password = widget.password;
           }
-          final saved = await ref
-              .read(appControllerProvider.notifier)
-              .persistAccount(_linker.linkedAccount!);
+          final saved = await controller.persistAccount(_linker.linkedAccount!);
           // If the local save failed we must NOT finalize — Steam Guard would
           // attach to the account while AVA holds no secret to generate codes.
           // Surface the revocation code so the user can remove the not-yet-
           // finalized authenticator and recover.
           if (!saved) {
-            _failWith(l.addErrSaveFailed(
-                _linker.linkedAccount!.revocationCode ?? '—'));
+            // No rescue-screen arming here: finalize was skipped, so nothing
+            // is attached on Steam's side yet — the state is fully
+            // recoverable (remove the pending authenticator, retry). The
+            // rescue takeover's "old authenticator is dead" copy is only
+            // true after a move-in continue or a successful finalize.
+            _failWith(
+              l.addErrSaveFailed(_linker.linkedAccount!.revocationCode ?? '—'),
+            );
             break;
           }
           setState(() {
@@ -184,37 +208,43 @@ class _AddAuthenticatorScreenState
   /// emergency, not an ordinary error.
   Future<void> _moveInSubmit() async {
     final l = AppLocalizations.of(context);
+    // Captured before any await: reading `ref` after unmount throws, and the
+    // save/surfacing below must run even if this route is gone by then.
+    final controller = ref.read(appControllerProvider.notifier);
+    final rescue = ref.read(moveInRescueProvider.notifier);
     setState(() {
       _busy = true;
+      _lockPop = true;
       _message = null;
     });
     try {
       final result = await _linker.moveInContinue(_challenge.text.trim());
-      if (!mounted) return;
       switch (result) {
         case LinkResult.movedIn:
           final account = _linker.linkedAccount!;
           if (widget.password != null && widget.password!.isNotEmpty) {
             account.password = widget.password;
           }
-          final saved = await ref
-              .read(appControllerProvider.notifier)
-              .persistAccount(account);
-          if (!mounted) return;
+          final saved = await controller.persistAccount(account);
           if (!saved) {
-            // Nothing to undo — the old token is gone either way. All we can
-            // do is put the only surviving copies on screen.
+            final secrets = (
+              code: account.revocationCode ?? '—',
+              secret: account.sharedSecret ?? '—',
+            );
+            // Nothing to undo — the old token is gone either way. Root-level
+            // fallback FIRST: it must exist even if this State is already
+            // disposed (see moveInRescueProvider).
+            rescue.set(secrets);
+            if (!mounted) return;
             setState(() {
               _busy = false;
               _step = _Step.failed;
               _message = null;
-              _fatalSecrets = (
-                code: account.revocationCode ?? '—',
-                secret: account.sharedSecret ?? '—',
-              );
+              _fatalSecrets = secrets;
             });
             break;
           }
+          if (!mounted) return;
           setState(() {
             _busy = false;
             _movedIn = true;
@@ -222,6 +252,7 @@ class _AddAuthenticatorScreenState
           });
           break;
         case LinkResult.badChallengeCode:
+          if (!mounted) return;
           setState(() {
             _busy = false;
             _message = l.addErrBadChallengeCode;
@@ -239,11 +270,18 @@ class _AddAuthenticatorScreenState
       }
     } catch (e) {
       _failWith('$e');
+    } finally {
+      _lockPop = false;
+      if (mounted) setState(() {});
     }
   }
 
   Future<void> _finalize() async {
     final l = AppLocalizations.of(context);
+    // Captured before any await: reading `ref` on a disposed State throws,
+    // and the post-finalize save / rescue-arming must not depend on it.
+    final controller = ref.read(appControllerProvider.notifier);
+    final rescue = ref.read(moveInRescueProvider.notifier);
     final account = _linker.linkedAccount!;
     if (_revocation.text.trim().toUpperCase() !=
         (account.revocationCode ?? '').toUpperCase()) {
@@ -254,9 +292,18 @@ class _AddAuthenticatorScreenState
     try {
       final result = await _linker.finalize(_sms.text.trim());
       if (result == FinalizeResult.success) {
-        await ref
-            .read(appControllerProvider.notifier)
-            .persistAccount(account);
+        final saved = await controller.persistAccount(account);
+        if (!saved) {
+          // Steam Guard is active but nothing reached disk — arm the
+          // root-level fallback BEFORE the mounted-guarded inline error, so
+          // a disposed screen still surfaces the revocation code.
+          rescue.set((
+            code: account.revocationCode ?? '—',
+            secret: account.sharedSecret ?? '—',
+          ));
+          _failWith(l.addErrSaveFailed(account.revocationCode ?? '—'));
+          return;
+        }
         if (!mounted) return;
         setState(() {
           _busy = false;
@@ -300,48 +347,64 @@ class _AddAuthenticatorScreenState
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final showStepper = _step != _Step.working &&
+    final showStepper =
+        _step != _Step.working &&
         _step != _Step.failed &&
         _step != _Step.present &&
         _step != _Step.challengeCode;
-    return Scaffold(
-      appBar: AppBar(title: Text(l.addAuthTitle)),
-      body: ScanlineOverlay(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: SingleChildScrollView(
-              padding: context.rInsets(all: 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (showStepper) ...[
-                    Stepper3(
-                      current: _stepIndex,
-                      labels: [
-                        l.addAuthStepPhone,
-                        l.addAuthStepSms,
-                        l.addAuthStepRevocation,
-                      ],
+    return PopScope(
+      // Only the irreversible move-in window blocks back (see _lockPop) —
+      // every other step may be abandoned; in-flight saves survive unmount
+      // via the pre-captured notifiers.
+      canPop: !_lockPop,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context).addMoveInPopBlocked),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: Text(l.addAuthTitle)),
+        body: ScanlineOverlay(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: SingleChildScrollView(
+                padding: context.rInsets(all: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (showStepper) ...[
+                      Stepper3(
+                        current: _stepIndex,
+                        labels: [
+                          l.addAuthStepPhone,
+                          l.addAuthStepSms,
+                          l.addAuthStepRevocation,
+                        ],
+                      ),
+                      SizedBox(height: context.r(28)),
+                    ],
+                    // Animated horizontal slide between steps.
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      transitionBuilder: (child, anim) => SlideTransition(
+                        position: Tween(
+                          begin: const Offset(0.12, 0),
+                          end: Offset.zero,
+                        ).animate(anim),
+                        child: FadeTransition(opacity: anim, child: child),
+                      ),
+                      child: KeyedSubtree(
+                        key: ValueKey(_step),
+                        child: _buildStep(l),
+                      ),
                     ),
-                    SizedBox(height: context.r(28)),
                   ],
-                  // Animated horizontal slide between steps.
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    transitionBuilder: (child, anim) => SlideTransition(
-                      position: Tween(
-                        begin: const Offset(0.12, 0),
-                        end: Offset.zero,
-                      ).animate(anim),
-                      child: FadeTransition(opacity: anim, child: child),
-                    ),
-                    child: KeyedSubtree(
-                      key: ValueKey(_step),
-                      child: _buildStep(l),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -391,20 +454,27 @@ class _AddAuthenticatorScreenState
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.warning_amber_rounded,
-                      color: t.warn, size: context.r(20)),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: t.warn,
+                    size: context.r(20),
+                  ),
                   SizedBox(width: context.r(10)),
                   Expanded(
-                    child: Text(l.addAuthRevocationWarn(_message ?? ''),
-                        style: TextStyle(color: t.text)),
+                    child: Text(
+                      l.addAuthRevocationWarn(_message ?? ''),
+                      style: TextStyle(color: t.text),
+                    ),
                   ),
                 ],
               ),
             ),
             SizedBox(height: context.r(16)),
-            Text(_linker.activatesByEmail
-                ? l.addAuthEmailPrompt
-                : l.addAuthSmsPrompt),
+            Text(
+              _linker.activatesByEmail
+                  ? l.addAuthEmailPrompt
+                  : l.addAuthSmsPrompt,
+            ),
             SizedBox(height: context.r(8)),
             TextField(
               controller: _sms,
@@ -428,11 +498,16 @@ class _AddAuthenticatorScreenState
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle_outline,
-                size: context.r(48), color: Colors.green),
+            Icon(
+              Icons.check_circle_outline,
+              size: context.r(48),
+              color: Colors.green,
+            ),
             SizedBox(height: context.r(12)),
-            Text(_movedIn ? l.addMoveInDone : l.addAuthLinked,
-                textAlign: TextAlign.center),
+            Text(
+              _movedIn ? l.addMoveInDone : l.addAuthLinked,
+              textAlign: TextAlign.center,
+            ),
             SizedBox(height: context.r(16)),
             FilledButton(
               onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
@@ -443,42 +518,47 @@ class _AddAuthenticatorScreenState
       case _Step.present:
         final t = Theme.of(context).extension<AvaTokens>()!;
         Widget step(int n, String text) => Padding(
-              padding: context.rInsets(bottom: 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: context.r(24),
-                    height: context.r(24),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: t.accent.withValues(alpha: 0.18),
-                      shape: BoxShape.circle,
-                      border:
-                          Border.all(color: t.accent.withValues(alpha: 0.6)),
-                    ),
-                    child: Text('$n',
-                        style: TextStyle(
-                            color: t.accent,
-                            fontWeight: FontWeight.bold,
-                            fontSize: context.r(13))),
+          padding: context.rInsets(bottom: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: context.r(24),
+                height: context.r(24),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: t.accent.withValues(alpha: 0.18),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: t.accent.withValues(alpha: 0.6)),
+                ),
+                child: Text(
+                  '$n',
+                  style: TextStyle(
+                    color: t.accent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: context.r(13),
                   ),
-                  SizedBox(width: context.r(12)),
-                  Expanded(child: Text(text)),
-                ],
+                ),
               ),
-            );
+              SizedBox(width: context.r(12)),
+              Expanded(child: Text(text)),
+            ],
+          ),
+        );
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Icon(Icons.shield_outlined,
-                size: context.r(44), color: t.accent),
+            Icon(Icons.shield_outlined, size: context.r(44), color: t.accent),
             SizedBox(height: context.r(12)),
-            Text(l.addPresentTitle,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: context.r(18), fontWeight: FontWeight.bold)),
+            Text(
+              l.addPresentTitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: context.r(18),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             SizedBox(height: context.r(10)),
             Text(l.addPresentIntro, textAlign: TextAlign.center),
             SizedBox(height: context.r(20)),
@@ -500,9 +580,7 @@ class _AddAuthenticatorScreenState
             // only remove it elsewhere and come back.
             TextButton.icon(
               onPressed: () => setState(() => _showFallback = !_showFallback),
-              icon: Icon(_showFallback
-                  ? Icons.expand_less
-                  : Icons.expand_more),
+              icon: Icon(_showFallback ? Icons.expand_less : Icons.expand_more),
               label: Text(l.addPresentFallbackTitle),
             ),
             if (!_showFallback) SizedBox(height: context.r(4)),
@@ -519,16 +597,20 @@ class _AddAuthenticatorScreenState
                       child: SelectableText(
                         l.addPresentManageUrl,
                         style: TextStyle(
-                            color: t.accent,
-                            decoration: TextDecoration.underline),
+                          color: t.accent,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                     IconButton(
                       tooltip: l.commonCopy,
                       icon: Icon(Icons.copy, size: context.r(18)),
                       onPressed: () async {
-                        await Clipboard.setData(ClipboardData(
-                            text: 'https://${l.addPresentManageUrl}'));
+                        await Clipboard.setData(
+                          ClipboardData(
+                            text: 'https://${l.addPresentManageUrl}',
+                          ),
+                        );
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text(l.addPresentCopiedUrl)),
@@ -570,12 +652,17 @@ class _AddAuthenticatorScreenState
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.warning_amber_rounded,
-                      color: t.warn, size: context.r(20)),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: t.warn,
+                    size: context.r(20),
+                  ),
                   SizedBox(width: context.r(10)),
                   Expanded(
-                    child:
-                        Text(l.addMoveInWarn, style: TextStyle(color: t.text)),
+                    child: Text(
+                      l.addMoveInWarn,
+                      style: TextStyle(color: t.text),
+                    ),
                   ),
                 ],
               ),
@@ -599,10 +686,12 @@ class _AddAuthenticatorScreenState
             ),
             SizedBox(height: context.r(8)),
             TextButton(
-              onPressed: _busy ? null : () => setState(() {
-                    _message = null;
-                    _step = _Step.present;
-                  }),
+              onPressed: _busy
+                  ? null
+                  : () => setState(() {
+                      _message = null;
+                      _step = _Step.present;
+                    }),
               child: Text(l.commonCancel),
             ),
           ],
@@ -618,20 +707,25 @@ class _AddAuthenticatorScreenState
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(Icons.report_problem_outlined,
-                  size: context.r(48), color: Colors.redAccent),
+              Icon(
+                Icons.report_problem_outlined,
+                size: context.r(48),
+                color: Colors.redAccent,
+              ),
               SizedBox(height: context.r(12)),
-              SelectableText(body,
-                  style: TextStyle(color: Colors.redAccent.shade100)),
+              SelectableText(
+                body,
+                style: TextStyle(color: Colors.redAccent.shade100),
+              ),
               SizedBox(height: context.r(16)),
               FilledButton.icon(
                 icon: const Icon(Icons.copy),
                 onPressed: () async {
                   await Clipboard.setData(ClipboardData(text: body));
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l.addMoveInCopied)),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(l.addMoveInCopied)));
                 },
                 label: Text(l.addMoveInCopySecrets),
               ),
@@ -641,11 +735,16 @@ class _AddAuthenticatorScreenState
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline,
-                size: context.r(48), color: Colors.redAccent),
+            Icon(
+              Icons.error_outline,
+              size: context.r(48),
+              color: Colors.redAccent,
+            ),
             SizedBox(height: context.r(12)),
-            Text('${l.commonError}: ${_message ?? ''}',
-                textAlign: TextAlign.center),
+            Text(
+              '${l.commonError}: ${_message ?? ''}',
+              textAlign: TextAlign.center,
+            ),
             SizedBox(height: context.r(16)),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(),

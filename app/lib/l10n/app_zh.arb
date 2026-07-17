@@ -14,6 +14,13 @@
   "resetVaultTitle": "重置加密数据",
   "resetVaultBody": "将删除本机存储的全部账户条目与加密密钥，之后需要重新导入你的 maFile 备份。你的 Steam 账户和已绑定的验证器不受影响。\n\n适用于正确 PIN 一直被拒的情况——通常发生在备份恢复或换机迁移之后：硬件密钥不会离开原设备，恢复出来的数据永远无法解密。\n\n此操作无法撤销。",
   "resetVaultConfirm": "全部删除并重置",
+  "storeErrorTitle": "本地数据无法读取",
+  "storeErrorBody": "AVA 的本地账户数据库（manifest.json）缺失或损坏。写入被中断或恢复不完整都可能导致此问题。请先重试；若持续失败，可重置后重新导入你的 maFile 备份。",
+  "storeRepair": "尝试修复",
+  "storeActionFailed": "操作失败：{error}",
+  "@storeActionFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
   "pinSetupTitle": "设置解锁 PIN",
   "pinSetupPrompt": "用 6 位 PIN 保护 AVA。解锁时输入它（或用指纹）。",
   "pinLabel": "6 位 PIN",
@@ -250,6 +257,16 @@
   "@importFailed": {
     "placeholders": { "error": { "type": "String" } }
   },
+  "importDuplicateTitle": "账户已存在",
+  "importDuplicateBody": "该 maFile 对应的账户 {name} 已在本设备上。要用导入的文件覆盖现有账户吗？文件中未包含的缓存头像、已存密码与现有会话会被保留。",
+  "@importDuplicateBody": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "importDuplicateBodyUnreadable": "该 maFile 对应的账户 {name} 已在本设备上，但其本地数据已无法读取。导入将完全替换它。",
+  "@importDuplicateBodyUnreadable": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "importDuplicateOverwrite": "覆盖",
   "importSessionDeadTitle": "激活该账户的会话？",
   "importSessionDeadBody": "该 maFile 中的 Steam 会话已失效。现在登录即可使用交易确认与登录批准——令牌验证码会自动填写。",
   "importSessionLater": "稍后",
@@ -305,6 +322,7 @@
   "addMoveInWarn": "确认后：旧手机上的验证器会立即失效，旧的撤销代码（Rxxxxx）作废并换发新的。此操作不可撤销。",
   "addMoveInConfirm": "移到本设备",
   "addMoveInDone": "验证器已移到本设备。",
+  "addMoveInPopBlocked": "正在迁移令牌，请稍候。",
   "addErrBadChallengeCode": "验证码不正确，请核对邮件后重试。",
   "addMoveInSaveFailed": "验证器已迁移成功，但 AVA 未能把它保存到本设备。旧验证器已失效，以下是仅有的副本——关闭本页前请立即抄写。\n\n撤销代码：{code}\n\n密钥：{secret}",
   "@addMoveInSaveFailed": {
@@ -312,6 +330,10 @@
   },
   "addMoveInCopySecrets": "复制",
   "addMoveInCopied": "已复制",
+  "moveInRescueDismiss": "我已保存——关闭",
+  "moveInRescueDismissTitle": "丢弃这些密钥？",
+  "moveInRescueDismissBody": "AVA 没有其他副本。若尚未抄下撤销代码与密钥，你将永久失去这个验证器。",
+  "moveInRescueDismissConfirm": "我已保存",
   "commonRetry": "重试",
   "commonCopy": "复制链接",
   "commonRefresh": "刷新",
@@ -372,11 +394,18 @@
   "marketListButton": "确认上架",
   "marketListed": "已上架，去确认完成。",
   "marketListedDone": "已上架并确认。",
+  "marketListedPartial": "已上架 {listed}/{total} 件（其余失败）——如有待确认项请在确认页完成。",
+  "@marketListedPartial": { "placeholders": { "listed": { "type": "int" }, "total": { "type": "int" } } },
+  "marketListedSessionExpired": "已上架 {listed}/{total} 件后会话过期——请重新登录并完成确认。",
+  "@marketListedSessionExpired": { "placeholders": { "listed": { "type": "int" }, "total": { "type": "int" } } },
+  "marketConfirmPartial": "已上架——已确认 {ok}/{total}，其余请在确认页完成。",
+  "@marketConfirmPartial": { "placeholders": { "ok": { "type": "int" }, "total": { "type": "int" } } },
   "marketAutoConfirm": "上架后自动确认",
   "marketQuantity": "数量",
   "marketMax": "最大",
   "marketListFailed": "上架失败：{error}",
   "@marketListFailed": { "placeholders": { "error": { "type": "String" } } },
+  "marketInvalidPrice": "请输入有效价格。",
   "marketCancel": "撤销在售",
   "marketCancelled": "已撤销在售。",
   "marketNoListings": "暂无在售。",

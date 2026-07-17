@@ -14,6 +14,13 @@
   "resetVaultTitle": "Reset encrypted data",
   "resetVaultBody": "This deletes every account entry and encryption key stored on this device; afterwards you re-import your maFile backups. Your Steam accounts and their authenticators are not affected.\n\nUse this when the correct PIN keeps being rejected \u2014 typically after a backup restore or phone migration, since the hardware key never leaves the original device, restored data can never be decrypted.\n\nThis cannot be undone.",
   "resetVaultConfirm": "Delete & reset",
+  "storeErrorTitle": "Stored data can't be read",
+  "storeErrorBody": "AVA's local account database (manifest.json) is missing or corrupt. This can happen after an interrupted write or a partial restore. Retry first; if it keeps failing, reset and re-import your maFile backups.",
+  "storeRepair": "Attempt repair",
+  "storeActionFailed": "Action failed: {error}",
+  "@storeActionFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
   "pinSetupTitle": "Set unlock PIN",
   "pinSetupPrompt": "Protect AVA with a 6-digit PIN. You'll enter it (or your fingerprint) to unlock.",
   "pinLabel": "6-digit PIN",
@@ -255,6 +262,16 @@
   "@importFailed": {
     "placeholders": { "error": { "type": "String" } }
   },
+  "importDuplicateTitle": "Account already exists",
+  "importDuplicateBody": "This maFile is for {name}, which is already on this device. Overwrite the stored account with the imported file? Its cached avatar, saved password, and existing session are kept when the file doesn't include them.",
+  "@importDuplicateBody": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "importDuplicateBodyUnreadable": "This maFile is for {name}, which exists on this device but its stored data can no longer be read. Importing will replace it entirely.",
+  "@importDuplicateBodyUnreadable": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "importDuplicateOverwrite": "Overwrite",
   "importSessionDeadTitle": "Activate this account?",
   "importSessionDeadBody": "The Steam session in this maFile has expired. Sign in now to enable confirmations and login approvals — the Steam Guard code will be filled in automatically.",
   "importSessionLater": "Later",
@@ -310,6 +327,7 @@
   "addMoveInWarn": "Once you confirm: the authenticator on your old phone stops working immediately, and your old revocation code (Rxxxxx) is replaced by a new one. This cannot be undone.",
   "addMoveInConfirm": "Move it here",
   "addMoveInDone": "Authenticator moved to this device.",
+  "addMoveInPopBlocked": "Moving the authenticator — please wait.",
   "addErrBadChallengeCode": "That code isn't right. Check the email and try again.",
   "addMoveInSaveFailed": "The authenticator moved to this account, but AVA could NOT save it to this device. Your old authenticator is already dead, so these are the only copies — write them down NOW before closing this screen.\n\nRevocation code: {code}\n\nSecret: {secret}",
   "@addMoveInSaveFailed": {
@@ -317,6 +335,10 @@
   },
   "addMoveInCopySecrets": "Copy",
   "addMoveInCopied": "Copied",
+  "moveInRescueDismiss": "I saved them — dismiss",
+  "moveInRescueDismissTitle": "Discard these secrets?",
+  "moveInRescueDismissBody": "AVA holds no other copy. If you haven't written down the revocation code and secret, you will permanently lose access to this authenticator.",
+  "moveInRescueDismissConfirm": "I saved them",
   "commonRetry": "Retry",
   "commonCopy": "Copy link",
   "commonRefresh": "Refresh",
@@ -377,11 +399,18 @@
   "marketListButton": "List for sale",
   "marketListed": "Listed — confirm it to finish.",
   "marketListedDone": "Listed and confirmed.",
+  "marketListedPartial": "Listed {listed} of {total} — the rest failed; confirm any pending in Confirmations.",
+  "@marketListedPartial": { "placeholders": { "listed": { "type": "int" }, "total": { "type": "int" } } },
+  "marketListedSessionExpired": "Listed {listed} of {total}, then the session expired — sign in again and confirm them.",
+  "@marketListedSessionExpired": { "placeholders": { "listed": { "type": "int" }, "total": { "type": "int" } } },
+  "marketConfirmPartial": "Listed — {ok} of {total} confirmed; finish the rest in Confirmations.",
+  "@marketConfirmPartial": { "placeholders": { "ok": { "type": "int" }, "total": { "type": "int" } } },
   "marketAutoConfirm": "Auto-confirm the listing",
   "marketQuantity": "Quantity",
   "marketMax": "Max",
   "marketListFailed": "Listing failed: {error}",
   "@marketListFailed": { "placeholders": { "error": { "type": "String" } } },
+  "marketInvalidPrice": "Enter a valid price.",
   "marketCancel": "Cancel listing",
   "marketCancelled": "Listing cancelled.",
   "marketNoListings": "No active listings.",

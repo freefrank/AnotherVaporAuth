@@ -176,6 +176,30 @@ abstract class AppLocalizations {
   /// **'Delete & reset'**
   String get resetVaultConfirm;
 
+  /// No description provided for @storeErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored data can\'t be read'**
+  String get storeErrorTitle;
+
+  /// No description provided for @storeErrorBody.
+  ///
+  /// In en, this message translates to:
+  /// **'AVA\'s local account database (manifest.json) is missing or corrupt. This can happen after an interrupted write or a partial restore. Retry first; if it keeps failing, reset and re-import your maFile backups.'**
+  String get storeErrorBody;
+
+  /// No description provided for @storeRepair.
+  ///
+  /// In en, this message translates to:
+  /// **'Attempt repair'**
+  String get storeRepair;
+
+  /// No description provided for @storeActionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Action failed: {error}'**
+  String storeActionFailed(String error);
+
   /// No description provided for @pinSetupTitle.
   ///
   /// In en, this message translates to:
@@ -1388,6 +1412,30 @@ abstract class AppLocalizations {
   /// **'Failed to import: {error}'**
   String importFailed(String error);
 
+  /// No description provided for @importDuplicateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account already exists'**
+  String get importDuplicateTitle;
+
+  /// No description provided for @importDuplicateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This maFile is for {name}, which is already on this device. Overwrite the stored account with the imported file? Its cached avatar, saved password, and existing session are kept when the file doesn\'t include them.'**
+  String importDuplicateBody(String name);
+
+  /// No description provided for @importDuplicateBodyUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'This maFile is for {name}, which exists on this device but its stored data can no longer be read. Importing will replace it entirely.'**
+  String importDuplicateBodyUnreadable(String name);
+
+  /// No description provided for @importDuplicateOverwrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Overwrite'**
+  String get importDuplicateOverwrite;
+
   /// No description provided for @importSessionDeadTitle.
   ///
   /// In en, this message translates to:
@@ -1646,6 +1694,12 @@ abstract class AppLocalizations {
   /// **'Authenticator moved to this device.'**
   String get addMoveInDone;
 
+  /// No description provided for @addMoveInPopBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Moving the authenticator — please wait.'**
+  String get addMoveInPopBlocked;
+
   /// No description provided for @addErrBadChallengeCode.
   ///
   /// In en, this message translates to:
@@ -1669,6 +1723,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copied'**
   String get addMoveInCopied;
+
+  /// No description provided for @moveInRescueDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'I saved them — dismiss'**
+  String get moveInRescueDismiss;
+
+  /// No description provided for @moveInRescueDismissTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard these secrets?'**
+  String get moveInRescueDismissTitle;
+
+  /// No description provided for @moveInRescueDismissBody.
+  ///
+  /// In en, this message translates to:
+  /// **'AVA holds no other copy. If you haven\'t written down the revocation code and secret, you will permanently lose access to this authenticator.'**
+  String get moveInRescueDismissBody;
+
+  /// No description provided for @moveInRescueDismissConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'I saved them'**
+  String get moveInRescueDismissConfirm;
 
   /// No description provided for @commonRetry.
   ///
@@ -2018,6 +2096,24 @@ abstract class AppLocalizations {
   /// **'Listed and confirmed.'**
   String get marketListedDone;
 
+  /// No description provided for @marketListedPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Listed {listed} of {total} — the rest failed; confirm any pending in Confirmations.'**
+  String marketListedPartial(int listed, int total);
+
+  /// No description provided for @marketListedSessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Listed {listed} of {total}, then the session expired — sign in again and confirm them.'**
+  String marketListedSessionExpired(int listed, int total);
+
+  /// No description provided for @marketConfirmPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Listed — {ok} of {total} confirmed; finish the rest in Confirmations.'**
+  String marketConfirmPartial(int ok, int total);
+
   /// No description provided for @marketAutoConfirm.
   ///
   /// In en, this message translates to:
@@ -2041,6 +2137,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Listing failed: {error}'**
   String marketListFailed(String error);
+
+  /// No description provided for @marketInvalidPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid price.'**
+  String get marketInvalidPrice;
 
   /// No description provided for @marketCancel.
   ///

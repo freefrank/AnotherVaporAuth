@@ -10,6 +10,8 @@ import '../../core/market_fees.dart';
 import '../../core/models/confirmation.dart';
 import '../../core/models/steam_guard_account.dart';
 import '../../core/models/steam_item.dart';
+import '../../core/protocol/confirmations_client.dart';
+import '../../services/steam_api_client.dart';
 
 /// The market-listing confirmations in [latest] that are NOT in the
 /// [preExistingCreatorIds] snapshot — i.e. the ones created since the snapshot.
@@ -17,13 +19,39 @@ import '../../core/models/steam_item.dart';
 /// a market confirmation the user already had pending.
 @visibleForTesting
 List<Confirmation> newMarketConfirmations(
-    Set<String> preExistingCreatorIds, List<Confirmation> latest) {
+  Set<String> preExistingCreatorIds,
+  List<Confirmation> latest,
+) {
   return latest
-      .where((c) =>
-          c.type == ConfirmationType.marketListing &&
-          !preExistingCreatorIds.contains(c.creatorId))
+      .where(
+        (c) =>
+            c.type == ConfirmationType.marketListing &&
+            !preExistingCreatorIds.contains(c.creatorId),
+      )
       .toList();
 }
+
+/// Parses a user-entered price into wallet minor units. Either '.' or ',' is
+/// accepted as the decimal separator. Returns null for empty/ambiguous input:
+/// mixed separators ('1.234,56'), a repeated separator ('1,234,567'), or a
+/// separator followed by 3+ digits ('1,234', '1.234' — thousands-looking;
+/// prices carry at most 2 decimals). Ambiguity must surface an error, never a
+/// silently mispriced listing.
+@visibleForTesting
+int? parsePriceToMinor(String s) {
+  final t = s.trim();
+  final seps = t.split('').where((c) => c == '.' || c == ',').length;
+  if (seps > 1) return null;
+  final sep = seps == 0 ? -1 : t.lastIndexOf(RegExp(r'[.,]'));
+  if (sep >= 0 && t.length - sep - 1 >= 3) return null;
+  final v = double.tryParse(t.replaceAll(',', '.'));
+  if (v == null || v <= 0) return null;
+  return (v * 100).round();
+}
+
+/// True only when the whole batch for this listing was actually approved.
+@visibleForTesting
+bool autoConfirmSucceeded(BatchResult r) => r.failed == 0 && r.ok > 0;
 
 /// Bottom sheet to list an inventory item for sale: market price + trend,
 /// two linked price fields (you receive ⇄ buyer pays) computed with Steam's
@@ -62,7 +90,8 @@ class _SellSheetState extends ConsumerState<SellSheet> {
   @override
   void initState() {
     super.initState();
-    _autoConfirm = ref
+    _autoConfirm =
+        ref
             .read(appControllerProvider)
             .value
             ?.store
@@ -82,10 +111,16 @@ class _SellSheetState extends ConsumerState<SellSheet> {
   Future<void> _load() async {
     try {
       final market = ref.read(marketClientProvider);
-      final p = await market.priceOverview(widget.item.appid,
-          widget.item.marketHashName, widget.wallet.currency);
+      final p = await market.priceOverview(
+        widget.item.appid,
+        widget.item.marketHashName,
+        widget.wallet.currency,
+      );
       final h = await market.priceHistory(
-          widget.account, widget.item.appid, widget.item.marketHashName);
+        widget.account,
+        widget.item.appid,
+        widget.item.marketHashName,
+      );
       if (!mounted) return;
       setState(() {
         _price = p;
@@ -99,20 +134,16 @@ class _SellSheetState extends ConsumerState<SellSheet> {
     }
   }
 
-  int _toMinor(String s) {
-    final v = double.tryParse(s.trim().replaceAll(',', '.')) ?? 0;
-    return (v * 100).round();
-  }
-
   String _fromMinor(int m) => (m / 100).toStringAsFixed(2);
 
   void _onReceiveChanged(String s) {
     if (_syncing) return;
     _syncing = true;
-    final minor = _toMinor(s);
+    final minor = parsePriceToMinor(s) ?? 0;
     _buyer.text = minor > 0
         ? _fromMinor(
-            _fees.buyerPays(minor, publisherPct: widget.item.publisherFeePct))
+            _fees.buyerPays(minor, publisherPct: widget.item.publisherFeePct),
+          )
         : '';
     _syncing = false;
   }
@@ -120,18 +151,25 @@ class _SellSheetState extends ConsumerState<SellSheet> {
   void _onBuyerChanged(String s) {
     if (_syncing) return;
     _syncing = true;
-    final minor = _toMinor(s);
+    final minor = parsePriceToMinor(s) ?? 0;
     _receive.text = minor > 0
-        ? _fromMinor(_fees.receiveFromTotal(minor,
-            publisherPct: widget.item.publisherFeePct))
+        ? _fromMinor(
+            _fees.receiveFromTotal(
+              minor,
+              publisherPct: widget.item.publisherFeePct,
+            ),
+          )
         : '';
     _syncing = false;
   }
 
   Future<void> _list() async {
     final l = AppLocalizations.of(context);
-    final minor = _toMinor(_receive.text);
-    if (minor <= 0) return;
+    final minor = parsePriceToMinor(_receive.text) ?? 0;
+    if (minor <= 0) {
+      setState(() => _error = l.marketInvalidPrice);
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
@@ -159,42 +197,107 @@ class _SellSheetState extends ConsumerState<SellSheet> {
       final ids = widget.assetIds.take(_quantity).toList();
       var listed = 0;
       var needsConf = false;
+      var authExpired = false;
+      var consecFails = 0;
       String? failMsg;
       for (final assetId in ids) {
-        final r = await market.sell(widget.account, widget.item, minor,
-            assetId: assetId);
-        if (r.success) {
-          listed++;
-          needsConf = needsConf || r.requiresConfirmation;
-        } else {
-          failMsg = r.message;
+        // One asset failing must not abandon the rest of the batch — but a
+        // stale session fails every remaining asset identically, and three
+        // straight hard failures with no success in between mean the batch
+        // is doomed (network down, Steam erroring): both break out instead
+        // of serially timing out on every remaining asset.
+        try {
+          final r = await market.sell(
+            widget.account,
+            widget.item,
+            minor,
+            assetId: assetId,
+          );
+          if (r.success) {
+            listed++;
+            consecFails = 0;
+            needsConf = needsConf || r.requiresConfirmation;
+          } else {
+            failMsg = r.message;
+          }
+        } on CommunityAuthException {
+          // Mid-batch expiry must not discard the partial-success
+          // accounting: assets already listed are live and need reporting.
+          authExpired = true;
+          break;
+        } on SteamApiException catch (e) {
+          failMsg = e.message.isNotEmpty ? e.message : '$e';
+          if (++consecFails >= 3) break;
         }
       }
       if (!mounted) return;
       if (listed == 0) {
         setState(() {
           _busy = false;
-          _error = failMsg ?? l.commonError;
+          _error = authExpired ? l.sessionExpired : (failMsg ?? l.commonError);
         });
         return;
       }
       // Auto-confirm only the confirmations that appeared for THIS listing.
+      // Pointless on a dead session — every mobileconf call would fail too.
       var autoConfirmedOk = false;
-      if (needsConf && _autoConfirm && preExistingCreatorIds != null) {
-        final latest = await confirmations.fetch(widget.account);
-        final newConfs =
-            newMarketConfirmations(preExistingCreatorIds, latest);
-        if (newConfs.isNotEmpty) {
-          await confirmations.respondMultiple(widget.account, newConfs, true);
-          autoConfirmedOk = true;
+      BatchResult? confirmRes;
+      if (!authExpired &&
+          needsConf &&
+          _autoConfirm &&
+          preExistingCreatorIds != null) {
+        try {
+          final latest = await confirmations.fetch(widget.account);
+          final newConfs = newMarketConfirmations(
+            preExistingCreatorIds,
+            latest,
+          );
+          if (newConfs.isNotEmpty) {
+            final res = await confirmations.respondMultiple(
+              widget.account,
+              newConfs,
+              true,
+            );
+            // "Confirmed" may only be claimed when every confirmation for
+            // this listing actually went through — a silent failure here is
+            // an unconfirmed listing the user believes is live (lost sale).
+            confirmRes = res;
+            autoConfirmedOk = autoConfirmSucceeded(res);
+          }
+        } catch (_) {
+          // The listing itself already succeeded; fall through to the
+          // "confirm it to finish" snackbar instead of an error state.
         }
       }
       if (!mounted) return;
       Navigator.of(context).pop(true);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(needsConf && !autoConfirmedOk
-              ? l.marketListed
-              : l.marketListedDone)));
+      // Truthful reporting: a partial batch or a mid-batch session expiry
+      // must never read as a full success.
+      final String msg;
+      if (authExpired) {
+        msg = l.marketListedSessionExpired(listed, ids.length);
+      } else if (listed < ids.length) {
+        msg = l.marketListedPartial(listed, ids.length);
+      } else if (needsConf && !autoConfirmedOk) {
+        msg = (confirmRes != null && confirmRes.ok > 0)
+            ? l.marketConfirmPartial(
+                confirmRes.ok, confirmRes.ok + confirmRes.failed)
+            : l.marketListed;
+      } else {
+        msg = l.marketListedDone;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+    } on CommunityAuthException {
+      // The session cookie was already stale before anything listed — point
+      // the user at re-auth instead of echoing a raw exception.
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = l.sessionExpired;
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -209,7 +312,7 @@ class _SellSheetState extends ConsumerState<SellSheet> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).extension<AvaTokens>()!;
-    final fmt = [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))];
+    final fmt = [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))];
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Container(
@@ -226,17 +329,23 @@ class _SellSheetState extends ConsumerState<SellSheet> {
             Row(
               children: [
                 if (widget.item.iconUrl.isNotEmpty)
-                  Image.network(widget.item.iconUrl,
-                      width: context.r(48), cacheWidth: context.rCache(48)),
+                  Image.network(
+                    widget.item.iconUrl,
+                    width: context.r(48),
+                    cacheWidth: context.rCache(48),
+                  ),
                 SizedBox(width: context.r(12)),
                 Expanded(
-                  child: Text(widget.item.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                          color: t.text,
-                          fontSize: context.r(15),
-                          fontWeight: FontWeight.bold)),
+                  child: Text(
+                    widget.item.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: t.text,
+                      fontSize: context.r(15),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -247,17 +356,20 @@ class _SellSheetState extends ConsumerState<SellSheet> {
               Row(
                 children: [
                   if (_price?.lowest != null)
-                    Text('${l.marketLowest}: ${_price!.lowest}  ',
-                        style:
-                            TextStyle(color: t.good, fontSize: context.r(13))),
+                    Text(
+                      '${l.marketLowest}: ${_price!.lowest}  ',
+                      style: TextStyle(color: t.good, fontSize: context.r(13)),
+                    ),
                   if (_price?.median != null)
-                    Text('${l.marketMedian}: ${_price!.median}',
-                        style:
-                            TextStyle(color: t.muted, fontSize: context.r(13))),
+                    Text(
+                      '${l.marketMedian}: ${_price!.median}',
+                      style: TextStyle(color: t.muted, fontSize: context.r(13)),
+                    ),
                   if (_price?.lowest == null && _price?.median == null)
-                    Text(l.marketPriceUnavailable,
-                        style:
-                            TextStyle(color: t.muted, fontSize: context.r(12))),
+                    Text(
+                      l.marketPriceUnavailable,
+                      style: TextStyle(color: t.muted, fontSize: context.r(12)),
+                    ),
                 ],
               ),
               if (_history.length >= 2) ...[
@@ -275,19 +387,21 @@ class _SellSheetState extends ConsumerState<SellSheet> {
                         top: 0,
                         right: 0,
                         child: _SparkLabel(
-                            text:
-                                '${l.marketHigh} ${_history.reduce((a, b) => a > b ? a : b).toStringAsFixed(2)}',
-                            color: t.good,
-                            panel: t.panel2),
+                          text:
+                              '${l.marketHigh} ${_history.reduce((a, b) => a > b ? a : b).toStringAsFixed(2)}',
+                          color: t.good,
+                          panel: t.panel2,
+                        ),
                       ),
                       Positioned(
                         bottom: 0,
                         right: 0,
                         child: _SparkLabel(
-                            text:
-                                '${l.marketLow} ${_history.reduce((a, b) => a < b ? a : b).toStringAsFixed(2)}',
-                            color: t.bad,
-                            panel: t.panel2),
+                          text:
+                              '${l.marketLow} ${_history.reduce((a, b) => a < b ? a : b).toStringAsFixed(2)}',
+                          color: t.bad,
+                          panel: t.panel2,
+                        ),
                       ),
                     ],
                   ),
@@ -297,46 +411,71 @@ class _SellSheetState extends ConsumerState<SellSheet> {
             SizedBox(height: context.r(14)),
             Row(
               children: [
-                Expanded(child: _priceField(_receive, l.marketYouReceive, fmt, _onReceiveChanged, t)),
+                Expanded(
+                  child: _priceField(
+                    _receive,
+                    l.marketYouReceive,
+                    fmt,
+                    _onReceiveChanged,
+                    t,
+                  ),
+                ),
                 SizedBox(width: context.r(12)),
-                Expanded(child: _priceField(_buyer, l.marketBuyerPays, fmt, _onBuyerChanged, t)),
+                Expanded(
+                  child: _priceField(
+                    _buyer,
+                    l.marketBuyerPays,
+                    fmt,
+                    _onBuyerChanged,
+                    t,
+                  ),
+                ),
               ],
             ),
             SizedBox(height: context.r(4)),
-            Text(l.marketFeeNote,
-                style: TextStyle(color: t.muted, fontSize: context.r(11))),
+            Text(
+              l.marketFeeNote,
+              style: TextStyle(color: t.muted, fontSize: context.r(11)),
+            ),
             if (widget.assetIds.length > 1)
               Padding(
                 padding: context.rInsets(v: 8),
                 child: Row(
                   children: [
-                    Text('${l.marketQuantity}  ',
-                        style: TextStyle(color: t.text, fontSize: context.r(14))),
+                    Text(
+                      '${l.marketQuantity}  ',
+                      style: TextStyle(color: t.text, fontSize: context.r(14)),
+                    ),
                     IconButton(
                       onPressed: _quantity > 1
                           ? () => setState(() => _quantity--)
                           : null,
                       icon: const Icon(Icons.remove_circle_outline),
                     ),
-                    Text('$_quantity',
-                        style: TextStyle(
-                            color: t.accent,
-                            fontSize: context.r(18),
-                            fontWeight: FontWeight.bold)),
+                    Text(
+                      '$_quantity',
+                      style: TextStyle(
+                        color: t.accent,
+                        fontSize: context.r(18),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     IconButton(
                       onPressed: _quantity < widget.assetIds.length
                           ? () => setState(() => _quantity++)
                           : null,
                       icon: const Icon(Icons.add_circle_outline),
                     ),
-                    Text('/ ${widget.assetIds.length}',
-                        style:
-                            TextStyle(color: t.muted, fontSize: context.r(13))),
+                    Text(
+                      '/ ${widget.assetIds.length}',
+                      style: TextStyle(color: t.muted, fontSize: context.r(13)),
+                    ),
                     const Spacer(),
                     TextButton(
                       onPressed: _quantity < widget.assetIds.length
                           ? () => setState(
-                              () => _quantity = widget.assetIds.length)
+                              () => _quantity = widget.assetIds.length,
+                            )
                           : null,
                       child: Text(l.marketMax),
                     ),
@@ -348,11 +487,12 @@ class _SellSheetState extends ConsumerState<SellSheet> {
               dense: true,
               value: _autoConfirm,
               onChanged: (v) => setState(() => _autoConfirm = v),
-              title: Text(l.marketAutoConfirm,
-                  style: TextStyle(fontSize: context.r(13))),
+              title: Text(
+                l.marketAutoConfirm,
+                style: TextStyle(fontSize: context.r(13)),
+              ),
             ),
-            if (_error != null)
-              Text(_error!, style: TextStyle(color: t.bad)),
+            if (_error != null) Text(_error!, style: TextStyle(color: t.bad)),
             SizedBox(height: context.r(12)),
             FilledButton(
               onPressed: _busy ? null : _list,
@@ -360,7 +500,8 @@ class _SellSheetState extends ConsumerState<SellSheet> {
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : Text(l.marketListButton),
             ),
           ],
@@ -369,8 +510,13 @@ class _SellSheetState extends ConsumerState<SellSheet> {
     );
   }
 
-  Widget _priceField(TextEditingController c, String label,
-      List<TextInputFormatter> fmt, ValueChanged<String> onChanged, AvaTokens t) {
+  Widget _priceField(
+    TextEditingController c,
+    String label,
+    List<TextInputFormatter> fmt,
+    ValueChanged<String> onChanged,
+    AvaTokens t,
+  ) {
     return TextField(
       controller: c,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -393,20 +539,27 @@ class _SparkLabel extends StatelessWidget {
   final String text;
   final Color color;
   final Color panel;
-  const _SparkLabel(
-      {required this.text, required this.color, required this.panel});
+  const _SparkLabel({
+    required this.text,
+    required this.color,
+    required this.panel,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(
-          horizontal: context.r(4), vertical: context.r(1)),
+        horizontal: context.r(4),
+        vertical: context.r(1),
+      ),
       decoration: BoxDecoration(
         color: panel.withValues(alpha: 0.82),
         borderRadius: BorderRadius.circular(3),
       ),
-      child: Text(text,
-          style: TextStyle(color: color, fontSize: context.r(10.5))),
+      child: Text(
+        text,
+        style: TextStyle(color: color, fontSize: context.r(10.5)),
+      ),
     );
   }
 }
@@ -439,15 +592,21 @@ class _Sparkline extends CustomPainter {
       }
     }
     // baseline
-    canvas.drawLine(Offset(0, size.height), Offset(size.width, size.height),
-        Paint()..color = grid..strokeWidth = 1);
+    canvas.drawLine(
+      Offset(0, size.height),
+      Offset(size.width, size.height),
+      Paint()
+        ..color = grid
+        ..strokeWidth = 1,
+    );
     canvas.drawPath(
-        path,
-        Paint()
-          ..color = line
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.6
-          ..strokeJoin = StrokeJoin.round);
+      path,
+      Paint()
+        ..color = line
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6
+        ..strokeJoin = StrokeJoin.round,
+    );
   }
 
   @override

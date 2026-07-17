@@ -10,7 +10,8 @@ import '../../core/models/trade_offer.dart';
 import '../../core/protocol/qr_approval_client.dart'
     show MissingAccessTokenException;
 import '../../services/session_manager.dart';
-import '../../services/steam_api_client.dart' show SteamApiException;
+import '../../services/steam_api_client.dart'
+    show CommunityAuthException, SteamApiException;
 import '../login_screen.dart';
 import 'offer_card.dart';
 
@@ -131,6 +132,10 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
   /// refresh token and retries once (same pattern as ConfirmationsTab's
   /// `_fetchWithAutoRefresh`). Rethrows when the refresh doesn't help.
   Future<TradeOffersPage> _fetchWithAutoRefresh(bool historical) async {
+    // Captured up front: `ref` on a disposed State throws, and the renewed
+    // (possibly rotated) refresh token must be persisted even if this tab is
+    // gone by the time the exchange returns.
+    final controller = ref.read(appControllerProvider.notifier);
     final client = ref.read(tradeOffersClientProvider);
     try {
       return await client.fetch(widget.account, historical: historical);
@@ -138,11 +143,7 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
       final refreshed = await SessionManager(ref.read(apiClientProvider))
           .refresh(widget.account.session);
       if (!refreshed) rethrow;
-      // Guard: the tab may have been disposed while the token refresh was in
-      // flight — reading a disposed ref throws and the save would be lost.
-      if (mounted) {
-        await ref.read(appControllerProvider).value?.store.save();
-      }
+      await controller.persistSession(widget.account);
       return await client.fetch(widget.account, historical: historical);
     }
   }
@@ -232,8 +233,9 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
     final isSent = _seg == _Segment.sent;
     setState(() => _busy = true);
     try {
-      // decline/cancel 自吞异常返回 false,try/finally 只为与 _accept 统一
-      // 姿势,保证 _busy 无论如何都复位。
+      // decline/cancel 把普通异常自吞返回 false;会话过期
+      // (CommunityAuthException) 则抛出,在这里给出重新登录提示。
+      // try/finally 保证 _busy 无论如何都复位。
       final ok = isSent
           ? await client.cancel(widget.account, offer.id)
           : await client.decline(widget.account, offer.id);
@@ -245,6 +247,10 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
       } else {
         messenger
             .showSnackBar(SnackBar(content: Text(l.offerActionFailed('?'))));
+      }
+    } on CommunityAuthException {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text(l.confNeedsLogin)));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

@@ -103,17 +103,17 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
   /// refreshes the access token from the refresh token and retries once. Only
   /// surfaces [ConfirmationAuthException] when there is no usable refresh token.
   Future<List<Confirmation>> _fetchWithAutoRefresh() async {
+    // Captured up front: `ref` on a disposed State throws, and the renewed
+    // (possibly rotated) refresh token must be persisted even if this tab is
+    // gone by the time the exchange returns.
+    final controller = ref.read(appControllerProvider.notifier);
     try {
       return await _client.fetch(widget.account);
     } on ConfirmationAuthException {
       final refreshed = await SessionManager(ref.read(apiClientProvider))
           .refresh(widget.account.session);
       if (!refreshed) rethrow;
-      // Guard: the tab may have been disposed while the token refresh was in
-      // flight — reading a disposed ref throws and the save would be lost.
-      if (mounted) {
-        await ref.read(appControllerProvider).value?.store.save();
-      }
+      await controller.persistSession(widget.account);
       return await _client.fetch(widget.account);
     }
   }

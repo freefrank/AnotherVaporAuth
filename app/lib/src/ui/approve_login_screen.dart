@@ -23,10 +23,13 @@ import 'widgets/scanline_overlay.dart';
 Future<bool> _ensureUsableSession(
     WidgetRef ref, SteamGuardAccount account) async {
   if (!AutoLogin.accessTokenStale(account.session.accessToken)) return true;
+  // Captured before the await: the renewed (possibly rotated) tokens must be
+  // persisted even if the calling widget is gone by the time it returns.
+  final controller = ref.read(appControllerProvider.notifier);
   final outcome = await ref.read(autoLoginProvider).ensureSession(account);
   if (outcome != AutoLoginOutcome.ok) return false;
   // Persist the renewed tokens so the next launch skips the dance.
-  await ref.read(appControllerProvider).value?.store.save();
+  await controller.persistSession(account);
   return true;
 }
 

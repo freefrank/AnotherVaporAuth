@@ -49,6 +49,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resetVaultConfirm => 'Delete & reset';
 
   @override
+  String get storeErrorTitle => 'Stored data can\'t be read';
+
+  @override
+  String get storeErrorBody =>
+      'AVA\'s local account database (manifest.json) is missing or corrupt. This can happen after an interrupted write or a partial restore. Retry first; if it keeps failing, reset and re-import your maFile backups.';
+
+  @override
+  String get storeRepair => 'Attempt repair';
+
+  @override
+  String storeActionFailed(String error) {
+    return 'Action failed: $error';
+  }
+
+  @override
   String get pinSetupTitle => 'Set unlock PIN';
 
   @override
@@ -734,6 +749,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get importDuplicateTitle => 'Account already exists';
+
+  @override
+  String importDuplicateBody(String name) {
+    return 'This maFile is for $name, which is already on this device. Overwrite the stored account with the imported file? Its cached avatar, saved password, and existing session are kept when the file doesn\'t include them.';
+  }
+
+  @override
+  String importDuplicateBodyUnreadable(String name) {
+    return 'This maFile is for $name, which exists on this device but its stored data can no longer be read. Importing will replace it entirely.';
+  }
+
+  @override
+  String get importDuplicateOverwrite => 'Overwrite';
+
+  @override
   String get importSessionDeadTitle => 'Activate this account?';
 
   @override
@@ -882,6 +913,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addMoveInDone => 'Authenticator moved to this device.';
 
   @override
+  String get addMoveInPopBlocked => 'Moving the authenticator — please wait.';
+
+  @override
   String get addErrBadChallengeCode =>
       'That code isn\'t right. Check the email and try again.';
 
@@ -895,6 +929,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addMoveInCopied => 'Copied';
+
+  @override
+  String get moveInRescueDismiss => 'I saved them — dismiss';
+
+  @override
+  String get moveInRescueDismissTitle => 'Discard these secrets?';
+
+  @override
+  String get moveInRescueDismissBody =>
+      'AVA holds no other copy. If you haven\'t written down the revocation code and secret, you will permanently lose access to this authenticator.';
+
+  @override
+  String get moveInRescueDismissConfirm => 'I saved them';
 
   @override
   String get commonRetry => 'Retry';
@@ -1077,6 +1124,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get marketListedDone => 'Listed and confirmed.';
 
   @override
+  String marketListedPartial(int listed, int total) {
+    return 'Listed $listed of $total — the rest failed; confirm any pending in Confirmations.';
+  }
+
+  @override
+  String marketListedSessionExpired(int listed, int total) {
+    return 'Listed $listed of $total, then the session expired — sign in again and confirm them.';
+  }
+
+  @override
+  String marketConfirmPartial(int ok, int total) {
+    return 'Listed — $ok of $total confirmed; finish the rest in Confirmations.';
+  }
+
+  @override
   String get marketAutoConfirm => 'Auto-confirm the listing';
 
   @override
@@ -1089,6 +1151,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String marketListFailed(String error) {
     return 'Listing failed: $error';
   }
+
+  @override
+  String get marketInvalidPrice => 'Enter a valid price.';
 
   @override
   String get marketCancel => 'Cancel listing';

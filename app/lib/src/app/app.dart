@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../services/account_store.dart';
 import '../ui/home_screen.dart';
+import '../ui/move_in_rescue_screen.dart';
 import '../ui/privacy_consent_screen.dart';
 import '../ui/setup_pin_screen.dart';
+import '../ui/store_recovery_screen.dart';
 import '../ui/unlock_screen.dart';
 import '../ui/welcome_screen.dart';
 
@@ -142,10 +145,23 @@ class _Root extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appState = ref.watch(appControllerProvider);
     return appState.when(
+      // Riverpod 3 auto-retries a failed bootstrap with backoff; without this
+      // flag every retry flips the UI back to the spinner and the error
+      // screens below only ever flash between attempts.
+      skipLoadingOnReload: true,
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('$e'))),
+      // A broken manifest gets the guided recovery screen; anything else a
+      // readable error with a retry instead of a bare exception string.
+      error: (e, _) => e is ManifestParseException
+          ? const StoreRecoveryScreen()
+          : _BootErrorScreen(error: e),
       data: (data) {
+        // Move-in save failure: the rescue screen outranks every other gate —
+        // it holds the only copies of a live authenticator's secrets and
+        // needs no store access.
+        final rescue = ref.watch(moveInRescueProvider);
+        if (rescue != null) return MoveInRescueScreen(secrets: rescue);
         // First run: require accepting the Privacy Policy before anything else.
         if (!data.privacyAccepted) return const PrivacyConsentScreen();
         if (data.locked) return const UnlockScreen();
@@ -154,6 +170,36 @@ class _Root extends ConsumerWidget {
         if (data.accounts.isEmpty) return const WelcomeScreen();
         return const HomeScreen();
       },
+    );
+  }
+}
+
+/// Fallback for bootstrap errors with no dedicated recovery path: the error
+/// text stays selectable (so it can be reported) with a retry underneath.
+class _BootErrorScreen extends ConsumerWidget {
+  final Object error;
+  const _BootErrorScreen({required this.error});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SelectableText('$error', textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              OutlinedButton(
+                onPressed: () => ref.invalidate(appControllerProvider),
+                child: Text(l.commonRetry),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

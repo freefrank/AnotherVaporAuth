@@ -96,15 +96,17 @@ class _FamilyGroupScreenState extends ConsumerState<FamilyGroupScreen> {
   /// 会话过期时自动续期并重试一次——与待办三页签同款模式
   /// （family_invites_tab 的 _fetchWithAutoRefresh）。
   Future<T> _withAutoRefresh<T>(Future<T> Function() run) async {
+    // Captured up front: `ref` on a disposed State throws, and the renewed
+    // (possibly rotated) refresh token must be persisted even if this screen
+    // is gone by the time the exchange returns.
+    final controller = ref.read(appControllerProvider.notifier);
     try {
       return await run();
     } catch (_) {
       final refreshed = await SessionManager(ref.read(apiClientProvider))
           .refresh(widget.account.session);
       if (!refreshed) rethrow;
-      if (mounted) {
-        await ref.read(appControllerProvider).value?.store.save();
-      }
+      await controller.persistSession(widget.account);
       return await run();
     }
   }

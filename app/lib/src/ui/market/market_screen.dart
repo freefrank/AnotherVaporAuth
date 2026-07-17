@@ -9,6 +9,7 @@ import '../../core/models/steam_guard_account.dart';
 import '../../core/models/steam_item.dart';
 import '../../core/protocol/inventory_client.dart';
 import '../../services/auto_login.dart';
+import '../../services/steam_api_client.dart' show CommunityAuthException;
 import '../login_screen.dart';
 import 'sell_sheet.dart';
 
@@ -88,6 +89,15 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
       if (!mounted) return;
       setState(() => _overview = ov);
       if (ov.games.isNotEmpty) _selectGame(ov.games.first);
+    } on CommunityAuthException {
+      // The session died between the ensureSession pre-check and the fetch —
+      // same routing as the pre-check failure: sign-in, not a raw exception.
+      if (mounted) {
+        setState(() {
+          _error = AppLocalizations.of(context).sessionExpired;
+          _needsLogin = true;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _error = '$e');
     }
@@ -148,6 +158,15 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
         _lastAssetId = page.lastAssetId;
         _moreItems = page.more;
       });
+    } on CommunityAuthException {
+      // Session died mid-browse: route to the overview's sign-in affordance
+      // instead of echoing a raw exception into the items pane.
+      if (mounted && gen == _loadGen) {
+        setState(() {
+          _error = AppLocalizations.of(context).sessionExpired;
+          _needsLogin = true;
+        });
+      }
     } catch (e) {
       // Keep already-loaded items; surface the error only when there is
       // nothing to show (the scroll listener retries pagination naturally).
@@ -493,8 +512,12 @@ class _MyListingsTabState extends ConsumerState<_MyListingsTab> {
           return const Center(child: CircularProgressIndicator());
         }
         if (snap.hasError) {
+          // A stale session reads as "session expired", not a raw exception;
+          // re-auth lives on the overview, so retry is still the action here.
           return _refreshable(_Centered(
-            text: '${l.commonError}: ${snap.error}',
+            text: snap.error is CommunityAuthException
+                ? l.sessionExpired
+                : '${l.commonError}: ${snap.error}',
             action:
                 TextButton(onPressed: _refresh, child: Text(l.commonRetry)),
           ));
