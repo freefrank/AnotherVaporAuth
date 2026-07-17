@@ -58,6 +58,30 @@
 
 - 设计文档（spec）在 `docs/specs/`，实施计划在 `docs/plans/`（原 `docs/superpowers/` 已并入）。
 
+## 密钥与 .env
+
+- 本地密钥放仓库根 `.env`（git 忽略，权限 600），模板见 `.env.example`。
+  与 `app/android/key.properties` 一样：**不进 git，但会被 `s` 的 rsync 带到镜像**。
+- 目前只有 `SMTP_PASS`（`hi@dotslash.pro`，用于发内测码）。**正本是**
+  `ownCloud/Deployr/mailserver/CREDENTIALS.md` 的 `hi (dotSlash)` 行——那里改了
+  密码，`.env` 要同步改。该文件自己也记着"搭建期密码应轮换"。
+- 需要密码时从上述文件**管道取用**（`PASS=$(...)` → `SMTP_PASS="$PASS" cmd`），
+  不打印明文、不写进对话。
+
+## 内测激活码（beta redeem）
+
+- 码在 Cloudflare D1 `ava-entitlement`（id `6f949ca5-90b5-46d2-8db0-abce6f3eeb19`）
+  的 `beta_testers(code, email, redeemed_by)`；worker 入口 `POST /v1/beta/redeem`。
+- **一码认一台设备**：`redeemedBy` 存单个 device_id，首个兑换者认领；同一设备可
+  重复兑换（重装），**其他设备一律 `code_redeemed`**——与 Play 订阅"四类端各一台"
+  不同。用户换机需人工清 `redeemed_by`。
+- 发码：`posts/zh/recruit/send_beta_codes.py`（`--test` 用假码预览 / `--one` /
+  `--send [start]` 续发）。码**从 `testers-beta-codes.csv` 读，绝不现生成**——码已
+  写进 D1，现生成会发出一批库里不存在的废码。
+- `posts/` 默认进 git，但 `testers*.csv/txt`、`send_beta_*.py` 含真实邮箱（PII）
+  与可用的 Pro 码，已在 `.gitignore` 挡掉；邮件模板只有占位符，可提交。
+- 2026-07-16 已向 50 名内测成员各发一码（`AVA-BETA-` + 8 位 hex）。
+
 ## 硬性约束
 
 - **绝不使用 `flutter install`**(它会先卸载应用,清空 maFiles/keystore 数据)。
@@ -79,3 +103,17 @@
   启动期组件写入行为。
 - 模拟器测试用官方 AVD `ava_test`(emulator-5554),数据可随意处置;
   mock 账户 PIN 123456。
+- **折叠屏上的 AVA 是 Play 版,本地构建永远装不上去**:Play App Signing 用
+  Google 持有的密钥重签名,本地只有 upload key,`install -r` 必然
+  `INSTALL_FAILED_UPDATE_INCOMPATIBLE`,唯一"解法"是卸载=清空真实 maFiles。
+  真机调试改用并存的 dev 副本:debug buildType 已带 `applicationIdSuffix=".dev"`
+  与 label "AVA dev"(release 包名不受影响)。两个图标必须一眼可辨——选错图标
+  就是不可逆操作落到真实账户上。
+- **Steam protobuf 的 `optional bool success` 不可信,别拿它当成功信号**:
+  实测 `RemoveAuthenticatorViaChallengeStart` 成功时返回 eresult=OK + **0 字节
+  空 body**(字段根本不存在),而 Continue 又确实填了 success=true。判断成功一律
+  以 eresult(`callProtobuf` 已在非 OK 时抛异常)或**实际载荷是否存在**为准。
+  字段编号要对照 SteamDatabase/Protobufs 核实,不要照抄第三方实现。
+- 本机 `unzip` 不是标准实现,`-p`/`-l` 会把整个包解开到 cwd(曾把 aab 内容
+  连同 `META-INF/` 签名文件吐进仓库根)。检查 apk/aab 用 `python3 -c
+  "import zipfile..."`(只读),或先 cd 到临时目录。
