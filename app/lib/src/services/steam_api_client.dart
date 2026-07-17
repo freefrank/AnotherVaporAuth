@@ -183,6 +183,8 @@ class SteamApiClient {
       );
       final body = resp.data ?? '';
       dlog('← $path  HTTP ${resp.statusCode}  ${body.length}B');
+      final diagnostic = _gateCommunityStatus(resp, path);
+      if (diagnostic != null) return diagnostic;
       if (body.isEmpty) return const {};
       final decoded = jsonDecode(body);
       // Some write endpoints (e.g. removelisting) reply 200 with a bare `[]` —
@@ -197,6 +199,60 @@ class SteamApiClient {
       dlog('  ✗ $path network: ${e.type.name} ${e.response?.statusCode ?? ''}');
       rethrow;
     }
+  }
+
+  /// Status gate for the community JSON helpers. Returns null for a 2xx (the
+  /// caller parses the body as usual); otherwise resolves the response here:
+  ///  - 401/403, or a redirect to the login page → the session cookie is
+  ///    stale; [CommunityAuthException] so callers route to re-auth instead
+  ///    of parsing the (usually empty) body as a success-shaped `{}`.
+  ///  - any other redirect (e.g. the market/eligibilitycheck bounce) is not
+  ///    an auth failure → [SteamApiException], never a success-shaped `{}`.
+  ///  - other non-2xx: Steam reports many command failures as a 4xx carrying
+  ///    a JSON diagnostic body (sellitem 400 + `{"message":...}`) — a body
+  ///    that decodes to an object is returned so the message reaches the
+  ///    caller (which already handles `success != true`); anything else
+  ///    → [SteamApiException].
+  static Map<String, dynamic>? _gateCommunityStatus(
+      Response<String> resp, String path) {
+    final status = resp.statusCode ?? 0;
+    if (status >= 200 && status < 300) return null;
+    if (status == 401 || status == 403) {
+      dlog('  ✗ $path HTTP $status (stale session?)');
+      throw CommunityAuthException(status, path);
+    }
+    if (status >= 300 && status < 400) {
+      final loc = resp.headers.value('location') ?? '';
+      dlog('  ✗ $path HTTP $status → $loc');
+      if (_isLoginRedirect(loc)) throw CommunityAuthException(status, path);
+      throw SteamApiException(2 /* Fail */, 'HTTP $status', path);
+    }
+    final body = resp.data ?? '';
+    if (body.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(body);
+        if (decoded is Map<String, dynamic>) {
+          dlog('  ⚠ $path HTTP $status with diagnostic body');
+          return decoded;
+        }
+      } on FormatException {
+        // Not JSON — fall through to the plain HTTP failure.
+      }
+    }
+    dlog('  ✗ $path HTTP $status');
+    throw SteamApiException(2 /* Fail */, 'HTTP $status', path);
+  }
+
+  /// Whether a redirect Location targets Steam's login page. Matched on the
+  /// URL path only — a `/login` inside a query string (goto=) must not count.
+  static bool _isLoginRedirect(String location) {
+    if (location.isEmpty) return false;
+    final uri = Uri.tryParse(location);
+    // steammobile://lostauth is Steam's other stale-mobile-session bounce;
+    // its path is empty so the '/login' check alone would miss it.
+    if (uri?.scheme == 'steammobile') return true;
+    final path = uri?.path ?? location;
+    return path.contains('/login');
   }
 
   /// GETs a community URL and returns the raw response body (HTML/text). Used to
@@ -248,6 +304,12 @@ class SteamApiClient {
       // follow off a Steam origin while carrying session cookies — a rogue
       // redirect to an external host would otherwise leak steamLoginSecure.
       url = Uri.parse(url).resolve(loc).toString();
+      // A bounce to the login page means the session cookie is stale — the
+      // caller must route to re-auth, not scrape the login page's HTML.
+      if (_isLoginRedirect(url)) {
+        dlog('  ✗ $path redirected to login (stale session?)');
+        throw CommunityAuthException(resp.statusCode ?? 302, path);
+      }
       if (!isSteamOrigin(url)) {
         dlog('  ✕ refused off-origin redirect $url');
         break;
@@ -255,6 +317,13 @@ class SteamApiClient {
       dlog('  ↪ redirect $url');
       resp = await _dio.get<String>(url, options: opts());
       absorb(resp);
+    }
+    // A bare 401/403 (initial or post-redirect) is a stale session too —
+    // the caller would otherwise scrape an error page for its globals.
+    final status = resp.statusCode ?? 0;
+    if (status == 401 || status == 403) {
+      dlog('  ✗ $path HTTP $status (stale session?)');
+      throw CommunityAuthException(status, path);
     }
     final body = resp.data ?? '';
     dlog('← $path  HTTP ${resp.statusCode}  ${body.length}B');
@@ -288,6 +357,8 @@ class SteamApiClient {
       );
       final body = resp.data ?? '';
       dlog('← $path  HTTP ${resp.statusCode}  ${body.length}B');
+      final diagnostic = _gateCommunityStatus(resp, path);
+      if (diagnostic != null) return diagnostic;
       if (body.isEmpty) return const {};
       final decoded = jsonDecode(body);
       // Some write endpoints (e.g. removelisting) reply 200 with a bare `[]` —
@@ -315,4 +386,16 @@ class SteamApiException implements Exception {
   SteamApiException(this.eresult, this.message, this.method);
   @override
   String toString() => 'SteamApiException($method): $message (eresult=$eresult)';
+}
+
+/// steamcommunity.com rejected the request at the HTTP level — a redirect
+/// (to the login page) or a bare 401/403. The session cookie is stale or
+/// missing; callers must route to re-auth instead of parsing the (usually
+/// empty) body as a success-shaped `{}`.
+class CommunityAuthException implements Exception {
+  final int status;
+  final String path;
+  const CommunityAuthException(this.status, this.path);
+  @override
+  String toString() => 'CommunityAuthException($path: HTTP $status)';
 }

@@ -34,6 +34,7 @@ class _FakeApi extends SteamApiClient {
   }
 
   bool throwOnPost = false;
+  Object? postError;
 
   @override
   Future<Map<String, dynamic>> communityPostJson(
@@ -46,6 +47,7 @@ class _FakeApi extends SteamApiClient {
     lastForm = form;
     lastCookies = cookies;
     lastReferer = referer;
+    if (postError != null) throw postError!;
     if (throwOnPost) throw Exception('network down');
     return postResponse;
   }
@@ -234,6 +236,34 @@ void main() {
       final r = await TradeOffersClient(api).accept(_account(), offer);
       expect(r.success, isFalse);
       expect(r.message, 'needauth');
+    });
+
+    test('accept maps CommunityAuthException to the needauth result', () async {
+      // 401/302→login 在 HTTP 层就被 CommunityAuthException 拦下 —— accept
+      // 必须收敛成与 needauth JSON 回复相同的结果形状,UI 才能路由到重登录
+      // 而不是把 toString 当错误文案展示。
+      final api = _FakeApi()
+        ..postError = const CommunityAuthException(302, '/tradeoffer/1/accept');
+      final offer = TradeOffer(
+        id: '1', partnerAccountId: 1, message: '',
+        state: TradeOfferState.active, isOurOffer: false,
+        itemsToGive: const [], itemsToReceive: const [],
+        timeCreated: 0, timeUpdated: 0, expirationTime: 0, escrowEndDate: 0,
+      );
+      final r = await TradeOffersClient(api).accept(_account(), offer);
+      expect(r.success, isFalse);
+      expect(r.message, 'needauth');
+    });
+
+    test('decline rethrows CommunityAuthException for re-auth routing', () async {
+      // 普通异常自吞返回 false,但 HTTP 层的会话过期必须抛出——tab 靠它
+      // 给出重新登录提示,而不是笼统的"操作失败"。
+      final api = _FakeApi()
+        ..postError = const CommunityAuthException(401, '/tradeoffer/1/decline');
+      await expectLater(
+        TradeOffersClient(api).decline(_account(), '1'),
+        throwsA(isA<CommunityAuthException>()),
+      );
     });
   });
 }

@@ -21,11 +21,17 @@ class ConfirmationsClient {
       ..['tag'] = 'list'
       // Localizes headline/summary/type_name; not part of the signed hash.
       ..['l'] = api.steamLanguage;
-    final json = await api.communityGetJson(
-      '/mobileconf/getlist',
-      query,
-      cookies: _cookies(account),
-    );
+    final Map<String, dynamic> json;
+    try {
+      json = await api.communityGetJson(
+        '/mobileconf/getlist',
+        query,
+        cookies: _cookies(account),
+      );
+    } on CommunityAuthException {
+      // HTTP-level session rejection == needauth: same re-auth path.
+      throw const ConfirmationAuthException();
+    }
     if (json['success'] != true) {
       if (json['needauth'] == true || json['needsauth'] == true) {
         throw const ConfirmationAuthException();

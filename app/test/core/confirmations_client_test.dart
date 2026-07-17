@@ -9,8 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 /// canned JSON response.
 class _FakeApi extends SteamApiClient {
   final Map<String, dynamic> response;
+  final Object? error;
   Map<String, dynamic>? lastQuery;
-  _FakeApi(this.response);
+  _FakeApi(this.response, {this.error});
 
   @override
   Future<Map<String, dynamic>> communityGetJson(
@@ -19,6 +20,7 @@ class _FakeApi extends SteamApiClient {
     Map<String, String>? cookies,
   }) async {
     lastQuery = query;
+    if (error != null) throw error!;
     return response;
   }
 }
@@ -50,6 +52,19 @@ void main() {
 
     test('needauth still maps to ConfirmationAuthException', () async {
       final api = _FakeApi({'success': false, 'needauth': true});
+      await expectLater(
+        ConfirmationsClient(api).fetch(_account(deviceId: 'android:x')),
+        throwsA(isA<ConfirmationAuthException>()),
+      );
+    });
+
+    test('an HTTP-level CommunityAuthException maps to ConfirmationAuth',
+        () async {
+      // A stale session now surfaces as a 302/401 throw from the API layer
+      // instead of a success-shaped {}; fetch must route it to the same
+      // re-auth path as needauth, not the wrong-secret rejection message.
+      final api = _FakeApi(const {},
+          error: const CommunityAuthException(302, '/mobileconf/getlist'));
       await expectLater(
         ConfirmationsClient(api).fetch(_account(deviceId: 'android:x')),
         throwsA(isA<ConfirmationAuthException>()),

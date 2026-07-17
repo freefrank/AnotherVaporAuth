@@ -108,18 +108,26 @@ class TradeOffersClient {
       SteamGuardAccount account, TradeOffer offer) async {
     _requireToken(account);
     final sid = _newSessionId();
-    final json = await api.communityPostJson(
-      '/tradeoffer/${offer.id}/accept',
-      {
-        'sessionid': sid,
-        'serverid': '1',
-        'tradeofferid': offer.id,
-        'partner': '${offer.partnerSteamId}',
-        'captcha': '',
-      },
-      cookies: _cookies(account, sid),
-      referer: '${SteamApiClient.communityBase}/tradeoffer/${offer.id}/',
-    );
+    final Map<String, dynamic> json;
+    try {
+      json = await api.communityPostJson(
+        '/tradeoffer/${offer.id}/accept',
+        {
+          'sessionid': sid,
+          'serverid': '1',
+          'tradeofferid': offer.id,
+          'partner': '${offer.partnerSteamId}',
+          'captcha': '',
+        },
+        cookies: _cookies(account, sid),
+        referer: '${SteamApiClient.communityBase}/tradeoffer/${offer.id}/',
+      );
+    } on CommunityAuthException {
+      // A stale session can also surface at the HTTP layer (401 or a redirect
+      // to the login page) — same routing as the needauth JSON reply below.
+      dlog('tradeoffer accept ${offer.id} -> needauth (http)');
+      return const TradeAcceptResult(success: false, message: 'needauth');
+    }
     // An expired session surfaces as needauth/needsauth — return a
     // recognizable message so the UI can route to re-login.
     if (json['needauth'] == true || json['needsauth'] == true) {
@@ -173,6 +181,11 @@ class TradeOffersClient {
       dlog('tradeoffer $op $offerId -> '
           '${ok ? 'ok' : 'no confirmation in reply'}');
       return ok;
+    } on CommunityAuthException {
+      // HTTP-level stale session: propagate so the tab can point the user at
+      // re-auth — swallowed as `false` it would read as a generic failure
+      // with no sign-in cue, unlike accept()'s needauth mapping.
+      rethrow;
     } catch (e) {
       dlog('tradeoffer $op $offerId failed: $e');
       return false;
