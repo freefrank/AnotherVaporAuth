@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:ava/src/app/providers.dart';
 import 'package:ava/src/core/entitlement.dart';
 import 'package:ava/src/services/entitlement_store.dart';
 import 'package:ava/src/services/storage_provider.dart';
+import 'package:dio/dio.dart';
 // fake_async ships (pinned) via flutter_test's dependency tree.
 // ignore: depend_on_referenced_packages
 import 'package:fake_async/fake_async.dart';
@@ -59,7 +61,42 @@ class _FakeApi implements EntitlementApi {
   Future<String> claimVip(
           {required String deviceId, required String deviceClass}) =>
       _reply();
+
+  @override
+  Future<EntitlementStatus> status(String token) async {
+    if (nextError != null) throw nextError!;
+    throw UnimplementedError('status not stubbed');
+  }
 }
+
+/// Serves one canned HTTP reply so DioEntitlementApi's wire parsing runs
+/// against real dio plumbing (no sockets).
+class _CannedAdapter implements HttpClientAdapter {
+  final int status;
+  final String body;
+  RequestOptions? last;
+  _CannedAdapter(this.status, this.body);
+
+  @override
+  Future<ResponseBody> fetch(RequestOptions options,
+      Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
+    last = options;
+    return ResponseBody.fromString(body, status, headers: {
+      Headers.contentTypeHeader: ['application/json'],
+    });
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+DioEntitlementApi _cannedApi(_CannedAdapter adapter) =>
+    DioEntitlementApi(
+        dio: Dio(BaseOptions(
+          baseUrl: 'https://canned.invalid',
+          validateStatus: (_) => true,
+        ))
+          ..httpClientAdapter = adapter);
 
 void main() {
   final mint = EntitlementMint();
@@ -276,6 +313,96 @@ void main() {
       expect(api.refreshCalls, 1);
       // The raw stays on disk for the daily-timer / next-launch retries.
       expect(await c.read(settingsStoreProvider).loadEntitlementToken(), raw);
+    });
+  });
+
+  group('DioEntitlementApi.status', () {
+    test('parses channel/tier/pro_until and activations incl. this_device',
+        () async {
+      final adapter = _CannedAdapter(200, '''
+        {"channel":"beta","tier":"pro","pro_until":0,"activations":[
+          {"device_class":"android","activated_at":1752700000,"this_device":true},
+          {"device_class":"windows","activated_at":1752700100}
+        ]}''');
+      final s = await _cannedApi(adapter).status('jwt-raw');
+      expect(adapter.last?.path, '/v1/entitlement/status');
+      expect(adapter.last?.data, {'token': 'jwt-raw'});
+      expect(s.channel, 'beta');
+      expect(s.tier, 'pro');
+      expect(s.proUntil, 0);
+      expect(s.activations, hasLength(2));
+      expect(s.activations[0].deviceClass, 'android');
+      expect(s.activations[0].activatedAt,
+          DateTime.fromMillisecondsSinceEpoch(1752700000 * 1000, isUtc: true));
+      expect(s.activations[0].thisDevice, isTrue);
+      expect(s.activations[1].deviceClass, 'windows');
+      expect(s.activations[1].thisDevice, isFalse);
+    });
+
+    test('missing activations parses as empty, not a failure', () async {
+      final adapter =
+          _CannedAdapter(200, '{"channel":"afdian","tier":"pro","pro_until":1}');
+      final s = await _cannedApi(adapter).status('jwt-raw');
+      expect(s.activations, isEmpty);
+      expect(s.proUntil, 1);
+    });
+
+    test('worker refusal surfaces its code', () async {
+      final adapter = _CannedAdapter(403, '{"error":"revoked"}');
+      await expectLater(
+          _cannedApi(adapter).status('jwt-raw'),
+          throwsA(isA<EntitlementApiException>()
+              .having((e) => e.code, 'code', 'revoked')
+              .having((e) => e.isTerminal, 'isTerminal', isTrue)));
+    });
+  });
+
+  group('EntitlementApiException.activations', () {
+    test('code_activation_limit body carries classes + timestamps', () async {
+      final adapter = _CannedAdapter(403, '''
+        {"error":"code_activation_limit","activations":[
+          {"device_class":"android","activated_at":1752700000},
+          {"device_class":"linux","activated_at":1752700200}
+        ]}''');
+      try {
+        await _cannedApi(adapter).redeemBeta(
+            code: 'AVA-BETA-x', deviceId: 'dev-1', deviceClass: 'android');
+        fail('expected EntitlementApiException');
+      } on EntitlementApiException catch (e) {
+        expect(e.code, 'code_activation_limit');
+        expect(e.activations, hasLength(2));
+        expect(e.activations![0].deviceClass, 'android');
+        expect(e.activations![1].deviceClass, 'linux');
+        expect(
+            e.activations![1].activatedAt,
+            DateTime.fromMillisecondsSinceEpoch(1752700200 * 1000,
+                isUtc: true));
+        // Error payloads never identify devices.
+        expect(e.activations!.any((a) => a.thisDevice), isFalse);
+      }
+    });
+
+    test('errors without activations keep the field null; malformed entries '
+        'are dropped, not fatal', () async {
+      final bare = _CannedAdapter(403, '{"error":"code_invalid"}');
+      try {
+        await _cannedApi(bare).redeemBeta(
+            code: 'nope', deviceId: 'dev-1', deviceClass: 'android');
+        fail('expected EntitlementApiException');
+      } on EntitlementApiException catch (e) {
+        expect(e.code, 'code_invalid');
+        expect(e.activations, isNull);
+      }
+
+      final mangled = _CannedAdapter(403,
+          '{"error":"code_activation_limit","activations":[{"device_class":5}]}');
+      try {
+        await _cannedApi(mangled).redeemBeta(
+            code: 'x', deviceId: 'dev-1', deviceClass: 'android');
+        fail('expected EntitlementApiException');
+      } on EntitlementApiException catch (e) {
+        expect(e.activations, isEmpty);
+      }
     });
   });
 

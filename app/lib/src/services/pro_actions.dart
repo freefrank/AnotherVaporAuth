@@ -9,8 +9,9 @@ import 'play_channel.dart';
 /// Outcome of a paywall action, mapped to UI copy by error [code]:
 /// 'canceled' | 'not_configured' | 'no_credential' | 'billing_unavailable' |
 /// 'unavailable' | 'no_subscription' | 'consent' | 'not_earned' | 'no_vip' |
-/// 'order_bound' | 'order_not_found' | 'plan_mismatch' | 'device_revoked' |
-/// 'bad_token' | 'network' | worker codes…
+/// 'order_bound' | 'order_invalid' | 'device_revoked' | 'code_invalid' |
+/// 'code_activation_limit' | 'code_redeemed' (legacy — pre per-class-slot
+/// workers only) | 'bad_token' | 'network' | worker codes…
 class ProResult {
   final bool ok;
   final String? code;

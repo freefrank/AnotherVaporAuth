@@ -1239,6 +1239,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proStatusLifetime => 'Pro · lifetime';
 
   @override
+  String proStatusActivations(Object classes) {
+    return 'Active on: $classes';
+  }
+
+  @override
+  String proStatusClassThisDevice(Object name) {
+    return '$name (this device)';
+  }
+
+  @override
+  String get proDeviceClassAndroid => 'Android';
+
+  @override
+  String get proDeviceClassWindows => 'Windows';
+
+  @override
+  String get proDeviceClassLinux => 'Linux';
+
+  @override
+  String get proDeviceClassMacos => 'macOS';
+
+  @override
   String get paywallTitle => 'AVA Pro';
 
   @override
@@ -1328,6 +1350,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String proErrGeneric(Object code) {
     return 'Failed: $code';
   }
+
+  @override
+  String get proErrCodeInvalid => 'Code not recognized — check it for typos.';
+
+  @override
+  String get proErrCodeRedeemed =>
+      'This code is already active on another device. To move it here, email hi@dotslash.pro.';
+
+  @override
+  String get proErrCodeActivationLimit =>
+      'This code has switched devices too often recently. Try again later, or email hi@dotslash.pro.';
+
+  @override
+  String get proErrRevoked =>
+      'This entitlement is no longer active. If you think this is a mistake, email hi@dotslash.pro.';
 
   @override
   String get privacyOptions => 'Privacy options';

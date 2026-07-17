@@ -2294,6 +2294,42 @@ abstract class AppLocalizations {
   /// **'Pro · lifetime'**
   String get proStatusLifetime;
 
+  /// No description provided for @proStatusActivations.
+  ///
+  /// In en, this message translates to:
+  /// **'Active on: {classes}'**
+  String proStatusActivations(Object classes);
+
+  /// No description provided for @proStatusClassThisDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (this device)'**
+  String proStatusClassThisDevice(Object name);
+
+  /// No description provided for @proDeviceClassAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'Android'**
+  String get proDeviceClassAndroid;
+
+  /// No description provided for @proDeviceClassWindows.
+  ///
+  /// In en, this message translates to:
+  /// **'Windows'**
+  String get proDeviceClassWindows;
+
+  /// No description provided for @proDeviceClassLinux.
+  ///
+  /// In en, this message translates to:
+  /// **'Linux'**
+  String get proDeviceClassLinux;
+
+  /// No description provided for @proDeviceClassMacos.
+  ///
+  /// In en, this message translates to:
+  /// **'macOS'**
+  String get proDeviceClassMacos;
+
   /// No description provided for @paywallTitle.
   ///
   /// In en, this message translates to:
@@ -2461,6 +2497,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed: {code}'**
   String proErrGeneric(Object code);
+
+  /// No description provided for @proErrCodeInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Code not recognized — check it for typos.'**
+  String get proErrCodeInvalid;
+
+  /// No description provided for @proErrCodeRedeemed.
+  ///
+  /// In en, this message translates to:
+  /// **'This code is already active on another device. To move it here, email hi@dotslash.pro.'**
+  String get proErrCodeRedeemed;
+
+  /// No description provided for @proErrCodeActivationLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'This code has switched devices too often recently. Try again later, or email hi@dotslash.pro.'**
+  String get proErrCodeActivationLimit;
+
+  /// No description provided for @proErrRevoked.
+  ///
+  /// In en, this message translates to:
+  /// **'This entitlement is no longer active. If you think this is a mistake, email hi@dotslash.pro.'**
+  String get proErrRevoked;
 
   /// No description provided for @privacyOptions.
   ///

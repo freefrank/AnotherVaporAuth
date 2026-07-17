@@ -27,6 +27,47 @@ Uint8List entitlementPublicKeyBytes() {
   }
 }
 
+/// One occupied device-class slot on an entitlement. The worker only ever
+/// discloses classes + timestamps — never device ids (a code holder must not
+/// learn another holder's device id).
+class EntitlementActivation {
+  /// Worker device_class vocabulary: 'android' | 'windows' | 'linux' | 'macos'.
+  final String deviceClass;
+  final DateTime activatedAt;
+
+  /// Only /v1/entitlement/status sets this (error payloads carry no
+  /// device identity to compare against).
+  final bool thisDevice;
+
+  EntitlementActivation({
+    required this.deviceClass,
+    required this.activatedAt,
+    this.thisDevice = false,
+  });
+
+  /// Null on any shape mismatch — one bad entry must not discard the reply.
+  static EntitlementActivation? tryParse(Object? json) {
+    if (json is! Map) return null;
+    final cls = json['device_class'];
+    final at = json['activated_at'];
+    if (cls is! String || at is! int) return null;
+    return EntitlementActivation(
+      deviceClass: cls,
+      activatedAt: DateTime.fromMillisecondsSinceEpoch(at * 1000, isUtc: true),
+      thisDevice: json['this_device'] == true,
+    );
+  }
+}
+
+List<EntitlementActivation>? _activationsFrom(Map<String, dynamic>? data) {
+  final raw = data?['activations'];
+  if (raw is! List) return null;
+  return raw
+      .map(EntitlementActivation.tryParse)
+      .whereType<EntitlementActivation>()
+      .toList();
+}
+
 /// Non-2xx reply from the worker. [status] 403 means the entitlement is
 /// positively gone (revoked / kicked device / ended) rather than unreachable.
 class EntitlementApiException implements Exception {
@@ -36,12 +77,33 @@ class EntitlementApiException implements Exception {
   /// 'order_bound' | …) — surfaced in UI copy where it matters.
   final String code;
 
-  EntitlementApiException(this.status, this.code);
+  /// Occupied slots, when the error body carries them ('code_activation_limit'
+  /// does — it turns a dead-end refusal into an actionable one).
+  final List<EntitlementActivation>? activations;
+
+  EntitlementApiException(this.status, this.code, {this.activations});
 
   bool get isTerminal => status == 403;
 
   @override
   String toString() => 'EntitlementApiException($status, $code)';
+}
+
+/// Reply of POST /v1/entitlement/status — feeds the paywall's status card.
+class EntitlementStatus {
+  final String channel;
+  final String tier;
+
+  /// Epoch seconds; 0 = lifetime (mirrors the JWT 'pro' claim).
+  final int proUntil;
+  final List<EntitlementActivation> activations;
+
+  EntitlementStatus({
+    required this.channel,
+    required this.tier,
+    required this.proUntil,
+    required this.activations,
+  });
 }
 
 abstract class EntitlementApi {
@@ -76,6 +138,11 @@ abstract class EntitlementApi {
     required String deviceId,
     required String deviceClass,
   });
+
+  /// Which device-class slots the token's entitlement occupies. The worker
+  /// verifies the signature but ignores expiry (same policy as refresh).
+  /// Errors: 'invalid_token' | 'entitlement_ended' | 'revoked'.
+  Future<EntitlementStatus> status(String token);
 }
 
 class DioEntitlementApi implements EntitlementApi {
@@ -143,6 +210,31 @@ class DioEntitlementApi implements EntitlementApi {
         'device_class': deviceClass,
       });
 
+  @override
+  Future<EntitlementStatus> status(String token) async {
+    const path = '/v1/entitlement/status';
+    final resp = await _dio.post<Map<String, dynamic>>(path, data: {
+      'token': token,
+    });
+    final status = resp.statusCode ?? 0;
+    final data = resp.data;
+    if (status >= 200 && status < 300) {
+      final channel = data?['channel'];
+      final tier = data?['tier'];
+      final proUntil = data?['pro_until'];
+      if (channel is! String || tier is! String) {
+        throw EntitlementApiException(status, 'malformed_response');
+      }
+      return EntitlementStatus(
+        channel: channel,
+        tier: tier,
+        proUntil: proUntil is int ? proUntil : 0,
+        activations: _activationsFrom(data) ?? const [],
+      );
+    }
+    throw _error(path, status, data);
+  }
+
   Future<String> _post(String path, Map<String, Object?> body) async {
     final resp = await _dio.post<Map<String, dynamic>>(path, data: body);
     final status = resp.statusCode ?? 0;
@@ -152,10 +244,15 @@ class DioEntitlementApi implements EntitlementApi {
       if (token is String && token.isNotEmpty) return token;
       throw EntitlementApiException(status, 'malformed_response');
     }
+    throw _error(path, status, data);
+  }
+
+  EntitlementApiException _error(
+      String path, int status, Map<String, dynamic>? data) {
     final code = data?['error'];
     dlog('entitlement: $path HTTP $status ${code ?? ''}');
-    throw EntitlementApiException(
-        status, code is String ? code : 'http_$status');
+    return EntitlementApiException(status, code is String ? code : 'http_$status',
+        activations: _activationsFrom(data));
   }
 }
 

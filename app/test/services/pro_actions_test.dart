@@ -90,6 +90,14 @@ class _RecordingApi implements EntitlementApi {
       required String deviceId,
       required String deviceClass}) async {
     calls.add('redeemBeta:$code');
+    if (code == 'capped') {
+      throw EntitlementApiException(403, 'code_activation_limit',
+          activations: [
+            EntitlementActivation(
+                deviceClass: 'android',
+                activatedAt: DateTime.utc(2026, 7, 16)),
+          ]);
+    }
     return 'jwt';
   }
 
@@ -100,6 +108,10 @@ class _RecordingApi implements EntitlementApi {
     if (claimFailures-- > 0) throw EntitlementApiException(404, 'no_vip');
     return 'jwt';
   }
+
+  @override
+  Future<EntitlementStatus> status(String token) =>
+      throw UnimplementedError('status not exercised by ProActions');
 }
 
 void main() {
@@ -203,6 +215,14 @@ void main() {
     final r = await actions.watchRewarded();
     expect(r.code, 'consent');
     expect(api.calls, isEmpty);
+  });
+
+  test('redeemBeta: worker refusals pass through verbatim '
+      '(code_activation_limit)', () async {
+    final r = await actions.redeemBeta('capped');
+    expect(r.ok, isFalse);
+    expect(r.code, 'code_activation_limit');
+    expect(adopted, isEmpty);
   });
 
   test('adopt failure surfaces bad_token', () async {

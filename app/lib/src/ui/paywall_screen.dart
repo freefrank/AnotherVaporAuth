@@ -8,11 +8,54 @@ import '../app/responsive.dart';
 import '../app/theme.dart';
 import '../core/channel.dart';
 import '../core/entitlement.dart';
+import '../services/entitlement_store.dart';
 import '../services/pro_actions.dart';
 
 /// Afdian sponsor page (cn channel; ifdian.net is Afdian's
 /// mainland-reachable domain).
 const kAfdianPageUrl = 'https://ifdian.net/a/anothervaporauth';
+
+/// ProResult / worker error code → user copy. Codes without an arm fall to
+/// proErrGeneric with the raw slug — every code the worker can emit at launch
+/// must stay out of that bucket.
+@visibleForTesting
+String paywallErrorText(AppLocalizations l, String code) => switch (code) {
+      'canceled' => l.proErrCanceled,
+      'network' => l.proErrNetwork,
+      'not_configured' || 'unavailable' => l.proErrNotConfigured,
+      'no_subscription' => l.proErrNoSubscription,
+      'order_bound' => l.proErrOrderBound,
+      // The worker emits order_invalid; the other two names predate it.
+      'order_invalid' || 'order_not_found' || 'plan_mismatch' =>
+        l.proErrOrderNotFound,
+      'device_revoked' => l.proErrDeviceRevoked,
+      'no_vip' || 'not_earned' => l.proErrNoVip,
+      'code_invalid' => l.proErrCodeInvalid,
+      // Pre per-class-slot workers only; kept for rollout overlap.
+      'code_redeemed' => l.proErrCodeRedeemed,
+      'code_activation_limit' => l.proErrCodeActivationLimit,
+      'revoked' || 'entitlement_ended' => l.proErrRevoked,
+      _ => l.proErrGeneric(code),
+    };
+
+/// "已激活：Android · Windows（本机）" — the status card's activation row.
+@visibleForTesting
+String paywallActivationsLine(
+    AppLocalizations l, List<EntitlementActivation> activations) {
+  String name(String cls) => switch (cls) {
+        'android' => l.proDeviceClassAndroid,
+        'windows' => l.proDeviceClassWindows,
+        'linux' => l.proDeviceClassLinux,
+        'macos' => l.proDeviceClassMacos,
+        // Unknown class (newer worker vocabulary): the raw slug beats hiding
+        // an occupied slot.
+        _ => cls,
+      };
+  final parts = activations.map((a) => a.thisDevice
+      ? l.proStatusClassThisDevice(name(a.deviceClass))
+      : name(a.deviceClass));
+  return l.proStatusActivations(parts.join(' · '));
+}
 
 /// AVA Pro paywall: status, perks, and the channel's unlock paths.
 class PaywallScreen extends ConsumerStatefulWidget {
@@ -26,6 +69,29 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   final _orderCtrl = TextEditingController();
   final _betaCtrl = TextEditingController();
   bool _busy = false;
+
+  /// Occupied device-class slots, fetched best-effort when Pro is active.
+  /// Null (fetch pending/failed) renders nothing — never blocks the paywall.
+  List<EntitlementActivation>? _activations;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(_loadActivations);
+  }
+
+  Future<void> _loadActivations() async {
+    try {
+      final token = ref.read(entitlementTokenProvider);
+      if (token == null || ref.read(proStatusProvider) == ProStatus.free) {
+        return;
+      }
+      final status = await ref.read(entitlementApiProvider).status(token.raw);
+      if (mounted) setState(() => _activations = status.activations);
+    } catch (_) {
+      // Informative row only; any failure leaves the card as-is.
+    }
+  }
 
   @override
   void dispose() {
@@ -44,24 +110,12 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(result.ok
             ? l.proResultSuccess
-            : _errorText(l, result.code ?? 'unknown')),
+            : paywallErrorText(l, result.code ?? 'unknown')),
       ));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
-
-  String _errorText(AppLocalizations l, String code) => switch (code) {
-        'canceled' => l.proErrCanceled,
-        'network' => l.proErrNetwork,
-        'not_configured' || 'unavailable' => l.proErrNotConfigured,
-        'no_subscription' => l.proErrNoSubscription,
-        'order_bound' => l.proErrOrderBound,
-        'order_not_found' || 'plan_mismatch' => l.proErrOrderNotFound,
-        'device_revoked' => l.proErrDeviceRevoked,
-        'no_vip' || 'not_earned' => l.proErrNoVip,
-        _ => l.proErrGeneric(code),
-      };
 
   String _statusLine(AppLocalizations l) {
     final token = ref.watch(entitlementTokenProvider);
@@ -102,6 +156,13 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (_activations?.isNotEmpty ?? false)
+                      Padding(
+                        padding: context.rInsets(v: 3),
+                        child: Text(paywallActivationsLine(l, _activations!),
+                            style: TextStyle(
+                                fontSize: context.r(12.5), color: t.muted)),
+                      ),
                     _perk(context, t, l.paywallPerkSkins),
                     if (isPlay) _perk(context, t, l.paywallPerkNoAds),
                     _perk(context, t, l.paywallPerkFuture),

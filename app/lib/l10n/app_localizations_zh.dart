@@ -1188,6 +1188,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get proStatusLifetime => 'Pro · 终身';
 
   @override
+  String proStatusActivations(Object classes) {
+    return '已激活：$classes';
+  }
+
+  @override
+  String proStatusClassThisDevice(Object name) {
+    return '$name（本机）';
+  }
+
+  @override
+  String get proDeviceClassAndroid => 'Android';
+
+  @override
+  String get proDeviceClassWindows => 'Windows';
+
+  @override
+  String get proDeviceClassLinux => 'Linux';
+
+  @override
+  String get proDeviceClassMacos => 'macOS';
+
+  @override
   String get paywallTitle => 'AVA Pro';
 
   @override
@@ -1272,6 +1294,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String proErrGeneric(Object code) {
     return '失败：$code';
   }
+
+  @override
+  String get proErrCodeInvalid => '激活码无效，请检查是否输错。';
+
+  @override
+  String get proErrCodeRedeemed =>
+      '该激活码已在另一台设备上激活。如需换机使用，请发邮件至 hi@dotslash.pro。';
+
+  @override
+  String get proErrCodeActivationLimit =>
+      '该激活码近期更换设备过于频繁，请稍后再试，或联系 hi@dotslash.pro。';
+
+  @override
+  String get proErrRevoked => '该权益已不再有效。如有疑问，请联系 hi@dotslash.pro。';
 
   @override
   String get privacyOptions => '隐私选项';
