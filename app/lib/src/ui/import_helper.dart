@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
+import '../app/theme.dart';
 import '../core/models/steam_guard_account.dart';
 import '../services/session_manager.dart';
 import 'login_screen.dart';
@@ -27,14 +28,57 @@ Future<void> importMaFileFlow(BuildContext context, WidgetRef ref) async {
     final contents = await file.readAsString();
     // Validate it parses as JSON before importing.
     jsonDecode(contents);
+    // Re-importing an already-stored SteamID is a wholesale overwrite of the
+    // stored account — never do that silently; ask first. When the manifest
+    // entry exists but the stored account can't be decoded, the "kept" copy
+    // would be a lie — say the import replaces everything instead.
+    final notifier = ref.read(appControllerProvider.notifier);
+    final dup = notifier.findImportCollision(contents, sourceName: file.name);
+    if (dup != null) {
+      if (!context.mounted) return;
+      final name = (dup.account.accountName ?? dup.account.personaName ?? '')
+          .trim();
+      final label = name.isEmpty ? '${dup.account.steamId}' : name;
+      final t = Theme.of(context).extension<AvaTokens>()!;
+      final overwrite = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l.importDuplicateTitle),
+          content: Text(
+            dup.storedReadable
+                ? l.importDuplicateBody(label)
+                : l.importDuplicateBodyUnreadable(label),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l.commonCancel),
+            ),
+            // Overwrite replaces stored secrets/session — destructive styling.
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: t.bad,
+                foregroundColor: const Color(0xFF06060F),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l.importDuplicateOverwrite),
+            ),
+          ],
+        ),
+      );
+      if (overwrite != true) return; // user kept the existing account
+      if (!context.mounted) return;
+    }
     // The filename is a last-resort SteamID source (e.g. <steamid>.maFile) for
     // exports that drop the Session block.
-    final account = await ref
-        .read(appControllerProvider.notifier)
-        .importMaFile(contents, sourceName: file.name);
+    final account = await notifier.importMaFile(
+      contents,
+      sourceName: file.name,
+    );
     if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l.importSuccess)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.importSuccess)));
     }
     // A maFile's session has usually already died on the source device by the
     // time it's imported here — reactivate it now instead of leaving the user
@@ -48,8 +92,9 @@ Future<void> importMaFileFlow(BuildContext context, WidgetRef ref) async {
     if (context.mounted) await showBackupReminderOnce(context, ref);
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l.importFailed('$e'))));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.importFailed('$e'))));
     }
   }
 }
@@ -60,23 +105,31 @@ Future<void> importMaFileFlow(BuildContext context, WidgetRef ref) async {
 /// decision so the branching is unit-testable without mocking the network
 /// refresh call.
 @visibleForTesting
-bool sessionActivatedSilently(
-        {required bool hasTokens, required bool refreshSucceeded}) =>
-    hasTokens && refreshSucceeded;
+bool sessionActivatedSilently({
+  required bool hasTokens,
+  required bool refreshSucceeded,
+}) => hasTokens && refreshSucceeded;
 
 /// Tries to silently refresh [account]'s session right after import; when
 /// that isn't possible (no tokens in the maFile, or the refresh call failed)
 /// offers to sign in now instead, prefilling [LoginScreen] with the account.
 Future<void> _activateImportedSession(
-    BuildContext context, WidgetRef ref, SteamGuardAccount account) async {
+  BuildContext context,
+  WidgetRef ref,
+  SteamGuardAccount account,
+) async {
   final hasTokens = account.session.hasTokens;
   // Short-circuits: refresh is only attempted (and awaited) when there is a
   // token to refresh in the first place.
-  final refreshSucceeded = hasTokens &&
-      await SessionManager(ref.read(apiClientProvider))
-          .refresh(account.session);
+  final refreshSucceeded =
+      hasTokens &&
+      await SessionManager(
+        ref.read(apiClientProvider),
+      ).refresh(account.session);
   if (sessionActivatedSilently(
-      hasTokens: hasTokens, refreshSucceeded: refreshSucceeded)) {
+    hasTokens: hasTokens,
+    refreshSucceeded: refreshSucceeded,
+  )) {
     // Best-effort: the account is already on disk from the import itself, so
     // a write failure here just means the refreshed token isn't persisted
     // yet — not worth failing the (already successful) import over.
@@ -105,9 +158,12 @@ Future<void> _activateImportedSession(
     ),
   );
   if (signInNow != true || !context.mounted) return;
-  await Navigator.of(context).push(MaterialPageRoute(
+  await Navigator.of(context).push(
+    MaterialPageRoute(
       builder: (_) =>
-          LoginScreen(reason: LoginReason.refresh, account: account)));
+          LoginScreen(reason: LoginReason.refresh, account: account),
+    ),
+  );
 }
 
 /// One-time reminder that authenticator data lives on this device only —
@@ -137,7 +193,9 @@ Future<void> showBackupReminderOnce(BuildContext context, WidgetRef ref) async {
 /// Exports an account as an **unencrypted** `*.maFile` (plain JSON), named after
 /// the account's username, via the system share sheet (save to Files, Drive…).
 Future<void> exportMaFileFlow(
-    BuildContext context, SteamGuardAccount account) async {
+  BuildContext context,
+  SteamGuardAccount account,
+) async {
   final l = AppLocalizations.of(context);
   // The export is a plaintext maFile — warn before it leaves the app. A saved
   // Steam password is stripped from the export unless the user opts in here.
@@ -158,19 +216,20 @@ Future<void> exportMaFileFlow(
                 contentPadding: EdgeInsets.zero,
                 dense: true,
                 value: includePassword,
-                onChanged: (v) =>
-                    setState(() => includePassword = v ?? false),
+                onChanged: (v) => setState(() => includePassword = v ?? false),
                 title: Text(l.exportIncludePassword),
               ),
           ],
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l.commonCancel)),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.commonCancel),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l.commonExport)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.commonExport),
+          ),
         ],
       ),
     ),
@@ -183,8 +242,9 @@ Future<void> exportMaFileFlow(
     final raw = (account.accountName ?? '').trim();
     final base = raw.isEmpty ? '${account.steamId}' : raw;
     final safe = base.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
-    final json = const JsonEncoder.withIndent('  ')
-        .convert(account.toExportJson(includePassword: includePassword));
+    final json = const JsonEncoder.withIndent(
+      '  ',
+    ).convert(account.toExportJson(includePassword: includePassword));
     final dir = await getTemporaryDirectory();
     path = '${dir.path}/$safe.maFile';
     await File(path).writeAsString(json);
@@ -194,8 +254,9 @@ Future<void> exportMaFileFlow(
     await Share.shareXFiles([XFile(path)], subject: '$safe.maFile');
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l.exportFailed('$e'))));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.exportFailed('$e'))));
     }
   } finally {
     // This maFile is plaintext (Steam session token, shared_secret…). Never
