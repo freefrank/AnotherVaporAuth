@@ -195,6 +195,11 @@ final entitlementTokenProvider =
 class EntitlementTokenController extends Notifier<EntitlementToken?> {
   Timer? _refreshTimer;
 
+  /// A stored token that failed local verification (e.g. the embedded
+  /// public key rotated out from under it). Still refreshable: the worker
+  /// verifies with its own key. Cleared only on a definitive 403.
+  String? _pendingRaw;
+
   @override
   EntitlementToken? build() {
     ref.onDispose(() => _refreshTimer?.cancel());
@@ -208,7 +213,14 @@ class EntitlementTokenController extends Notifier<EntitlementToken?> {
     final token = EntitlementToken.tryParse(raw,
         publicKey: ref.read(entitlementPublicKeyProvider));
     state = token;
-    if (token == null) return;
+    if (token == null) {
+      // Stored but locally unverifiable — never strand a paying user:
+      // ask the worker to re-issue; keep the raw for retries.
+      _pendingRaw = raw;
+      await refreshNow();
+      _scheduleDailyRefresh();
+      return;
+    }
     final eval = evaluateEntitlement(token, ref.read(clockProvider)());
     if (eval.needsRefresh) {
       await refreshNow();
@@ -231,18 +243,23 @@ class EntitlementTokenController extends Notifier<EntitlementToken?> {
   }
 
   /// Rotates the current token against the worker. Terminal rejections
-  /// (403: revoked / kicked device / subscription ended) drop the token;
-  /// network failures keep it — the offline grace window covers those.
+  /// (403: revoked / kicked device / subscription ended / not our token)
+  /// drop the token; network failures keep it — the offline grace window
+  /// covers those. Also retries a stored-but-unverifiable raw
+  /// ([_pendingRaw]) so an embedded-key rotation can heal itself.
   Future<void> refreshNow() async {
     final token = state;
-    if (token == null) return;
+    final raw = token?.raw ?? _pendingRaw;
+    if (raw == null) return;
     try {
-      final fresh = await ref
-          .read(entitlementApiProvider)
-          .refresh(token.raw, token.deviceId);
-      await adopt(fresh);
+      final String deviceId =
+          token?.deviceId ?? await ref.read(deviceIdProvider.future);
+      final fresh =
+          await ref.read(entitlementApiProvider).refresh(raw, deviceId);
+      if (await adopt(fresh)) _pendingRaw = null;
     } on EntitlementApiException catch (e) {
       if (e.isTerminal) {
+        _pendingRaw = null;
         state = null;
         await ref.read(settingsStoreProvider).clearEntitlementToken();
       }
@@ -268,10 +285,30 @@ final deviceIdProvider = FutureProvider<String>((ref) async {
   return id;
 });
 
-/// What the UI gates Pro features on.
+/// What the UI gates Pro features on. Schedules its own re-evaluation at
+/// the next moment the verdict can change (entitlement end, refresh
+/// deadline, end of offline grace): a token expiring while the app runs
+/// must flip Pro off without waiting for a restart.
 final proStatusProvider = Provider<ProStatus>((ref) {
   final token = ref.watch(entitlementTokenProvider);
-  return evaluateEntitlement(token, ref.read(clockProvider)()).status;
+  final now = ref.read(clockProvider)();
+  if (token != null) {
+    final boundaries = [
+      if (token.proUntil != null) token.proUntil!,
+      token.expiresAt,
+      token.expiresAt.add(entitlementGrace),
+    ].where((b) => b.isAfter(now));
+    if (boundaries.isNotEmpty) {
+      final next = boundaries.reduce((a, b) => a.isBefore(b) ? a : b);
+      // +1s so the re-evaluation lands strictly past the boundary
+      // (evaluateEntitlement flips exactly at proUntil / after exp+grace).
+      final timer = Timer(
+          next.difference(now) + const Duration(seconds: 1),
+          ref.invalidateSelf);
+      ref.onDispose(timer.cancel);
+    }
+  }
+  return evaluateEntitlement(token, now).status;
 });
 
 /// Native play-flavor layer (billing / ads / sign-in).
@@ -288,6 +325,7 @@ final proActionsProvider = Provider<ProActions>((ref) => ProActions(
       play: ref.read(playChannelProvider),
       deviceId: () => ref.read(deviceIdProvider.future),
       adopt: (raw) => ref.read(entitlementTokenProvider.notifier).adopt(raw),
+      deviceClass: deviceClassForPlatform(),
     ));
 
 /// The skin actually rendered: neon/pixel are Pro perks since 0.90, so free
@@ -425,6 +463,20 @@ class TutorialReplayController extends Notifier<int> {
   int build() => 0;
 
   void bump() => state++;
+}
+
+/// Last-chance copy of a moved-in authenticator's secrets when the local save
+/// failed. Non-null ⇒ the root swaps to MoveInRescueScreen until the user
+/// explicitly confirms they copied them. Held in memory only, never persisted.
+final moveInRescueProvider =
+    NotifierProvider<MoveInRescueController, ({String code, String secret})?>(
+        MoveInRescueController.new);
+
+class MoveInRescueController extends Notifier<({String code, String secret})?> {
+  @override
+  ({String code, String secret})? build() => null;
+  void set(({String code, String secret}) v) => state = v;
+  void clear() => state = null;
 }
 
 /// A 1-second tick used to refresh codes and countdowns.
@@ -590,6 +642,7 @@ class AppController extends AsyncNotifier<AppData> {
       for (final acc in data.accounts) {
         if (acc.steamId == 0) continue;
         var accChanged = false;
+        var migratedLegacyPassword = false;
         // One-time migration: earlier builds stored the password in the keystore;
         // move it into the maFile so it travels with the account.
         if ((acc.password ?? '').isEmpty) {
@@ -597,6 +650,7 @@ class AppController extends AsyncNotifier<AppData> {
           if (legacy != null && legacy.isNotEmpty) {
             acc.password = legacy;
             accChanged = true;
+            migratedLegacyPassword = true;
           }
         }
         // Refresh the token only when it's stale/expiring.
@@ -609,9 +663,20 @@ class AppController extends AsyncNotifier<AppData> {
           }
         }
         if (accChanged) {
-          await data.store
+          final saved = await data.store
               .saveAccount(acc, data.store.encrypted, passKey: data.passKey);
           changed = true;
+          if (saved && migratedLegacyPassword) {
+            // Drop the keystore copy now that the maFile owns the password.
+            // Leaving it would resurrect a password the user later deletes
+            // (login_screen sets account.password = null on opt-out, and
+            // this migration would re-copy it on the next unlock).
+            try {
+              await creds.clear(acc.steamId);
+            } catch (_) {
+              // best-effort: a failed delete just retries next unlock
+            }
+          }
         }
       }
       if (changed && state.value != null) {
@@ -784,6 +849,31 @@ class AppController extends AsyncNotifier<AppData> {
     state = AsyncData(data.copyWith(accounts: accounts));
   }
 
+  /// The already-stored account this maFile would overwrite (same effective
+  /// SteamID after normalization), or null when the import is new. Runs the
+  /// same parse as [importMaFile], so alias-keyed / code-only files match too.
+  /// [storedReadable] is false when only the manifest entry exists (the stored
+  /// payload didn't decode) — then [account] is the parsed incoming file,
+  /// good for a display name but not for merge decisions.
+  /// Throws [MaFileImportException] for unusable input, same as the import.
+  ({SteamGuardAccount account, bool storedReadable})? findImportCollision(
+      String contents,
+      {String? sourceName}) {
+    final data = state.value;
+    if (data == null) return null;
+    final incoming =
+        data.store.parseMaFileContents(contents, sourceName: sourceName);
+    if (!data.store.entries.any((e) => e.steamId == incoming.steamId)) {
+      return null;
+    }
+    for (final a in data.accounts) {
+      if (a.steamId == incoming.steamId) {
+        return (account: a, storedReadable: true);
+      }
+    }
+    return (account: incoming, storedReadable: false);
+  }
+
   /// Imports a maFile and returns the resulting account, so callers can act on
   /// it right away (e.g. reactivating its session) without re-scanning the
   /// freshly reloaded account list.
@@ -793,8 +883,19 @@ class AppController extends AsyncNotifier<AppData> {
     if (data == null) {
       throw StateError('importMaFile called before the store is ready');
     }
-    final account = await data.store
-        .importMaFileContents(contents, data.passKey, sourceName: sourceName);
+    SteamGuardAccount? existing;
+    final incomingId = data.store
+        .parseMaFileContents(contents, sourceName: sourceName)
+        .steamId;
+    for (final a in data.accounts) {
+      if (a.steamId == incomingId) {
+        existing = a;
+        break;
+      }
+    }
+    final account = await data.store.importMaFileContents(
+        contents, data.passKey,
+        sourceName: sourceName, mergeExisting: existing);
     await reload();
     unawaited(refreshAvatars());
     return account;
@@ -848,6 +949,33 @@ class AppController extends AsyncNotifier<AppData> {
     await reload();
     unawaited(refreshAvatars(steamIds: [account.steamId]));
     return true;
+  }
+
+  /// Persists [account]'s renewed session onto the currently-loaded account.
+  /// Unlike [persistAccount] it does not reload state or refetch avatars —
+  /// nothing user-visible changed except the tokens. Safe to call from a
+  /// pre-captured notifier after the calling widget unmounted: only the
+  /// session is grafted onto the live instance, so a stale caller-held copy
+  /// cannot clobber newer non-session fields (deleted password, re-import)
+  /// already on disk. Best-effort: returns false when the store isn't loaded
+  /// or the write failed.
+  Future<bool> persistSession(SteamGuardAccount account) async {
+    final data = state.value;
+    if (data == null) return false;
+    SteamGuardAccount? target;
+    for (final a in data.accounts) {
+      if (a.steamId == account.steamId) {
+        target = a;
+        break;
+      }
+    }
+    // The account may have been removed while the caller's refresh was in
+    // flight — saving the stale caller copy would re-insert the manifest
+    // entry and resurrect the deleted account's secrets on disk.
+    if (target == null) return false;
+    if (!identical(target, account)) target.session = account.session;
+    return data.store
+        .saveAccount(target, data.store.encrypted, passKey: data.passKey);
   }
 
   /// Changes (or sets) the unlock PIN.

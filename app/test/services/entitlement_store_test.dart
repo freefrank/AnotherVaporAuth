@@ -4,6 +4,9 @@ import 'package:ava/src/app/providers.dart';
 import 'package:ava/src/core/entitlement.dart';
 import 'package:ava/src/services/entitlement_store.dart';
 import 'package:ava/src/services/storage_provider.dart';
+// fake_async ships (pinned) via flutter_test's dependency tree.
+// ignore: depend_on_referenced_packages
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -14,6 +17,8 @@ class _FakeApi implements EntitlementApi {
   String? nextToken;
   Object? nextError;
   int refreshCalls = 0;
+  String? lastRefreshToken;
+  String? lastDeviceId;
 
   Future<String> _reply() async {
     if (nextError != null) throw nextError!;
@@ -23,6 +28,8 @@ class _FakeApi implements EntitlementApi {
   @override
   Future<String> refresh(String token, String deviceId) {
     refreshCalls++;
+    lastRefreshToken = token;
+    lastDeviceId = deviceId;
     return _reply();
   }
 
@@ -191,6 +198,179 @@ void main() {
           .adopt(mint.mint(now: now));
       expect(ok, isFalse);
       expect(c.read(proStatusProvider), ProStatus.free);
+    });
+
+    test('a stored token signed by a rotated key is refreshed, not dropped',
+        () async {
+      // A second mint = a different signing key: the stored raw fails local
+      // verification but is still refreshable server-side.
+      final rotated = EntitlementMint();
+      final seed = makeContainer();
+      await seed
+          .read(settingsStoreProvider)
+          .saveEntitlementToken(rotated.mint(now: now));
+      api.nextToken = mint.mint(now: now);
+
+      final c = makeContainer();
+      c.read(entitlementTokenProvider);
+      await settle(c, () => api.refreshCalls > 0);
+      await settle(c, () => c.read(entitlementTokenProvider) != null);
+      expect(c.read(entitlementTokenProvider), isNotNull);
+      expect(c.read(proStatusProvider), ProStatus.pro);
+      // The refresh was bound to this install's device id (no dev claim was
+      // readable from the unverifiable raw).
+      expect(api.lastDeviceId,
+          await c.read(settingsStoreProvider).loadDeviceId());
+      // The persisted token now verifies against the embedded key. adopt()
+      // flips state before its save lands, so poll the file briefly.
+      EntitlementToken? persisted;
+      for (var i = 0; i < 100 && persisted == null; i++) {
+        final raw =
+            await c.read(settingsStoreProvider).loadEntitlementToken();
+        persisted = raw == null
+            ? null
+            : EntitlementToken.tryParse(raw, publicKey: mint.publicKey);
+        if (persisted == null) {
+          await Future<void>.delayed(const Duration(milliseconds: 1));
+        }
+      }
+      expect(persisted, isNotNull);
+    });
+
+    test('terminal 403 on an unverifiable token clears it', () async {
+      final rotated = EntitlementMint();
+      final seed = makeContainer();
+      await seed
+          .read(settingsStoreProvider)
+          .saveEntitlementToken(rotated.mint(now: now));
+      api.nextError = EntitlementApiException(403, 'invalid_token');
+
+      final c = makeContainer();
+      c.read(entitlementTokenProvider);
+      await settle(c, () => api.refreshCalls > 0);
+      var cleared = false;
+      for (var i = 0; i < 100 && !cleared; i++) {
+        cleared =
+            await c.read(settingsStoreProvider).loadEntitlementToken() == null;
+        if (!cleared) {
+          await Future<void>.delayed(const Duration(milliseconds: 1));
+        }
+      }
+      expect(cleared, isTrue);
+      expect(c.read(entitlementTokenProvider), isNull);
+      expect(c.read(proStatusProvider), ProStatus.free);
+    });
+
+    test('network failure keeps the unverifiable raw stored for retry',
+        () async {
+      final rotated = EntitlementMint();
+      final raw = rotated.mint(now: now);
+      final seed = makeContainer();
+      await seed.read(settingsStoreProvider).saveEntitlementToken(raw);
+      api.nextError = Exception('socket');
+
+      final c = makeContainer();
+      c.read(entitlementTokenProvider);
+      await settle(c, () => api.refreshCalls > 0);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      expect(api.refreshCalls, 1);
+      // The raw stays on disk for the daily-timer / next-launch retries.
+      expect(await c.read(settingsStoreProvider).loadEntitlementToken(), raw);
+    });
+  });
+
+  group('deviceClassForPlatform', () {
+    test('maps onto the worker vocabulary', () {
+      expect(
+          const {'android', 'windows', 'linux', 'macos'}
+              .contains(deviceClassForPlatform()),
+          isTrue);
+      if (Platform.isLinux) {
+        expect(deviceClassForPlatform(), 'linux');
+      }
+    });
+
+    test('proActionsProvider sends the platform device class', () {
+      expect(makeContainer().read(proActionsProvider).deviceClass,
+          deviceClassForPlatform());
+    });
+  });
+
+  group('proStatusProvider boundary timer', () {
+    test('exp+grace passing while the app runs flips Pro off', () async {
+      var clock = now; // mutable; the clockProvider closure reads it
+      final c = ProviderContainer(overrides: [
+        storageProvider.overrideWithValue(storage),
+        entitlementApiProvider.overrideWithValue(api),
+        entitlementPublicKeyProvider.overrideWithValue(mint.publicKey),
+        clockProvider.overrideWithValue(() => clock),
+      ]);
+      addTearDown(c.dispose);
+      api.nextError = Exception('offline'); // refresh keeps failing
+      await c.read(entitlementTokenProvider.notifier).adopt(
+          mint.mint(now: now, pro: now.add(const Duration(days: 365))));
+      expect(c.read(proStatusProvider), ProStatus.pro);
+      fakeAsync((async) {
+        c.invalidate(proStatusProvider); // schedule inside this zone
+        final sub = c.listen(proStatusProvider, (_, _) {}); // keep it eager
+        expect(c.read(proStatusProvider), ProStatus.pro);
+        clock = now.add(const Duration(days: 9)); // past exp(24h)+grace(7d)
+        async.elapse(const Duration(days: 9)); // boundary timers fire
+        expect(c.read(proStatusProvider), ProStatus.free);
+        sub.close();
+      });
+    });
+
+    test('still pro inside the grace window', () async {
+      var clock = now;
+      final c = ProviderContainer(overrides: [
+        storageProvider.overrideWithValue(storage),
+        entitlementApiProvider.overrideWithValue(api),
+        entitlementPublicKeyProvider.overrideWithValue(mint.publicKey),
+        clockProvider.overrideWithValue(() => clock),
+      ]);
+      addTearDown(c.dispose);
+      api.nextError = Exception('offline');
+      await c.read(entitlementTokenProvider.notifier).adopt(
+          mint.mint(now: now, pro: now.add(const Duration(days: 365))));
+      fakeAsync((async) {
+        c.invalidate(proStatusProvider);
+        final sub = c.listen(proStatusProvider, (_, _) {});
+        clock = now.add(const Duration(days: 2)); // past exp, inside grace
+        async.elapse(const Duration(days: 2));
+        expect(c.read(proStatusProvider), ProStatus.pro);
+        sub.close();
+      });
+    });
+
+    test('lifetime token flips off after exp+grace; a refresh restores it',
+        () async {
+      var clock = now;
+      final c = ProviderContainer(overrides: [
+        storageProvider.overrideWithValue(storage),
+        entitlementApiProvider.overrideWithValue(api),
+        entitlementPublicKeyProvider.overrideWithValue(mint.publicKey),
+        clockProvider.overrideWithValue(() => clock),
+      ]);
+      addTearDown(c.dispose);
+      api.nextError = Exception('offline');
+      await c
+          .read(entitlementTokenProvider.notifier)
+          .adopt(mint.mint(now: now, lifetime: true));
+      expect(c.read(proStatusProvider), ProStatus.pro);
+      fakeAsync((async) {
+        c.invalidate(proStatusProvider);
+        final sub = c.listen(proStatusProvider, (_, _) {});
+        clock = now.add(const Duration(days: 9));
+        async.elapse(const Duration(days: 9));
+        // Even lifetime needs a refresh past exp+grace (anti-tamper).
+        expect(c.read(proStatusProvider), ProStatus.free);
+        sub.close();
+      });
+      api.nextError = null;
+      api.nextToken = mint.mint(now: clock, lifetime: true);
+      await c.read(entitlementTokenProvider.notifier).refreshNow();
+      expect(c.read(proStatusProvider), ProStatus.pro);
     });
   });
 }

@@ -42,4 +42,42 @@ void main() {
       await tmp.delete(recursive: true);
     }
   });
+
+  test('a burst of saves leaves no temp residue and round-trips every key',
+      () async {
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      final store = SettingsStore(_TmpStorage(tmp.path));
+      await store.saveLocale('zh');
+      await store.saveEntitlementToken('jwt-raw');
+      await store.saveDeviceId('device-abc');
+
+      // Atomic replace must never leave a *.tmp sibling behind — a leftover
+      // could masquerade as data (or signal a torn write path).
+      final names = Directory(tmp.path)
+          .listSync()
+          .map((e) => p.basename(e.path))
+          .toList();
+      expect(names, ['app_settings.json']);
+
+      expect(await store.loadLocale(), 'zh');
+      expect(await store.loadEntitlementToken(), 'jwt-raw');
+      expect(await store.loadDeviceId(), 'device-abc');
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
+
+  test('the entitlement token survives an unrelated save', () async {
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      final store = SettingsStore(_TmpStorage(tmp.path));
+      await store.saveEntitlementToken('t');
+      await store.saveHaptics(false);
+      expect(await store.loadEntitlementToken(), 't');
+      expect(await store.loadHaptics(), isFalse);
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
 }

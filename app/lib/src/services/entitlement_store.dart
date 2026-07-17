@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -157,6 +158,21 @@ class DioEntitlementApi implements EntitlementApi {
         status, code is String ? code : 'http_$status');
   }
 }
+
+/// Maps the running platform onto the worker's device_class vocabulary
+/// (DEVICE_CLASSES in infra/entitlement-worker/src/logic.ts — keep in sync:
+/// 'android' | 'windows' | 'linux' | 'macos'). The class keys the one-
+/// device-per-class slot on the worker, so sending the wrong one consumes
+/// another platform's slot.
+String deviceClassForPlatform() => switch (Platform.operatingSystem) {
+      'android' => 'android',
+      'windows' => 'windows',
+      'linux' => 'linux',
+      'macos' => 'macos',
+      // Unsupported platform (no such build target today): keep the
+      // historical default rather than sending a value the worker rejects.
+      _ => 'android',
+    };
 
 /// Generates the stable per-install device id (crypto-random, hex).
 String newDeviceId() {

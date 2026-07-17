@@ -30,9 +30,12 @@ class SettingsStore {
     try {
       final f = await _file();
       await f.parent.create(recursive: true);
-      await f.writeAsString(jsonEncode(data));
+      // Atomic replace (temp + flush + rename): this file carries the
+      // entitlement JWT and the device id Pro is bound to — a torn write
+      // must never truncate it.
+      await StorageProvider.replaceFileAtomic(f.path, jsonEncode(data));
     } catch (_) {
-      // best-effort; preferences are non-critical
+      // best-effort; a failed write leaves the previous contents intact
     }
   }
 
