@@ -567,12 +567,24 @@ class AccountStore {
   /// which the PIN no longer derives any file key.
   static const int avaIterations = 100;
 
-  void moveEntry(int from, int to) {
-    if (from < 0 || to < 0 || from >= manifest.entries.length) return;
-    if (to >= manifest.entries.length) to = manifest.entries.length - 1;
-    final e = manifest.entries.removeAt(from);
-    manifest.entries.insert(to, e);
-  }
+  /// Moves the entry for [steamId] so it sits just before [beforeSteamId]'s
+  /// entry (or last when null). Keyed by steamId, never by index: the UI list
+  /// is the decryptable subset while `manifest.entries` keeps undecryptable
+  /// entries too (kept-good-subset reads, entries preserved by
+  /// [migrateToVault]), so UI indices don't address the manifest. Only the
+  /// moved entry is touched — every other entry, undecryptable ones included,
+  /// keeps its relative order. Does not save; callers commit via [save].
+  Future<void> moveEntryById(int steamId, {int? beforeSteamId}) =>
+      _locked(() async {
+        final from =
+            manifest.entries.indexWhere((e) => e.steamId == steamId);
+        if (from < 0) return;
+        final entry = manifest.entries.removeAt(from);
+        final to = beforeSteamId == null
+            ? -1
+            : manifest.entries.indexWhere((e) => e.steamId == beforeSteamId);
+        manifest.entries.insert(to < 0 ? manifest.entries.length : to, entry);
+      });
 
   /// Parses and normalizes raw maFile JSON into the account it would import,
   /// resolving the effective SteamID (real, recovered, or synthetic) without

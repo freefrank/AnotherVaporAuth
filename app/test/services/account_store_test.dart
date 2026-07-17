@@ -271,15 +271,79 @@ void main() {
       expect(storage.files.containsKey('666.maFile'), isFalse);
     });
 
-    test('moveEntry reorders', () async {
+    test('moveEntryById reorders before a target and to the end', () async {
       final storage = MemoryStorageProvider();
       final store = AccountStore(storage);
       await store.saveAccount(_account(1, 'a'), false);
       await store.saveAccount(_account(2, 'b'), false);
       await store.saveAccount(_account(3, 'c'), false);
 
-      store.moveEntry(2, 0);
+      await store.moveEntryById(3, beforeSteamId: 1);
       expect(store.entries.map((e) => e.steamId).toList(), [3, 1, 2]);
+
+      // No beforeSteamId → last.
+      await store.moveEntryById(3);
+      expect(store.entries.map((e) => e.steamId).toList(), [1, 2, 3]);
+
+      // Unknown ids: unknown mover is a no-op; unknown target lands last.
+      await store.moveEntryById(99, beforeSteamId: 1);
+      await store.moveEntryById(1, beforeSteamId: 99);
+      expect(store.entries.map((e) => e.steamId).toList(), [2, 3, 1]);
+    });
+
+    test(
+        'moveEntryById skips no undecryptable entries: manifest [A,X,B,C], '
+        'UI drag C→0 keeps X and yields visible [C,A,B]', () async {
+      final storage = MemoryStorageProvider();
+      final store = AccountStore(storage);
+      await store.saveAccount(_account(1, 'a'), false);
+      await store.saveAccount(_account(9, 'x'), false);
+      await store.saveAccount(_account(2, 'b'), false);
+      await store.saveAccount(_account(3, 'c'), false);
+      storage.files['9.maFile'] = 'not json'; // X undecodable, entry kept
+      expect((await store.getAllAccounts()).map((a) => a.steamId), [1, 2, 3]);
+
+      // Drag C before A (what an index-based move would misapply to X).
+      await store.moveEntryById(3, beforeSteamId: 1);
+      await store.save();
+
+      final reloaded = await AccountStore.load(storage);
+      expect(reloaded.entries.map((e) => e.steamId).toList(), [3, 1, 9, 2]);
+      expect(
+          (await reloaded.getAllAccounts()).map((a) => a.steamId), [3, 1, 2]);
+    });
+
+    test(
+        'post-migration [A,B,P,D]: dragging imported D→0 leaves preserved P '
+        'untouched', () async {
+      final storage = MemoryStorageProvider();
+      final store = AccountStore(storage);
+      await store.changeEncryptionKey(null, '123456');
+      for (final (id, name) in [(111, 'alice'), (222, 'bob'), (333, 'pat')]) {
+        await store.saveAccount(_account(id, name), true, passKey: '123456');
+      }
+      final patFile =
+          store.entries.firstWhere((e) => e.steamId == 333).filename;
+      storage.files[patFile] = base64.encode(List.filled(64, 7)); // P corrupt
+      final readable = await store.getAllAccounts(passKey: '123456');
+      expect(readable.map((a) => a.steamId), [111, 222]);
+
+      final dek = VaultCrypto.generateDek();
+      await store.migrateToVault(dek, readable);
+      await store.saveAccount(_account(444, 'dana'), true); // post-migration D
+      expect(store.entries.map((e) => e.steamId).toList(), [111, 222, 333, 444]);
+
+      await store.moveEntryById(444, beforeSteamId: 111);
+      await store.save();
+
+      expect(store.entries.map((e) => e.steamId).toList(), [444, 111, 222, 333]);
+      final pat = store.entries.firstWhere((e) => e.steamId == 333);
+      expect(pat.filename, patFile); // preserved verbatim
+      expect(pat.salt, isNotNull);
+      final reloaded = await AccountStore.load(storage);
+      reloaded.setDek(dek);
+      expect((await reloaded.getAllAccounts()).map((a) => a.steamId),
+          [444, 111, 222]);
     });
   });
 }

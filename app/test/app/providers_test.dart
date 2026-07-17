@@ -233,6 +233,79 @@ void main() {
     });
   });
 
+  group('AppController.reorder', () {
+    const a = 76561198000000101;
+    const x = 76561198000000109; // becomes undecodable mid-list
+    const b = 76561198000000102;
+    const c = 76561198000000103;
+
+    late MemoryStorageProvider storage;
+    late ProviderContainer container;
+
+    // Manifest [A, X, B, C] with X undecodable → UI shows [A, B, C]: the
+    // exact geometry where index-based manifest moves address the wrong
+    // (invisible) entry.
+    setUp(() async {
+      storage = MemoryStorageProvider();
+      container = ProviderContainer(overrides: [
+        storageProvider.overrideWithValue(storage),
+        timeAlignerProvider.overrideWithValue(() async {}),
+        avatarServiceProvider.overrideWithValue(_NoAvatars()),
+      ]);
+      addTearDown(container.dispose);
+      await container.read(appControllerProvider.future);
+      final notifier = container.read(appControllerProvider.notifier);
+      for (final id in [a, x, b, c]) {
+        await notifier.importMaFile(_maFile(steamId: id));
+      }
+      storage.files['$x.maFile'] = 'not json';
+      await notifier.reload();
+      expect(
+          container
+              .read(appControllerProvider)
+              .value!
+              .accounts
+              .map((acc) => acc.steamId),
+          [a, b, c]);
+    });
+
+    test('drag C→0 moves C in the manifest, not the invisible X', () async {
+      final notifier = container.read(appControllerProvider.notifier);
+
+      await notifier.reorder(2, 0);
+
+      final data = container.read(appControllerProvider).value!;
+      expect(data.accounts.map((acc) => acc.steamId), [c, a, b]);
+      expect(data.store.entries.map((e) => e.steamId), [c, a, x, b]);
+
+      // The order was persisted and X's entry survived.
+      await notifier.reload();
+      final reloaded = container.read(appControllerProvider).value!;
+      expect(reloaded.accounts.map((acc) => acc.steamId), [c, a, b]);
+      expect(reloaded.store.entries.map((e) => e.steamId), contains(x));
+    });
+
+    test('drag A→end (no entry after it) appends behind every entry',
+        () async {
+      final notifier = container.read(appControllerProvider.notifier);
+
+      await notifier.reorder(0, 2);
+
+      final data = container.read(appControllerProvider).value!;
+      expect(data.accounts.map((acc) => acc.steamId), [b, c, a]);
+      expect(data.store.entries.map((e) => e.steamId), [x, b, c, a]);
+
+      await notifier.reload();
+      expect(
+          container
+              .read(appControllerProvider)
+              .value!
+              .accounts
+              .map((acc) => acc.steamId),
+          [b, c, a]);
+    });
+  });
+
   group('MoveInRescueController', () {
     test('set and clear', () {
       final container = ProviderContainer();

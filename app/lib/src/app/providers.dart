@@ -925,13 +925,22 @@ class AppController extends AsyncNotifier<AppData> {
       return;
     }
     // newIndex is already adjusted for the removed item (onReorderItem).
-    data.store.moveEntry(oldIndex, newIndex);
     // Mirror the move in memory instead of reloading — a full reload decrypts
     // every account from disk and makes the dragged row visibly snap back.
     final accounts = [...data.accounts];
     final moved = accounts.removeAt(oldIndex);
-    accounts.insert(newIndex.clamp(0, accounts.length), moved);
+    final insertAt = newIndex.clamp(0, accounts.length);
+    accounts.insert(insertAt, moved);
     state = AsyncData(data.copyWith(accounts: accounts));
+    // The manifest move must be keyed by steamId, not by these indices: the
+    // visible list is the decryptable subset, so indices skew as soon as an
+    // undecryptable entry precedes a decryptable one and an index-based move
+    // would displace the wrong (invisible) entry.
+    final beforeSteamId = insertAt + 1 < accounts.length
+        ? accounts[insertAt + 1].steamId
+        : null;
+    await data.store
+        .moveEntryById(moved.steamId, beforeSteamId: beforeSteamId);
     await data.store.save();
   }
 
