@@ -8,7 +8,7 @@
 | # | 事项 | 产出 | 状态(2026-07-16) |
 |---|---|---|---|
 | 1 | Play Console 订阅商品 | 商品 ID(已定 `ava_pro_monthly`) | 🔶 AAB v34(0.90.0)已发内测轨道,建品入口已解锁;**商品待创建** |
-| 2 | Google Cloud SA + OAuth | SA 邮箱/JSON 密钥、Web client_id | ⏳ **未开始**(订阅购买链路的唯一阻塞项) |
+| 2 | Google Cloud SA + OAuth | SA 邮箱/JSON 密钥、Web client_id | ⏸️ **挂起**(2026-07-18 决定,恢复时从 §2 继续;仍是订阅购买链路的唯一阻塞项) |
 | 3 | AdMob | App ID、两个单元 ID、SSV 回调 | ✅ 开户+建应用+双单元完成,真实 ID 已回填;app-ads.txt 双域上线;SSV 回调探测已修(worker 侧),后台保存待确认 |
 | 4 | 爱发电 | user_id、token、plan_id、主页 URL | ✅ secrets 已入 worker,sign 算法已实测核验,主页 URL 已回填;webhook 测试推送已修通,**后台保存待确认**;首笔真实订单联调待做 |
 | 5 | Cloudflare worker 部署 | D1/KV id、Ed25519 公钥、api 子域 | ✅ **已上线** `api.ava.dotslash.pro`,beta 码全链路验签通过;私钥备份于 ownCloud 根 `ava-entitlement-signing.pem` |
@@ -156,7 +156,7 @@ Play 商店页**公开可见**——内部/封闭测试不公开,**公开测试(
 |---|---|---|
 | `kEntitlementPublicKeyB64` | `app/lib/src/services/entitlement_store.dart` | ✅ 已回填(生产公钥,2026-07-16) |
 | `kEntitlementApiBase` | 同上 | ✅ `api.ava.dotslash.pro` 已上线 |
-| `kGoogleServerClientId` | `app/lib/src/services/play_channel.dart` | ⏳ **待第 2 步 Web client** |
+| `kGoogleServerClientId` | `app/lib/src/services/play_channel.dart` | ⏸️ **挂起,待第 2 步 Web client**(2026-07-18) |
 | `kBannerAdUnitId` / `kRewardedAdUnitId` | 同上 | ✅ 真实 ID 已回填;**release 构建才用真实位,debug 恒走官方测试位**(防误点封号) |
 | AdMob `APPLICATION_ID` | `app/android/app/src/play/AndroidManifest.xml` | ✅ 已回填 |
 | `kAfdianPageUrl` | `app/lib/src/ui/paywall_screen.dart` | ✅ `ifdian.net/a/anothervaporauth` |
@@ -165,6 +165,12 @@ Play 商店页**公开可见**——内部/封闭测试不公开,**公开测试(
 唯一剩余占位符是 `kGoogleServerClientId`:为空时订阅/恢复购买报"该构建尚未
 配置",其余功能(含爱发电解锁、beta 码、激励视频)不受影响——安全降级仍然
 成立,0.90 内测可以随时铺开。
+
+**2026-07-18 挂起备注**:审计修复批(commit `1dd1929`)已把订阅流程改为
+**先 Google 登录、后发起扣费**,且两条流程入口都有 `signInConfigured` 快速
+失败——即使误上架未配置的构建,用户也只会看到"未配置"提示,**不可能被扣费
+后拿不到权益**。恢复本项时只需:走 §2 建 Web client → 回填该常量 + worker
+三个 GOOGLE secrets → Play 沙盒联调,代码侧无需再改。
 
 ## 关联完成项(2026-07-16,超出原六项范围)
 
