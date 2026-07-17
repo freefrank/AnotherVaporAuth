@@ -13,14 +13,19 @@ EdDSA(Ed25519)JWT;客户端(`app/lib/src/core/entitlement.dart`)用内嵌公钥
 | `POST /v1/play/verify` `{id_token, purchase_token, device_id, device_class}` | 验 Google id_token + Play 订阅,upsert 权益并占设备名额,签 token |
 | `POST /v1/afdian/redeem` `{order_no, device_id, device_class}` | 通过爱发电开放平台核验订单;订单绑定他人 → 403 `order_bound` |
 | `POST /v1/afdian/webhook` | 爱发电续订推送。推送无签名,靠回查 query-order 鉴别真伪;响应 `{ec:200}` |
-| `POST /v1/beta/redeem` `{code, device_id, device_class}` | beta 码兑换,签终身 pro(pro=0);码归首个兑换设备,他人 403 `code_redeemed` |
+| `POST /v1/beta/redeem` `{code, device_id, device_class}` | beta 码兑换,签终身 pro(pro=0);按设备类占名额(同 Play),同类换机为受限 REPLACE,超出激活上限 403 `code_activation_limit`(附 `activations` 名额表,只含类与时间戳);`redeemed_by` 仅留作首兑审计,不再作门禁 |
+| `POST /v1/entitlement/status` `{token}` | 查询权益与各设备类名额:`{channel, tier, pro_until, activations:[{device_class, activated_at, this_device}]}`;只验签名不看过期(同 refresh);403:`invalid_token` / `entitlement_ended` / `revoked` |
 | `POST /v1/vip/claim` `{device_id, device_class}` | 领取 SSV 已建立的 VIP 权益(客户端看完广告后轮询);无有效 VIP → 404 `{error:'no_vip'}` |
 | `GET /v1/admob/ssv?...` | AdMob 激励视频服务端回调(ECDSA 验签);`user_id` = 客户端 device_id;成功 200 空体 |
 
 错误统一 `{error: string}`;签发成功统一 `{token: string}`。
 
 设备名额:**每权益每设备类(android/windows/linux/macos)一个**,新设备激活即
-REPLACE,旧设备下次 refresh 收 403 `device_revoked`。
+REPLACE,旧设备下次 refresh 收 403 `device_revoked`。beta 码 / 爱发电这类
+**可转述凭据**的换机受激活次数约束:每(权益, 设备类)在滑动窗口
+(KV `ACTIVATION_WINDOW_DAYS`,默认 90 天)内至多 `ACTIVATION_CAP`(默认 3)
+条 `activation_log`(首次激活也计入;同设备重装不计),超出 403
+`code_activation_limit`;Play/VIP 锚定账号,不设上限。
 
 ## 部署步骤(全部手动执行,勿在 CI 里自动跑)
 
@@ -53,6 +58,8 @@ npx wrangler secret put PLAY_PACKAGE_NAME         # pro.dotslash.ava
 
 # 5. 可选 KV 配置
 npx wrangler kv key put --binding CONFIG VIP_DAYS 3   # 每次激励视频的 VIP 天数,默认 3
+npx wrangler kv key put --binding CONFIG ACTIVATION_WINDOW_DAYS 90  # 换机计数窗口,默认 90
+npx wrangler kv key put --binding CONFIG ACTIVATION_CAP 3           # 窗口内每设备类激活上限,默认 3
 
 # 6. 部署(注意本账号 workers.dev 有故障,需配自定义域路由,见 wrangler.jsonc)
 npm run deploy

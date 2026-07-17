@@ -49,6 +49,12 @@ export interface Deps {
     afdianPlanId(): string;
     /** VIP days granted per rewarded ad (KV `VIP_DAYS`, default 3). */
     vipDays(): Promise<number>;
+    /** Sliding window for the per-class activation bound, in days
+     * (KV `ACTIVATION_WINDOW_DAYS`, default 90). */
+    activationWindowDays(): Promise<number>;
+    /** Max activation_log rows per (entitlement, class) within the window
+     * (KV `ACTIVATION_CAP`, default 3). */
+    activationCap(): Promise<number>;
   };
   replay: {
     /** True if this SSV transaction_id was already processed; marks it otherwise. */
@@ -98,6 +104,44 @@ async function issueToken(
     pro: ent.proUntil,
   };
   return ok({ token: await deps.tokens.sign(claims) });
+}
+
+/** Per-class claim with an abuse bound, for channels whose credential is a
+ * shareable string (beta code, afdian order number): pure REPLACE would turn
+ * a leaked credential into a floating multi-user license. The current holder
+ * re-claims for free (no log row); replacing another device is refused with
+ * 403 `code_activation_limit` once the activation_log for this (entitlement,
+ * class) reaches the cap within the window. The refusal carries the slot map
+ * as classes + timestamps only — never device_ids. Play/VIP claims stay
+ * unbounded (account-anchored). Returns null on success. */
+async function claimDeviceBounded(
+  deps: Deps,
+  entitlementId: number,
+  deviceClass: string,
+  deviceId: string,
+  now: number,
+): Promise<Res | null> {
+  const held = await deps.store.getDevice(entitlementId, deviceClass);
+  if (held && held.deviceId === deviceId) return null; // reinstall — nothing to write
+  if (held) {
+    const windowDays = await deps.config.activationWindowDays();
+    const cap = await deps.config.activationCap();
+    const recent = await deps.store.countRecentActivations(
+      entitlementId,
+      deviceClass,
+      now - windowDays * DAY_SECONDS,
+    );
+    if (recent >= cap) {
+      const activations = (await deps.store.listDevices(entitlementId)).map((d) => ({
+        device_class: d.deviceClass,
+        activated_at: d.activatedAt,
+      }));
+      return { status: 403, body: { error: 'code_activation_limit', activations } };
+    }
+  }
+  // Kicks any previous same-class holder; its next refresh gets device_revoked.
+  await deps.store.logActivation(entitlementId, deviceClass, deviceId, now);
+  return null;
 }
 
 /** POST /v1/token/refresh {token, device_id} */
@@ -211,7 +255,8 @@ export async function handleAfdianRedeem(body: unknown, deps: Deps): Promise<Res
     }
   }
 
-  await deps.store.claimDevice(ent.id, deviceClass, deviceId, now);
+  const refused = await claimDeviceBounded(deps, ent.id, deviceClass, deviceId, now);
+  if (refused) return refused;
   return issueToken(deps, ent, deviceId, deviceClass);
 }
 
@@ -276,15 +321,11 @@ export async function handleBetaRedeem(body: unknown, deps: Deps): Promise<Res> 
 
   const row = await deps.store.getBetaCode(code);
   if (!row) return err(403, 'code_invalid');
-  // First redeemer's device_id claims the code; the same device may re-redeem
-  // (reinstall), anyone else is refused.
-  if (row.redeemedBy !== null && row.redeemedBy !== deviceId) return err(403, 'code_redeemed');
 
   const existing = await deps.store.getEntitlement('beta', code);
   if (existing?.revoked) return err(403, 'revoked');
 
   const now = deps.now();
-  if (row.redeemedBy === null) await deps.store.redeemBetaCode(code, deviceId);
   const ent = await deps.store.upsertEntitlement({
     channel: 'beta',
     subject: code,
@@ -292,8 +333,42 @@ export async function handleBetaRedeem(body: unknown, deps: Deps): Promise<Res> 
     proUntil: 0, // lifetime
     now,
   });
-  await deps.store.claimDevice(ent.id, deviceClass, deviceId, now);
+  // Authorization is the per-class device slots (same model as Play), with
+  // the bounded REPLACE guarding against a shared code.
+  const refused = await claimDeviceBounded(deps, ent.id, deviceClass, deviceId, now);
+  if (refused) return refused;
+  // redeemed_by is write-once audit metadata (first redeemer) — no longer a
+  // gate, kept for ops tooling and old-worker rollback.
+  if (row.redeemedBy === null) await deps.store.redeemBetaCode(code, deviceId);
   return issueToken(deps, ent, deviceId, deviceClass);
+}
+
+/** POST /v1/entitlement/status {token} — the activation-status surface for
+ * the paywall status card. Same verification policy as refresh: signature
+ * must hold, expiry is irrelevant. `activations` exposes classes +
+ * timestamps only — never device_ids. */
+export async function handleEntitlementStatus(body: unknown, deps: Deps): Promise<Res> {
+  const token = field(body, 'token');
+  if (!str(token)) return BAD_REQUEST;
+
+  const claims = await deps.tokens.verify(token);
+  if (!claims) return err(403, 'invalid_token');
+
+  const ent = await deps.store.getEntitlement(claims.chan, claims.sub);
+  if (!ent) return err(403, 'entitlement_ended');
+  if (ent.revoked) return err(403, 'revoked');
+
+  const devices = await deps.store.listDevices(ent.id);
+  return ok({
+    channel: ent.channel,
+    tier: ent.tier,
+    pro_until: ent.proUntil,
+    activations: devices.map((d) => ({
+      device_class: d.deviceClass,
+      activated_at: d.activatedAt,
+      this_device: d.deviceId === claims.dev,
+    })),
+  });
 }
 
 /** POST /v1/vip/claim {device_id, device_class} — pick up a VIP entitlement

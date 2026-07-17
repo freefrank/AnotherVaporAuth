@@ -61,6 +61,13 @@ describe('router', () => {
     expect(await res.json()).toEqual({ error: 'no_vip' });
   });
 
+  it('dispatches entitlement status (403 invalid_token on garbage)', async () => {
+    const { deps } = await setup();
+    const res = await route(post('/v1/entitlement/status', { token: 'garbage' }), deps);
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: 'invalid_token' });
+  });
+
   it('serves GET /v1/admob/ssv with an empty 200 body', async () => {
     const { deps } = await setup();
     const res = await route(

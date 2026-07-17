@@ -19,6 +19,7 @@ export const NOW = 1_800_000_000; // fixed epoch reference for tests
 export class MemoryStore implements Store {
   ents: EntitlementRow[] = [];
   devices = new Map<string, DeviceRow>();
+  activationLog: DeviceRow[] = [];
   orders = new Map<string, OrderRow>();
   beta = new Map<string, BetaRow>();
   private nextId = 1;
@@ -72,6 +73,36 @@ export class MemoryStore implements Store {
       deviceId,
       activatedAt: now,
     });
+  }
+
+  async listDevices(entitlementId: number): Promise<DeviceRow[]> {
+    return [...this.devices.values()]
+      .filter((d) => d.entitlementId === entitlementId)
+      .sort((a, b) => a.deviceClass.localeCompare(b.deviceClass))
+      .map((d) => ({ ...d }));
+  }
+
+  async logActivation(
+    entitlementId: number,
+    deviceClass: string,
+    deviceId: string,
+    now: number,
+  ): Promise<void> {
+    this.activationLog.push({ entitlementId, deviceClass, deviceId, activatedAt: now });
+    await this.claimDevice(entitlementId, deviceClass, deviceId, now);
+  }
+
+  async countRecentActivations(
+    entitlementId: number,
+    deviceClass: string,
+    since: number,
+  ): Promise<number> {
+    return this.activationLog.filter(
+      (a) =>
+        a.entitlementId === entitlementId &&
+        a.deviceClass === deviceClass &&
+        a.activatedAt > since,
+    ).length;
   }
 
   async getOrder(outTradeNo: string): Promise<OrderRow | null> {
@@ -138,7 +169,12 @@ export async function setup(overrides: Partial<Deps> = {}): Promise<TestContext>
       queryOrder: async (no) => afdianOrders.get(no) ?? null,
     },
     admob: { verify: async () => true },
-    config: { afdianPlanId: () => 'plan-pro', vipDays: async () => 3 },
+    config: {
+      afdianPlanId: () => 'plan-pro',
+      vipDays: async () => 3,
+      activationWindowDays: async () => 90,
+      activationCap: async () => 3,
+    },
     replay: {
       seenTransaction: async (id) => {
         if (seenTxns.has(id)) return true;

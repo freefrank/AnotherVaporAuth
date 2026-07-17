@@ -6,6 +6,7 @@ import {
   handleAfdianRedeem,
   handleAfdianWebhook,
   handleBetaRedeem,
+  handleEntitlementStatus,
   handlePlayVerify,
   handleRefresh,
   handleVipClaim,
@@ -46,6 +47,8 @@ export async function route(request: Request, deps: Deps): Promise<Response> {
       return post(handleAfdianWebhook);
     case 'POST /v1/beta/redeem':
       return post(handleBetaRedeem);
+    case 'POST /v1/entitlement/status':
+      return post(handleEntitlementStatus);
     case 'POST /v1/vip/claim':
       return post(handleVipClaim);
     default:

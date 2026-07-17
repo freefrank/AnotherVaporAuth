@@ -12,6 +12,8 @@ import { route } from './router';
 import { D1Store } from './store';
 
 const DEFAULT_VIP_DAYS = 3;
+const DEFAULT_ACTIVATION_WINDOW_DAYS = 90;
+const DEFAULT_ACTIVATION_CAP = 3;
 const SSV_TXN_TTL_SECONDS = 7 * 86400;
 
 /** Lazily imports the signing key once per isolate. */
@@ -29,6 +31,11 @@ let cachedDeps: Deps | null = null;
 function buildDeps(env: Env): Deps {
   if (cachedDeps) return cachedDeps;
   const now = () => Math.floor(Date.now() / 1000);
+  // KV-tunable positive integers; anything unset/garbage falls back.
+  const kvNumber = async (key: string, fallback: number): Promise<number> => {
+    const v = Number(await env.CONFIG.get(key));
+    return Number.isFinite(v) && v > 0 ? v : fallback;
+  };
   cachedDeps = {
     store: new D1Store(env.DB),
     tokens: lazyTokenService(env.ENTITLEMENT_SIGNING_KEY),
@@ -42,10 +49,10 @@ function buildDeps(env: Env): Deps {
     admob: createAdmob({ kv: env.CONFIG }),
     config: {
       afdianPlanId: () => env.AFDIAN_PLAN_ID,
-      vipDays: async () => {
-        const v = Number(await env.CONFIG.get('VIP_DAYS'));
-        return Number.isFinite(v) && v > 0 ? v : DEFAULT_VIP_DAYS;
-      },
+      vipDays: () => kvNumber('VIP_DAYS', DEFAULT_VIP_DAYS),
+      activationWindowDays: () =>
+        kvNumber('ACTIVATION_WINDOW_DAYS', DEFAULT_ACTIVATION_WINDOW_DAYS),
+      activationCap: () => kvNumber('ACTIVATION_CAP', DEFAULT_ACTIVATION_CAP),
     },
     replay: {
       async seenTransaction(id: string): Promise<boolean> {

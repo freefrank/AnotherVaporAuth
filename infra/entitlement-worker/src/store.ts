@@ -56,6 +56,14 @@ export interface Store {
   getDevice(entitlementId: number, deviceClass: string): Promise<DeviceRow | null>;
   /** REPLACE semantics: the previous holder of this class slot is kicked. */
   claimDevice(entitlementId: number, deviceClass: string, deviceId: string, now: number): Promise<void>;
+  /** All class slots of one entitlement, ordered by device_class. */
+  listDevices(entitlementId: number): Promise<DeviceRow[]>;
+  /** claimDevice + an activation_log row in one atomic write, so the log
+   * always records the winner of a same-slot race. Bounded flows only —
+   * idempotent same-device re-claims must not go through here. */
+  logActivation(entitlementId: number, deviceClass: string, deviceId: string, now: number): Promise<void>;
+  /** activation_log rows for (entitlement, class) with activated_at > since. */
+  countRecentActivations(entitlementId: number, deviceClass: string, since: number): Promise<number>;
 
   getOrder(outTradeNo: string): Promise<OrderRow | null>;
   recordOrder(order: OrderRow): Promise<void>;
@@ -159,6 +167,56 @@ export class D1Store implements Store {
       )
       .bind(entitlementId, deviceClass, deviceId, now)
       .run();
+  }
+
+  async listDevices(entitlementId: number): Promise<DeviceRow[]> {
+    const rs = await this.db
+      .prepare('SELECT * FROM devices WHERE entitlement_id = ?1 ORDER BY device_class')
+      .bind(entitlementId)
+      .all<{ entitlement_id: number; device_class: string; device_id: string; activated_at: number }>();
+    return rs.results.map((r) => ({
+      entitlementId: r.entitlement_id,
+      deviceClass: r.device_class,
+      deviceId: r.device_id,
+      activatedAt: r.activated_at,
+    }));
+  }
+
+  async logActivation(
+    entitlementId: number,
+    deviceClass: string,
+    deviceId: string,
+    now: number,
+  ): Promise<void> {
+    await this.db.batch([
+      this.db
+        .prepare(
+          `INSERT INTO activation_log (entitlement_id, device_class, device_id, activated_at)
+           VALUES (?1, ?2, ?3, ?4)`,
+        )
+        .bind(entitlementId, deviceClass, deviceId, now),
+      this.db
+        .prepare(
+          `INSERT OR REPLACE INTO devices (entitlement_id, device_class, device_id, activated_at)
+           VALUES (?1, ?2, ?3, ?4)`,
+        )
+        .bind(entitlementId, deviceClass, deviceId, now),
+    ]);
+  }
+
+  async countRecentActivations(
+    entitlementId: number,
+    deviceClass: string,
+    since: number,
+  ): Promise<number> {
+    const r = await this.db
+      .prepare(
+        `SELECT COUNT(*) AS n FROM activation_log
+         WHERE entitlement_id = ?1 AND device_class = ?2 AND activated_at > ?3`,
+      )
+      .bind(entitlementId, deviceClass, since)
+      .first<{ n: number }>();
+    return r?.n ?? 0;
   }
 
   async getOrder(outTradeNo: string): Promise<OrderRow | null> {
