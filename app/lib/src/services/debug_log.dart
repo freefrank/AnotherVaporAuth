@@ -35,6 +35,18 @@ class DebugLog extends ChangeNotifier {
       ),
       (m) => '${m[1]}${m[2]}<redacted>',
     );
+    // Padded standard-base64 blobs — Steam shared_secret / identity_secret
+    // are 20 raw bytes → 28 chars ALWAYS ending '='. Anchoring on the padding
+    // lets '/' into the class (the bare pass below can't allow it): URL paths
+    // never end in a literal '=', and snake_case identifiers are excluded
+    // because '_' is not in the class. Residual gap: an *unpadded* secret
+    // containing '/' whose fragments all fall under the bare pass's threshold
+    // — no unpadded 20-byte Steam secret exists, and labeled occurrences are
+    // caught by the keyed pass above.
+    out = out.replaceAllMapped(
+      RegExp(r'[A-Za-z0-9+/]{20,}={1,2}'),
+      (m) => '<redacted:${m[0]!.length}>',
+    );
     // Bare long token-shaped blobs (>= 24 chars): base64url / hex / JWT-ish.
     // Excludes '/' so URL paths (e.g. Iface/Method) aren't mistaken for keys.
     out = out.replaceAllMapped(

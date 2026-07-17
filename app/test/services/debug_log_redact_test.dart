@@ -29,6 +29,26 @@ void main() {
       expect(DebugLog.redactSecrets('bearer $blob'), isNot(contains(blob)));
     });
 
+    test('masks padded standard-base64 secrets containing "/"', () {
+      // 20-byte Steam secrets are 28 base64 chars always ending '='; a '/'
+      // used to split the bare no-slash pass into unmatched short fragments.
+      const secret = 'mBqamz/OY7dfN1zzAAAAExamp0c=';
+      final out = DebugLog.redactSecrets('R code: $secret');
+      // Assert on a fragment: whole-string containment would pass even with
+      // the old partial splitting.
+      expect(out, isNot(contains('OY7dfN1zz')));
+      expect(out, isNot(contains('mBqamz')));
+      expect(out, contains('<redacted:28>'));
+    });
+
+    test('padded pass does not eat identifiers or URLs', () {
+      const ident = 'input_protobuf_encoded=abc';
+      expect(DebugLog.redactSecrets(ident), ident);
+      const redirect = '  ↪ redirect https://steamcommunity.com/login/home/'
+          '?goto=%2Fmobileconf%2Fgetlist';
+      expect(DebugLog.redactSecrets(redirect), redirect);
+    });
+
     test('leaves ordinary log lines readable', () {
       const line = '→ GET IAuthenticationService/GetPasswordRSAPublicKey';
       expect(DebugLog.redactSecrets(line), line);
