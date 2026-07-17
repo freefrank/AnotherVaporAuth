@@ -329,13 +329,29 @@ class AuthenticatorLinker {
       ))
           .parse();
 
-      final success = fields[1]?.asBool ?? false;
+      // `success` is an optional proto field — like moveInStart/moveInContinue
+      // above, Steam is entitled to answer OK and leave it (or the whole body)
+      // out, and defaulting it to false would fail a link that took: Steam
+      // Guard live, the user told otherwise. The eresult header is the real
+      // signal — callProtobuf has already thrown on anything but OK — so only
+      // explicit evidence in the payload may override it.
+      final successField = fields[1];
       final wantMore = fields[2]?.asBool ?? false;
       final status = fields[4]?.asInt ?? 0;
-      dlog('Finalize: success=$success wantMore=$wantMore status=$status try=$tries');
+      dlog('Finalize: success=${successField?.asBool} wantMore=$wantMore '
+          'status=$status try=$tries');
 
       if (status == 89) return FinalizeResult.badSmsCode;
-      if (success) {
+      final explicitFailure = (successField != null && !successField.asBool) ||
+          wantMore ||
+          status == 88;
+      if (!explicitFailure) {
+        if (successField == null) {
+          // OK + no success field: the measured success shape of the Remove*
+          // endpoints, unconfirmed for Finalize — log it so a false success
+          // (Steam meaning "codes not aligned yet") stays diagnosable.
+          dlog('Finalize: eresult OK, empty success field — treating as success');
+        }
         account.fullyEnrolled = true;
         return FinalizeResult.success;
       }
