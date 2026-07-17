@@ -1,5 +1,9 @@
 # 家庭组（邀请页签 + 信息页） 实施计划（计划 2/2）
 
+> **已归档(2026-07-18)**:功能已随 **v0.82.0**(2026-07-15)发布并在后续版本迭代
+> (0.91.0 起接口错误显示简短原因)。计划内复选框当时未逐项勾选,以 CHANGELOG
+> 与代码现状为准。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 待办中心新增"邀请"第三页签（发现家庭组邀请、加入前预检、长按加入、与 type-11 mobileconf 确认联动），加一个只读的家庭组信息页。

@@ -1,5 +1,10 @@
 # Paywall(Android)实施计划
 
+> **已归档(2026-07-18)**:主体已随 **v0.90.0**(2026-07-16)发布(双 flavor、
+> AVA Pro 付费墙、爱发电/beta 码解锁、AdMob)。唯一未完成项——Google 订阅购买
+> 链路的 `kGoogleServerClientId` 配置——已于 2026-07-18 决定**挂起**,进展与恢复
+> 步骤见仍在活跃的 `../2026-07-16-paywall-prerequisites.md`。
+
 日期:2026-07-15 · 对应 spec:`docs/specs/2026-07-15-paywall-design.md` ·
 状态:草案,待用户复核后执行 · 目标版本:0.90.0(渠道拆分可先行落在 0.8x)
 

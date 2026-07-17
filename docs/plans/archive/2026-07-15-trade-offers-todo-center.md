@@ -1,5 +1,9 @@
 # 交易报价 + 待办中心 实施计划（计划 1/2）
 
+> **已归档(2026-07-18)**:功能已随 **v0.81.0**(2026-07-15)发布(待办中心、交易
+> 报价、长按确认、确认类型标签)。计划内复选框当时未逐项勾选,以 CHANGELOG 与
+> 代码现状为准。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 确认页升级为"待办中心"（确认/报价双页签，邀请页签由计划 2 加入），新增交易报价的查看、就地接受（长按+加速震动）/拒绝/取消，接受后与 mobileconf 确认联动；补全 mobileconf 确认类型标签。

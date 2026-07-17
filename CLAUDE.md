@@ -57,6 +57,8 @@
 ## 文档位置
 
 - 设计文档（spec）在 `docs/specs/`，实施计划在 `docs/plans/`（原 `docs/superpowers/` 已并入）。
+- 完成的计划归档到 `docs/plans/archive/`（标题下加归档说明；索引见 `docs/plans/README.md`）。
+  审计记录在 `docs/` 根（`*-audit-*.md`），结论型决策同步进对应 memory。
 
 ## 密钥与 .env
 
