@@ -66,21 +66,42 @@ abstract class StorageProvider {
   Future<String> readFile(String filename) async =>
       File(await filePath(filename)).readAsString();
 
-  // Serializes writes to the same filename. Two concurrent saves — e.g.
-  // refreshSessions and refreshAvatars both persisting the manifest — must not
-  // race on the temp file or lose an update; this chains them per filename.
+  /// Last modification time of [filename], or null when the file is missing
+  /// or the platform can't report one. Rebuild/recovery paths use this to
+  /// tell a live payload from a stale leftover slot.
+  Future<DateTime?> lastModified(String filename) async {
+    try {
+      return await File(await filePath(filename)).lastModified();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Serializes writes AND deletes to the same filename. Two concurrent saves —
+  // e.g. refreshSessions and refreshAvatars both persisting the manifest —
+  // must not race on the temp file or lose an update; and a delete landing
+  // between a queued write's exists-check and rename would resurrect or drop a
+  // file mid-commit. This chains all mutations per filename.
   final Map<String, Future<void>> _writeChains = {};
   // Monotonic suffix so each in-flight write uses its own temp file (a shared
   // "$path.tmp" could be clobbered or renamed out from under a sibling write).
-  int _tmpSeq = 0;
+  static int _tmpSeq = 0;
 
-  Future<void> writeFile(String filename, String contents) async {
+  Future<void> writeFile(String filename, String contents) =>
+      _chained(filename, () => _writeAtomic(filename, contents));
+
+  Future<void> deleteFile(String filename) => _chained(filename, () async {
+        final f = File(await filePath(filename));
+        if (await f.exists()) await f.delete();
+      });
+
+  Future<void> _chained(String filename, Future<void> Function() action) async {
     final prev = _writeChains[filename] ?? Future<void>.value();
     final done = Completer<void>();
     _writeChains[filename] = done.future;
     await prev.catchError((_) {}); // wait our turn; ignore a prior failure
     try {
-      await _writeAtomic(filename, contents);
+      await action();
     } finally {
       done.complete();
       if (identical(_writeChains[filename], done.future)) {
@@ -91,11 +112,17 @@ abstract class StorageProvider {
 
   Future<void> _writeAtomic(String filename, String contents) async {
     await ensureDir();
-    final path = await filePath(filename);
-    // Write to a unique sibling temp file then rename over the target: a crash
-    // or partial write leaves the old file intact instead of a truncated one,
-    // so the manifest and payloads can't be torn mid-write. Rename within a
-    // directory is atomic on the platforms we target.
+    await replaceFileAtomic(await filePath(filename), contents);
+  }
+
+  /// Atomically replaces the file at absolute [path]: write a unique sibling
+  /// temp file (flushed), then rename over the target. A crash or partial
+  /// write leaves the old file intact instead of a truncated one; rename
+  /// within a directory is atomic on the platforms we target. Shared by
+  /// [writeFile] and callers that keep files outside `maFiles/`
+  /// (SettingsStore's app_settings.json, which carries the entitlement token
+  /// and device id).
+  static Future<void> replaceFileAtomic(String path, String contents) async {
     final tmp = File('$path.${_tmpSeq++}.tmp');
     try {
       await tmp.writeAsString(contents, flush: true);
@@ -107,11 +134,6 @@ abstract class StorageProvider {
       } catch (_) {}
       rethrow;
     }
-  }
-
-  Future<void> deleteFile(String filename) async {
-    final f = File(await filePath(filename));
-    if (await f.exists()) await f.delete();
   }
 
   Future<List<String>> listFiles({String extension = '.maFile'}) async {
@@ -179,6 +201,11 @@ class MemoryStorageProvider extends StorageProvider {
   final String _dir;
   MemoryStorageProvider([this._dir = '/memory/maFiles']);
 
+  // Monotonic per-write sequence backing [lastModified]: real clocks tie
+  // within a test's timescale, a counter gives deterministic write ordering.
+  final Map<String, int> _writeSeq = {};
+  int _seq = 0;
+
   @override
   Future<String> maFilesDir() async => _dir;
 
@@ -195,11 +222,24 @@ class MemoryStorageProvider extends StorageProvider {
   Future<String> readFile(String filename) async =>
       files[StorageProvider.sanitizeFilename(filename)]!;
   @override
-  Future<void> writeFile(String filename, String contents) async =>
-      files[StorageProvider.sanitizeFilename(filename)] = contents;
+  Future<void> writeFile(String filename, String contents) async {
+    final name = StorageProvider.sanitizeFilename(filename);
+    files[name] = contents;
+    _writeSeq[name] = ++_seq;
+  }
+
   @override
-  Future<void> deleteFile(String filename) async =>
-      files.remove(StorageProvider.sanitizeFilename(filename));
+  Future<void> deleteFile(String filename) async {
+    final name = StorageProvider.sanitizeFilename(filename);
+    files.remove(name);
+    _writeSeq.remove(name);
+  }
+
+  @override
+  Future<DateTime?> lastModified(String filename) async {
+    final seq = _writeSeq[StorageProvider.sanitizeFilename(filename)];
+    return seq == null ? null : DateTime.fromMillisecondsSinceEpoch(seq);
+  }
   @override
   Future<List<String>> listFiles({String extension = '.maFile'}) async =>
       files.keys.where((k) => k.endsWith(extension)).toList();

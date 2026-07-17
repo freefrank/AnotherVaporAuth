@@ -141,6 +141,32 @@ void main() {
       expect(back.map((a) => a.accountName).toSet(), {'alice', 'bob'});
     });
 
+    test('migrateToVault preserves entries whose ciphertext failed to decrypt',
+        () async {
+      final (store, storage, _) = await legacyStoreWithTwo();
+      final bobFile =
+          store.entries.firstWhere((e) => e.steamId == 222).filename;
+      // Valid base64, bad CBC — decrypt yields null, not a throw.
+      storage.files[bobFile] = base64.encode(List.filled(64, 7));
+      final accounts = await store.getAllAccounts(passKey: '123456');
+      expect(accounts.map((a) => a.steamId), [111]);
+
+      final dek = VaultCrypto.generateDek();
+      await store.migrateToVault(dek, accounts);
+
+      // Bob's entry AND file survive verbatim; alice migrated.
+      expect(store.entries.map((e) => e.steamId).toSet(), {111, 222});
+      final bob = store.entries.firstWhere((e) => e.steamId == 222);
+      expect(bob.filename, bobFile);
+      expect(bob.salt, isNotNull); // legacy params preserved for recovery
+      expect(storage.files.containsKey(bobFile), isTrue);
+
+      // A mixed manifest loads and returns the readable subset.
+      final reloaded = await AccountStore.load(storage);
+      reloaded.setDek(dek);
+      expect((await reloaded.getAllAccounts()).map((a) => a.steamId), [111]);
+    });
+
     test('vault reads need the right DEK', () async {
       final (store, storage, accounts) = await legacyStoreWithTwo();
       final dek = VaultCrypto.generateDek();

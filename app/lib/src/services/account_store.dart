@@ -21,6 +21,19 @@ class AccountStore {
   /// [setDek]. Null until unlocked (or in legacy stores).
   Uint8List? _dek;
 
+  /// Serializes all mutating operations. Concurrent writers (refreshSessions,
+  /// refreshAvatars, persistAccount, the unawaited vault migration) otherwise
+  /// interleave check-then-act sequences over the shared manifest — see the
+  /// alt-slot double-delete. Non-reentrant: public mutators acquire it and
+  /// delegate to *Unlocked internals; internals never call locked wrappers.
+  Future<void> _writeLock = Future<void>.value();
+
+  Future<T> _locked<T>(Future<T> Function() action) {
+    final run = _writeLock.then((_) => action());
+    _writeLock = run.then<void>((_) {}, onError: (_) {});
+    return run;
+  }
+
   AccountStore(this.storage, [Manifest? manifest])
       : manifest = manifest ?? Manifest();
 
@@ -76,7 +89,9 @@ class AccountStore {
     }
   }
 
-  Future<void> save() async {
+  Future<void> save() => _locked(_saveUnlocked);
+
+  Future<void> _saveUnlocked() async {
     await storage.ensureDir();
     await storage.writeFile('manifest.json', jsonEncode(manifest.toJson()));
   }
@@ -161,6 +176,10 @@ class AccountStore {
 
   /// Saves (or updates) an account, optionally encrypting with [passKey].
   Future<bool> saveAccount(SteamGuardAccount account, bool encrypt,
+          {String? passKey}) =>
+      _locked(() => _saveAccountUnlocked(account, encrypt, passKey: passKey));
+
+  Future<bool> _saveAccountUnlocked(SteamGuardAccount account, bool encrypt,
       {String? passKey}) async {
     // Vault mode: always encrypt with the in-memory DEK; the encrypt/passKey
     // args are legacy no-ops here.
@@ -216,9 +235,13 @@ class AccountStore {
       // the untouched old file, for a new account an orphan payload recompute
       // ignores. save() is the commit point.
       await storage.writeFile(filename, jsonAccount);
-      await save();
+      await _saveUnlocked();
       // The old ciphertext is now orphaned (manifest points at the new file).
-      if (oldEntry != null && oldEntry.filename != filename) {
+      // Re-check after the awaits: only delete a file the manifest no longer
+      // references (a concurrent/queued writer may have re-pointed it).
+      if (oldEntry != null &&
+          oldEntry.filename != filename &&
+          !manifest.entries.any((e) => e.filename == oldEntry.filename)) {
         try {
           await storage.deleteFile(oldEntry.filename);
         } catch (_) {}
@@ -237,6 +260,10 @@ class AccountStore {
   }
 
   Future<bool> removeAccount(SteamGuardAccount account,
+          {bool deleteMaFile = true}) =>
+      _locked(() => _removeAccountUnlocked(account, deleteMaFile: deleteMaFile));
+
+  Future<bool> _removeAccountUnlocked(SteamGuardAccount account,
       {bool deleteMaFile = true}) async {
     final idx =
         manifest.entries.indexWhere((e) => e.steamId == account.steamId);
@@ -247,7 +274,7 @@ class AccountStore {
         manifest.passkeyCheck == null) {
       manifest.encrypted = false;
     }
-    await save();
+    await _saveUnlocked();
     if (deleteMaFile) {
       try {
         await storage.deleteFile(entry.filename);
@@ -261,11 +288,14 @@ class AccountStore {
   /// Removes the manifest entry (and its maFile) for [steamId], if present.
   /// Used to drop a code-only account's synthetic-id placeholder once its real
   /// SteamID is known after sign-in.
-  Future<void> removeEntryById(int steamId) async {
+  Future<void> removeEntryById(int steamId) =>
+      _locked(() => _removeEntryByIdUnlocked(steamId));
+
+  Future<void> _removeEntryByIdUnlocked(int steamId) async {
     final idx = manifest.entries.indexWhere((e) => e.steamId == steamId);
     if (idx < 0) return;
     final entry = manifest.entries.removeAt(idx);
-    await save();
+    await _saveUnlocked();
     try {
       await storage.deleteFile(entry.filename);
     } catch (_) {}
@@ -287,7 +317,14 @@ class AccountStore {
   /// that save lands the old files and old manifest stay fully consistent, so a
   /// crash mid-rotation leaves the store openable with the old key rather than
   /// a half-rotated, partly-undecryptable mess.
-  Future<bool> changeEncryptionKey(String? oldKey, String? newKey) async {
+  ///
+  /// Storage exceptions propagate (callers treat a mid-rotation throw as a
+  /// crash); [_locked] must not swallow them.
+  Future<bool> changeEncryptionKey(String? oldKey, String? newKey) =>
+      _locked(() => _changeEncryptionKeyUnlocked(oldKey, newKey));
+
+  Future<bool> _changeEncryptionKeyUnlocked(
+      String? oldKey, String? newKey) async {
     if (manifest.encrypted) {
       if (oldKey == null || !await verifyPasskey(oldKey)) return false;
     }
@@ -346,7 +383,7 @@ class AccountStore {
     } else {
       manifest.passkeyCheck = null;
     }
-    await save(); // commit point — new files are now the source of truth
+    await _saveUnlocked(); // commit point — new files are now the source of truth
     // Delete the old ciphertexts the manifest no longer references. A leftover
     // is harmless (recompute ignores unreferenced files); never delete a name
     // a rewrite reused.
@@ -381,7 +418,7 @@ class AccountStore {
       // Payload before manifest (see saveAccount) so a crash can't leave the
       // manifest referencing an unwritten or stale vault blob.
       await storage.writeFile(filename, blob);
-      await save();
+      await _saveUnlocked();
       return true;
     } catch (_) {
       return false;
@@ -398,7 +435,10 @@ class AccountStore {
   /// last in one atomic [save]. A crash before that leaves a fully readable
   /// legacy store (the `.v2` files are harmless orphans); a crash after leaves a
   /// fully readable vault store. Old files are deleted best-effort afterwards.
-  Future<void> migrateToVault(
+  Future<void> migrateToVault(Uint8List dek, List<SteamGuardAccount> accounts) =>
+      _locked(() => _migrateToVaultUnlocked(dek, accounts));
+
+  Future<void> _migrateToVaultUnlocked(
       Uint8List dek, List<SteamGuardAccount> accounts) async {
     if (manifest.vault) return;
     final oldFilenames = <String>[];
@@ -412,14 +452,27 @@ class AccountStore {
       if (oldIdx >= 0) oldFilenames.add(manifest.entries[oldIdx].filename);
       newEntries.add(ManifestEntry(steamId: acc.steamId, filename: newName));
     }
+    // Preserve entries that did not decrypt (accounts contains only the
+    // successfully-decrypted set): keep them verbatim — filename + salt/iv —
+    // so the ciphertext stays reachable for later recovery/export instead of
+    // becoming an invisible orphan. Vault reads skip them (GCM decrypt fails
+    // per-entry); _recomputeExistingEntries keeps them (file still exists).
+    final migratedIds = {for (final e in newEntries) e.steamId};
+    final preserved = manifest.entries
+        .where((e) => !migratedIds.contains(e.steamId))
+        .toList();
+    if (preserved.isNotEmpty) {
+      dlog('migrateToVault: preserving ${preserved.length} '
+          'undecrypted entr${preserved.length == 1 ? 'y' : 'ies'}');
+    }
     // Atomic commit: swap the manifest to the vault scheme + new filenames.
-    manifest.entries = newEntries;
+    manifest.entries = [...newEntries, ...preserved];
     manifest.vault = true;
     manifest.encrypted = true;
     manifest.schemaVersion = 2;
     manifest.passkeyCheck = null;
     _dek = dek;
-    await save();
+    await _saveUnlocked();
     // Post-commit cleanup of the old CBC files (best-effort).
     for (final f in oldFilenames) {
       if (f.endsWith('.v2.maFile')) continue;
@@ -428,6 +481,85 @@ class AccountStore {
       } catch (_) {}
     }
   }
+
+  /// Rebuilds a vault manifest by scanning the payload files on disk. Recovery
+  /// path for a vault store whose manifest.json is lost: vault entries carry no
+  /// per-entry crypto params (the DEK lives in the keystore), so the
+  /// `<steamId>[.v2].maFile` filenames alone reconstitute them. Files whose
+  /// prefix isn't a SteamID are skipped; a file that later fails GCM decrypt is
+  /// skipped per-entry by [getAllAccounts], same as any corrupt vault blob.
+  /// Callers gate this on evidence the store really was a vault (the keystore
+  /// wrap record exists) — legacy CBC stores are unrebuildable, their salt/iv
+  /// lived only in the manifest.
+  static Future<void> rebuildVaultManifest(StorageProvider storage) async {
+    final candidates = <int, List<String>>{};
+    for (final name in await storage.listFiles()) {
+      final dot = name.indexOf('.');
+      if (dot <= 0) continue;
+      final id = int.tryParse(name.substring(0, dot));
+      if (id == null) continue;
+      (candidates[id] ??= []).add(name);
+    }
+    // Per steamId, the most recently written file is the live payload: slot
+    // deletes are best-effort, so a failed cleanup (e.g. a `.v2` blob left
+    // behind after remove-then-relink re-created the bare name) leaves a
+    // stale slot that a fixed rank order would resurrect over the real data.
+    // Only when mtimes are unavailable or equal does [_slotRank] decide.
+    final byId = <int, String>{};
+    for (final e in candidates.entries) {
+      var best = e.value.first;
+      var bestTime = await storage.lastModified(best);
+      for (final name in e.value.skip(1)) {
+        final time = await storage.lastModified(name);
+        final bool newer;
+        if (time != null && bestTime != null) {
+          // Equal (non-null) timestamps only arise when both slots were
+          // written within the same clock tick — a remove-then-relink race,
+          // where the re-created canonical bare name is the fresh payload.
+          // The migration-era rank (.v2 first) is kept for the unknowable
+          // null-mtime case only.
+          newer = time.isAtSameMomentAs(bestTime)
+              ? _tieRank(name) < _tieRank(best)
+              : time.isAfter(bestTime);
+        } else {
+          newer = _slotRank(name) < _slotRank(best);
+        }
+        if (newer) {
+          best = name;
+          bestTime = time;
+        }
+      }
+      byId[e.key] = best;
+    }
+    final manifest = Manifest(
+      vault: true,
+      encrypted: true,
+      schemaVersion: 2,
+      entries: [
+        for (final e in byId.entries)
+          ManifestEntry(steamId: e.key, filename: e.value),
+      ],
+    );
+    await AccountStore(storage, manifest).save();
+  }
+
+  /// Tie-breaker when write times can't order a steamId's payload files: the
+  /// migrated `.v2.maFile` beats the canonical `<id>.maFile`, which beats a
+  /// leftover `.b.maFile` alt slot.
+  static int _slotRank(String name) => name.endsWith('.v2.maFile')
+      ? 0
+      : name.endsWith('.b.maFile')
+          ? 2
+          : 1;
+
+  /// Equal-timestamp tie-breaker: both slots written in the same clock tick
+  /// implies remove-then-relink re-created the canonical bare name last, so
+  /// it outranks a leftover `.v2.maFile` whose delete failed.
+  static int _tieRank(String name) => name.endsWith('.v2.maFile')
+      ? 1
+      : name.endsWith('.b.maFile')
+          ? 2
+          : 0;
 
   /// PBKDF2 rounds for the legacy PIN-derived CBC scheme. Only reached now when
   /// rotating the key on an un-migrated legacy store; such stores upgrade to the
@@ -442,12 +574,10 @@ class AccountStore {
     manifest.entries.insert(to, e);
   }
 
-  /// Imports an existing `*.maFile` (its raw JSON text, already decrypted).
-  /// Returns the imported account, encrypting it under the store's current
-  /// passkey when the store is encrypted.
-  Future<SteamGuardAccount> importMaFileContents(
-      String contents, String? passKey,
-      {String? sourceName}) async {
+  /// Parses and normalizes raw maFile JSON into the account it would import,
+  /// resolving the effective SteamID (real, recovered, or synthetic) without
+  /// writing anything. Throws [MaFileImportException] on unusable input.
+  SteamGuardAccount parseMaFileContents(String contents, {String? sourceName}) {
     final decoded = jsonDecode(contents) as Map<String, dynamic>;
     final account = SteamGuardAccount.fromJson(
         MaFileNormalizer.normalize(decoded, sourceName: sourceName));
@@ -461,6 +591,21 @@ class AccountStore {
         throw const MaFileImportException('maFile has no SteamID or secret');
       }
       account.session.steamId = syntheticSteamId(account);
+    }
+    return account;
+  }
+
+  /// Imports an existing `*.maFile` (its raw JSON text, already decrypted).
+  /// Returns the imported account, encrypting it under the store's current
+  /// passkey when the store is encrypted. When [mergeExisting] is the stored
+  /// account this import overwrites, [mergeImportedAccount]'s policy keeps
+  /// AVA-local enrichment the file doesn't carry.
+  Future<SteamGuardAccount> importMaFileContents(
+      String contents, String? passKey,
+      {String? sourceName, SteamGuardAccount? mergeExisting}) async {
+    final account = parseMaFileContents(contents, sourceName: sourceName);
+    if (mergeExisting != null && mergeExisting.steamId == account.steamId) {
+      mergeImportedAccount(account, mergeExisting);
     }
     final ok = await saveAccount(account, manifest.encrypted, passKey: passKey);
     if (!ok) throw const MaFileImportException('Failed to save imported file');
@@ -481,6 +626,24 @@ class AccountStore {
       h = ((h ^ c) * 0x01000193) & 0xffffffff;
     }
     return -(h & 0x7fffffff) - 1; // [-2^31 .. -1]
+  }
+}
+
+/// Applies overwrite-merge policy: the imported file wins for authenticator
+/// material; AVA-local enrichment and a live session survive when the file
+/// doesn't carry its own.
+@visibleForTesting
+void mergeImportedAccount(
+    SteamGuardAccount incoming, SteamGuardAccount existing) {
+  incoming.avatarUrl ??= existing.avatarUrl;
+  incoming.avatarFrameUrl ??= existing.avatarFrameUrl;
+  incoming.animatedAvatarUrl ??= existing.animatedAvatarUrl;
+  incoming.personaName ??= existing.personaName;
+  if ((incoming.password ?? '').isEmpty) incoming.password = existing.password;
+  // A stale backup must not kill a working login: keep the stored session
+  // when the file brings no tokens of its own.
+  if (!incoming.session.hasTokens && existing.session.hasTokens) {
+    incoming.session = existing.session;
   }
 }
 

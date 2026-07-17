@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ava/src/core/models/session_data.dart';
 import 'package:ava/src/core/models/steam_guard_account.dart';
 import 'package:ava/src/services/account_store.dart';
@@ -32,6 +34,29 @@ class FailingStorageProvider extends MemoryStorageProvider {
 
 class FileSystemFailure implements Exception {
   const FileSystemFailure();
+}
+
+/// In-memory storage that can suspend a write on a completer, to interleave
+/// two writers at a precise point.
+class GatedStorageProvider extends MemoryStorageProvider {
+  /// filename -> gate the next write must await before landing.
+  final Map<String, Completer<void>> gates = {};
+
+  /// filename -> completes when writeFile is CALLED on a gated name (before
+  /// the gate is awaited), so a test can hold a writer provably suspended
+  /// inside its critical section before releasing a rival.
+  final Map<String, Completer<void>> entered = {};
+
+  @override
+  Future<void> writeFile(String filename, String contents) async {
+    final gate = gates[filename];
+    if (gate != null) {
+      final e = entered[filename];
+      if (e != null && !e.isCompleted) e.complete();
+      await gate.future;
+    }
+    return super.writeFile(filename, contents);
+  }
 }
 
 void main() {
@@ -100,6 +125,52 @@ void main() {
       final accounts = await reloaded.getAllAccounts(passKey: '654321');
       expect(accounts.map((a) => a.accountName).toSet(), {'alice', 'bob'});
       expect(await reloaded.getAllAccounts(passKey: pin), isEmpty);
+    });
+  });
+
+  group('concurrent saveAccount is serialized (finding #3)', () {
+    test('two concurrent updates never delete both ciphertext slots', () async {
+      final storage = GatedStorageProvider();
+      final store = AccountStore(storage);
+      expect(await store.saveAccount(_account(111, 'alice'), false), isTrue);
+      expect(await store.changeEncryptionKey(null, pin), isTrue);
+      // changeEncryptionKey rewrote into the .b slot, so the next update's
+      // alt slot is the bare name — gate it to suspend the first save
+      // mid-write, inside its critical section.
+      final gate = storage.gates['111.maFile'] = Completer<void>();
+      final entered = storage.entered['111.maFile'] = Completer<void>();
+      final f1 =
+          store.saveAccount(_account(111, 'alice-v2'), true, passKey: pin);
+      // f1 is now provably suspended between its manifest mutation and its
+      // commit — the window the write lock exists to close.
+      await entered.future;
+      final f2 =
+          store.saveAccount(_account(111, 'alice-v3'), true, passKey: pin);
+      // Let f2 reach the lock (or, were the lock broken, run through the
+      // suspended f1's critical section) before releasing f1.
+      for (var i = 0; i < 5; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      gate.complete();
+      await Future.wait([f1, f2]);
+      final reloaded = await AccountStore.load(storage);
+      final accounts = await reloaded.getAllAccounts(passKey: pin);
+      expect(accounts, hasLength(1)); // entry survived and decrypts
+      expect(accounts.single.accountName, anyOf('alice-v2', 'alice-v3'));
+      // Serialized saves leave exactly one payload slot; an interleave leaves
+      // the loser's ciphertext behind as a stale orphan — the very slot a
+      // manifest rebuild must then be tricked into not resurrecting.
+      expect(storage.files.keys.where((k) => k.endsWith('.maFile')),
+          hasLength(1));
+    });
+  });
+
+  group('a broken store surfaces as ManifestParseException (finding #14)', () {
+    test('load throws when the dir exists without a manifest', () async {
+      final storage = MemoryStorageProvider();
+      storage.files['111.maFile'] = '{}';
+      await expectLater(
+          AccountStore.load(storage), throwsA(isA<ManifestParseException>()));
     });
   });
 
