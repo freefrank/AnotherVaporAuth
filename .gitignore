@@ -362,11 +362,20 @@ skills-lock.json
 /dist/
 
 # posts/ is tracked (blog copy + screenshots), EXCEPT tester PII: the public
-# repo must never carry the beta testers' email lists, nor the invite script
-# that hard-codes a couple of them in its SKIP set.
+# repo must never carry the beta testers' email lists, nor the mailing scripts
+# that hard-code a couple of them in their SKIP sets. The `testers*` prefix
+# also covers the generated code lists (testers-beta-codes.csv), which pair a
+# real email with a live Pro redeem code — the worst of both to leak.
 /posts/**/testers*.csv
 /posts/**/testers*.txt
-/posts/**/send_beta_invite.py
+/posts/**/send_beta_*.py
+
+# Secrets. This repo is public — a .env must never be committable, anywhere in
+# the tree. Like key.properties, .env travels to the mirror via rsync (which
+# ignores gitignore), so the working copy keeps it while git never sees it.
+.env
+.env.*
+!.env.example
 
 # brainstorm visual companion sessions
 .superpowers/
