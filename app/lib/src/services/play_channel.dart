@@ -74,6 +74,10 @@ class PlayChannel {
   /// Reopens the UMP privacy-options form (change an earlier consent choice).
   Future<void> showPrivacyOptions() => _call<bool>('consent.privacyOptions');
 
+  /// Whether Google sign-in is configured (server client id present); the
+  /// paywall flows short-circuit to 'not_configured' without any native call.
+  bool get signInConfigured => kGoogleServerClientId.isNotEmpty;
+
   /// Google sign-in returning an id_token for the entitlement worker.
   Future<String> signInIdToken() => _call<String>(
       'signin.idToken', {'serverClientId': kGoogleServerClientId});

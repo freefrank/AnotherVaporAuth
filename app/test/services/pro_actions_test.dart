@@ -9,6 +9,11 @@ class _FakePlay implements PlayChannel {
   bool rewardEarned = true;
   String? restoreToken;
   Object? subscribeError;
+  Object? signInError;
+  final calls = <String>[];
+
+  @override
+  bool signInConfigured = true;
 
   @override
   MethodChannel get channel => throw UnimplementedError();
@@ -26,16 +31,24 @@ class _FakePlay implements PlayChannel {
   Future<void> showPrivacyOptions() async {}
 
   @override
-  Future<String> signInIdToken() async => 'id-token-1';
+  Future<String> signInIdToken() async {
+    calls.add('signin');
+    if (signInError != null) throw signInError!;
+    return 'id-token-1';
+  }
 
   @override
   Future<String> subscribe() async {
+    calls.add('subscribe');
     if (subscribeError != null) throw subscribeError!;
     return 'purchase-token-1';
   }
 
   @override
-  Future<String?> restore() async => restoreToken;
+  Future<String?> restore() async {
+    calls.add('restore');
+    return restoreToken;
+  }
 
   @override
   Future<bool> showRewarded(String deviceId) async => rewardEarned;
@@ -107,17 +120,41 @@ void main() {
         adopted.add(raw);
         return raw == 'jwt';
       },
+      deviceClass: 'android',
       vipClaimDelay: Duration.zero,
       vipClaimAttempts: 3,
     );
   });
 
-  test('subscribeViaPlay: billing → sign-in → worker → adopt', () async {
+  test('subscribeViaPlay: sign-in → billing → worker → adopt', () async {
     final r = await actions.subscribeViaPlay();
     expect(r.ok, isTrue);
+    // Sign-in MUST precede billing: the money step comes after the fallible
+    // no-side-effect step.
+    expect(play.calls, ['signin', 'subscribe']);
     expect(api.calls,
         ['verifyPlay:id-token-1:purchase-token-1:dev-1:android']);
     expect(adopted, ['jwt']);
+  });
+
+  test('subscribeViaPlay: sign-in failure never reaches billing', () async {
+    play.signInError = PlatformException(code: 'not_configured');
+    final r = await actions.subscribeViaPlay();
+    expect(r.ok, isFalse);
+    expect(r.code, 'not_configured');
+    // The money assertion: no charge may happen once sign-in has failed.
+    expect(play.calls, isNot(contains('subscribe')));
+    expect(api.calls, isEmpty);
+    expect(adopted, isEmpty);
+  });
+
+  test('unconfigured sign-in short-circuits both flows before any native call',
+      () async {
+    play.signInConfigured = false;
+    expect((await actions.subscribeViaPlay()).code, 'not_configured');
+    expect((await actions.restoreViaPlay()).code, 'not_configured');
+    // Neither billing nor restore's native acknowledge may run.
+    expect(play.calls, isEmpty);
   });
 
   test('subscribeViaPlay: user cancel maps to canceled', () async {
@@ -174,6 +211,7 @@ void main() {
       play: play,
       deviceId: () async => 'dev-1',
       adopt: (_) async => false,
+      deviceClass: 'android',
     );
     expect((await actions.redeemBeta('code')).code, 'bad_token');
   });

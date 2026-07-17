@@ -40,7 +40,7 @@ class ProActions {
     required this.play,
     required this.deviceId,
     required this.adopt,
-    this.deviceClass = 'android',
+    required this.deviceClass,
     this.vipClaimDelay = const Duration(seconds: 2),
     this.vipClaimAttempts = 6,
   });
@@ -63,10 +63,13 @@ class ProActions {
   Future<ProResult> _adoptFrom(String raw) async =>
       await adopt(raw) ? const ProResult.success() : const ProResult.fail('bad_token');
 
-  /// Play: buy the subscription, then bind it to the Google account.
+  /// Play: sign in first (identifies the entitlement owner), THEN run the
+  /// billing flow. Sign-in failing after an acknowledged purchase would
+  /// strand the user charged-but-unentitled.
   Future<ProResult> subscribeViaPlay() => _guard(() async {
-        final purchaseToken = await play.subscribe();
+        if (!play.signInConfigured) return const ProResult.fail('not_configured');
         final idToken = await play.signInIdToken();
+        final purchaseToken = await play.subscribe();
         return _adoptFrom(await api.verifyPlay(
           idToken: idToken,
           purchaseToken: purchaseToken,
@@ -75,8 +78,12 @@ class ProActions {
         ));
       });
 
-  /// Play: restore an existing subscription on this device.
+  /// Play: restore an existing subscription on this device. Restore runs
+  /// before sign-in (it charges nothing and avoids an account-picker just to
+  /// learn "no subscription"); the configured-guard keeps the native
+  /// acknowledge from running when sign-in is guaranteed to fail.
   Future<ProResult> restoreViaPlay() => _guard(() async {
+        if (!play.signInConfigured) return const ProResult.fail('not_configured');
         final purchaseToken = await play.restore();
         if (purchaseToken == null) return const ProResult.fail('no_subscription');
         final idToken = await play.signInIdToken();
