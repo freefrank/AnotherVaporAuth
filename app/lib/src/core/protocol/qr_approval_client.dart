@@ -125,20 +125,7 @@ class QrApprovalClient {
       if (f.varint != null) {
         ids.add(f.varint!); // unpacked repeated uint64
       } else if (f.bytes != null) {
-        // packed repeated varint
-        final b = f.bytes!;
-        var i = 0;
-        while (i < b.length) {
-          var shift = 0;
-          var val = BigInt.zero;
-          while (i < b.length) {
-            final byte = b[i++];
-            val |= BigInt.from(byte & 0x7f) << shift;
-            if (byte & 0x80 == 0) break;
-            shift += 7;
-          }
-          ids.add(val.toSigned(64).toInt());
-        }
+        ids.addAll(f.asPackedVarints()); // packed repeated uint64
       }
     }
     return ids;

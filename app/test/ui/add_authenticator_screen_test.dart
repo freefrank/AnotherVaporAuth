@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:ava/l10n/app_localizations.dart';
 import 'package:ava/src/app/providers.dart';
@@ -158,6 +159,34 @@ Future<void> _openChallengeStep(
 }
 
 void main() {
+  testWidgets(
+    'a malformed Steam payload shows the generic failure, not a parser dump',
+    (tester) async {
+      final api = _FakeApi();
+      // AddAuthenticator answered with a truncated buffer (wire-2 length
+      // overrunning the payload) — parse() throws ProtoParseException in the
+      // screen's generic catch, which used to render the raw '$e' string.
+      api.handlers['AddAuthenticator'] = () async =>
+          ProtoReader(Uint8List.fromList([0x0A, 0x05, 0x61]));
+      final (_, navKey) = await _pumpHost(tester, api, MemoryStorageProvider());
+      unawaited(
+        navKey.currentState!.push(
+          MaterialPageRoute(
+            builder: (_) => AddAuthenticatorScreen(
+              session: SessionData(steamId: _steamId, accessToken: 't'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Failed to add authenticator'), findsOneWidget);
+      expect(find.textContaining('protobuf'), findsNothing);
+      expect(find.textContaining('FormatException'), findsNothing);
+      expect(find.textContaining('RangeError'), findsNothing);
+    },
+  );
+
   testWidgets('back is blocked while a move-in submit is in flight', (
     tester,
   ) async {

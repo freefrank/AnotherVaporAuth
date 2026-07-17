@@ -160,9 +160,15 @@ class _AddAuthenticatorScreenState
           break;
       }
     } catch (e) {
-      _failWith('$e');
+      _failWith(_describe(e, l));
     }
   }
+
+  /// A malformed Steam payload (ProtoParseException, any [FormatException])
+  /// is a transport failure, never user-facing copy — fold it into the
+  /// generic failure text instead of echoing the parser dump.
+  String _describe(Object e, AppLocalizations l) =>
+      e is FormatException ? l.addErrFailed : '$e';
 
   Future<void> _submitPhone() async {
     _linker.phoneNumber = _phone.text.trim();
@@ -198,7 +204,7 @@ class _AddAuthenticatorScreenState
           break;
       }
     } catch (e) {
-      _failWith('$e');
+      _failWith(_describe(e, l));
     }
   }
 
@@ -269,7 +275,7 @@ class _AddAuthenticatorScreenState
           break;
       }
     } catch (e) {
-      _failWith('$e');
+      _failWith(_describe(e, l));
     } finally {
       _lockPop = false;
       if (mounted) setState(() {});
@@ -318,7 +324,7 @@ class _AddAuthenticatorScreenState
         _failWith(l.addErrFinalize('$result'));
       }
     } catch (e) {
-      _failWith('$e');
+      _failWith(_describe(e, l));
     }
   }
 

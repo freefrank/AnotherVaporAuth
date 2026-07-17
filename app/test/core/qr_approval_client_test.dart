@@ -131,6 +131,54 @@ void main() {
     });
   });
 
+  group('pendingLoginClientIds — repeated client_ids field encodings', () {
+    // Client ids are random uint64s — roughly half exceed 2^63-1 and arrive
+    // as negative signed ints; both encodings must survive that.
+    const idSmall = 123456789;
+    const idHuge = -524256132778200960; // an unsigned-64 id, stored signed
+
+    test('unpacked repeated varints are collected', () async {
+      final w = ProtoWriter()
+        ..writeUint64(1, idSmall)
+        ..writeUint64(1, idHuge);
+      final api = _FakeApi([ProtoReader(w.toBytes())]);
+      final client = QrApprovalClient(api);
+
+      final ids = await client.pendingLoginClientIds(
+          _account(accessToken: 'atok'));
+      expect(ids, [idSmall, idHuge]);
+    });
+
+    test('packed repeated varints are collected', () async {
+      // Pack by stripping each writeUint64's 1-byte tag (field 1, wire 0).
+      final packed = BytesBuilder();
+      for (final v in [idSmall, idHuge]) {
+        packed.add((ProtoWriter()..writeUint64(1, v)).toBytes().sublist(1));
+      }
+      final w = ProtoWriter()..writeBytes(1, packed.toBytes());
+      final api = _FakeApi([ProtoReader(w.toBytes())]);
+      final client = QrApprovalClient(api);
+
+      final ids = await client.pendingLoginClientIds(
+          _account(accessToken: 'atok'));
+      expect(ids, [idSmall, idHuge]);
+    });
+
+    test('truncated packed payload throws ProtoParseException, not garbage',
+        () async {
+      // A varint cut mid-continuation must not silently under-read into a
+      // bogus id the user could be asked to approve.
+      final w = ProtoWriter()..writeBytes(1, const [0x87, 0x80]);
+      final api = _FakeApi([ProtoReader(w.toBytes())]);
+      final client = QrApprovalClient(api);
+
+      await expectLater(
+        client.pendingLoginClientIds(_account(accessToken: 'atok')),
+        throwsA(isA<ProtoParseException>()),
+      );
+    });
+  });
+
   group('QrApprovalClient — session with an access token', () {
     test('respondToSession sends the access token through and succeeds',
         () async {

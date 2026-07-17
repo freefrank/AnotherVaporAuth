@@ -281,6 +281,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   /// Users shouldn't be reading raw SteamApiException dumps — map the
   /// common sign-in EResults to human messages, fall back to the dump.
   String _friendlyError(Object e, AppLocalizations l) {
+    // A malformed Steam payload (ProtoParseException, any FormatException) is
+    // a transport failure — show the network copy, never the parser dump.
+    if (e is FormatException) return l.proErrNetwork;
     if (e is SteamApiException) {
       switch (e.eresult) {
         case 5: // InvalidPassword
