@@ -67,13 +67,15 @@
 
   与扫码批准签名（LE 整数拼接）**布局不同**，别照抄。msg 不含 steamid / 时间戳
   （无需时钟同步）；steamid、revoke_action 照放请求但不参与签名。证据链与坑见
-  memory `steam-revoke-signature`。**上线前须用一次性小号实弹验证一次**（token_id
-  的十进制字符串形式为静态推定），**不得用折叠屏真实账户**。
+  memory `steam-revoke-signature`。
+- **已实弹验证通过（2026-07-18）**：AVA dev 包在真机对一次性小号 revoke 成功，
+  目标设备真掉线、Steam 回 OK。token_id 十进制字符串形式的静态推定被证实，方案
+  确认无误；二期 revoke 已落地（`SessionsClient.revoke` + 每设备注销按钮）。
 
-## Revoke 为何暂缓
+## Revoke 签名的来龙去脉（已解决）
 
-`signature` 是 "required signature over token_id"，但**其 HMAC 密钥与被签数据
-Steam 未公开，也没有可靠的公开参考实现真正算过它**：
+`signature` 是 "required signature over token_id"。一期动工时，**其 HMAC 密钥与被签
+数据 Steam 未公开，也没有可靠的公开参考实现真正算过它**：
 
 - **steamguard-cli** 只封装了 `revoke_refresh_token` 的 API 外壳，`src` 里**从未
   调用**；它的 `build_signature` 是给**扫码登录批准**用的
@@ -81,10 +83,10 @@ Steam 未公开，也没有可靠的公开参考实现真正算过它**：
 - **node-steam-session** 未实现设备吊销；**ValvePython/steam** 只有 protobuf 定义。
 
 按仓库红线（"protobuf 字段编号要对照 SteamDatabase 核实，不要照抄第三方"、
-"成功信号别信 `success` bool"）——**签名方案不拍脑袋写**。二期先独立验证签名
-（抓真机 mobile app 的 revoke 请求 / 逆向其 HMAC 输入），跑通再接入。届时 UI 的
-占位提示（`deviceSessionsRevokeComingSoon`）换成每台设备的注销按钮 + 二次确认，
-且**禁止对「本机」自注销**（会把自己登出）。
+"成功信号别信 `success` bool"）——**签名方案没拍脑袋写**，而是逆向 Steam 官方
+APK（3.10.9，Hermes HBC v96）得出上文的方案，再用一次性小号在真机实弹确认。
+二期随即落地：`SessionsClient.revoke` + 每设备注销按钮 + 二次确认，且**禁止对
+「本机」自注销**（会把自己登出）。
 
 ## 数据模型（`core/models/device_session.dart`）
 
@@ -95,21 +97,27 @@ Steam 未公开，也没有可靠的公开参考实现真正算过它**：
 
 ## Client（`core/protocol/sessions_client.dart`）
 
-`SessionsClient.enumerate(account)`：requireAccessToken → POST EnumerateTokens →
-解析 repeated + 嵌套 last_seen → 按 timeUpdated 降序 → 返回 `DeviceSessionList`。
-会话过期由 UI 层 `fetchWithAutoRefresh` 续期重试一次（同待办三页签 / family）。
+- `SessionsClient.enumerate(account)`：requireAccessToken → POST EnumerateTokens →
+  解析 repeated + 嵌套 last_seen → 按 timeUpdated 降序 → 返回 `DeviceSessionList`。
+- `SessionsClient.revoke(account, device, {permanent})`：算签名 → 组请求
+  （token_id/steamid/revoke_action/signature）→ POST RevokeRefreshToken。token_id
+  以无符号十进制字符串存，回写 fixed64 时 `BigInt.toSigned(64)` 复原低 64 位；
+  成功 = OK eresult（空 body），不信 `success` bool。
+- 会话过期由 UI 层 `fetchWithAutoRefresh` 续期重试一次（同待办页签 / family）。
 
 ## UI（`ui/device_sessions_screen.dart`）
 
-只读列表：每台设备一张 `AvaPanel`（平台图标 + 名称 + 「本机」/「已登出」角标 +
-"平台 · 地点 · N 前活跃"）。入口挂在 home 的按账户动作菜单
-（`item('devices', …)` → `case 'devices'`）。列表底部一条占位说明远程注销待推出，
-不渲染无效按钮（同 family 页对未实现能力的处理）。
+每台设备一张 `AvaPanel`（平台图标 + 名称 + 「本机」/「已登出」角标 +
+"平台 · 地点 · N 前活跃"）。**非本机**设备右侧有红色注销按钮 → 二次确认 → revoke
+→ 刷新;本机不给注销钮（自注销会把 App 登出）。入口挂在 home 的按账户动作菜单
+（`item('devices', …)` → `case 'devices'`）。
 
-## 测试（`test/core/sessions_client_test.dart`，6 项）
+## 测试（`test/core/sessions_client_test.dart`，11 项）
 
-POST（非 GET，守住 GET/POST 陷阱）+ 带 token；解析 + 降序排序 + 标本机；
-无符号 fixed64（-1 → `18446744073709551615`）；嵌套 last_seen 地点；空请求体；
-无 token 抛 `MissingAccessTokenException`。
+enumerate：POST（非 GET，守住 GET/POST 陷阱）+ 带 token；解析 + 降序 + 标本机；
+无符号 fixed64（-1 → `18446744073709551615`）；嵌套 last_seen 地点；空请求体；无
+token 抛 `MissingAccessTokenException`。revoke：HMAC 参考向量（python 独立算）锁死
+签名；请求编码（token_id/steamid/action=1/signature）+ POST；logout action=0；
+无 token 守卫。
 
 [roadmap]: 见 memory `ava-roadmap`。
