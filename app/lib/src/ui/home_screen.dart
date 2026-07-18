@@ -27,6 +27,7 @@ import 'pending/pending_screen.dart';
 import 'widgets/ava_banner.dart';
 import 'import_helper.dart';
 import 'pending_login.dart';
+import 'device_sessions_screen.dart';
 import 'family_group_screen.dart';
 import 'login_screen.dart';
 import 'market/market_screen.dart';
@@ -611,6 +612,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         Navigator.of(context).push(MaterialPageRoute(
             builder: (_) => FamilyGroupScreen(account: account)));
         break;
+      case 'devices':
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => DeviceSessionsScreen(account: account)));
+        break;
       case 'remove':
         final t = Theme.of(context).extension<AvaTokens>()!;
         final ok = await showDialog<bool>(
@@ -984,6 +989,7 @@ class _SidebarRow extends StatelessWidget {
         item('confirm', Icons.verified_user_outlined, l.actionConfirmations),
         item('market', Icons.inventory_2_outlined, l.actionMarket),
         item('family', Icons.family_restroom, l.famAccountAction),
+        item('devices', Icons.devices_outlined, l.deviceSessionsAction),
         item('login', Icons.refresh, l.commonRefresh),
         item('export', Icons.ios_share, l.commonExport),
         item('remove', Icons.delete_outline, l.commonDelete, color: t.bad),

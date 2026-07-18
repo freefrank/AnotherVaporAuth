@@ -986,6 +986,102 @@ abstract class AppLocalizations {
   /// **'Purchase approval is coming in a future update.'**
   String get famPendingComingSoon;
 
+  /// No description provided for @deviceSessionsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices'**
+  String get deviceSessionsAction;
+
+  /// No description provided for @deviceSessionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged-in devices'**
+  String get deviceSessionsTitle;
+
+  /// No description provided for @deviceSessionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No active devices for this account.'**
+  String get deviceSessionsEmpty;
+
+  /// No description provided for @deviceSessionsRevokeComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Remotely signing a device out is coming in a future update.'**
+  String get deviceSessionsRevokeComingSoon;
+
+  /// No description provided for @deviceCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'(this device)'**
+  String get deviceCurrent;
+
+  /// No description provided for @deviceSignedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'signed out'**
+  String get deviceSignedOut;
+
+  /// No description provided for @deviceUnnamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown device'**
+  String get deviceUnnamed;
+
+  /// No description provided for @deviceLastSeen.
+  ///
+  /// In en, this message translates to:
+  /// **'active {age} ago'**
+  String deviceLastSeen(String age);
+
+  /// No description provided for @devicePlatformSteam.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam client'**
+  String get devicePlatformSteam;
+
+  /// No description provided for @devicePlatformWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Web browser'**
+  String get devicePlatformWeb;
+
+  /// No description provided for @devicePlatformMobile.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile app'**
+  String get devicePlatformMobile;
+
+  /// No description provided for @devicePlatformUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get devicePlatformUnknown;
+
+  /// No description provided for @deviceAgeDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{n}d'**
+  String deviceAgeDays(int n);
+
+  /// No description provided for @deviceAgeHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{n}h'**
+  String deviceAgeHours(int n);
+
+  /// No description provided for @deviceAgeMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{n}m'**
+  String deviceAgeMinutes(int n);
+
+  /// No description provided for @deviceAgeNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get deviceAgeNow;
+
   /// No description provided for @loginOrApprove.
   ///
   /// In en, this message translates to:

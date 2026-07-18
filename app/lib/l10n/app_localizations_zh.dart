@@ -489,6 +489,62 @@ class AppLocalizationsZh extends AppLocalizations {
   String get famPendingComingSoon => '购买审批将在后续版本推出。';
 
   @override
+  String get deviceSessionsAction => '登录设备';
+
+  @override
+  String get deviceSessionsTitle => '已登录的设备';
+
+  @override
+  String get deviceSessionsEmpty => '该账户没有已登录的设备。';
+
+  @override
+  String get deviceSessionsRevokeComingSoon => '远程注销某个设备将在后续版本推出。';
+
+  @override
+  String get deviceCurrent => '(本机)';
+
+  @override
+  String get deviceSignedOut => '已登出';
+
+  @override
+  String get deviceUnnamed => '未知设备';
+
+  @override
+  String deviceLastSeen(String age) {
+    return '$age前活跃';
+  }
+
+  @override
+  String get devicePlatformSteam => 'Steam 客户端';
+
+  @override
+  String get devicePlatformWeb => '网页浏览器';
+
+  @override
+  String get devicePlatformMobile => '手机 App';
+
+  @override
+  String get devicePlatformUnknown => '未知';
+
+  @override
+  String deviceAgeDays(int n) {
+    return '$n 天';
+  }
+
+  @override
+  String deviceAgeHours(int n) {
+    return '$n 小时';
+  }
+
+  @override
+  String deviceAgeMinutes(int n) {
+    return '$n 分钟';
+  }
+
+  @override
+  String get deviceAgeNow => '刚刚';
+
+  @override
   String get loginOrApprove => '…或直接在 Steam 手机 App 点「允许」。';
 
   @override

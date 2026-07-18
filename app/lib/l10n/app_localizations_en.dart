@@ -510,6 +510,63 @@ class AppLocalizationsEn extends AppLocalizations {
       'Purchase approval is coming in a future update.';
 
   @override
+  String get deviceSessionsAction => 'Devices';
+
+  @override
+  String get deviceSessionsTitle => 'Logged-in devices';
+
+  @override
+  String get deviceSessionsEmpty => 'No active devices for this account.';
+
+  @override
+  String get deviceSessionsRevokeComingSoon =>
+      'Remotely signing a device out is coming in a future update.';
+
+  @override
+  String get deviceCurrent => '(this device)';
+
+  @override
+  String get deviceSignedOut => 'signed out';
+
+  @override
+  String get deviceUnnamed => 'Unknown device';
+
+  @override
+  String deviceLastSeen(String age) {
+    return 'active $age ago';
+  }
+
+  @override
+  String get devicePlatformSteam => 'Steam client';
+
+  @override
+  String get devicePlatformWeb => 'Web browser';
+
+  @override
+  String get devicePlatformMobile => 'Mobile app';
+
+  @override
+  String get devicePlatformUnknown => 'Unknown';
+
+  @override
+  String deviceAgeDays(int n) {
+    return '${n}d';
+  }
+
+  @override
+  String deviceAgeHours(int n) {
+    return '${n}h';
+  }
+
+  @override
+  String deviceAgeMinutes(int n) {
+    return '${n}m';
+  }
+
+  @override
+  String get deviceAgeNow => 'just now';
+
+  @override
   String get loginOrApprove => '…or just tap “Allow” in your Steam mobile app.';
 
   @override
