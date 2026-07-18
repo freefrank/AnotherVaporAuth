@@ -182,3 +182,23 @@ Play 商店页**公开可见**——内部/封闭测试不公开,**公开测试(
   webhook 测试推送(无法核验 → `{ec:200}` 确认但零发放);
 - Play Console 仍需(转公测前):应用内容 → 广告 / 广告 ID 两项声明、Data
   safety 表单更新、商店描述去掉"无广告"表述。
+
+## 7. beta 码按类激活上线(2026-07-18 代码已就绪,待执行)
+
+worker 已实现"一码四类端各一台"(commit `e77c3aa`,worker 测试 75 全绿):
+同类换机为带上限替换(超限 `code_activation_limit`),新增
+`POST /v1/entitlement/status` 供 app 展示各端激活状态。**执行顺序不可颠倒**
+(新 worker 依赖新表;旧 worker 兼容新表,反向回滚安全):
+
+1. **预检(只读)**——确认 50 个已发码无"半程失败"残留行:
+   ```
+   npx wrangler d1 execute ava-entitlement --remote --command "SELECT bt.code, bt.redeemed_by, e.id AS ent, d.device_class FROM beta_testers bt LEFT JOIN entitlements e ON e.channel='beta' AND e.subject=bt.code LEFT JOIN devices d ON d.entitlement_id=e.id WHERE bt.redeemed_by IS NOT NULL;"
+   ```
+   有 `redeemed_by` 但 `ent` 为空的行**无需处理**(新逻辑下任意设备兑换即自愈)。
+2. `cd infra/entitlement-worker && npx wrangler d1 migrations apply ava-entitlement --remote`
+   (纯增量建表 `activation_log`)。
+3. `npm run deploy`——**已发行的 app 立即获得跨端兑换能力**(paywall 本来就能
+   在第二台设备输码,只是不再收 `code_redeemed`)。
+4. (可选)调参:`npx wrangler kv key put --binding CONFIG ACTIVATION_CAP 3` /
+   `ACTIVATION_WINDOW_DAYS 90`(不设即用默认值)。
+5. app 侧文案与状态卡已随批次 3 落库,随下个版本发布即可(纯锦上添花,不阻塞)。

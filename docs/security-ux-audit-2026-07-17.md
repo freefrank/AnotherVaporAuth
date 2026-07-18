@@ -38,6 +38,10 @@ Final state: `flutter analyze` clean, 403 tests green (~+100 vs. baseline). Land
 
 ## Remaining work
 
-- 31 lower-severity round-1 items (dead code, duplication, perf, small UX incl. the missing `code_redeemed` paywall message, ProtoReader bounds checks, reorder index skew) — triage/fix batch in flight.
-- Entitlement worker: per-device-class activation records for beta/lifetime codes (design in flight) so a tester can run desktop + phone without manual `redeemed_by` surgery in D1.
+- ~~31 lower-severity round-1 items~~ — resolved 2026-07-18 as batch 3 (commits `e77c3aa`..`1bac636`): 5 were already fixed by the main batch, 25 fixed across two waves (finalize evidence signal, ProtoReader bounds checks, reorder-by-steamId, paywall vocabulary, session-retry unification, perf, dedup, dead code), 1 accepted as a loss (below).
+- ~~Entitlement worker per-device-class activation~~ — implemented (commit `e77c3aa`); **production deploy pending, user-run**: see `docs/plans/2026-07-16-paywall-prerequisites.md` §7 for the ordered runbook (audit query → D1 migration → worker deploy).
 - Play billing configuration (`kGoogleServerClientId` + worker Google secrets) — **on hold** per 2026-07-18 decision; see `docs/plans/2026-07-16-paywall-prerequisites.md`.
+
+## Accepted losses
+
+- **Stale Pro launcher icon for lapsed-Pro upgraders (round-1 item O1).** Pre-0.90.1 users who had Pro + the pixel skin selected keep the pixel home-screen icon even if Pro lapses: the launcher-icon feature was retired (ColorOS force-stops apps that toggle their own components in the foreground) and its plumbing deleted in batch 3, so no reconcile path exists. In-app rendering is correctly gated; only the static icon can linger, for a small cohort. Accepted until a zero-component-write icon mechanism exists — any future re-design must fold "icon reconcile on entitlement change" into its requirements.
