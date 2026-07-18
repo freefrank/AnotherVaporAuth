@@ -82,14 +82,27 @@ export class MemoryStore implements Store {
       .map((d) => ({ ...d }));
   }
 
-  async logActivation(
+  /** Models D1's single conditional INSERT: no await between the count and
+   * the append, so concurrent callers serialize here exactly like SQLite
+   * serializes the atomic statement — interleaved redeems cannot both read
+   * a below-cap count and both insert. */
+  async tryLogActivation(
     entitlementId: number,
     deviceClass: string,
     deviceId: string,
     now: number,
-  ): Promise<void> {
+    since: number,
+    cap: number,
+  ): Promise<boolean> {
+    const recent = this.activationLog.filter(
+      (a) =>
+        a.entitlementId === entitlementId &&
+        a.deviceClass === deviceClass &&
+        a.activatedAt > since,
+    ).length;
+    if (recent >= cap) return false;
     this.activationLog.push({ entitlementId, deviceClass, deviceId, activatedAt: now });
-    await this.claimDevice(entitlementId, deviceClass, deviceId, now);
+    return true;
   }
 
   async countRecentActivations(
@@ -173,7 +186,7 @@ export async function setup(overrides: Partial<Deps> = {}): Promise<TestContext>
       afdianPlanId: () => 'plan-pro',
       vipDays: async () => 3,
       activationWindowDays: async () => 90,
-      activationCap: async () => 3,
+      activationCap: async () => 3, // tests pin a small cap (prod default is 5)
     },
     replay: {
       seenTransaction: async (id) => {

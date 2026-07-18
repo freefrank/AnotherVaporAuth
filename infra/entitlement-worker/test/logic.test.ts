@@ -13,7 +13,7 @@ import {
   handleVipClaim,
   type Res,
 } from '../src/logic';
-import { NOW, decodeClaims, setup, type TestContext } from './helpers';
+import { MemoryStore, NOW, decodeClaims, setup, type TestContext } from './helpers';
 
 function tokenOf(res: Res): string {
   expect(res.status).toBe(200);
@@ -306,6 +306,50 @@ describe('afdian redeem', () => {
     expect(decodeClaims(tokenOf(res)).pro).toBe(NOW + MONTH_SECONDS);
     expect((await ctx.store.getOrder('ord-1'))?.entitlementId).toBe(ctx.store.ents[0].id);
   });
+
+  it('a capped slot refuses BEFORE consuming a fresh order', async () => {
+    const ctx = await setup();
+    ctx.afdianOrders.set('ord-1', order1);
+    const redeem = (no: string, deviceId: string) =>
+      handleAfdianRedeem({ order_no: no, device_id: deviceId, device_class: 'android' }, ctx.deps);
+    // Fill the android slot to the cap: free first claim + 3 replacements.
+    await redeem('ord-1', 'dev-A');
+    for (const id of ['dev-B', 'dev-C', 'dev-D']) {
+      expect((await redeem('ord-1', id)).status).toBe(200);
+    }
+    // A fresh paid order from yet another device is refused…
+    ctx.afdianOrders.set('ord-2', { ...order1, outTradeNo: 'ord-2', paidAt: NOW + 10 });
+    const refused = await redeem('ord-2', 'dev-E');
+    expect(refused.status).toBe(403);
+    expect(refused.body?.error).toBe('code_activation_limit');
+    // …and the order survives the refusal: not recorded, pro_until untouched.
+    expect(await ctx.store.getOrder('ord-2')).toBeNull();
+    expect(ctx.store.ents[0].proUntil).toBe(NOW + MONTH_SECONDS);
+    // An under-cap device (the current holder re-claims for free) still
+    // applies the order.
+    const applied = await redeem('ord-2', 'dev-D');
+    expect(applied.status).toBe(200);
+    expect(ctx.store.ents[0].proUntil).toBe(NOW + 2 * MONTH_SECONDS);
+    expect((await ctx.store.getOrder('ord-2'))?.entitlementId).toBe(ctx.store.ents[0].id);
+  });
+
+  it('a capped slot leaves a webhook-first order unbound and unapplied', async () => {
+    const ctx = await setup();
+    // ord-0 arrives via webhook before any entitlement exists — recorded unbound.
+    ctx.afdianOrders.set('ord-0', { ...order1, outTradeNo: 'ord-0' });
+    await handleAfdianWebhook({ data: { order: { out_trade_no: 'ord-0' } } }, ctx.deps);
+    // ord-1 creates the entitlement and fills the android slot to the cap.
+    ctx.afdianOrders.set('ord-1', order1);
+    const redeem = (no: string, deviceId: string) =>
+      handleAfdianRedeem({ order_no: no, device_id: deviceId, device_class: 'android' }, ctx.deps);
+    await redeem('ord-1', 'dev-A');
+    for (const id of ['dev-B', 'dev-C', 'dev-D']) await redeem('ord-1', id);
+    // Redeeming the unbound ord-0 from an over-cap device must not bind it.
+    const refused = await redeem('ord-0', 'dev-E');
+    expect(refused.body?.error).toBe('code_activation_limit');
+    expect((await ctx.store.getOrder('ord-0'))?.entitlementId).toBeNull();
+    expect(ctx.store.ents[0].proUntil).toBe(NOW + MONTH_SECONDS);
+  });
 });
 
 describe('afdian webhook', () => {
@@ -413,7 +457,7 @@ describe('beta redeem', () => {
     ctx.store.beta.set('BETA-1', { code: 'BETA-1', email: null, redeemedBy: null });
     await handleBetaRedeem(body, ctx.deps);
     expect((await handleBetaRedeem(body, ctx.deps)).status).toBe(200);
-    expect(ctx.store.activationLog).toHaveLength(1); // reinstall is not a device change
+    expect(ctx.store.activationLog).toHaveLength(0); // neither first claim nor re-claim logs
     expect(await handleBetaRedeem({ ...body, code: 'NOPE' }, ctx.deps)).toEqual({
       status: 403,
       body: { error: 'code_invalid' },
@@ -467,12 +511,16 @@ describe('beta per-class activation', () => {
   it('refuses with code_activation_limit at the cap; an expired window frees the slot', async () => {
     const ctx = await setup();
     seed(ctx);
-    // Cap 3 = the initial claim plus two same-class replacements in the window.
+    // The initial claim into the empty slot is free — device_id is
+    // per-install, so a first claim must not burn a replacement.
     await handleBetaRedeem(body, ctx.deps);
+    expect(ctx.store.activationLog).toHaveLength(0);
+    // Cap 3 = three same-class replacements of another device in the window.
     expect((await handleBetaRedeem({ ...body, device_id: 'dev-B' }, ctx.deps)).status).toBe(200);
     expect((await handleBetaRedeem({ ...body, device_id: 'dev-C' }, ctx.deps)).status).toBe(200);
+    expect((await handleBetaRedeem({ ...body, device_id: 'dev-D' }, ctx.deps)).status).toBe(200);
     // Classes + timestamps only — device ids must never leak to another holder.
-    expect(await handleBetaRedeem({ ...body, device_id: 'dev-D' }, ctx.deps)).toEqual({
+    expect(await handleBetaRedeem({ ...body, device_id: 'dev-E' }, ctx.deps)).toEqual({
       status: 403,
       body: {
         error: 'code_activation_limit',
@@ -481,7 +529,7 @@ describe('beta per-class activation', () => {
     });
     expect(ctx.store.activationLog).toHaveLength(3); // refusal writes nothing
     ctx.clock.t = NOW + 91 * DAY_SECONDS;
-    expect((await handleBetaRedeem({ ...body, device_id: 'dev-D' }, ctx.deps)).status).toBe(200);
+    expect((await handleBetaRedeem({ ...body, device_id: 'dev-E' }, ctx.deps)).status).toBe(200);
   });
 
   it('legacy single-device rows gain cross-class redeem and bounded replace', async () => {
@@ -533,16 +581,50 @@ describe('beta per-class activation', () => {
         { order_no: 'ord-1', device_id: deviceId, device_class: 'android' },
         ctx.deps,
       );
-    await redeem('dev-A');
+    await redeem('dev-A'); // empty slot — free, not logged
     expect((await redeem('dev-B')).status).toBe(200);
     expect((await redeem('dev-C')).status).toBe(200);
-    expect(await redeem('dev-D')).toEqual({
+    expect((await redeem('dev-D')).status).toBe(200);
+    expect(await redeem('dev-E')).toEqual({
       status: 403,
       body: {
         error: 'code_activation_limit',
         activations: [{ device_class: 'android', activated_at: NOW }],
       },
     });
+  });
+});
+
+describe('atomic activation admission', () => {
+  it('tryLogActivation admits exactly cap attempts fired without awaiting', async () => {
+    const store = new MemoryStore();
+    const cap = 3;
+    // A tight burst: all attempts start before any completes — MemoryStore is
+    // single-threaded, so this only stays bounded because the count and the
+    // append happen with no await in between (modelling D1's one conditional
+    // INSERT). A count-then-log split would admit all six.
+    const results = await Promise.all(
+      Array.from({ length: cap + 3 }, (_, i) =>
+        store.tryLogActivation(1, 'android', `dev-${i}`, NOW, NOW - 90 * DAY_SECONDS, cap),
+      ),
+    );
+    expect(results.filter(Boolean)).toHaveLength(cap);
+    expect(store.activationLog).toHaveLength(cap);
+  });
+
+  it('concurrent redeems at cap-1 admit exactly one replacement', async () => {
+    const ctx = await setup();
+    ctx.store.beta.set('BETA-1', { code: 'BETA-1', email: null, redeemedBy: null });
+    const redeem = (deviceId: string) =>
+      handleBetaRedeem({ code: 'BETA-1', device_id: deviceId, device_class: 'android' }, ctx.deps);
+    await redeem('dev-A'); // free empty-slot claim
+    await redeem('dev-B'); // log 1
+    await redeem('dev-C'); // log 2 = cap-1
+    // Four parallel redeems race for the last admission; the awaits inside
+    // the handler interleave, so a non-atomic cap check would pass them all.
+    const results = await Promise.all(['dev-D', 'dev-E', 'dev-F', 'dev-G'].map(redeem));
+    expect(results.filter((r) => r.status === 200)).toHaveLength(1);
+    expect(ctx.store.activationLog).toHaveLength(3);
   });
 });
 
@@ -576,6 +658,19 @@ describe('entitlement status', () => {
     const token = tokenOf(await handleBetaRedeem(body, ctx.deps));
     ctx.clock.t = NOW + 5 * DAY_SECONDS; // token exp long gone
     expect((await handleEntitlementStatus({ token }, ctx.deps)).status).toBe(200);
+  });
+
+  it('a kicked device cannot keep reading the slot map; the holder can', async () => {
+    const ctx = await setup();
+    seed(ctx);
+    const tokenA = tokenOf(await handleBetaRedeem(body, ctx.deps));
+    const tokenB = tokenOf(await handleBetaRedeem({ ...body, device_id: 'dev-B' }, ctx.deps));
+    // dev-B replaced dev-A in the android slot — same guard as refresh.
+    expect(await handleEntitlementStatus({ token: tokenA }, ctx.deps)).toEqual({
+      status: 403,
+      body: { error: 'device_revoked' },
+    });
+    expect((await handleEntitlementStatus({ token: tokenB }, ctx.deps)).status).toBe(200);
   });
 
   it('refuses garbage tokens, revoked and ended entitlements', async () => {

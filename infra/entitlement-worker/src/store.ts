@@ -58,10 +58,20 @@ export interface Store {
   claimDevice(entitlementId: number, deviceClass: string, deviceId: string, now: number): Promise<void>;
   /** All class slots of one entitlement, ordered by device_class. */
   listDevices(entitlementId: number): Promise<DeviceRow[]>;
-  /** claimDevice + an activation_log row in one atomic write, so the log
-   * always records the winner of a same-slot race. Bounded flows only —
-   * idempotent same-device re-claims must not go through here. */
-  logActivation(entitlementId: number, deviceClass: string, deviceId: string, now: number): Promise<void>;
+  /** Atomic admission for a bounded slot REPLACE: appends an activation_log
+   * row only while the (entitlement, class) count with activated_at > since
+   * is below `cap`, in ONE conditional INSERT so concurrent redeems cannot
+   * race past the bound. Returns whether the row was written (= admitted);
+   * only then may the caller REPLACE the devices slot. Bounded flows only —
+   * empty-slot claims and same-device re-claims must not go through here. */
+  tryLogActivation(
+    entitlementId: number,
+    deviceClass: string,
+    deviceId: string,
+    now: number,
+    since: number,
+    cap: number,
+  ): Promise<boolean>;
   /** activation_log rows for (entitlement, class) with activated_at > since. */
   countRecentActivations(entitlementId: number, deviceClass: string, since: number): Promise<number>;
 
@@ -182,26 +192,26 @@ export class D1Store implements Store {
     }));
   }
 
-  async logActivation(
+  async tryLogActivation(
     entitlementId: number,
     deviceClass: string,
     deviceId: string,
     now: number,
-  ): Promise<void> {
-    await this.db.batch([
-      this.db
-        .prepare(
-          `INSERT INTO activation_log (entitlement_id, device_class, device_id, activated_at)
-           VALUES (?1, ?2, ?3, ?4)`,
-        )
-        .bind(entitlementId, deviceClass, deviceId, now),
-      this.db
-        .prepare(
-          `INSERT OR REPLACE INTO devices (entitlement_id, device_class, device_id, activated_at)
-           VALUES (?1, ?2, ?3, ?4)`,
-        )
-        .bind(entitlementId, deviceClass, deviceId, now),
-    ]);
+    since: number,
+    cap: number,
+  ): Promise<boolean> {
+    // Count and append in one statement: SQLite serializes writes, so at most
+    // `cap` concurrent admissions win per (entitlement, class, window).
+    const r = await this.db
+      .prepare(
+        `INSERT INTO activation_log (entitlement_id, device_class, device_id, activated_at)
+         SELECT ?1, ?2, ?3, ?4
+         WHERE (SELECT COUNT(*) FROM activation_log
+                WHERE entitlement_id = ?1 AND device_class = ?2 AND activated_at > ?5) < ?6`,
+      )
+      .bind(entitlementId, deviceClass, deviceId, now, since, cap)
+      .run();
+    return r.meta.changes > 0;
   }
 
   async countRecentActivations(

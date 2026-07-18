@@ -68,7 +68,9 @@ describe('Ed25519 JWT', () => {
     const [h, p, s] = token.split('.');
     const forgedPayload = bytesToB64url(utf8(JSON.stringify({ ...CLAIMS, tier: 'vip' })));
     expect(await verifyToken(`${h}.${forgedPayload}.${s}`, keys.publicKey)).toBeNull();
-    const flipped = s.slice(0, -1) + (s.endsWith('A') ? 'B' : 'A');
+    // Flip the FIRST char: the last one holds base64 padding bits, so a flip
+    // there can decode to the very same 64 bytes and (flakily) still verify.
+    const flipped = (s.startsWith('A') ? 'B' : 'A') + s.slice(1);
     expect(await verifyToken(`${h}.${p}.${flipped}`, keys.publicKey)).toBeNull();
   });
 

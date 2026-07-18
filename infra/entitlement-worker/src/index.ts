@@ -13,7 +13,7 @@ import { D1Store } from './store';
 
 const DEFAULT_VIP_DAYS = 3;
 const DEFAULT_ACTIVATION_WINDOW_DAYS = 90;
-const DEFAULT_ACTIVATION_CAP = 3;
+const DEFAULT_ACTIVATION_CAP = 5;
 const SSV_TXN_TTL_SECONDS = 7 * 86400;
 
 /** Lazily imports the signing key once per isolate. */

@@ -53,7 +53,7 @@ export interface Deps {
      * (KV `ACTIVATION_WINDOW_DAYS`, default 90). */
     activationWindowDays(): Promise<number>;
     /** Max activation_log rows per (entitlement, class) within the window
-     * (KV `ACTIVATION_CAP`, default 3). */
+     * (KV `ACTIVATION_CAP`, default 5). */
     activationCap(): Promise<number>;
   };
   replay: {
@@ -106,14 +106,49 @@ async function issueToken(
   return ok({ token: await deps.tokens.sign(claims) });
 }
 
+/** The 403 for a cap-refused claim. Carries the slot map as classes +
+ * timestamps only — never device_ids. */
+async function activationLimitRefusal(deps: Deps, entitlementId: number): Promise<Res> {
+  const activations = (await deps.store.listDevices(entitlementId)).map((d) => ({
+    device_class: d.deviceClass,
+    activated_at: d.activatedAt,
+  }));
+  return { status: 403, body: { error: 'code_activation_limit', activations } };
+}
+
+/** Read-only preview of claimDeviceBounded: would this claim be refused
+ * right now? Lets afdian redeem check the cap BEFORE consuming a paid order.
+ * Advisory only — admission is still decided by the atomic tryLogActivation
+ * in claimDeviceBounded. */
+async function peekClaimRefusal(
+  deps: Deps,
+  entitlementId: number,
+  deviceClass: string,
+  deviceId: string,
+  now: number,
+): Promise<Res | null> {
+  const held = await deps.store.getDevice(entitlementId, deviceClass);
+  if (!held || held.deviceId === deviceId) return null; // empty slot / reinstall — always admitted
+  const windowDays = await deps.config.activationWindowDays();
+  const cap = await deps.config.activationCap();
+  const recent = await deps.store.countRecentActivations(
+    entitlementId,
+    deviceClass,
+    now - windowDays * DAY_SECONDS,
+  );
+  return recent >= cap ? activationLimitRefusal(deps, entitlementId) : null;
+}
+
 /** Per-class claim with an abuse bound, for channels whose credential is a
  * shareable string (beta code, afdian order number): pure REPLACE would turn
  * a leaked credential into a floating multi-user license. The current holder
- * re-claims for free (no log row); replacing another device is refused with
- * 403 `code_activation_limit` once the activation_log for this (entitlement,
- * class) reaches the cap within the window. The refusal carries the slot map
- * as classes + timestamps only — never device_ids. Play/VIP claims stay
- * unbounded (account-anchored). Returns null on success. */
+ * re-claims for free, and the first claim of an empty class slot writes no
+ * log row either — device_id is per-install, so counting first claims would
+ * burn the cap on every reinstall of a legit tester. Only replacing a
+ * *different* current holder logs + counts; that is refused with 403
+ * `code_activation_limit` once the activation_log for this (entitlement,
+ * class) reaches the cap within the window. Play/VIP claims stay unbounded
+ * (account-anchored). Returns null on success. */
 async function claimDeviceBounded(
   deps: Deps,
   entitlementId: number,
@@ -123,24 +158,26 @@ async function claimDeviceBounded(
 ): Promise<Res | null> {
   const held = await deps.store.getDevice(entitlementId, deviceClass);
   if (held && held.deviceId === deviceId) return null; // reinstall — nothing to write
-  if (held) {
-    const windowDays = await deps.config.activationWindowDays();
-    const cap = await deps.config.activationCap();
-    const recent = await deps.store.countRecentActivations(
-      entitlementId,
-      deviceClass,
-      now - windowDays * DAY_SECONDS,
-    );
-    if (recent >= cap) {
-      const activations = (await deps.store.listDevices(entitlementId)).map((d) => ({
-        device_class: d.deviceClass,
-        activated_at: d.activatedAt,
-      }));
-      return { status: 403, body: { error: 'code_activation_limit', activations } };
-    }
+  if (!held) {
+    // Empty slot: unbounded claim, no log row (see doc comment above).
+    await deps.store.claimDevice(entitlementId, deviceClass, deviceId, now);
+    return null;
   }
-  // Kicks any previous same-class holder; its next refresh gets device_revoked.
-  await deps.store.logActivation(entitlementId, deviceClass, deviceId, now);
+  // Replacing another device. Admission must be one atomic statement — a
+  // separate count-then-log lets N parallel redeems at cap-1 all pass.
+  const windowDays = await deps.config.activationWindowDays();
+  const cap = await deps.config.activationCap();
+  const admitted = await deps.store.tryLogActivation(
+    entitlementId,
+    deviceClass,
+    deviceId,
+    now,
+    now - windowDays * DAY_SECONDS,
+    cap,
+  );
+  if (!admitted) return activationLimitRefusal(deps, entitlementId);
+  // Kicks the previous same-class holder; its next refresh gets device_revoked.
+  await deps.store.claimDevice(entitlementId, deviceClass, deviceId, now);
   return null;
 }
 
@@ -232,6 +269,14 @@ export async function handleAfdianRedeem(body: unknown, deps: Deps): Promise<Res
     // Already applied. Same entitlement → idempotent re-redeem; else refuse.
     if (!ent || recorded.entitlementId !== ent.id) return err(403, 'order_bound');
   } else {
+    // NEW order: check the class-slot cap BEFORE any mutation — otherwise a
+    // capped redeem would consume the paid order and extend pro_until while
+    // still reporting failure. Without an entitlement the slot is empty and
+    // cannot be cap-refused, so first redeems proceed.
+    if (ent) {
+      const refused = await peekClaimRefusal(deps, ent.id, deviceClass, deviceId, now);
+      if (refused) return refused;
+    }
     const base = ent && ent.proUntil > now ? ent.proUntil : now;
     const proUntil = ent && ent.proUntil === 0 ? 0 : base + order.month * MONTH_SECONDS;
     ent = await deps.store.upsertEntitlement({
@@ -344,8 +389,8 @@ export async function handleBetaRedeem(body: unknown, deps: Deps): Promise<Res> 
 }
 
 /** POST /v1/entitlement/status {token} — the activation-status surface for
- * the paywall status card. Same verification policy as refresh: signature
- * must hold, expiry is irrelevant. `activations` exposes classes +
+ * the paywall status card. Same verification policy as refresh: signature +
+ * current-slot-holder; expiry ignored. `activations` exposes classes +
  * timestamps only — never device_ids. */
 export async function handleEntitlementStatus(body: unknown, deps: Deps): Promise<Res> {
   const token = field(body, 'token');
@@ -357,6 +402,11 @@ export async function handleEntitlementStatus(body: unknown, deps: Deps): Promis
   const ent = await deps.store.getEntitlement(claims.chan, claims.sub);
   if (!ent) return err(403, 'entitlement_ended');
   if (ent.revoked) return err(403, 'revoked');
+
+  // Same guard as refresh: only the current slot holder may read the map —
+  // a kicked device's old token is exactly device_revoked.
+  const active = await deps.store.getDevice(ent.id, claims.cls);
+  if (!active || active.deviceId !== claims.dev) return err(403, 'device_revoked');
 
   const devices = await deps.store.listDevices(ent.id);
   return ok({
