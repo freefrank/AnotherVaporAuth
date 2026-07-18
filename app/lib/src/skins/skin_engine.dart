@@ -477,7 +477,13 @@ class _SkinOverlayState extends ConsumerState<SkinOverlay>
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1400),
-  )..repeat();
+  );
+  bool _covered = false;
+  bool _hasRecDot = false;
+  SkinSpec? _spec;
+  // Label painters live on the state so they survive frames; rebuilt when the
+  // spec changes (same idea as the file-level _glyphCache, but per spec).
+  final Map<String, TextPainter> _labelCache = {};
 
   @override
   void didChangeDependencies() {
@@ -488,12 +494,25 @@ class _SkinOverlayState extends ConsumerState<SkinOverlay>
 
   @override
   void didPushNext() {
-    if (_c.isAnimating) _c.stop();
+    _covered = true;
+    _updateRunning();
   }
 
   @override
   void didPopNext() {
-    if (!_c.isAnimating) _c.repeat();
+    _covered = false;
+    _updateRunning();
+  }
+
+  // The 1.4s tick only drives the blinking REC dot. Specs without one keep
+  // the controller parked, so a static HUD paints once and never repaints.
+  void _updateRunning() {
+    final shouldRun = !_covered && _hasRecDot && mounted;
+    if (shouldRun && !_c.isAnimating) {
+      _c.repeat();
+    } else if (!shouldRun && _c.isAnimating) {
+      _c.stop();
+    }
   }
 
   @override
@@ -506,6 +525,12 @@ class _SkinOverlayState extends ConsumerState<SkinOverlay>
   @override
   Widget build(BuildContext context) {
     final spec = ref.watch(skinSpecProvider);
+    if (!identical(spec, _spec)) {
+      _spec = spec;
+      _hasRecDot = spec?.overlay.any((l) => l is RecDotSpec) ?? false;
+      _labelCache.clear();
+    }
+    _updateRunning();
     if (spec == null || spec.overlay.isEmpty) return const SizedBox.shrink();
     final tokens = Theme.of(context).extension<AvaTokens>()!;
     // Keep the HUD chrome (brackets, ticks, labels) inside the safe area so
@@ -516,7 +541,12 @@ class _SkinOverlayState extends ConsumerState<SkinOverlay>
           padding: MediaQuery.paddingOf(context),
           child: CustomPaint(
             size: Size.infinite,
-            painter: _OverlayPainter(spec: spec, tokens: tokens, t: _c),
+            painter: _OverlayPainter(
+              spec: spec,
+              tokens: tokens,
+              t: _c,
+              labelCache: _labelCache,
+            ),
           ),
         ),
       ),
@@ -528,25 +558,36 @@ class _OverlayPainter extends CustomPainter {
   final SkinSpec spec;
   final AvaTokens tokens;
   final Animation<double> t;
-  _OverlayPainter({required this.spec, required this.tokens, required this.t})
-      : super(repaint: t);
+  // Owned by _SkinOverlayState so laid-out labels survive across frames
+  // (the HUD text is a small fixed set per spec).
+  final Map<String, TextPainter> labelCache;
+  _OverlayPainter({
+    required this.spec,
+    required this.tokens,
+    required this.t,
+    required this.labelCache,
+  }) : super(repaint: t);
 
   void _label(Canvas canvas, String text, Offset at, Color color,
       LabelsSpec style,
       {bool right = false}) {
-    final tp = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: TextStyle(
-          color: color,
-          fontSize: style.fontSize,
-          fontFamily: style.fontFamily,
-          fontWeight: FontWeight.w700,
-          letterSpacing: style.letterSpacing,
+    final key = '$text|${color.toARGB32()}|${style.fontSize}'
+        '|${style.fontFamily}|${style.letterSpacing}';
+    final tp = labelCache.putIfAbsent(key, () {
+      return TextPainter(
+        text: TextSpan(
+          text: text,
+          style: TextStyle(
+            color: color,
+            fontSize: style.fontSize,
+            fontFamily: style.fontFamily,
+            fontWeight: FontWeight.w700,
+            letterSpacing: style.letterSpacing,
+          ),
         ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
+        textDirection: TextDirection.ltr,
+      )..layout();
+    });
     tp.paint(canvas, right ? at.translate(-tp.width, 0) : at);
   }
 

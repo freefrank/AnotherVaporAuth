@@ -29,9 +29,12 @@
               android:resource="@style/NormalTheme"
               />
         </activity>
-        <!-- Launcher aliases: the home-screen icon follows the active skin.
-             Exactly one is enabled at a time (toggled from MainActivity via
-             the ava/launcher_icon channel); MainActivity itself stays
+        <!-- Launcher aliases: remnant of the icon-follows-skin feature retired
+             in 0.90.1 (runtime alias toggling force-stops the app on ColorOS —
+             see app.dart). Nothing toggles them anymore, but they MUST stay:
+             component enabled-state persists across updates, so devices where
+             LauncherPixel is the enabled alias would lose their home-screen
+             icon if the elements disappeared. MainActivity itself stays
              launchable by explicit component for adb/deep links. -->
         <activity-alias
             android:name=".LauncherNeon"

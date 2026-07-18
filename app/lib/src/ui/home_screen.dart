@@ -1322,8 +1322,86 @@ class _MainPanel extends StatelessWidget {
   }
 }
 
-/// Floating settings button (bottom-right), styled per theme: neon glass disc
-/// with an accent glow, or a chunky pixel square with a hard offset shadow.
+/// Shared chrome for the floating corner buttons: neon glass disc with an
+/// accent glow, or a chunky pixel square with a hard offset shadow. The two
+/// call sites deliberately differ in size and emphasis — those constants are
+/// explicit arguments here instead of drifting copies.
+class _AvaFab extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final IconData icon;
+  final double size; // logical design size, scaled via context.r()
+  final double iconSize;
+  // Neon look: null border alpha keeps the accent token untouched.
+  final double? neonBorderAlpha;
+  final double neonBorderWidth;
+  final double neonGlowAlpha;
+  final double neonGlowBlur;
+  // Pixel look: hard shadow offset (same value for dx and dy).
+  final double pixelShadowOffset;
+  final bool tooltip;
+  const _AvaFab({
+    required this.label,
+    required this.onTap,
+    required this.icon,
+    required this.size,
+    required this.iconSize,
+    required this.neonBorderAlpha,
+    required this.neonBorderWidth,
+    required this.neonGlowAlpha,
+    required this.neonGlowBlur,
+    required this.pixelShadowOffset,
+    required this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).extension<AvaTokens>()!;
+    final neon = t.glow;
+    final side = context.r(size);
+    Widget button = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(neon ? side / 2 : t.radiusSm),
+        child: Container(
+          width: side,
+          height: side,
+          alignment: Alignment.center,
+          decoration: neon
+              ? BoxDecoration(
+                  color: t.panel2,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: neonBorderAlpha == null
+                          ? t.accent
+                          : t.accent.withValues(alpha: neonBorderAlpha!),
+                      width: context.r(neonBorderWidth)),
+                  boxShadow: [
+                    BoxShadow(
+                        color: t.accent.withValues(alpha: neonGlowAlpha),
+                        blurRadius: context.r(neonGlowBlur)),
+                  ],
+                )
+              : BoxDecoration(
+                  color: t.panel2,
+                  border: Border.all(color: t.accent, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                        color: t.borderColor,
+                        offset: Offset(context.r(pixelShadowOffset),
+                            context.r(pixelShadowOffset))),
+                  ],
+                ),
+          child: Icon(icon, color: t.accent, size: context.r(iconSize)),
+        ),
+      ),
+    );
+    if (tooltip) button = Tooltip(message: label, child: button);
+    return Semantics(button: true, label: label, child: button);
+  }
+}
+
 /// Compact top-right corner chip that launches the QR sign-in approval for
 /// the selected account — same visual language as [_SettingsFab], sized down.
 class _ScanFab extends StatelessWidget {
@@ -1332,106 +1410,42 @@ class _ScanFab extends StatelessWidget {
   const _ScanFab({required this.label, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<AvaTokens>()!;
-    final neon = t.glow;
-    final size = context.r(44);
-    return Semantics(
-      button: true,
-      label: label,
-      child: Tooltip(
-        message: label,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(neon ? size / 2 : t.radiusSm),
-            child: Container(
-              width: size,
-              height: size,
-              alignment: Alignment.center,
-              decoration: neon
-                  ? BoxDecoration(
-                      color: t.panel2,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                          color: t.accent.withValues(alpha: 0.75),
-                          width: context.r(1.2)),
-                      boxShadow: [
-                        BoxShadow(
-                            color: t.accent.withValues(alpha: 0.3),
-                            blurRadius: context.r(10)),
-                      ],
-                    )
-                  : BoxDecoration(
-                      color: t.panel2,
-                      border: Border.all(color: t.accent, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                            color: t.borderColor,
-                            offset: Offset(context.r(2), context.r(2))),
-                      ],
-                    ),
-              child: Icon(Icons.qr_code_scanner,
-                  color: t.accent, size: context.r(20)),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => _AvaFab(
+        label: label,
+        onTap: onTap,
+        icon: Icons.qr_code_scanner,
+        size: 44,
+        iconSize: 20,
+        neonBorderAlpha: 0.75,
+        neonBorderWidth: 1.2,
+        neonGlowAlpha: 0.3,
+        neonGlowBlur: 10,
+        pixelShadowOffset: 2,
+        tooltip: true,
+      );
 }
 
+/// Floating settings button (bottom-right), styled per theme: neon glass disc
+/// with an accent glow, or a chunky pixel square with a hard offset shadow.
 class _SettingsFab extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   const _SettingsFab({required this.label, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).extension<AvaTokens>()!;
-    final neon = t.glow;
-    final size = context.r(54);
-    return Semantics(
-      button: true,
-      label: label,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius:
-              BorderRadius.circular(neon ? size / 2 : t.radiusSm),
-          child: Container(
-            width: size,
-            height: size,
-            alignment: Alignment.center,
-            decoration: neon
-                ? BoxDecoration(
-                    color: t.panel2,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: t.accent, width: context.r(1.4)),
-                    boxShadow: [
-                      BoxShadow(
-                          color: t.accent.withValues(alpha: 0.4),
-                          blurRadius: context.r(14)),
-                    ],
-                  )
-                : BoxDecoration(
-                    color: t.panel2,
-                    border: Border.all(color: t.accent, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                          color: t.borderColor,
-                          offset: Offset(context.r(3), context.r(3))),
-                    ],
-                  ),
-            child: Icon(Icons.settings_outlined,
-                color: t.accent, size: context.r(26)),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => _AvaFab(
+        label: label,
+        onTap: onTap,
+        icon: Icons.settings_outlined,
+        size: 54,
+        iconSize: 26,
+        neonBorderAlpha: null,
+        neonBorderWidth: 1.4,
+        neonGlowAlpha: 0.4,
+        neonGlowBlur: 14,
+        pixelShadowOffset: 3,
+        tooltip: false,
+      );
 }
 
 /// Wraps a tappable child with a subtle press-scale for tactile feedback.
