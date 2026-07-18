@@ -50,6 +50,11 @@
     --dart-define=AVA_CHANNEL=play` → `dist/AVA-v<版本>-play.aab`
   - 发布 cn:`flutter build apk --flavor cn --dart-define=AVA_CHANNEL=cn`
     → `dist/AVA-v<版本>-cn.apk`
+  - **真机 dev 包**(与 Play 版并存的 `.dev` 副本,调试用):`flutter build apk
+    --debug --flavor cn --dart-define=AVA_CHANNEL=cn --dart-define=AVA_DEV_PRO=true`
+    → `dist/AVA-dev-v<版本>-cn.apk`。`AVA_DEV_PRO=true` 让 debug 构建默认解锁 Pro
+    (预览付费皮肤);该 define 双重防呆(release/测试都不传 + `kDebugMode` 编译期
+    为假),绝不会漏进发布版或干扰门控测试。
 - 不带 `--flavor` 的 Android 构建会直接失败;`flutter test/analyze` 与桌面
   构建不受影响。cn 包绝不允许包含 ads/billing/GMS 依赖(发布前用
   `apkanalyzer` 验收)。

@@ -1,16 +1,19 @@
 # 设备管理 / 会话列表（Device Sessions）设计
 
-- 状态：一期（只读设备列表）已实现，分支 `feature/device-sessions`。
+- 状态：**已实现并合并**（2026-07-18）——设备列表 + 远程注销（revoke）均落地，
+  revoke 签名已逆向 Steam APK 并在真机实弹验证通过。
 - 来源：2026-07-18 内测 feature request——"设备管理，可以 revoke 某个设备的授权"。
-- 相关：[roadmap] 的「设备管理 / 会话吊销」条目；协议基建同 `family_groups_client`。
+- 相关：[roadmap] 的「设备管理 / 会话吊销」条目；协议基建同 `family_groups_client`；
+  revoke 签名方案见 memory `steam-revoke-signature`。
 
 ## 目标
 
 在按账户的动作菜单里新增「登录设备」入口，展示该 Steam 账户所有已登录的
 设备 / 浏览器会话（名称、平台、最近活跃时间与大致地理位置），并标记「本机」。
 
-**分期**：一期只做**只读列表**（`EnumerateTokens`）。远程注销某个设备
-（`RevokeRefreshToken`）留到二期，原因见 §Revoke——签名方案未经核实前不做。
+**分期（均已完成）**：一期**只读列表**（`EnumerateTokens`）；二期**远程注销**
+（`RevokeRefreshToken`）——其签名方案曾是唯一阻塞，逆向 Steam APK 得出并实弹
+验证后落地，来龙去脉见 §Revoke。
 
 ## 协议事实（对照 SteamDatabase/Protobufs，verbatim 核实）
 
