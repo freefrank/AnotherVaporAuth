@@ -50,12 +50,25 @@
 `_uFixed64` 从 8 个小端字节自行解码成**无符号十进制字符串**保存。
 标「本机」用字符串等值比较（device.token_id == requesting_token）。
 
-### `IAuthenticationService/RevokeRefreshToken`（二期，暂不实现）
+### `IAuthenticationService/RevokeRefreshToken`（二期）
 
 - POST，`ePrivilege=2, eWebAPIKeyRequirement=1`。
 - 请求 `CAuthentication_RefreshToken_Revoke_Request`：
   `1 token_id` (fixed64)、`2 steamid` (fixed64)、
   `3 revoke_action` (enum：0 Logout / 1 Permanent…)、**`4 signature` (bytes)**。
+- **signature 已逆向 Steam APK 3.10.9 得出（2026-07-18，HIGH 置信度）**：
+
+  ```
+  signature = HMAC_SHA256(
+      key = base64_decode(shared_secret),   // 密钥 = shared_secret 原始字节
+      msg = ascii(token_id 的十进制字符串)    // 如 "123…789" 的 ASCII 数字，非 LE 整数
+  )                                          // → 原始 32 字节
+  ```
+
+  与扫码批准签名（LE 整数拼接）**布局不同**，别照抄。msg 不含 steamid / 时间戳
+  （无需时钟同步）；steamid、revoke_action 照放请求但不参与签名。证据链与坑见
+  memory `steam-revoke-signature`。**上线前须用一次性小号实弹验证一次**（token_id
+  的十进制字符串形式为静态推定），**不得用折叠屏真实账户**。
 
 ## Revoke 为何暂缓
 
