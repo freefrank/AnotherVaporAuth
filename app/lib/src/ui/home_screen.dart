@@ -1116,11 +1116,14 @@ class _SidebarRow extends StatelessWidget {
           ],
         ),
         child: GestureDetector(
-          // Mouse right-click mirrors the touch gestures (desktop).
+          // Long-press (touch) and right-click (mouse) both open the full
+          // per-account menu — the only entry point for market / family /
+          // devices, which have no swipe action of their own. onLongPressStart
+          // carries the position showMenu anchors to.
+          onLongPressStart: (d) => _contextMenu(context, d.globalPosition),
           onSecondaryTapDown: (d) => _contextMenu(context, d.globalPosition),
           child: InkWell(
           onTap: onTap,
-          onLongPress: () => onAction(account, 'market'),
           borderRadius: BorderRadius.circular(t.radiusSm),
           child: Container(
             padding: context.rInsets(all: 8),
