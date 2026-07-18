@@ -16,7 +16,15 @@ class SettingsStore {
     return File(p.join(p.dirname(dir), 'app_settings.json'));
   }
 
-  Future<Map<String, dynamic>> _read() async {
+  // Read-through cache for the whole file: startup does ~10 independent
+  // load*() calls and every one used to re-read + re-decode the same tiny
+  // JSON. Safe because this store is the file's only writer (the app-private
+  // dir sees no external edits) and _update publishes to it after each write.
+  Map<String, dynamic>? _cache;
+
+  Future<Map<String, dynamic>> _read() async => _cache ??= await _readDisk();
+
+  Future<Map<String, dynamic>> _readDisk() async {
     try {
       final f = await _file();
       if (!await f.exists()) return {};
@@ -47,9 +55,12 @@ class SettingsStore {
 
   Future<void> _update(void Function(Map<String, dynamic> data) mutate) {
     final task = _chain.then((_) async {
-      final data = await _read();
+      // Mutate a copy and publish it to the cache only after the write, so
+      // concurrent loads never observe a half-applied mutation.
+      final data = Map<String, dynamic>.of(await _read());
       mutate(data);
       await _write(data);
+      _cache = data;
     });
     // Keep the chain alive even if this update fails.
     _chain = task.catchError((_) {});
@@ -131,11 +142,9 @@ class SettingsStore {
   Future<void> saveBrightnessMode(String mode) =>
       _update((data) => data['brightness_mode'] = mode);
 
-  /// UI theme variant: 'neon' (default) or 'pixel'.
-  Future<String?> loadTheme() async => (await _read())['theme'] as String?;
-
-  Future<void> saveTheme(String variant) =>
-      _update((data) => data['theme'] = variant);
+  // The pre-0.84 loadTheme/saveTheme pair is gone: the legacy 'theme' key
+  // lives on only as the read-only migration source inside loadSkin /
+  // loadBrightnessMode — writing it again would corrupt those switches.
 
   /// The stored entitlement JWT (Pro/VIP), verbatim. Not a secret: it is
   /// signature-protected and device-bound, so plain app_settings.json is fine.

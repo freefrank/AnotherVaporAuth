@@ -8,10 +8,9 @@ import '../../app/theme.dart';
 import '../../core/models/confirmation.dart';
 import '../../core/models/steam_guard_account.dart';
 import '../../core/protocol/confirmations_client.dart';
-import '../../services/session_manager.dart';
-import '../login_screen.dart';
 import '../widgets/ava_panel.dart';
 import '../widgets/hold_button.dart';
+import 'session_retry.dart';
 
 /// Design screen 06 — confirmations. Native JSON rendering (no WebView). Top
 /// batch bar (accept all / reject all) + per-item cards with type chip, title,
@@ -34,7 +33,7 @@ class ConfirmationsTab extends ConsumerStatefulWidget {
 /// re-sign and re-fetch from Steam mobileconf on every switch and drop
 /// scroll position / in-flight responses.
 class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, SessionRetryState {
   late final ConfirmationsClient _client;
   List<Confirmation>? _confs;
   // false so the initState refresh passes its own re-entrancy guard;
@@ -62,7 +61,12 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
       _needsLogin = false;
     });
     try {
-      final list = await _fetchWithAutoRefresh();
+      // A stale session (`needauth` → ConfirmationAuthException) transparently
+      // refreshes the token and retries once; only a dead refresh token
+      // surfaces as an error. Other failures skip the token exchange.
+      final list = await fetchWithAutoRefresh(
+          widget.account, () => _client.fetch(widget.account),
+          retryOnAnyError: false);
       if (!mounted) return;
       setState(() {
         _confs = list;
@@ -71,7 +75,7 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
       widget.onCount?.call(list.length);
     } catch (e) {
       if (!mounted) return;
-      final needsLogin = e is ConfirmationAuthException;
+      final needsLogin = isAuthError(e);
       final l = AppLocalizations.of(context);
       setState(() {
         _loading = false;
@@ -87,34 +91,6 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
                     : '${l.confRejected}\n\nSteam: ${e.message}')
                 : '$e';
       });
-    }
-  }
-
-  /// Opens sign-in for this account, then re-fetches on return.
-  Future<void> _signIn() async {
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) =>
-          LoginScreen(reason: LoginReason.refresh, account: widget.account),
-    ));
-    if (mounted) refresh();
-  }
-
-  /// Fetches confirmations; on a stale session (`needauth`) it transparently
-  /// refreshes the access token from the refresh token and retries once. Only
-  /// surfaces [ConfirmationAuthException] when there is no usable refresh token.
-  Future<List<Confirmation>> _fetchWithAutoRefresh() async {
-    // Captured up front: `ref` on a disposed State throws, and the renewed
-    // (possibly rotated) refresh token must be persisted even if this tab is
-    // gone by the time the exchange returns.
-    final controller = ref.read(appControllerProvider.notifier);
-    try {
-      return await _client.fetch(widget.account);
-    } on ConfirmationAuthException {
-      final refreshed = await SessionManager(ref.read(apiClientProvider))
-          .refresh(widget.account.session);
-      if (!refreshed) rethrow;
-      await controller.persistSession(widget.account);
-      return await _client.fetch(widget.account);
     }
   }
 
@@ -190,21 +166,6 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
     );
   }
 
-  /// Wraps [child] in a scrollable that fills the viewport and centers it —
-  /// RefreshIndicator needs a scrollable to trigger, and the content must
-  /// stay vertically centered (and able to grow) on any screen height.
-  Widget _scrollableCentered(Widget child) => LayoutBuilder(
-        builder: (context, constraints) => ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Center(child: child),
-            ),
-          ],
-        ),
-      );
-
   Widget _buildBody(
       AppLocalizations l, AvaTokens t, List<Confirmation> confs) {
     if (_loading) {
@@ -212,31 +173,17 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null) {
-      return _scrollableCentered(
-        Padding(
-          padding: context.rInsets(all: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.cloud_off, color: t.muted, size: context.r(40)),
-              SizedBox(height: context.r(12)),
-              Text(
-                _needsLogin ? _error! : '${l.commonError}: $_error',
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: context.r(16)),
-              _needsLogin
-                  ? FilledButton(
-                      onPressed: _signIn, child: Text(l.loginButton))
-                  : OutlinedButton(
-                      onPressed: refresh, child: Text(l.commonRetry)),
-            ],
-          ),
-        ),
-      );
+      return scrollableCentered(sessionErrorBody(
+        l,
+        t,
+        error: _error!,
+        needsLogin: _needsLogin,
+        onSignIn: () => signInThen(widget.account, refresh),
+        onRetry: refresh,
+      ));
     }
     if (confs.isEmpty) {
-      return _scrollableCentered(
+      return scrollableCentered(
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [

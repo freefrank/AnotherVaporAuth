@@ -10,7 +10,7 @@ import '../../core/models/steam_item.dart';
 import '../../core/protocol/inventory_client.dart';
 import '../../services/auto_login.dart';
 import '../../services/steam_api_client.dart' show CommunityAuthException;
-import '../login_screen.dart';
+import '../pending/session_retry.dart';
 import 'sell_sheet.dart';
 
 /// Inventory browser + market listings for one account.
@@ -23,7 +23,7 @@ class MarketScreen extends ConsumerStatefulWidget {
 }
 
 class _MarketScreenState extends ConsumerState<MarketScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, SessionRetryState {
   late final TabController _tabs = TabController(length: 2, vsync: this);
 
   InventoryOverview? _overview;
@@ -101,17 +101,6 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
     } catch (e) {
       if (mounted) setState(() => _error = '$e');
     }
-  }
-
-  /// Opens the sign-in flow for this account, then retries the load. A
-  /// successful sign-in refreshes the session (and, for a code-only import,
-  /// fills in the real SteamID).
-  Future<void> _signIn() async {
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) =>
-          LoginScreen(reason: LoginReason.refresh, account: widget.account),
-    ));
-    if (mounted) _loadOverview();
   }
 
   Future<void> _selectGame(InventoryGame g) async {
@@ -253,8 +242,12 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
     if (_error != null) {
       return _Centered(
         text: _error!,
+        // A successful sign-in refreshes the session (and, for a code-only
+        // import, fills in the real SteamID) before the reload.
         action: _needsLogin
-            ? FilledButton(onPressed: _signIn, child: Text(l.loginButton))
+            ? FilledButton(
+                onPressed: () => signInThen(widget.account, _loadOverview),
+                child: Text(l.loginButton))
             : TextButton(
                 onPressed: _loadOverview, child: Text(l.commonRetry)),
       );

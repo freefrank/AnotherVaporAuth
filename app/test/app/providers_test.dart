@@ -1,7 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' show Locale;
 
 import 'package:ava/src/app/providers.dart';
+import 'package:ava/src/app/settings_store.dart';
+import 'package:ava/src/app/theme.dart';
 import 'package:ava/src/core/models/steam_guard_account.dart';
 import 'package:ava/src/services/account_store.dart';
 import 'package:ava/src/services/avatar_service.dart';
@@ -10,6 +14,7 @@ import 'package:ava/src/services/storage_provider.dart';
 import 'package:ava/src/services/vault_key_store.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 
 // A valid 20-byte Steam shared secret, base64 (what generateCode expects).
 final _secret = base64.encode(Uint8List.fromList(List.generate(20, (i) => i)));
@@ -32,6 +37,34 @@ class _NoAvatars implements AvatarService {
   @override
   Future<SteamProfile> fetchProfile(int steamId) async =>
       const SteamProfile();
+
+  @override
+  Future<EquippedItems> fetchEquippedItems(
+          int steamId, String? accessToken) async =>
+      const EquippedItems();
+}
+
+/// Scripted avatar resolver for the refreshAvatars parallelism test: inert
+/// until [active] (imports fire refreshAvatars unawaited and must not
+/// pre-fill personas), then resolves `p<steamId>` after a small real delay —
+/// long enough for concurrent calls to overlap — and throws for [failFor].
+class _ScriptedAvatars implements AvatarService {
+  final int failFor;
+  bool active = false;
+  int _inFlight = 0;
+  int maxInFlight = 0;
+  _ScriptedAvatars({this.failFor = 0});
+
+  @override
+  Future<SteamProfile> fetchProfile(int steamId) async {
+    if (!active) return const SteamProfile();
+    _inFlight++;
+    if (_inFlight > maxInFlight) maxInFlight = _inFlight;
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    _inFlight--;
+    if (steamId == failFor) throw Exception('profile fetch down');
+    return SteamProfile(personaName: 'p$steamId');
+  }
 
   @override
   Future<EquippedItems> fetchEquippedItems(
@@ -303,6 +336,144 @@ void main() {
               .accounts
               .map((acc) => acc.steamId),
           [b, c, a]);
+    });
+  });
+
+  group('AppController.refreshAvatars', () {
+    const idA = 76561198000000101;
+    const idB = 76561198000000102; // its profile fetch throws
+    const idC = 76561198000000103;
+
+    test('fetches per-account in parallel; one failure does not abort the rest',
+        () async {
+      final storage = MemoryStorageProvider();
+      final avatars = _ScriptedAvatars(failFor: idB);
+      final container = ProviderContainer(overrides: [
+        storageProvider.overrideWithValue(storage),
+        timeAlignerProvider.overrideWithValue(() async {}),
+        avatarServiceProvider.overrideWithValue(avatars),
+      ]);
+      addTearDown(container.dispose);
+      await container.read(appControllerProvider.future);
+      final notifier = container.read(appControllerProvider.notifier);
+      for (final id in [idA, idB, idC]) {
+        await notifier.importMaFile(_maFile(steamId: id));
+      }
+      // Drain the imports' unawaited refreshAvatars before arming the fake.
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      avatars.active = true;
+
+      await notifier.refreshAvatars();
+
+      expect(avatars.maxInFlight, 3,
+          reason: 'accounts must refresh concurrently, not one at a time');
+      final byId = {
+        for (final a
+            in container.read(appControllerProvider).value!.accounts)
+          a.steamId: a,
+      };
+      // B's failure is contained to B — A and C still refreshed + persisted.
+      expect(byId[idA]!.personaName, 'p$idA');
+      expect(byId[idC]!.personaName, 'p$idC');
+      expect(byId[idB]!.personaName, isNull);
+      expect(storage.files['$idA.maFile'], contains('p$idA'));
+      expect(storage.files['$idC.maFile'], contains('p$idC'));
+    });
+  });
+
+  group('PersistedSettingController', () {
+    // SettingsStore writes app_settings.json next to the maFiles dir on the
+    // real filesystem, so the fake storage points at a temp dir.
+    late Directory tmp;
+    late MemoryStorageProvider storage;
+
+    setUp(() async {
+      tmp = await Directory.systemTemp.createTemp('ava_persisted_settings');
+      addTearDown(() => tmp.delete(recursive: true));
+      storage = MemoryStorageProvider(p.join(tmp.path, 'maFiles'));
+    });
+
+    ProviderContainer containerWithStorage() {
+      final container = ProviderContainer(overrides: [
+        storageProvider.overrideWithValue(storage),
+      ]);
+      addTearDown(container.dispose);
+      return container;
+    }
+
+    /// The load in build() is async — poll (bounded) until it lands.
+    Future<void> settle(bool Function() done) async {
+      for (var i = 0; i < 50 && !done(); i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+      }
+    }
+
+    test('publishes the default until the stored value loads, then applies it',
+        () async {
+      File(p.join(tmp.path, 'app_settings.json')).writeAsStringSync(jsonEncode({
+        'skin': 'neon',
+        'brightness_mode': 'dark',
+        'text_size': 'large',
+        'locale': 'zh',
+        'hold_confirm': false,
+        'haptics': false,
+      }));
+      final container = containerWithStorage();
+
+      // Synchronous first read: the defaults, not the (unloaded) file.
+      expect(container.read(skinProvider), AvaSkin.none);
+      expect(container.read(brightnessModeProvider), AvaBrightnessMode.system);
+      expect(container.read(textSizeProvider), AvaTextSize.small);
+      expect(container.read(localeProvider), isNull);
+      expect(container.read(holdConfirmProvider), isTrue);
+      expect(container.read(hapticsProvider), isTrue);
+
+      await settle(() =>
+          container.read(skinProvider) == AvaSkin.neon &&
+          container.read(brightnessModeProvider) == AvaBrightnessMode.dark &&
+          container.read(textSizeProvider) == AvaTextSize.large &&
+          container.read(localeProvider) == const Locale('zh') &&
+          container.read(holdConfirmProvider) == false &&
+          container.read(hapticsProvider) == false);
+      expect(container.read(skinProvider), AvaSkin.neon);
+      expect(container.read(brightnessModeProvider), AvaBrightnessMode.dark);
+      expect(container.read(textSizeProvider), AvaTextSize.large);
+      expect(container.read(localeProvider), const Locale('zh'));
+      expect(container.read(holdConfirmProvider), isFalse);
+      expect(container.read(hapticsProvider), isFalse);
+    });
+
+    test('an unknown stored enum name keeps the default', () async {
+      File(p.join(tmp.path, 'app_settings.json')).writeAsStringSync(
+          jsonEncode({'brightness_mode': 'blurple'}));
+      final container = containerWithStorage();
+
+      container.read(brightnessModeProvider); // trigger the async load
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(container.read(brightnessModeProvider), AvaBrightnessMode.system);
+    });
+
+    test('set updates state and writes through to the store', () async {
+      final container = containerWithStorage();
+      // Let build()'s async load land first: a set racing the initial load
+      // can be overwritten by it (pre-existing semantics, kept by the
+      // generic controller — settings screens only offer set() well after
+      // the load resolved).
+      container.read(brightnessModeProvider);
+      container.read(holdConfirmProvider);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      await container
+          .read(brightnessModeProvider.notifier)
+          .setMode(AvaBrightnessMode.light);
+      await container.read(holdConfirmProvider.notifier).set(false);
+
+      expect(container.read(brightnessModeProvider), AvaBrightnessMode.light);
+      expect(container.read(holdConfirmProvider), isFalse);
+      // A fresh store instance (own cache) proves the values hit disk.
+      final store = SettingsStore(storage);
+      expect(await store.loadBrightnessMode(), 'light');
+      expect(await store.loadHoldConfirm(), isFalse);
     });
   });
 

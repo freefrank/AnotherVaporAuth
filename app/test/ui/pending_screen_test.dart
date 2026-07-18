@@ -8,6 +8,8 @@ import 'package:ava/src/core/models/manifest.dart';
 import 'package:ava/src/core/models/session_data.dart';
 import 'package:ava/src/core/models/steam_guard_account.dart';
 import 'package:ava/src/core/proto/protobuf_wire.dart';
+import 'package:ava/src/core/protocol/community_session.dart'
+    show MissingAccessTokenException;
 import 'package:ava/src/services/steam_api_client.dart';
 import 'package:ava/src/services/storage_provider.dart';
 import 'package:ava/src/ui/pending/offer_card.dart';
@@ -280,6 +282,158 @@ class _FakeApiNeedAuthOnce extends _FakeApi {
         accessToken: accessToken,
         useGet: useGet,
         version: version);
+  }
+}
+
+/// First GetTradeOffers fails with a structural 401; the token exchange
+/// hands out rotated tokens and the retry succeeds — drives the shared
+/// session-retry mixin's refresh-then-retry path on the offers tab.
+class _FakeApiOffers401Once extends _FakeApiWithOffer {
+  int offerCalls = 0;
+  int tokenCalls = 0;
+
+  @override
+  Future<Map<String, dynamic>> apiGetJson(
+    String iface,
+    String method,
+    Map<String, dynamic> query, {
+    String? accessToken,
+    int version = 1,
+  }) {
+    if (method == 'GetTradeOffers' && ++offerCalls == 1) {
+      throw SteamApiException(2, 'HTTP 401', 'GetTradeOffers',
+          httpStatus: 401);
+    }
+    return super.apiGetJson(iface, method, query,
+        accessToken: accessToken, version: version);
+  }
+
+  @override
+  Future<ProtoReader> callProtobuf(
+    String iface,
+    String method, {
+    required ProtoWriter request,
+    String? accessToken,
+    bool useGet = false,
+    int version = 1,
+  }) async {
+    if (method == 'GenerateAccessTokenForApp') {
+      tokenCalls++;
+      // Field numbers per session_manager.dart: 1=access, 2=refresh.
+      final w = ProtoWriter()
+        ..writeString(1, 'new-access')
+        ..writeString(2, 'new-refresh');
+      return ProtoReader(w.toBytes());
+    }
+    return super.callProtobuf(iface, method,
+        request: request,
+        accessToken: accessToken,
+        useGet: useGet,
+        version: version);
+  }
+}
+
+/// GetTradeOffers always finds the session dead and the token exchange
+/// yields nothing (empty reply) — the offers tab must land on the sign-in
+/// affordance, not a retry loop or a raw exception dump.
+class _FakeApiOffersSessionDead extends _FakeApi {
+  @override
+  Future<Map<String, dynamic>> apiGetJson(
+    String iface,
+    String method,
+    Map<String, dynamic> query, {
+    String? accessToken,
+    int version = 1,
+  }) {
+    if (method == 'GetTradeOffers') {
+      throw const MissingAccessTokenException();
+    }
+    return super.apiGetJson(iface, method, query,
+        accessToken: accessToken, version: version);
+    // base callProtobuf answers GenerateAccessTokenForApp with an empty
+    // body → SessionManager.refresh returns false → the error surfaces.
+  }
+}
+
+/// Two received offers whose miniprofile lookups each take [latency] —
+/// pins that persona resolution is parallel (one latency window fills all
+/// names; serial resolution would need one window per partner).
+class _FakeApiSlowPersonas extends _FakeApi {
+  static const latency = Duration(milliseconds: 300);
+
+  @override
+  Future<Map<String, dynamic>> apiGetJson(
+    String iface,
+    String method,
+    Map<String, dynamic> query, {
+    String? accessToken,
+    int version = 1,
+  }) async {
+    if (method == 'GetTradeOffers') {
+      Map<String, dynamic> offer(String id, int partner) => {
+            'tradeofferid': id,
+            'accountid_other': partner,
+            'trade_offer_state': 2,
+            'items_to_receive': [
+              {
+                'appid': 730,
+                'contextid': '2',
+                'assetid': '111',
+                'classid': '9',
+                'instanceid': '0',
+                'amount': '1',
+              }
+            ],
+            'items_to_give': [],
+            'time_created': 1752500000,
+            'time_updated': 1752500000,
+          };
+      return {
+        'response': {
+          'trade_offers_received': [offer('7001', 123), offer('7002', 456)],
+          'descriptions': [
+            {
+              'appid': 730,
+              'classid': '9',
+              'instanceid': '0',
+              'icon_url': '',
+              'name': 'AK-47 | Redline',
+              'market_hash_name': 'AK-47',
+              'name_color': 'D2D2D2',
+              'type': 'Rifle',
+              'tradable': 1,
+            }
+          ],
+        },
+      };
+    }
+    return {'response': {}};
+  }
+
+  int _inFlight = 0;
+
+  /// Peak concurrent miniprofile lookups: 2 ⇒ parallel, 1 ⇒ serial.
+  int maxInFlightMiniProfiles = 0;
+
+  @override
+  Future<Map<String, dynamic>> communityGetJson(
+    String path,
+    Map<String, dynamic> query, {
+    Map<String, String>? cookies,
+  }) async {
+    if (path.startsWith('/miniprofile/')) {
+      _inFlight++;
+      if (_inFlight > maxInFlightMiniProfiles) {
+        maxInFlightMiniProfiles = _inFlight;
+      }
+      await Future<void>.delayed(latency);
+      _inFlight--;
+      return {
+        'persona_name': path.contains('/123/') ? 'alice' : 'bob',
+        'avatar_url': '',
+      };
+    }
+    return super.communityGetJson(path, query, cookies: cookies);
   }
 }
 
@@ -674,5 +828,65 @@ void main() {
     await hold();
     expect(api.postPaths, hasLength(2),
         reason: 'an accept exception must not leave _busy stuck at true');
+  });
+
+  testWidgets(
+      'offers tab: a structural 401 triggers one silent token refresh and '
+      'the retry renders the offers', (tester) async {
+    final api = _FakeApiOffers401Once();
+    final account = _account();
+    await tester.pumpWidget(_app(api, account));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trade offers'));
+    await tester.pumpAndSettle();
+
+    expect(api.tokenCalls, 1,
+        reason: 'the failed fetch must refresh the token exactly once');
+    expect(api.offerCalls, 2, reason: 'refresh must be followed by a retry');
+    // SessionManager patched the session in place with the rotated tokens.
+    expect(account.session.accessToken, 'new-access');
+    expect(account.session.refreshToken, 'new-refresh');
+    // The retry succeeded — offer card, no error affordances.
+    expect(find.byType(OfferCard), findsOneWidget);
+    expect(find.text('Log in'), findsNothing);
+    expect(find.text('Retry'), findsNothing);
+  });
+
+  testWidgets(
+      'offers tab: a dead session (refresh cannot help) offers sign-in, '
+      'not retry', (tester) async {
+    await tester.pumpWidget(_app(_FakeApiOffersSessionDead(), _account()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trade offers'));
+    await tester.pumpAndSettle();
+
+    expect(
+        find.text('Session expired — sign in again to refresh this account.'),
+        findsOneWidget);
+    expect(find.text('Log in'), findsOneWidget,
+        reason: 'a dead session must route to interactive sign-in');
+    expect(find.text('Retry'), findsNothing);
+  });
+
+  testWidgets('persona lookups run in parallel and all names land',
+      (tester) async {
+    final api = _FakeApiSlowPersonas();
+    await tester.pumpWidget(_app(api, _account()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trade offers'));
+    await tester.pumpAndSettle();
+
+    // Generous pumps so the delayed lookups complete under either shape —
+    // a serial regression must fail on the concurrency assertion below,
+    // not on a pending-timer teardown error.
+    await tester.pump(_FakeApiSlowPersonas.latency * 2);
+    await tester.pump(_FakeApiSlowPersonas.latency * 2);
+    await tester.pump();
+
+    expect(api.maxInFlightMiniProfiles, 2,
+        reason: 'persona lookups must be issued concurrently — serially, '
+            'N partners cost N round-trips before the last name fills in');
+    expect(find.text('alice'), findsOneWidget);
+    expect(find.text('bob'), findsOneWidget);
   });
 }

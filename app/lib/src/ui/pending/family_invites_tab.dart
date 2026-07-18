@@ -9,14 +9,10 @@ import '../../app/theme.dart';
 import '../../core/models/family_group.dart';
 import '../../core/models/steam_guard_account.dart';
 import '../../core/models/trade_offer.dart' show TradeOffer;
-import '../../core/protocol/qr_approval_client.dart'
-    show MissingAccessTokenException;
-import '../../services/session_manager.dart';
-import '../../services/steam_api_client.dart' show SteamApiException;
 import '../family_group_screen.dart';
-import '../login_screen.dart';
 import '../widgets/ava_panel.dart';
 import '../widgets/hold_button.dart';
+import 'session_retry.dart';
 
 /// 待办中心第三页签：家庭组邀请。发现邀请（GetFamilyGroupForUser）、
 /// 加入前预检（可降级）、长按加入 → type-11 mobileconf 确认联动。
@@ -36,7 +32,7 @@ class FamilyInvitesTab extends ConsumerStatefulWidget {
 }
 
 class FamilyInvitesTabState extends ConsumerState<FamilyInvitesTab>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, SessionRetryState {
   FamilyUserState? _state;
   final _checks = <int, InviteChecks?>{}; // familyGroupId -> checks (null=降级)
   final _checksLoaded = <int>{};
@@ -65,7 +61,9 @@ class FamilyInvitesTabState extends ConsumerState<FamilyInvitesTab>
       _needsLogin = false;
     });
     try {
-      final s = await _fetchWithAutoRefresh();
+      final client = ref.read(familyGroupsClientProvider);
+      final s = await fetchWithAutoRefresh(
+          widget.account, () => client.forUser(widget.account));
       if (!mounted) return;
       setState(() {
         _state = s;
@@ -76,82 +74,51 @@ class FamilyInvitesTabState extends ConsumerState<FamilyInvitesTab>
       _loadDetails(s);
     } catch (e) {
       if (!mounted) return;
-      final needsLogin = _isAuthError(e);
+      final needsLogin = isAuthError(e);
       final l = AppLocalizations.of(context);
       setState(() {
         _loading = false;
         _needsLogin = needsLogin;
-        _error = needsLogin
-            ? l.confNeedsLogin
-            // SteamApiException 的完整 toString 对用户像未捕获的崩溃 ——
-            // 只显示其 message（如 "HTTP 405"），其余异常保持原样。
-            : (e is SteamApiException ? e.message : '$e');
+        _error = needsLogin ? l.confNeedsLogin : fetchErrorText(e);
       });
     }
   }
 
-  Future<FamilyUserState> _fetchWithAutoRefresh() async {
-    // Captured up front: `ref` on a disposed State throws, and the renewed
-    // (possibly rotated) refresh token must be persisted even if this tab is
-    // gone by the time the exchange returns.
-    final controller = ref.read(appControllerProvider.notifier);
-    final client = ref.read(familyGroupsClientProvider);
-    try {
-      return await client.forUser(widget.account);
-    } catch (_) {
-      final refreshed = await SessionManager(ref.read(apiClientProvider))
-          .refresh(widget.account.session);
-      if (!refreshed) rethrow;
-      await controller.persistSession(widget.account);
-      return await client.forUser(widget.account);
-    }
-  }
-
-  static bool _isAuthError(Object e) =>
-      e is MissingAccessTokenException ||
-      (e is SteamApiException &&
-          (e.message.contains('HTTP 401') || e.message.contains('HTTP 403')));
-
-  Future<void> _signIn() async {
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) =>
-          LoginScreen(reason: LoginReason.refresh, account: widget.account),
-    ));
-    if (mounted) refresh();
-  }
-
   /// 每条邀请的补充信息：预检（可降级）、组名/空位（可失败）、邀请人昵称。
-  /// 全部 best-effort，逐个 setState；任何失败都不影响卡片主体。
-  Future<void> _loadDetails(FamilyUserState s) async {
+  /// 全部 best-effort，逐个 setState；任何失败都不影响卡片主体。邀请之间
+  /// 并行拉取（每条内部仍按 预检 → 组名 → 昵称 串行——三项喂同一张卡片）。
+  Future<void> _loadDetails(FamilyUserState s) =>
+      Future.wait([for (final i in s.pendingInvites) _loadInviteDetails(i)]);
+
+  Future<void> _loadInviteDetails(FamilyInvite invite) async {
+    // Read before the first await: `ref` on a disposed State throws.
     final client = ref.read(familyGroupsClientProvider);
     final trade = ref.read(tradeOffersClientProvider);
-    for (final invite in s.pendingInvites) {
-      if (!_checksLoaded.contains(invite.familyGroupId)) {
-        // await 前登记，防并发 _loadDetails 重复拉取（纯簿记，无需 setState）。
-        _checksLoaded.add(invite.familyGroupId);
-        final c = await client.inviteChecks(widget.account, invite.familyGroupId)
-            .catchError((_) => null);
+    if (!_checksLoaded.contains(invite.familyGroupId)) {
+      // await 前登记，防并发 _loadDetails 重复拉取（纯簿记，无需 setState）。
+      _checksLoaded.add(invite.familyGroupId);
+      final c = await client.inviteChecks(widget.account, invite.familyGroupId)
+          .catchError((_) => null);
+      if (!mounted) return;
+      setState(() => _checks[invite.familyGroupId] = c);
+    }
+    if (!_groupNames.containsKey(invite.familyGroupId) &&
+        !_groupInfoRequested.contains(invite.familyGroupId)) {
+      _groupInfoRequested.add(invite.familyGroupId);
+      try {
+        final g = await client.groupInfo(widget.account, invite.familyGroupId);
         if (!mounted) return;
-        setState(() => _checks[invite.familyGroupId] = c);
+        setState(() => _groupNames[invite.familyGroupId] = g);
+      } catch (_) {
+        // 非成员可能无权查看组详情——卡片退回通用标题。
       }
-      if (!_groupNames.containsKey(invite.familyGroupId) &&
-          !_groupInfoRequested.contains(invite.familyGroupId)) {
-        _groupInfoRequested.add(invite.familyGroupId);
-        try {
-          final g = await client.groupInfo(widget.account, invite.familyGroupId);
-          if (!mounted) return;
-          setState(() => _groupNames[invite.familyGroupId] = g);
-        } catch (_) {
-          // 非成员可能无权查看组详情——卡片退回通用标题。
-        }
-      }
-      final accountId = invite.inviterSteamId - TradeOffer.steamId64Base;
-      if (accountId > 0 && !_personas.containsKey(accountId)) {
-        final (name, _) = await trade.miniProfile(accountId);
-        if (!mounted) return;
-        if (name.isNotEmpty) {
-          setState(() => _personas[accountId] = name);
-        }
+    }
+    final accountId = invite.inviterSteamId - TradeOffer.steamId64Base;
+    if (accountId > 0 && !_personas.containsKey(accountId)) {
+      final (name, _) = await trade.miniProfile(accountId);
+      if (!mounted) return;
+      if (name.isNotEmpty) {
+        setState(() => _personas[accountId] = name);
       }
     }
   }
@@ -196,46 +163,23 @@ class FamilyInvitesTabState extends ConsumerState<FamilyInvitesTab>
     return RefreshIndicator(onRefresh: refresh, child: _body(l, t));
   }
 
-  Widget _scrollableCentered(Widget child) => LayoutBuilder(
-        builder: (context, constraints) => ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Center(child: child),
-            ),
-          ],
-        ),
-      );
-
   Widget _body(AppLocalizations l, AvaTokens t) {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
-      return _scrollableCentered(
-        Padding(
-          padding: context.rInsets(all: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.cloud_off, color: t.muted, size: context.r(40)),
-              SizedBox(height: context.r(12)),
-              Text(_needsLogin ? _error! : '${l.commonError}: $_error',
-                  textAlign: TextAlign.center),
-              SizedBox(height: context.r(16)),
-              _needsLogin
-                  ? FilledButton(onPressed: _signIn, child: Text(l.loginButton))
-                  : OutlinedButton(
-                      onPressed: refresh, child: Text(l.commonRetry)),
-            ],
-          ),
-        ),
-      );
+      return scrollableCentered(sessionErrorBody(
+        l,
+        t,
+        error: _error!,
+        needsLogin: _needsLogin,
+        onSignIn: () => signInThen(widget.account, refresh),
+        onRetry: refresh,
+      ));
     }
     final s = _state;
     final invites = s?.pendingInvites ?? const <FamilyInvite>[];
     if (s != null && s.isMember && invites.isEmpty) {
       // 已在家庭组：空态直接给"查看家庭组"入口。
-      return _scrollableCentered(
+      return scrollableCentered(
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -255,7 +199,7 @@ class FamilyInvitesTabState extends ConsumerState<FamilyInvitesTab>
       );
     }
     if (invites.isEmpty) {
-      return _scrollableCentered(
+      return scrollableCentered(
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [

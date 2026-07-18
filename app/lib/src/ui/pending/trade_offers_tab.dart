@@ -7,13 +7,9 @@ import '../../app/responsive.dart';
 import '../../app/theme.dart';
 import '../../core/models/steam_guard_account.dart';
 import '../../core/models/trade_offer.dart';
-import '../../core/protocol/qr_approval_client.dart'
-    show MissingAccessTokenException;
-import '../../services/session_manager.dart';
-import '../../services/steam_api_client.dart'
-    show CommunityAuthException, SteamApiException;
-import '../login_screen.dart';
+import '../../services/steam_api_client.dart' show CommunityAuthException;
 import 'offer_card.dart';
+import 'session_retry.dart';
 
 /// 报价页签：收到 / 发出 / 历史 三段。卡片可展开（双方物品 + 警示条），
 /// 接受走长按确认，拒绝/取消即点即行。Hosted inside PendingScreen。
@@ -43,7 +39,7 @@ enum _Segment { received, sent, history }
 /// [ConfirmationsTabState]): re-creating the state would re-fetch on every
 /// switch and drop segment/expansion/scroll state.
 class TradeOffersTabState extends ConsumerState<TradeOffersTab>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, SessionRetryState {
   _Segment _seg = _Segment.received;
   TradeOffersPage? _active; // received + sent 段共用的 active 拉取结果
   TradeOffersPage? _history;
@@ -72,7 +68,9 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
     });
     try {
       final historical = _seg == _Segment.history;
-      final page = await _fetchWithAutoRefresh(historical);
+      final client = ref.read(tradeOffersClientProvider);
+      final page = await fetchWithAutoRefresh(widget.account,
+          () => client.fetch(widget.account, historical: historical));
       if (!mounted) return;
       setState(() {
         if (historical) {
@@ -97,71 +95,35 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
       if (segMissing) return refresh();
     } catch (e) {
       if (!mounted) return;
-      final needsLogin = _isAuthError(e);
+      final needsLogin = isAuthError(e);
       final l = AppLocalizations.of(context);
       setState(() {
         _loading = false;
         _needsLogin = needsLogin;
-        _error = needsLogin
-            ? l.confNeedsLogin
-            // SteamApiException 的完整 toString 对用户像未捕获的崩溃 ——
-            // 只显示其 message（如 "HTTP 405"），其余异常保持原样。
-            : (e is SteamApiException ? e.message : '$e');
+        _error = needsLogin ? l.confNeedsLogin : fetchErrorText(e);
       });
-    }
-  }
-
-  /// True for the error shapes that mean "the session is dead and only an
-  /// interactive sign-in can fix it": no access token at all, or Steam
-  /// answering the (already token-refreshed) retry with a bare 401/403.
-  static bool _isAuthError(Object e) =>
-      e is MissingAccessTokenException ||
-      (e is SteamApiException &&
-          (e.message.contains('HTTP 401') || e.message.contains('HTTP 403')));
-
-  /// Opens sign-in for this account, then re-fetches on return.
-  Future<void> _signIn() async {
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) =>
-          LoginScreen(reason: LoginReason.refresh, account: widget.account),
-    ));
-    if (mounted) refresh();
-  }
-
-  /// Fetches offers; on failure it refreshes the access token from the
-  /// refresh token and retries once (same pattern as ConfirmationsTab's
-  /// `_fetchWithAutoRefresh`). Rethrows when the refresh doesn't help.
-  Future<TradeOffersPage> _fetchWithAutoRefresh(bool historical) async {
-    // Captured up front: `ref` on a disposed State throws, and the renewed
-    // (possibly rotated) refresh token must be persisted even if this tab is
-    // gone by the time the exchange returns.
-    final controller = ref.read(appControllerProvider.notifier);
-    final client = ref.read(tradeOffersClientProvider);
-    try {
-      return await client.fetch(widget.account, historical: historical);
-    } catch (_) {
-      final refreshed = await SessionManager(ref.read(apiClientProvider))
-          .refresh(widget.account.session);
-      if (!refreshed) rethrow;
-      await controller.persistSession(widget.account);
-      return await client.fetch(widget.account, historical: historical);
     }
   }
 
   /// Resolves partner persona names via the community miniprofile endpoint.
   /// Best-effort: only successful lookups land in the cache; failures keep
-  /// the SteamID fallback.
+  /// the SteamID fallback. Lookups run in parallel — serially, N partners
+  /// meant N round-trips before the last name filled in.
   Future<void> _loadPersonas(TradeOffersPage page) async {
     final client = ref.read(tradeOffersClientProvider);
     final ids = <int>{
       for (final o in page.received) o.partnerAccountId,
       for (final o in page.sent) o.partnerAccountId,
     }..removeAll(_personas.keys);
-    for (final id in ids) {
-      final (name, _) = await client.miniProfile(id);
-      if (!mounted) return;
-      if (name.isNotEmpty) setState(() => _personas[id] = name);
-    }
+    await Future.wait([
+      for (final id in ids)
+        () async {
+          final (name, _) = await client.miniProfile(id);
+          if (mounted && name.isNotEmpty) {
+            setState(() => _personas[id] = name);
+          }
+        }(),
+    ]);
   }
 
   /// The offers of the current segment, filtered/sorted for display.
@@ -302,52 +264,24 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
     );
   }
 
-  /// Wraps [child] in a scrollable that fills the viewport and centers it —
-  /// RefreshIndicator needs a scrollable to trigger (same as ConfirmationsTab).
-  Widget _scrollableCentered(Widget child) => LayoutBuilder(
-        builder: (context, constraints) => ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Center(child: child),
-            ),
-          ],
-        ),
-      );
-
   Widget _body(AppLocalizations l, AvaTokens t) {
     if (_loading) {
       // Non-scrollable on purpose: pull-to-refresh is pointless mid-load.
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null) {
-      return _scrollableCentered(
-        Padding(
-          padding: context.rInsets(all: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.cloud_off, color: t.muted, size: context.r(40)),
-              SizedBox(height: context.r(12)),
-              Text(
-                _needsLogin ? _error! : '${l.commonError}: $_error',
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: context.r(16)),
-              _needsLogin
-                  ? FilledButton(
-                      onPressed: _signIn, child: Text(l.loginButton))
-                  : OutlinedButton(
-                      onPressed: refresh, child: Text(l.commonRetry)),
-            ],
-          ),
-        ),
-      );
+      return scrollableCentered(sessionErrorBody(
+        l,
+        t,
+        error: _error!,
+        needsLogin: _needsLogin,
+        onSignIn: () => signInThen(widget.account, refresh),
+        onRetry: refresh,
+      ));
     }
     final offers = _shown;
     if (offers.isEmpty) {
-      return _scrollableCentered(
+      return scrollableCentered(
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [

@@ -80,4 +80,56 @@ void main() {
       await tmp.delete(recursive: true);
     }
   });
+
+  test('a corrupt file loads as empty and the next save recovers it',
+      () async {
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      File(p.join(tmp.path, 'app_settings.json'))
+          .writeAsStringSync('not json {');
+      final store = SettingsStore(_TmpStorage(tmp.path));
+      expect(await store.loadLocale(), isNull);
+      expect(await store.loadHoldConfirm(), isTrue); // default
+
+      await store.saveLocale('zh');
+      expect(await store.loadLocale(), 'zh');
+      // A fresh instance re-reads disk: the save replaced the corrupt file.
+      expect(await SettingsStore(_TmpStorage(tmp.path)).loadLocale(), 'zh');
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
+
+  test('a load after two chained updates sees both keys', () async {
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      final store = SettingsStore(_TmpStorage(tmp.path));
+      expect(await store.loadDeviceId(), isNull); // prime the cache first
+      await store.saveDeviceId('device-1');
+      await store.saveLocale('en');
+      expect(await store.loadDeviceId(), 'device-1');
+      expect(await store.loadLocale(), 'en');
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
+
+  test('loads are served from the cache once read (single-writer store)',
+      () async {
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      final store = SettingsStore(_TmpStorage(tmp.path));
+      await store.saveLocale('zh');
+      expect(await store.loadLocale(), 'zh');
+
+      // An out-of-band edit is deliberately NOT observed: this store is the
+      // file's only writer (app-private dir), so loads hit disk once and
+      // the cache is authoritative afterwards.
+      File(p.join(tmp.path, 'app_settings.json'))
+          .writeAsStringSync('{"locale":"en"}');
+      expect(await store.loadLocale(), 'zh');
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
 }

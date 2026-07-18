@@ -9,11 +9,7 @@ import '../app/theme.dart';
 import '../core/models/family_group.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/models/trade_offer.dart' show TradeOffer;
-import '../core/protocol/qr_approval_client.dart'
-    show MissingAccessTokenException;
-import '../services/session_manager.dart';
-import '../services/steam_api_client.dart' show SteamApiException;
-import 'login_screen.dart';
+import 'pending/session_retry.dart';
 import 'widgets/ava_panel.dart';
 import 'widgets/scanline_overlay.dart';
 
@@ -29,7 +25,8 @@ class FamilyGroupScreen extends ConsumerStatefulWidget {
   ConsumerState<FamilyGroupScreen> createState() => _FamilyGroupScreenState();
 }
 
-class _FamilyGroupScreenState extends ConsumerState<FamilyGroupScreen> {
+class _FamilyGroupScreenState extends ConsumerState<FamilyGroupScreen>
+    with SessionRetryState {
   FamilyGroupInfo? _group;
   bool _notInGroup = false;
   bool _loading = true;
@@ -52,8 +49,10 @@ class _FamilyGroupScreenState extends ConsumerState<FamilyGroupScreen> {
     });
     try {
       final client = ref.read(familyGroupsClientProvider);
-      // null = 非成员（forUser 判定），与网络失败区分开。
-      final group = await _withAutoRefresh<FamilyGroupInfo?>(() async {
+      // null = 非成员（forUser 判定），与网络失败区分开。会话过期时
+      // fetchWithAutoRefresh 自动续期并重试一次——与待办三页签同款模式。
+      final group =
+          await fetchWithAutoRefresh<FamilyGroupInfo?>(widget.account, () async {
         var groupId = widget.familyGroupId;
         FamilyGroupInfo? g;
         if (groupId == null) {
@@ -79,49 +78,14 @@ class _FamilyGroupScreenState extends ConsumerState<FamilyGroupScreen> {
       _loadPersonas(group);
     } catch (e) {
       if (!mounted) return;
-      final needsLogin = _isAuthError(e);
+      final needsLogin = isAuthError(e);
       final l = AppLocalizations.of(context);
       setState(() {
         _loading = false;
         _needsLogin = needsLogin;
-        _error = needsLogin
-            ? l.confNeedsLogin
-            // SteamApiException 的完整 toString 对用户像未捕获的崩溃 ——
-            // 只显示其 message（如 "HTTP 405"），其余异常保持原样。
-            : (e is SteamApiException ? e.message : '$e');
+        _error = needsLogin ? l.confNeedsLogin : fetchErrorText(e);
       });
     }
-  }
-
-  /// 会话过期时自动续期并重试一次——与待办三页签同款模式
-  /// （family_invites_tab 的 _fetchWithAutoRefresh）。
-  Future<T> _withAutoRefresh<T>(Future<T> Function() run) async {
-    // Captured up front: `ref` on a disposed State throws, and the renewed
-    // (possibly rotated) refresh token must be persisted even if this screen
-    // is gone by the time the exchange returns.
-    final controller = ref.read(appControllerProvider.notifier);
-    try {
-      return await run();
-    } catch (_) {
-      final refreshed = await SessionManager(ref.read(apiClientProvider))
-          .refresh(widget.account.session);
-      if (!refreshed) rethrow;
-      await controller.persistSession(widget.account);
-      return await run();
-    }
-  }
-
-  static bool _isAuthError(Object e) =>
-      e is MissingAccessTokenException ||
-      (e is SteamApiException &&
-          (e.message.contains('HTTP 401') || e.message.contains('HTTP 403')));
-
-  Future<void> _signIn() async {
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) =>
-          LoginScreen(reason: LoginReason.refresh, account: widget.account),
-    ));
-    if (mounted) _load();
   }
 
   Future<void> _loadPersonas(FamilyGroupInfo group) async {
@@ -171,24 +135,16 @@ class _FamilyGroupScreenState extends ConsumerState<FamilyGroupScreen> {
       );
     }
     if (_error != null) {
+      // 无 RefreshIndicator 的整页（AppBar 自带刷新钮）——居中即可,无需
+      // scrollableCentered。
       return Center(
-        child: Padding(
-          padding: context.rInsets(all: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.cloud_off, color: t.muted, size: context.r(40)),
-              SizedBox(height: context.r(12)),
-              Text(_needsLogin ? _error! : '${l.commonError}: $_error',
-                  textAlign: TextAlign.center),
-              SizedBox(height: context.r(16)),
-              _needsLogin
-                  ? FilledButton(
-                      onPressed: _signIn, child: Text(l.loginButton))
-                  : OutlinedButton(
-                      onPressed: _load, child: Text(l.commonRetry)),
-            ],
-          ),
+        child: sessionErrorBody(
+          l,
+          t,
+          error: _error!,
+          needsLogin: _needsLogin,
+          onSignIn: () => signInThen(widget.account, _load),
+          onRetry: _load,
         ),
       );
     }

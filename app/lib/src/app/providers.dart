@@ -88,45 +88,58 @@ final timeAlignerProvider =
 final settingsStoreProvider =
     Provider<SettingsStore>((ref) => SettingsStore(ref.read(storageProvider)));
 
+/// Shared shape for every scalar setting persisted in app_settings.json:
+/// publish the default synchronously, apply the stored value when the async
+/// load lands (ref.mounted-guarded — the provider can be disposed before the
+/// file read completes), write through on set. Subclasses only supply the
+/// default + load/save closures (and keep their call-site setter names).
+class PersistedSettingController<T> extends Notifier<T> {
+  final T _defaultValue;
+  final Future<T?> Function(SettingsStore store) _load;
+  final Future<void> Function(SettingsStore store, T value) _save;
+
+  PersistedSettingController(this._defaultValue, this._load, this._save);
+
+  @override
+  T build() {
+    _load(ref.read(settingsStoreProvider)).then((v) {
+      if (!ref.mounted || v == null) return;
+      state = v;
+    });
+    return _defaultValue;
+  }
+
+  Future<void> set(T value) async {
+    state = value;
+    await _save(ref.read(settingsStoreProvider), value);
+  }
+}
+
+/// Enum lookup by persisted name; null when the stored value is absent or no
+/// longer a member (the controller then keeps its default).
+T? _enumByName<T extends Enum>(List<T> values, String? name) {
+  for (final v in values) {
+    if (v.name == name) return v;
+  }
+  return null;
+}
+
 /// The styled skin layer (none / neon / pixel), persisted.
 final skinProvider = NotifierProvider<SkinController, AvaSkin>(
     SkinController.new);
 
-class SkinController extends Notifier<AvaSkin> {
-  /// True once the persisted selection has been read. The launcher-icon
-  /// reconcile in app.dart MUST NOT act before this: acting on the interim
-  /// default toggles the alias the running task was launched from, and
-  /// ColorOS removes the task on the spot (0.90.1 flash-quit at unlock —
-  /// the biometric prompt pauses the app within milliseconds of launch,
-  /// well before this file read completes).
-  bool loaded = false;
+/// Pure persistence since 0.90.1 — launcher-icon syncing that once hooked in
+/// here was retired; see the retirement note in app.dart before reviving it.
+class SkinController extends PersistedSettingController<AvaSkin> {
+  SkinController()
+      : super(
+          // Default is the plain look since 0.90 (neon moved behind the paywall).
+          AvaSkin.none,
+          (s) async => _enumByName(AvaSkin.values, await s.loadSkin()),
+          (s, v) => s.saveSkin(v.name),
+        );
 
-  @override
-  AvaSkin build() {
-    ref.read(settingsStoreProvider).loadSkin().then((v) {
-      if (!ref.mounted) return;
-      loaded = true;
-      for (final skin in AvaSkin.values) {
-        if (v == skin.name) state = skin;
-      }
-      // Deliberately NO launcher-icon reconcile here. Toggling the alias the
-      // current task was launched from removes the task on some OEMs
-      // (ColorOS killed the app at every launch when 0.90's paywall gating
-      // first made the startup value differ from the active alias). The icon
-      // reconciles only when the app backgrounds — see the paused handler in
-      // app.dart, the single place allowed to call LauncherIcon.apply.
-    });
-    // Default is the plain look since 0.90 (neon moved behind the paywall).
-    return AvaSkin.none;
-  }
-
-  Future<void> setSkin(AvaSkin skin) async {
-    state = skin;
-    await ref.read(settingsStoreProvider).saveSkin(skin.name);
-    // Deliberately NOT applying the launcher icon here: toggling launcher
-    // aliases mid-session makes some launchers drop the task (feels like a
-    // restart). The icon reconciles on next background/launch instead.
-  }
+  Future<void> setSkin(AvaSkin skin) => set(skin);
 }
 
 /// The active skin's effect spec, loaded from the bundled JSON pack.
@@ -158,21 +171,17 @@ final brightnessModeProvider =
     NotifierProvider<BrightnessModeController, AvaBrightnessMode>(
         BrightnessModeController.new);
 
-class BrightnessModeController extends Notifier<AvaBrightnessMode> {
-  @override
-  AvaBrightnessMode build() {
-    ref.read(settingsStoreProvider).loadBrightnessMode().then((v) {
-      for (final mode in AvaBrightnessMode.values) {
-        if (v == mode.name) state = mode;
-      }
-    });
-    return AvaBrightnessMode.system;
-  }
+class BrightnessModeController
+    extends PersistedSettingController<AvaBrightnessMode> {
+  BrightnessModeController()
+      : super(
+          AvaBrightnessMode.system,
+          (s) async =>
+              _enumByName(AvaBrightnessMode.values, await s.loadBrightnessMode()),
+          (s, v) => s.saveBrightnessMode(v.name),
+        );
 
-  Future<void> setMode(AvaBrightnessMode mode) async {
-    state = mode;
-    await ref.read(settingsStoreProvider).saveBrightnessMode(mode.name);
-  }
+  Future<void> setMode(AvaBrightnessMode mode) => set(mode);
 }
 
 /// Wall clock, injectable for entitlement tests.
@@ -377,75 +386,52 @@ class SkinPaywallNoticeController extends Notifier<bool> {
 final textSizeProvider =
     NotifierProvider<TextSizeController, AvaTextSize>(TextSizeController.new);
 
-class TextSizeController extends Notifier<AvaTextSize> {
-  @override
-  AvaTextSize build() {
-    ref.read(settingsStoreProvider).loadTextSize().then((v) {
-      for (final size in AvaTextSize.values) {
-        if (v == size.name) state = size;
-      }
-    });
-    return AvaTextSize.small;
-  }
+class TextSizeController extends PersistedSettingController<AvaTextSize> {
+  TextSizeController()
+      : super(
+          AvaTextSize.small,
+          (s) async => _enumByName(AvaTextSize.values, await s.loadTextSize()),
+          (s, v) => s.saveTextSize(v.name),
+        );
 
-  Future<void> setSize(AvaTextSize size) async {
-    state = size;
-    await ref.read(settingsStoreProvider).saveTextSize(size.name);
-  }
+  Future<void> setSize(AvaTextSize size) => set(size);
 }
 
 /// The active UI locale (null = follow system).
 final localeProvider =
     NotifierProvider<LocaleController, Locale?>(LocaleController.new);
 
-class LocaleController extends Notifier<Locale?> {
-  @override
-  Locale? build() {
-    // Load asynchronously; default to system until loaded.
-    ref.read(settingsStoreProvider).loadLocale().then((code) {
-      if (code != null) state = Locale(code);
-    });
-    return null;
-  }
+class LocaleController extends PersistedSettingController<Locale?> {
+  LocaleController()
+      : super(
+          // Follow the system until (and unless) a stored override loads.
+          null,
+          (s) async {
+            final code = await s.loadLocale();
+            return code == null ? null : Locale(code);
+          },
+          (s, v) => s.saveLocale(v?.languageCode),
+        );
 
-  Future<void> setLocale(Locale? locale) async {
-    state = locale;
-    await ref.read(settingsStoreProvider).saveLocale(locale?.languageCode);
-  }
+  Future<void> setLocale(Locale? locale) => set(locale);
 }
 
 /// 长按确认开关（默认开），持久化到 app_settings.json。
 final holdConfirmProvider =
     NotifierProvider<HoldConfirmController, bool>(HoldConfirmController.new);
 
-class HoldConfirmController extends Notifier<bool> {
-  @override
-  bool build() {
-    ref.read(settingsStoreProvider).loadHoldConfirm().then((v) => state = v);
-    return true;
-  }
-
-  Future<void> set(bool enabled) async {
-    state = enabled;
-    await ref.read(settingsStoreProvider).saveHoldConfirm(enabled);
-  }
+class HoldConfirmController extends PersistedSettingController<bool> {
+  HoldConfirmController()
+      : super(true, (s) => s.loadHoldConfirm(), (s, v) => s.saveHoldConfirm(v));
 }
 
 /// 全局触觉反馈开关（默认开）。
 final hapticsProvider =
     NotifierProvider<HapticsController, bool>(HapticsController.new);
 
-class HapticsController extends Notifier<bool> {
-  @override
-  bool build() {
-    ref.read(settingsStoreProvider).loadHaptics().then((v) => state = v);
-    return true;
-  }
-
-  Future<void> set(bool enabled) async {
-    state = enabled;
-    await ref.read(settingsStoreProvider).saveHaptics(enabled);
-  }
+class HapticsController extends PersistedSettingController<bool> {
+  HapticsController()
+      : super(true, (s) => s.loadHaptics(), (s, v) => s.saveHaptics(v));
 }
 
 /// The installed app version (from the platform package info).
@@ -680,9 +666,13 @@ class AppController extends AsyncNotifier<AppData> {
         }
       }
       if (changed && state.value != null) {
-        final accounts = await state.value!.store
-            .getAllAccounts(passKey: state.value!.passKey);
-        state = AsyncData(state.value!.copyWith(accounts: accounts));
+        // Republish the live objects under a new list identity instead of a
+        // full disk re-read: everything above mutated these instances in
+        // place and already persisted them via saveAccount, so re-reading
+        // only re-decrypts what memory holds (and used to race the unlock
+        // migration's file swap). Callers that truly need disk use reload().
+        state = AsyncData(
+            state.value!.copyWith(accounts: [...state.value!.accounts]));
       }
     } finally {
       _refreshingSessions = false;
@@ -703,64 +693,82 @@ class AppController extends AsyncNotifier<AppData> {
     try {
       final svc = ref.read(avatarServiceProvider);
       final only = steamIds?.toSet();
-      var changed = false;
-      for (final acc in data.accounts) {
-        if (acc.steamId == 0) continue;
-        if (only != null && !only.contains(acc.steamId)) continue;
-        var accChanged = false;
-        final profile = await svc.fetchProfile(acc.steamId);
-        if (profile.avatarUrl != null && profile.avatarUrl != acc.avatarUrl) {
-          acc.avatarUrl = profile.avatarUrl;
-          accChanged = true;
-        }
-        if (profile.personaName != null &&
-            profile.personaName != acc.personaName) {
-          acc.personaName = profile.personaName;
-          accChanged = true;
-        }
-        // The frame/animated avatar need a valid access token; on 401 refresh
-        // once and retry.
-        EquippedItems items;
-        try {
-          items =
-              await svc.fetchEquippedItems(acc.steamId, acc.session.accessToken);
-        } on FrameUnauthorized {
-          items = const EquippedItems();
-          final refreshed =
-              await SessionManager(ref.read(apiClientProvider))
-                  .refresh(acc.session);
-          if (refreshed) {
-            accChanged = true; // persist the new token
-            try {
-              items = await svc.fetchEquippedItems(
-                  acc.steamId, acc.session.accessToken);
-            } catch (_) {/* leave items unchanged */}
-          }
-        }
-        // A null value means "not equipped / unresolved" — keep the cached one
-        // rather than dropping a good value on a transient failure.
-        if (items.frameUrl != null && items.frameUrl != acc.avatarFrameUrl) {
-          acc.avatarFrameUrl = items.frameUrl;
-          accChanged = true;
-        }
-        if (items.animatedAvatarUrl != null &&
-            items.animatedAvatarUrl != acc.animatedAvatarUrl) {
-          acc.animatedAvatarUrl = items.animatedAvatarUrl;
-          accChanged = true;
-        }
-        if (accChanged) {
-          await data.store
-              .saveAccount(acc, data.store.encrypted, passKey: data.passKey);
-          changed = true;
-        }
-      }
-      if (changed && state.value != null) {
-        final accounts = await state.value!.store
-            .getAllAccounts(passKey: state.value!.passKey);
-        state = AsyncData(state.value!.copyWith(accounts: accounts));
+      final targets = [
+        for (final acc in data.accounts)
+          if (acc.steamId != 0 && (only == null || only.contains(acc.steamId)))
+            acc,
+      ];
+      // Accounts refresh in parallel — each is 2–3 HTTP round-trips, and the
+      // old sequential loop serialized ~3N of them behind the refresh
+      // overlay. saveAccount stays safe: the store's write lock serializes
+      // the actual disk mutations.
+      final results = await Future.wait(
+          [for (final acc in targets) _refreshOneAvatar(acc, svc, data)]);
+      if (results.any((changed) => changed) && state.value != null) {
+        // Same republish-in-memory rationale as refreshSessions above.
+        state = AsyncData(
+            state.value!.copyWith(accounts: [...state.value!.accounts]));
       }
     } finally {
       _refreshingAvatars = false;
+    }
+  }
+
+  /// Refreshes one account's avatar / persona / frame and persists it when
+  /// something changed. Own catch: one account's network failure must not
+  /// abort the rest of the batch (the old sequential loop died mid-way on
+  /// the first throw, leaving later accounts stale).
+  Future<bool> _refreshOneAvatar(
+      SteamGuardAccount acc, AvatarService svc, AppData data) async {
+    try {
+      var accChanged = false;
+      final profile = await svc.fetchProfile(acc.steamId);
+      if (profile.avatarUrl != null && profile.avatarUrl != acc.avatarUrl) {
+        acc.avatarUrl = profile.avatarUrl;
+        accChanged = true;
+      }
+      if (profile.personaName != null &&
+          profile.personaName != acc.personaName) {
+        acc.personaName = profile.personaName;
+        accChanged = true;
+      }
+      // The frame/animated avatar need a valid access token; on 401 refresh
+      // once and retry.
+      EquippedItems items;
+      try {
+        items =
+            await svc.fetchEquippedItems(acc.steamId, acc.session.accessToken);
+      } on FrameUnauthorized {
+        items = const EquippedItems();
+        final refreshed = await SessionManager(ref.read(apiClientProvider))
+            .refresh(acc.session);
+        if (refreshed) {
+          accChanged = true; // persist the new token
+          try {
+            items = await svc.fetchEquippedItems(
+                acc.steamId, acc.session.accessToken);
+          } catch (_) {/* leave items unchanged */}
+        }
+      }
+      // A null value means "not equipped / unresolved" — keep the cached one
+      // rather than dropping a good value on a transient failure.
+      if (items.frameUrl != null && items.frameUrl != acc.avatarFrameUrl) {
+        acc.avatarFrameUrl = items.frameUrl;
+        accChanged = true;
+      }
+      if (items.animatedAvatarUrl != null &&
+          items.animatedAvatarUrl != acc.animatedAvatarUrl) {
+        acc.animatedAvatarUrl = items.animatedAvatarUrl;
+        accChanged = true;
+      }
+      if (accChanged) {
+        await data.store
+            .saveAccount(acc, data.store.encrypted, passKey: data.passKey);
+      }
+      return accChanged;
+    } catch (e) {
+      dlog('avatar refresh: ${acc.steamId} failed: $e');
+      return false;
     }
   }
 

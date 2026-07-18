@@ -78,6 +78,18 @@ class _FailingWritesStorage extends MemoryStorageProvider {
   }
 }
 
+/// Counts payload reads, to pin that refreshSessions republishes the
+/// in-memory accounts instead of re-reading (and re-decrypting) the store.
+class _CountingReadsStorage extends MemoryStorageProvider {
+  int reads = 0;
+
+  @override
+  Future<String> readFile(String filename) {
+    reads++;
+    return super.readFile(filename);
+  }
+}
+
 void main() {
   Future<ProviderContainer> bootstrap(
       MemoryStorageProvider storage, _FakeCreds creds) async {
@@ -132,6 +144,31 @@ void main() {
     final saved = jsonDecode(storage.files['$_steamId.maFile']!)
         as Map<String, dynamic>;
     expect(saved['password'], isNull);
+  });
+
+  test(
+      'refreshSessions republishes the live in-memory accounts with zero '
+      'post-save re-reads (no full disk re-read + re-decrypt)', () async {
+    final storage = _CountingReadsStorage();
+    final creds = _FakeCreds({_steamId: 'legacy-pw'});
+    final container = await bootstrap(storage, creds);
+    final notifier = container.read(appControllerProvider.notifier);
+    final before = container.read(appControllerProvider).value!.accounts;
+    storage.reads = 0;
+
+    // The password migration marks the account changed → the republish
+    // branch runs. saveAccount writes; nothing may read.
+    await notifier.refreshSessions();
+
+    expect(storage.reads, 0,
+        reason: 'the republish must reuse the mutated in-memory instances, '
+            'not re-read every payload from disk');
+    final after = container.read(appControllerProvider).value!.accounts;
+    // New list identity (so Riverpod notifies) around the same live objects.
+    expect(identical(after, before), isFalse);
+    expect(identical(after.single, before.single), isTrue);
+    // And the published instance carries the refreshed state.
+    expect(after.single.password, 'legacy-pw');
   });
 
   test('a failed maFile save keeps the keystore copy for the next attempt',
