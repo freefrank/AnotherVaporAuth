@@ -76,7 +76,7 @@
   的 `beta_testers(code, email, redeemed_by)`；worker 入口 `POST /v1/beta/redeem`。
 - **一码四类端各一台**（代码已改，**生产尚未部署**，见 prerequisites 文档 §7）：
   与 Play 订阅同模型，android/windows/linux/macos 各占一槽；重装同设备幂等，
-  同类换机是带上限的替换（KV 配置 `ACTIVATION_CAP`=3 次 / `ACTIVATION_WINDOW_DAYS`=90 天
+  同类换机是带上限的替换（空槽首次认领不计数；KV 配置 `ACTIVATION_CAP`=5 次 / `ACTIVATION_WINDOW_DAYS`=90 天
   窗口，超限 403 `code_activation_limit`），被踢设备下次 refresh 收 `device_revoked`。
   `redeemed_by` 降级为只记首个兑换者的审计字段。部署前生产仍是旧行为：
   首个设备认领整码，其他设备一律 `code_redeemed`，换机需人工清 `redeemed_by`。

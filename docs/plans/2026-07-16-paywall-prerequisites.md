@@ -199,6 +199,8 @@ worker 已实现"一码四类端各一台"(commit `e77c3aa`,worker 测试 75 全
    (纯增量建表 `activation_log`)。
 3. `npm run deploy`——**已发行的 app 立即获得跨端兑换能力**(paywall 本来就能
    在第二台设备输码,只是不再收 `code_redeemed`)。
-4. (可选)调参:`npx wrangler kv key put --binding CONFIG ACTIVATION_CAP 3` /
-   `ACTIVATION_WINDOW_DAYS 90`(不设即用默认值)。
+4. (可选)调参:`npx wrangler kv key put --binding CONFIG ACTIVATION_CAP 5` /
+   `ACTIVATION_WINDOW_DAYS 90`(不设即用默认值 5 / 90;空槽首次认领不计数,
+   计数只针对"换掉另一台同类设备"的替换)。**注意**:若远程 KV 曾被设成旧值
+   3,它会覆盖新默认 5,需一并更新或删除该键。
 5. app 侧文案与状态卡已随批次 3 落库,随下个版本发布即可(纯锦上添花,不阻塞)。
