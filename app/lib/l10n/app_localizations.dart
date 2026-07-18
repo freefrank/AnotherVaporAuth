@@ -1937,7 +1937,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutTagline.
   ///
   /// In en, this message translates to:
-  /// **'An open-source Steam Guard authenticator, rewritten in Flutter.'**
+  /// **'An open-source Steam Guard authenticator, built with Flutter.'**
   String get aboutTagline;
 
   /// No description provided for @aboutSourceCode.

@@ -1,10 +1,10 @@
 # 小黑盒招募帖(配图:home-neon / home-pixel / confirmations / tutorial-swipe / settings,同目录)
 
-标题:【测试招募】自制开源 Steam 手机令牌 AVA——SDA 精神续作,找 12 位盒友帮忙过 Google Play 上架关
+标题:【测试招募】自制开源 Steam 手机令牌 AVA——受 SDA 启发的独立项目,找 12 位盒友帮忙过 Google Play 上架关
 
 ---
 
-各位盒友好!我用业余时间写了一个**开源的 Steam 手机令牌 App:AVA(AnotherVaporAuth)**,算是老牌工具 Steam Desktop Authenticator(SDA)的精神续作、彻底的移动端重写。
+各位盒友好!我用业余时间写了一个**开源的 Steam 手机令牌 App:AVA(AnotherVaporAuth)**,用 Flutter 从零写起、完全独立的一个项目,灵感来自老牌工具 Steam Desktop Authenticator(SDA),但不共用它的任何代码。
 
 现在准备上架 Google Play。按照 Google 对个人开发者的新规,**需要 12 名测试者参与连续 14 天的封闭测试**才能开放正式下载——所以来招募一波,动动手指就能帮上大忙。
 

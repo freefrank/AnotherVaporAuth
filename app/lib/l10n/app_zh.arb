@@ -367,7 +367,7 @@
   "themeLight": "亮色",
 
   "settingsAbout": "关于",
-  "aboutTagline": "开源的 Steam 令牌验证器，用 Flutter 重写。",
+  "aboutTagline": "开源的 Steam 令牌验证器，用 Flutter 打造。",
   "aboutSourceCode": "源代码",
   "aboutAuthor": "作者",
   "aboutLicense": "许可证",

@@ -994,7 +994,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAbout => '关于';
 
   @override
-  String get aboutTagline => '开源的 Steam 令牌验证器，用 Flutter 重写。';
+  String get aboutTagline => '开源的 Steam 令牌验证器，用 Flutter 打造。';
 
   @override
   String get aboutSourceCode => '源代码';

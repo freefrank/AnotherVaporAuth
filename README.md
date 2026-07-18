@@ -79,7 +79,9 @@ app/      Flutter application (see app/README.md)
 docs/     design spec (docs/specs/)
 ```
 
-The original .NET WinForms implementation is preserved on the **`legacy`** branch.
+The **`legacy`** branch preserves the original .NET WinForms Steam Desktop
+Authenticator that inspired this project — kept for reference only; AVA shares no
+code with it.
 
 ## Build
 
@@ -126,8 +128,11 @@ ideograph blocks (simplified + traditional). Latin-only fonts cover ASCII.
 
 ## Credits
 
-Original Steam Desktop Authenticator by Jessecar96 and contributors. Steam auth
-protocol references: [SteamAuth](https://github.com/geel9/SteamAuth),
+AVA is an independent project, written from scratch in Flutter — not a fork or
+port. It was inspired by the classic **Steam Desktop Authenticator** (by
+Jessecar96 and contributors), and stays compatible with its `.maFile` format so
+existing users can migrate. Steam auth protocol references:
+[SteamAuth](https://github.com/geel9/SteamAuth),
 [node-steam-session](https://github.com/DoctorMcKay/node-steam-session).
 
 ## Privacy

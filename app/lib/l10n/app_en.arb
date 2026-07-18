@@ -372,7 +372,7 @@
   "themeLight": "Light",
 
   "settingsAbout": "About",
-  "aboutTagline": "An open-source Steam Guard authenticator, rewritten in Flutter.",
+  "aboutTagline": "An open-source Steam Guard authenticator, built with Flutter.",
   "aboutSourceCode": "Source code",
   "aboutAuthor": "Author",
   "aboutLicense": "License",

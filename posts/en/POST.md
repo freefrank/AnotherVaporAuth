@@ -1,10 +1,10 @@
 # Reddit post (r/AndroidClosedTesting; screenshots in this directory: home-neon, home-pixel, confirmations, tutorial-swipe, settings)
 
-Title: [App] AVA — open-source Steam Guard authenticator (spiritual successor to Steam Desktop Authenticator) — need 12 testers for 14 days
+Title: [App] AVA — open-source Steam Guard authenticator (independent project, inspired by Steam Desktop Authenticator) — need 12 testers for 14 days
 
 ---
 
-Hey everyone! I'm recruiting testers for **AVA (AnotherVaporAuth)** — an open-source Steam Guard authenticator for Android, a ground-up mobile rewrite of the classic Steam Desktop Authenticator (SDA).
+Hey everyone! I'm recruiting testers for **AVA (AnotherVaporAuth)** — an open-source Steam Guard authenticator for Android. It's an independent project written from scratch in Flutter, inspired by the classic Steam Desktop Authenticator (SDA) but sharing no code with it.
 
 Google requires new personal developer accounts to run a closed test with **12 testers opted in for 14 continuous days** before the app can go to production — that's where you come in.
 

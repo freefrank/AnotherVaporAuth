@@ -15,7 +15,7 @@ AVA 上线在即，0.91.0 是上线前的最后一个版本。
 顺手把 0.91.0 更新上、打开用两下，就当帮我最后验一遍。
 激活码本周内发出，人人终身 Pro，不用做任何事，等着就行。
 
-给没看过之前帖子的喝油门：AVA 是老工具 SDA(Steam Desktop Authenticator)的多端重写,完全开源(MIT)。
+给没看过之前帖子的喝油门:AVA 是一个受老牌工具 SDA(Steam Desktop Authenticator)启发、用 Flutter 从零写起的独立项目,完全开源(MIT)。
 详情可见 https://www.xiaoheihe.cn/app/bbs/link/184971199
 密钥走 Android Keystore 硬件加密，没统计、没后端，数据只在你手机上。
 令牌验证码、交易 / 市场确认、扫码登录、库存浏览和社区市场上架都有，还有霓虹和像素两套皮肤。

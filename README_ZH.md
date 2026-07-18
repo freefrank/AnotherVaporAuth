@@ -55,7 +55,8 @@ app/      Flutter 应用（详见 app/README.md）
 docs/     设计文档（docs/specs/）
 ```
 
-原 .NET WinForms 实现保留在 **`legacy`** 分支。
+**`legacy`** 分支保留了启发本项目的那个 .NET WinForms 版 Steam Desktop
+Authenticator —— 仅供参考存档，AVA 与它不共享任何代码。
 
 ## 构建
 
@@ -98,7 +99,9 @@ Noto Sans SC 子集化到 CJK 汉字区块（简体 + 繁体）。拉丁字体�
 
 ## 致谢
 
-原 Steam Desktop Authenticator 由 Jessecar96 及贡献者开发。Steam 认证协议参考：
+AVA 是一个用 Flutter 从零写起的独立项目 —— 既非 fork 也非移植，灵感来自
+老牌工具 **Steam Desktop Authenticator**（Jessecar96 及贡献者开发），并保持与其
+`.maFile` 格式兼容，方便老用户迁移。Steam 认证协议参考：
 [SteamAuth](https://github.com/geel9/SteamAuth)、
 [node-steam-session](https://github.com/DoctorMcKay/node-steam-session)。
 

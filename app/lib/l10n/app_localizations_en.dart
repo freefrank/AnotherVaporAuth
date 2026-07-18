@@ -1042,7 +1042,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutTagline =>
-      'An open-source Steam Guard authenticator, rewritten in Flutter.';
+      'An open-source Steam Guard authenticator, built with Flutter.';
 
   @override
   String get aboutSourceCode => 'Source code';

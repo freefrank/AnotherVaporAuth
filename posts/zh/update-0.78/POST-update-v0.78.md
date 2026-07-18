@@ -1,6 +1,6 @@
 AVA 的封闭测试已经凑齐人、扛过Google Play 那 14 天门槛就可以做公测啦，测试名额也满了。谢谢每一位报名帮忙的盒友。 现在暂时没办法加更多人进内测，有想尝试的喝油门可以点个关注，正式发布的时候会同步发布Google Play版和国内版的apk。
 
-给没看过之前帖子的喝油门：AVA 是老工具 SDA(Steam Desktop Authenticator)的多端重写,完全开源(MIT)。
+给没看过之前帖子的喝油门:AVA 是一个受老牌工具 SDA(Steam Desktop Authenticator)启发、用 Flutter 从零写起的独立项目,完全开源(MIT)。
 
 详情可见 https://www.xiaoheihe.cn/app/bbs/link/184971199
 
