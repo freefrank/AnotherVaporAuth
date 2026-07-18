@@ -497,6 +497,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get famInvitesSection => 'Invites';
+
+  @override
   String get famSectionMembers => 'Members';
 
   @override

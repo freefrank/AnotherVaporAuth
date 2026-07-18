@@ -170,6 +170,7 @@
   "@famSummaryMembers": {"placeholders": {"used": {"type": "int"}, "total": {"type": "int"}}},
   "famSummaryCooldown": "冷却 {days} 天",
   "@famSummaryCooldown": {"placeholders": {"days": {"type": "int"}}},
+  "famInvitesSection": "邀请",
   "famSectionMembers": "成员",
   "famMemberYou": "（你）",
   "famSectionPending": "待处理",

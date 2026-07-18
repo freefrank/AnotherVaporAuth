@@ -8,6 +8,7 @@ import 'package:ava/src/core/models/steam_guard_account.dart';
 import 'package:ava/src/core/proto/protobuf_wire.dart';
 import 'package:ava/src/services/steam_api_client.dart';
 import 'package:ava/src/ui/family_group_screen.dart';
+import 'package:ava/src/ui/widgets/hold_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // Override(provider 覆写基类)在 riverpod 3 移到了 misc 入口。
@@ -98,6 +99,94 @@ class _FakeApiMemberNestedGroup extends SteamApiClient {
       {};
 }
 
+/// GetFamilyGroupForUser returns one pending invite (non-member).
+/// GetInviteCheckResults throws AccessDenied (ePrivilege=5 降级路径),
+/// GetFamilyGroup throws Fail (通用标题路径), JoinFamilyGroup replies with
+/// two_factor_method=1 so the join flow hands off to the confirmations screen.
+class _FakeApiWithInvite extends SteamApiClient {
+  int joinCalls = 0;
+
+  @override
+  Future<ProtoReader> callProtobuf(
+    String iface,
+    String method, {
+    required ProtoWriter request,
+    String? accessToken,
+    bool useGet = false,
+    int version = 1,
+  }) async {
+    if (method == 'GetFamilyGroupForUser') {
+      final invite = ProtoWriter()
+        ..writeUint64(1, 9001) // family_groupid
+        ..writeVarint(2, 1) // role
+        ..writeFixed64(3, 76561198000000456) // inviter_steamid (fixed64!)
+        ..writeBool(4, false) // awaiting_2fa
+        ..writeUint64(5, 555001); // invite_id
+      final w = ProtoWriter()
+        ..writeBool(2, true) // is_not_member_of_any_group
+        ..writeMessage(5, invite);
+      return ProtoReader(w.toBytes());
+    }
+    if (method == 'GetInviteCheckResults') {
+      throw SteamApiException(15, 'denied', 'GetInviteCheckResults');
+    }
+    if (method == 'GetFamilyGroup') {
+      throw SteamApiException(2, 'fail', 'GetFamilyGroup');
+    }
+    if (method == 'JoinFamilyGroup') {
+      joinCalls++;
+      final w = ProtoWriter()..writeVarint(2, 1); // two_factor_method=1
+      return ProtoReader(w.toBytes());
+    }
+    return ProtoReader(Uint8List(0));
+  }
+
+  @override
+  Future<Map<String, dynamic>> communityGetJson(
+    String path,
+    Map<String, dynamic> query, {
+    Map<String, String>? cookies,
+  }) async =>
+      {'success': true, 'conf': []};
+
+  @override
+  Future<Map<String, dynamic>> apiGetJson(
+    String iface,
+    String method,
+    Map<String, dynamic> query, {
+    String? accessToken,
+    int version = 1,
+  }) async =>
+      {'response': {}};
+}
+
+/// [_FakeApiWithInvite] variant whose preflight succeeds but reports a wallet
+/// country mismatch — the join button must come out disabled (spec 承诺).
+class _FakeApiWalletMismatch extends _FakeApiWithInvite {
+  @override
+  Future<ProtoReader> callProtobuf(
+    String iface,
+    String method, {
+    required ProtoWriter request,
+    String? accessToken,
+    bool useGet = false,
+    int version = 1,
+  }) async {
+    if (method == 'GetInviteCheckResults') {
+      final w = ProtoWriter()
+        ..writeBool(1, false) // wallet_country_matches
+        ..writeBool(2, true) // ip_match
+        ..writeVarint(3, 0); // join_restriction
+      return ProtoReader(w.toBytes());
+    }
+    return super.callProtobuf(iface, method,
+        request: request,
+        accessToken: accessToken,
+        useGet: useGet,
+        version: version);
+  }
+}
+
 /// Keeps the skin spec null (plain look) so ScanlineOverlay renders no
 /// looping animation — otherwise pumpAndSettle would never settle.
 class _NoSkinSpec extends SkinSpecController {
@@ -173,5 +262,58 @@ void main() {
     expect(api.getFamilyGroupCalls, 0,
         reason: 'the field-8 group must short-circuit the GetFamilyGroup '
             'follow-up call');
+  });
+
+  // Invites moved here from the old todo-center tab: the long-press entry
+  // (familyGroupId == null) surfaces pending invites for a non-member.
+  testWidgets('pending invite renders degraded with a generic title',
+      (tester) async {
+    await tester.pumpWidget(_app(_FakeApiWithInvite(), _account()));
+    await tester.pumpAndSettle();
+
+    // GetFamilyGroup 失败 → 通用标题;GetInviteCheckResults 拒绝 → 降级。
+    expect(find.text('Family group invite'), findsOneWidget);
+    expect(find.text('Hold to join'), findsOneWidget);
+    // 静态冷却警告不依赖预检端点,始终显示。
+    expect(find.textContaining('Joining locks family-group switching'),
+        findsOneWidget);
+    // 降级生效:钱包/IP 预检行都不出现。
+    expect(find.textContaining('Wallet region'), findsNothing);
+    expect(find.text('✓ Usual IP matches'), findsNothing);
+  });
+
+  testWidgets('wallet country mismatch disables the join button',
+      (tester) async {
+    await tester.pumpWidget(_app(_FakeApiWalletMismatch(), _account()));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining("Wallet region doesn't match"), findsOneWidget);
+    expect(
+        tester
+            .widget<HoldToConfirmButton>(find.byType(HoldToConfirmButton))
+            .enabled,
+        isFalse,
+        reason: 'a wallet-region mismatch must disable the join button');
+  });
+
+  testWidgets('hold-to-join sends the join and opens the todo center',
+      (tester) async {
+    final api = _FakeApiWithInvite();
+    await tester.pumpWidget(_app(api, _account()));
+    await tester.pumpAndSettle();
+
+    // Drive the 900ms hold past completion.
+    final gesture =
+        await tester.startGesture(tester.getCenter(find.text('Hold to join')));
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pump(const Duration(milliseconds: 1000));
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(api.joinCalls, 1);
+    // A 2FA-needed join pushes the todo center (PendingScreen) so the user can
+    // approve the mobile confirmation — its tabs are now on screen.
+    expect(find.text('Confirmations'), findsOneWidget);
+    expect(find.text('Trade offers'), findsOneWidget);
   });
 }

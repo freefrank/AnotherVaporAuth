@@ -477,6 +477,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get famInvitesSection => '邀请';
+
+  @override
   String get famSectionMembers => '成员';
 
   @override

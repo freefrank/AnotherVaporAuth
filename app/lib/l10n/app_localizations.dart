@@ -962,6 +962,12 @@ abstract class AppLocalizations {
   /// **'Cooldown {days}d'**
   String famSummaryCooldown(int days);
 
+  /// No description provided for @famInvitesSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Invites'**
+  String get famInvitesSection;
+
   /// No description provided for @famSectionMembers.
   ///
   /// In en, this message translates to:
