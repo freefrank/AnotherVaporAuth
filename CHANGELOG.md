@@ -5,6 +5,41 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.92.0] — 2026-07-18
+
+### Added
+- **Device management.** See every device and browser session signed into your
+  Steam account — platform, rough location, and last activity — and remotely
+  sign out any of them. The current device is marked and can't sign itself out.
+  Open it from an account's menu. (The remote sign-out reproduces exactly what
+  Steam's own mobile app does.)
+
+### Changed
+- **The account menu is now touch-first.** Long-press an account to open it (it
+  used to be desktop right-click only, so on a phone the market / family /
+  devices entries had no way in), and the menu appears centered on screen with
+  larger rows instead of a desktop-style popup. Holding an account now also
+  scales the card and gives a haptic tap so the long-press is discoverable.
+- **Family group invites moved.** They now live in the family group screen
+  (reached from the account menu) instead of a third tab in the to-do center,
+  which drops to two tabs (Confirmations / Trade offers). Discovering,
+  pre-checking, and joining an invite work exactly as before.
+
+—
+
+### 新增
+- **设备管理。** 查看登录了你 Steam 账户的所有设备与浏览器会话——平台、大致
+  地点、最近活跃时间——并可远程注销其中任意一台。本机会被标记且不能自注销。
+  从账户菜单进入。(远程注销复刻的正是 Steam 官方手机 App 的行为。)
+
+### 变更
+- **账户菜单改为触屏优先。** 长按账户即可打开(以前只有桌面右键能开,手机上
+  市场 / 家庭组 / 设备等入口无从进入),菜单改为**居中显示**、行更大,不再是
+  桌面风格的贴边弹出。长按时卡片会缩放并伴一次轻震动,让"可长按"更易被发现。
+- **家庭组邀请挪了位置。** 现在收进**家庭组页面**(从账户菜单进),不再占用
+  待办中心的第三个页签——待办中心因此降为两页签(确认 / 报价)。邀请的发现、
+  预检、加入流程与以前完全一致。
+
 ## [v0.91.2] — 2026-07-17
 
 ### Changed
