@@ -624,8 +624,11 @@ class AppController extends AsyncNotifier<AppData> {
     try {
       final auto = ref.read(autoLoginProvider);
       final creds = ref.read(credentialStoreProvider);
+      // The exact instances this loop mutates: the fast republish below is
+      // only valid while state still holds this very list.
+      final target = data.accounts;
       var changed = false;
-      for (final acc in data.accounts) {
+      for (final acc in target) {
         if (acc.steamId == 0) continue;
         var accChanged = false;
         var migratedLegacyPassword = false;
@@ -666,13 +669,21 @@ class AppController extends AsyncNotifier<AppData> {
         }
       }
       if (changed && state.value != null) {
-        // Republish the live objects under a new list identity instead of a
-        // full disk re-read: everything above mutated these instances in
-        // place and already persisted them via saveAccount, so re-reading
-        // only re-decrypts what memory holds (and used to race the unlock
-        // migration's file swap). Callers that truly need disk use reload().
-        state = AsyncData(
-            state.value!.copyWith(accounts: [...state.value!.accounts]));
+        if (!identical(state.value?.accounts, target)) {
+          // A concurrent reload/unlock/import replaced the account list
+          // mid-refresh: the renewed tokens live on the old instances (and
+          // on disk), not on what state now holds — republishing that list
+          // would keep the stale tokens on screen. Re-read disk instead.
+          await reload();
+        } else {
+          // Republish the live objects under a new list identity instead of
+          // a full disk re-read: everything above mutated these instances in
+          // place and already persisted them via saveAccount, so re-reading
+          // only re-decrypts what memory holds (and used to race the unlock
+          // migration's file swap). Callers that truly need disk use
+          // reload().
+          state = AsyncData(state.value!.copyWith(accounts: [...target]));
+        }
       }
     } finally {
       _refreshingSessions = false;
@@ -693,8 +704,10 @@ class AppController extends AsyncNotifier<AppData> {
     try {
       final svc = ref.read(avatarServiceProvider);
       final only = steamIds?.toSet();
+      // Same instance-tracking rationale as refreshSessions above.
+      final target = data.accounts;
       final targets = [
-        for (final acc in data.accounts)
+        for (final acc in target)
           if (acc.steamId != 0 && (only == null || only.contains(acc.steamId)))
             acc,
       ];
@@ -705,9 +718,13 @@ class AppController extends AsyncNotifier<AppData> {
       final results = await Future.wait(
           [for (final acc in targets) _refreshOneAvatar(acc, svc, data)]);
       if (results.any((changed) => changed) && state.value != null) {
-        // Same republish-in-memory rationale as refreshSessions above.
-        state = AsyncData(
-            state.value!.copyWith(accounts: [...state.value!.accounts]));
+        if (!identical(state.value?.accounts, target)) {
+          // Same concurrent-replacement hazard as refreshSessions above.
+          await reload();
+        } else {
+          // Same republish-in-memory rationale as refreshSessions above.
+          state = AsyncData(state.value!.copyWith(accounts: [...target]));
+        }
       }
     } finally {
       _refreshingAvatars = false;
@@ -947,8 +964,16 @@ class AppController extends AsyncNotifier<AppData> {
     final beforeSteamId = insertAt + 1 < accounts.length
         ? accounts[insertAt + 1].steamId
         : null;
-    await data.store
+    final movedInManifest = await data.store
         .moveEntryById(moved.steamId, beforeSteamId: beforeSteamId);
+    if (!movedInManifest) {
+      // No manifest entry matches the dragged account's steamId (legacy
+      // steamid-0 import, diverged entry): nothing was persisted, so resync
+      // the optimistic in-memory order with disk instead of showing a
+      // reorder that snaps back on the next restart.
+      await reload();
+      return;
+    }
     await data.store.save();
   }
 

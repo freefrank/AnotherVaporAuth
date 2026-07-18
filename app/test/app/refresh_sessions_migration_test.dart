@@ -66,6 +66,22 @@ class _FakeCreds implements CredentialStore {
   }
 }
 
+/// Runs [onFirstRead] once before answering the first password lookup —
+/// the seam where refreshSessions awaits, so a hooked reload() models a
+/// concurrent flow replacing the account list mid-refresh.
+class _ReloadTriggeringCreds extends _FakeCreds {
+  Future<void> Function()? onFirstRead;
+  _ReloadTriggeringCreds(super.passwords);
+
+  @override
+  Future<String?> password(int steamId) async {
+    final hook = onFirstRead;
+    onFirstRead = null;
+    if (hook != null) await hook();
+    return super.password(steamId);
+  }
+}
+
 /// Storage whose writes can be made to fail after seeding, to prove the
 /// keystore copy is only dropped once the maFile actually holds the password.
 class _FailingWritesStorage extends MemoryStorageProvider {
@@ -169,6 +185,32 @@ void main() {
     expect(identical(after.single, before.single), isTrue);
     // And the published instance carries the refreshed state.
     expect(after.single.password, 'legacy-pw');
+  });
+
+  test(
+      'REGRESSION: when a concurrent reload replaces the account list '
+      'mid-refresh, refreshSessions re-reads disk instead of republishing '
+      'the replaced (pre-save) instances', () async {
+    final storage = MemoryStorageProvider();
+    final creds = _ReloadTriggeringCreds({_steamId: 'legacy-pw'});
+    final container = await bootstrap(storage, creds);
+    final notifier = container.read(appControllerProvider.notifier);
+    // Mid-refresh — before the migration mutates + saves the old instance —
+    // a concurrent reload swaps in fresh instances read from disk.
+    creds.onFirstRead = notifier.reload;
+
+    await notifier.refreshSessions();
+
+    // The migration landed on disk via the old (replaced) instance…
+    final saved = jsonDecode(storage.files['$_steamId.maFile']!)
+        as Map<String, dynamic>;
+    expect(saved['password'], 'legacy-pw');
+    // …so the published state must match disk: a fast republish of the
+    // replaced list would keep the pre-migration snapshot (no password,
+    // stale tokens) on screen for the rest of the session.
+    final published =
+        container.read(appControllerProvider).value!.accounts.single;
+    expect(published.password, 'legacy-pw');
   });
 
   test('a failed maFile save keeps the keystore copy for the next attempt',

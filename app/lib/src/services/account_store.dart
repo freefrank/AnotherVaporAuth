@@ -574,16 +574,20 @@ class AccountStore {
   /// [migrateToVault]), so UI indices don't address the manifest. Only the
   /// moved entry is touched — every other entry, undecryptable ones included,
   /// keeps its relative order. Does not save; callers commit via [save].
-  Future<void> moveEntryById(int steamId, {int? beforeSteamId}) =>
+  /// Returns false when no entry matches [steamId] (legacy steamid-0 import,
+  /// diverged entry): nothing moved, so callers must not report the reorder
+  /// as persisted.
+  Future<bool> moveEntryById(int steamId, {int? beforeSteamId}) =>
       _locked(() async {
         final from =
             manifest.entries.indexWhere((e) => e.steamId == steamId);
-        if (from < 0) return;
+        if (from < 0) return false;
         final entry = manifest.entries.removeAt(from);
         final to = beforeSteamId == null
             ? -1
             : manifest.entries.indexWhere((e) => e.steamId == beforeSteamId);
         manifest.entries.insert(to < 0 ? manifest.entries.length : to, entry);
+        return true;
       });
 
   /// Parses and normalizes raw maFile JSON into the account it would import,

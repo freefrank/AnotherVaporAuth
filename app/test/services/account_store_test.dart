@@ -278,16 +278,18 @@ void main() {
       await store.saveAccount(_account(2, 'b'), false);
       await store.saveAccount(_account(3, 'c'), false);
 
-      await store.moveEntryById(3, beforeSteamId: 1);
+      expect(await store.moveEntryById(3, beforeSteamId: 1), isTrue);
       expect(store.entries.map((e) => e.steamId).toList(), [3, 1, 2]);
 
       // No beforeSteamId → last.
-      await store.moveEntryById(3);
+      expect(await store.moveEntryById(3), isTrue);
       expect(store.entries.map((e) => e.steamId).toList(), [1, 2, 3]);
 
-      // Unknown ids: unknown mover is a no-op; unknown target lands last.
-      await store.moveEntryById(99, beforeSteamId: 1);
-      await store.moveEntryById(1, beforeSteamId: 99);
+      // Unknown ids: an unknown mover is a reported no-op (false, so callers
+      // don't publish a reorder that never persisted); an unknown target
+      // lands the mover last.
+      expect(await store.moveEntryById(99, beforeSteamId: 1), isFalse);
+      expect(await store.moveEntryById(1, beforeSteamId: 99), isTrue);
       expect(store.entries.map((e) => e.steamId).toList(), [2, 3, 1]);
     });
 

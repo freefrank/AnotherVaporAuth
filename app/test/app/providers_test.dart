@@ -72,6 +72,27 @@ class _ScriptedAvatars implements AvatarService {
       const EquippedItems();
 }
 
+/// Inert until [onFirstFetch] is armed; then the first profile fetch runs the
+/// hook (modelling a concurrent reload replacing the account list mid-flight)
+/// before resolving a persona.
+class _SwapOnceAvatars implements AvatarService {
+  Future<void> Function()? onFirstFetch;
+
+  @override
+  Future<SteamProfile> fetchProfile(int steamId) async {
+    final hook = onFirstFetch;
+    if (hook == null) return const SteamProfile();
+    onFirstFetch = null;
+    await hook();
+    return const SteamProfile(personaName: 'fresh-persona');
+  }
+
+  @override
+  Future<EquippedItems> fetchEquippedItems(
+          int steamId, String? accessToken) async =>
+      const EquippedItems();
+}
+
 /// resetVault's key-drop path talks to platform keystores; off-device the
 /// plugin channel is absent, so the controller test stubs it out.
 class _NoopVaultKeys implements VaultKeyStore {
@@ -337,6 +358,35 @@ void main() {
               .map((acc) => acc.steamId),
           [b, c, a]);
     });
+
+    test(
+        'REGRESSION: a dragged account whose steamId matches no manifest '
+        'entry resyncs with disk instead of faking success', () async {
+      final notifier = container.read(appControllerProvider.notifier);
+      final data = container.read(appControllerProvider).value!;
+      // Diverge C in memory: its manifest entry keeps c, but the live
+      // instance now answers with an id no entry carries — the manifest
+      // move has nothing to grab.
+      data.accounts.last.session.steamId = 76561198000000999;
+
+      await notifier.reorder(2, 0);
+
+      // Nothing persisted → the published order must match disk again, not
+      // the optimistic move (which would snap back on the next restart).
+      final published = container.read(appControllerProvider).value!;
+      expect(published.accounts.map((acc) => acc.steamId), [a, b, c]);
+      final onDisk = await AccountStore.load(storage);
+      expect(onDisk.entries.map((e) => e.steamId), [a, x, b, c]);
+      // And the post-reload order equals the on-disk manifest order.
+      await notifier.reload();
+      expect(
+          container
+              .read(appControllerProvider)
+              .value!
+              .accounts
+              .map((acc) => acc.steamId),
+          [a, b, c]);
+    });
   });
 
   group('AppController.refreshAvatars', () {
@@ -378,6 +428,40 @@ void main() {
       expect(byId[idB]!.personaName, isNull);
       expect(storage.files['$idA.maFile'], contains('p$idA'));
       expect(storage.files['$idC.maFile'], contains('p$idC'));
+    });
+
+    test(
+        'REGRESSION: refreshAvatars re-reads disk when a concurrent reload '
+        'replaces the account list mid-refresh', () async {
+      final storage = MemoryStorageProvider();
+      final avatars = _SwapOnceAvatars();
+      final container = ProviderContainer(overrides: [
+        storageProvider.overrideWithValue(storage),
+        timeAlignerProvider.overrideWithValue(() async {}),
+        avatarServiceProvider.overrideWithValue(avatars),
+      ]);
+      addTearDown(container.dispose);
+      await container.read(appControllerProvider.future);
+      final notifier = container.read(appControllerProvider.notifier);
+      await notifier.importMaFile(_maFile(steamId: idA));
+      // Drain the import's unawaited refreshAvatars before arming the hook.
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      avatars.onFirstFetch = notifier.reload;
+
+      await notifier.refreshAvatars();
+
+      // The persona was persisted onto the replaced (old) instance; the
+      // published state must reflect disk, not the swapped-in pre-save
+      // snapshot a fast republish would keep on screen.
+      expect(storage.files['$idA.maFile'], contains('fresh-persona'));
+      expect(
+          container
+              .read(appControllerProvider)
+              .value!
+              .accounts
+              .single
+              .personaName,
+          'fresh-persona');
     });
   });
 
