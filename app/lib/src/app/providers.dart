@@ -13,6 +13,7 @@ import '../core/protocol/confirmations_client.dart';
 import '../core/protocol/family_groups_client.dart';
 import '../core/protocol/inventory_client.dart';
 import '../core/protocol/market_client.dart';
+import '../core/protocol/sessions_client.dart';
 import '../core/protocol/trade_offers_client.dart';
 import '../services/account_store.dart';
 import '../skins/skin_spec.dart';
@@ -79,6 +80,10 @@ final confirmationsClientProvider = Provider<ConfirmationsClient>(
 /// Steam family groups (invites, join, read-only group info) client.
 final familyGroupsClientProvider = Provider<FamilyGroupsClient>(
     (ref) => FamilyGroupsClient(ref.read(apiClientProvider)));
+
+/// Device / session management (read-only device list; IAuthenticationService).
+final sessionsClientProvider = Provider<SessionsClient>(
+    (ref) => SessionsClient(ref.read(apiClientProvider)));
 
 /// Time alignment hook (overridable in tests to avoid network).
 final timeAlignerProvider =
