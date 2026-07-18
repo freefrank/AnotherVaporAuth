@@ -44,6 +44,72 @@ void main() {
       expect(fired, 1);
     });
 
+    testWidgets(
+        'progress jumps to half on press then fills over the full duration',
+        (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: HoldToConfirmButton(
+            label: 'accept',
+            color: Colors.green,
+            duration: const Duration(milliseconds: 300),
+            onConfirmed: () {},
+          ),
+        ),
+      ));
+      double ring() => tester
+          .widget<CircularProgressIndicator>(
+              find.byType(CircularProgressIndicator))
+          .value!;
+      // Idle: empty ring.
+      expect(ring(), 0.0);
+
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.text('accept')));
+      await tester.pump(const Duration(milliseconds: 16)); // one tick
+      // Right after press the ring is at (a hair past) the halfway mark, not
+      // near zero — the "gifted" first half is the immediate feedback.
+      expect(ring(), greaterThanOrEqualTo(0.5));
+      expect(ring(), lessThan(0.6));
+
+      // ~halfway through the real hold → displayed progress past the ¾ mark.
+      await tester.pump(const Duration(milliseconds: 150));
+      expect(ring(), greaterThan(0.7));
+      expect(ring(), lessThan(1.0));
+
+      await gesture.up();
+      await tester.pumpAndSettle();
+      // Cancelled before completion: back to empty.
+      expect(ring(), 0.0);
+    });
+
+    testWidgets('button scales up while held and springs back on release',
+        (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: HoldToConfirmButton(
+            label: 'accept',
+            color: Colors.green,
+            duration: const Duration(milliseconds: 300),
+            onConfirmed: () {},
+          ),
+        ),
+      ));
+      double scale() =>
+          tester.widget<AnimatedScale>(find.byType(AnimatedScale)).scale;
+      expect(scale(), 1.0);
+
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.text('accept')));
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(scale(), greaterThan(1.0));
+
+      await gesture.up();
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(scale(), 1.0);
+      await tester.pumpAndSettle();
+    });
+
     testWidgets('early release cancels and resets', (tester) async {
       var fired = 0;
       await tester.pumpWidget(MaterialApp(

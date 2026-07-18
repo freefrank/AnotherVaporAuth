@@ -9,6 +9,12 @@ import 'package:flutter/services.dart';
 /// intervals (an accelerating "charging" feel), ending in a medium impact
 /// when the action commits. Early release cancels and resets.
 ///
+/// On press the control gives immediate feedback so it never reads as a dead
+/// button: it scales up slightly and the ring jumps straight to the halfway
+/// mark, then the real timer drives the second half. The shown progress is
+/// front-loaded (0→½ is a "gift"); the hold *length* is unchanged — commit
+/// still requires the full [duration] of held time.
+///
 /// Two shapes: pill ([HoldToConfirmButton.new] with [label]) and round icon
 /// ([HoldToConfirmButton.round] — drop-in for the confirmation card's ✓).
 /// [holdEnabled] false (settings toggle) degrades to a plain tap;
@@ -95,17 +101,25 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton> {
   Timer? _timer;
   int _elapsedMs = 0;
   int _nextHaptic = 0;
+  bool _pressed = false; // 手指按下期间为真：驱动按钮放大反馈
   late List<int> _haptics =
       HoldToConfirmButton.hapticTimesMs(widget.duration.inMilliseconds);
 
-  double get _progress =>
+  /// 真实计时进度 [0,1]：`onConfirmed` 只认它，长按总时长不受显示层影响。
+  double get _rawProgress =>
       (_elapsedMs / widget.duration.inMilliseconds).clamp(0.0, 1.0);
+
+  /// 显示进度：按下瞬间即跳到一半，之后真实计时驱动后半程填满。前半程是
+  /// “送”的即时反馈——按钮一按就有明显动静，不再像坏掉；实际计时逻辑
+  /// （`_elapsedMs >= duration` 才提交）分毫未改，总时长不变。
+  double get _displayProgress => _pressed ? 0.5 + 0.5 * _rawProgress : 0.0;
 
   void _start([_]) {
     if (!widget.enabled || !widget.holdEnabled) return;
     _timer?.cancel();
     _elapsedMs = 0;
     _nextHaptic = 0;
+    _pressed = true;
     _timer = Timer.periodic(_tick, (_) => _onTick());
     setState(() {});
   }
@@ -127,6 +141,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton> {
       _timer = null;
       _elapsedMs = 0;
       _nextHaptic = 0;
+      _pressed = false; // 提交完成：进度清空、按钮回落，即使手指还没抬起
       if (widget.hapticsEnabled) HapticFeedback.mediumImpact();
       setState(() {});
       widget.onConfirmed();
@@ -136,11 +151,14 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton> {
   }
 
   void _cancel([_]) {
-    if (_timer == null) return;
+    // 抬手/取消可能发生在计时器已结束（提交完成）之后：此时仍要确保按钮
+    // 回落到常态，所以不能只在 _timer != null 时才处理。
+    if (_timer == null && !_pressed) return;
     _timer?.cancel();
     _timer = null;
     _elapsedMs = 0;
     _nextHaptic = 0;
+    _pressed = false;
     setState(() {});
   }
 
@@ -162,7 +180,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton> {
 
   @override
   Widget build(BuildContext context) {
-    final progress = _progress;
+    final progress = _displayProgress;
     final child = widget.icon != null
         // 48dp 命中区域包住 36dp 视觉(a11y 触摸目标,同 _RoundAction 先例)。
         ? SizedBox(
@@ -235,7 +253,14 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton> {
         onTapDown: _start,
         onTapUp: _cancel,
         onTapCancel: _cancel,
-        child: Opacity(opacity: widget.enabled ? 1 : 0.45, child: child),
+        // 按下即放大：给出即时“已响应”反馈，长按不再像点了个坏按钮。
+        // 松手/完成后 _pressed 复位，弹回常态。
+        child: AnimatedScale(
+          scale: _pressed ? 1.08 : 1.0,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+          child: Opacity(opacity: widget.enabled ? 1 : 0.45, child: child),
+        ),
       ),
     );
   }
