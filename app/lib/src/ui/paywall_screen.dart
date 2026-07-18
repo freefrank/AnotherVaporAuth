@@ -91,6 +91,11 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   /// Null (fetch pending/failed) renders nothing — never blocks the paywall.
   List<EntitlementActivation>? _activations;
 
+  // A successful redeem both calls _loadActivations directly and flips
+  // proStatus free→pro (which trips the listener), so guard against the two
+  // firing the status() network call concurrently.
+  bool _loadingActivations = false;
+
   @override
   void initState() {
     super.initState();
@@ -98,6 +103,8 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   }
 
   Future<void> _loadActivations() async {
+    if (_loadingActivations) return;
+    _loadingActivations = true;
     try {
       final token = ref.read(entitlementTokenProvider);
       if (token == null || ref.read(proStatusProvider) == ProStatus.free) {
@@ -107,6 +114,8 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       if (mounted) setState(() => _activations = status.activations);
     } catch (_) {
       // Informative row only; any failure leaves the card as-is.
+    } finally {
+      _loadingActivations = false;
     }
   }
 

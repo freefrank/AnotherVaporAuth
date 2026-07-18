@@ -179,6 +179,52 @@ void main() {
     }
   });
 
+  test(
+      'REGRESSION: an _update whose base read transiently fails does not '
+      'overwrite the intact file with a single-key map', () async {
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      // A real, populated file on disk.
+      final seeder = SettingsStore(_TmpStorage(tmp.path));
+      await seeder.saveLocale('zh');
+      await seeder.saveEntitlementToken('jwt-raw');
+      await seeder.saveDeviceId('dev-1');
+
+      // A fresh instance (empty cache): the very first thing it does is a
+      // settings toggle whose base read fails transiently. It must abort the
+      // write, not persist {skin: neon} over the token/device-id/locale.
+      final store = SettingsStore(_FlakyStorage(tmp.path, failuresLeft: 1));
+      await store.saveSkin('neon');
+
+      final reader = SettingsStore(_TmpStorage(tmp.path));
+      expect(await reader.loadEntitlementToken(), 'jwt-raw');
+      expect(await reader.loadDeviceId(), 'dev-1');
+      expect(await reader.loadLocale(), 'zh');
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
+
+  test(
+      'REGRESSION: loadDeviceId throws on a read failure rather than '
+      'reporting the id as unset', () async {
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      final seeder = SettingsStore(_TmpStorage(tmp.path));
+      await seeder.saveDeviceId('dev-1');
+
+      // Transient failure → throw, so deviceIdProvider never mistakes it for
+      // first-run and mints a fresh id that would rebind Pro.
+      final store = SettingsStore(_FlakyStorage(tmp.path, failuresLeft: 1));
+      await expectLater(
+          store.loadDeviceId(), throwsA(isA<SettingsReadException>()));
+      // Recovered: the real id is returned, no minting happened.
+      expect(await store.loadDeviceId(), 'dev-1');
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
+
   test('loads are served from the cache once read (single-writer store)',
       () async {
     final tmp = await Directory.systemTemp.createTemp('ava_settings');

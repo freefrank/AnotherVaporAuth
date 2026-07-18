@@ -287,6 +287,9 @@ class EntitlementTokenController extends Notifier<EntitlementToken?> {
 /// Stable per-install device id for entitlement binding (created lazily).
 final deviceIdProvider = FutureProvider<String>((ref) async {
   final settings = ref.read(settingsStoreProvider);
+  // loadDeviceId throws on a read failure rather than returning null, so a
+  // transient error propagates (the provider re-evaluates) instead of minting
+  // a fresh id — which would rebind Pro to a device the worker never saw.
   final existing = await settings.loadDeviceId();
   if (existing != null && existing.isNotEmpty) return existing;
   final id = newDeviceId();

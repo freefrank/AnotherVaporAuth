@@ -5,6 +5,16 @@ import 'package:path/path.dart' as p;
 
 import '../services/storage_provider.dart';
 
+/// Thrown by the strict read path when app_settings.json exists but could not
+/// be read/parsed (a transient IO error, a momentary decode failure on an
+/// otherwise-intact file). Callers that would otherwise overwrite the file or
+/// mint fresh identity must abort rather than act on a fabricated empty store.
+class SettingsReadException implements Exception {
+  const SettingsReadException();
+  @override
+  String toString() => 'SettingsReadException';
+}
+
 /// Tiny key/value store for non-secret app preferences (e.g. UI language),
 /// kept next to the maFiles directory as `app_settings.json`.
 class SettingsStore {
@@ -34,15 +44,39 @@ class SettingsStore {
     return fresh ?? const {};
   }
 
-  /// {} when the file simply doesn't exist yet (a real empty store, safe to
-  /// cache); null on a read/parse failure, so the next read retries disk.
+  /// Like [_read] but throws [SettingsReadException] instead of collapsing a
+  /// read failure to `{}`. Used by paths where an empty map is a destructive
+  /// decision: [_update] (which would else overwrite an intact file with a
+  /// single-key map) and device-id resolution (which would else mint a fresh
+  /// id and rebind Pro). A genuinely absent file still returns `{}`.
+  Future<Map<String, dynamic>> _readStrict() async {
+    final c = _cache;
+    if (c != null) return c;
+    final fresh = await _readDisk();
+    if (fresh == null) throw const SettingsReadException();
+    _cache = fresh;
+    return fresh;
+  }
+
+  /// `{}` when the store holds nothing recoverable — the file is absent, or
+  /// its content is unparseable (writes are atomic temp+rename, so a parse
+  /// failure means genuinely corrupt content, not a half-written file, and is
+  /// safe to treat as empty and overwrite). `null` ONLY on an IO failure
+  /// (couldn't read the file at all), which may be transient over an intact
+  /// file — the strict callers refuse to overwrite/mint on null.
   Future<Map<String, dynamic>?> _readDisk() async {
+    final String contents;
     try {
       final f = await _file();
       if (!await f.exists()) return {};
-      return jsonDecode(await f.readAsString()) as Map<String, dynamic>;
+      contents = await f.readAsString();
     } catch (_) {
       return null;
+    }
+    try {
+      return jsonDecode(contents) as Map<String, dynamic>;
+    } catch (_) {
+      return {};
     }
   }
 
@@ -70,9 +104,19 @@ class SettingsStore {
 
   Future<void> _update(void Function(Map<String, dynamic> data) mutate) {
     final task = _chain.then((_) async {
+      // Establish the current file contents strictly: if the read failed we
+      // must NOT write, or a single-key mutation over a fabricated {} would
+      // overwrite an intact file and drop the entitlement token / device id.
+      // The setting re-applies on its next change once the read recovers.
+      final Map<String, dynamic> base;
+      try {
+        base = await _readStrict();
+      } on SettingsReadException {
+        return;
+      }
       // Mutate a copy and publish it to the cache only after the write, so
       // concurrent loads never observe a half-applied mutation.
-      final data = Map<String, dynamic>.of(await _read());
+      final data = Map<String, dynamic>.of(base);
       mutate(data);
       if (await _write(data)) {
         _cache = data;
@@ -187,8 +231,12 @@ class SettingsStore {
       _update((data) => data['skin_pro_notice_shown'] = true);
 
   /// Stable per-install device id used for entitlement device binding.
+  /// Strict: throws [SettingsReadException] on a read failure rather than
+  /// returning null, so a transient error is never mistaken for "no id yet"
+  /// (which would mint a fresh id and rebind Pro to a device the worker never
+  /// activated). Returns null only when the id is genuinely unset.
   Future<String?> loadDeviceId() async =>
-      (await _read())['device_id'] as String?;
+      (await _readStrict())['device_id'] as String?;
 
   Future<void> saveDeviceId(String id) =>
       _update((data) => data['device_id'] = id);

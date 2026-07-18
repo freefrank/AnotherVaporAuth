@@ -55,10 +55,18 @@ class _CappedApi extends _NoApi {
 }
 
 /// _StatusApi whose redeemBeta hands out the given token — the happy
-/// redeem-then-see-your-slot path.
+/// redeem-then-see-your-slot path. Counts status() calls so the redeem
+/// (direct refresh + free→pro listener) is asserted to not double-fire it.
 class _RedeemApi extends _StatusApi {
   final String token;
+  int statusCalls = 0;
   _RedeemApi(this.token, super.activations);
+
+  @override
+  Future<EntitlementStatus> status(String tok) {
+    statusCalls++;
+    return super.status(tok);
+  }
 
   @override
   Future<String> redeemBeta(
@@ -179,14 +187,14 @@ void main() {
       (tester) async {
     final tmp = Directory.systemTemp.createTempSync('ava_paywall');
     addTearDown(() => tmp.deleteSync(recursive: true));
-    await tester.pumpWidget(app(tmp,
-        api: _RedeemApi(mint.mint(now: now, lifetime: true), [
-          EntitlementActivation(
-              deviceClass: 'android',
-              activatedAt: DateTime.utc(2026, 7, 15),
-              thisDevice: true),
-        ]),
-        tokenController: _NoIoController.new));
+    final api = _RedeemApi(mint.mint(now: now, lifetime: true), [
+      EntitlementActivation(
+          deviceClass: 'android',
+          activatedAt: DateTime.utc(2026, 7, 15),
+          thisDevice: true),
+    ]);
+    await tester.pumpWidget(
+        app(tmp, api: api, tokenController: _NoIoController.new));
     await tester.pumpAndSettle();
     expect(find.text('Free plan'), findsOneWidget);
     expect(find.textContaining('Active on:'), findsNothing);
@@ -199,6 +207,9 @@ void main() {
     // activation fetch — no screen reopen required.
     expect(find.text('Pro · lifetime'), findsOneWidget);
     expect(find.text('Active on: Android (this device)'), findsOneWidget);
+    // The direct on-success fetch and the free→pro listener must not both
+    // fire status() — the initState bail (free) doesn't count.
+    expect(api.statusCalls, 1);
   });
 
   testWidgets('status fetch failure leaves the card without an activation row',
