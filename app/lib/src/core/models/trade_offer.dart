@@ -1,4 +1,5 @@
 // Trade offer models for IEconService/GetTradeOffers.
+import '../json_coerce.dart';
 import 'steam_item.dart' show itemImageUrl;
 
 /// `trade_offer_state` values from IEconService/GetTradeOffers.
@@ -18,7 +19,7 @@ enum TradeOfferState {
 }
 
 TradeOfferState _stateFrom(dynamic raw) {
-  final v = _asInt(raw);
+  final v = asInt(raw);
   return (v >= 1 && v <= 11)
       ? TradeOfferState.values[v - 1]
       : TradeOfferState.unknown;
@@ -60,12 +61,12 @@ class TradeAsset {
     final d = descByKey[
         '${json['appid']}_${json['classid']}_${json['instanceid']}'];
     return TradeAsset(
-      appid: _asInt(json['appid']),
+      appid: asInt(json['appid']),
       contextId: '${json['contextid']}',
       assetId: '${json['assetid']}',
       classId: '${json['classid']}',
       instanceId: '${json['instanceid']}',
-      amount: _asInt(json['amount']),
+      amount: asInt(json['amount']),
       name: (d?['name'] ?? '') as String,
       marketHashName: (d?['market_hash_name'] ?? '') as String,
       iconUrl:
@@ -123,16 +124,16 @@ class TradeOffer {
         .toList();
     return TradeOffer(
       id: '${json['tradeofferid']}',
-      partnerAccountId: _asInt(json['accountid_other']),
+      partnerAccountId: asInt(json['accountid_other']),
       message: (json['message'] ?? '') as String,
       state: _stateFrom(json['trade_offer_state']),
       isOurOffer: json['is_our_offer'] == true,
       itemsToGive: assets(json['items_to_give']),
       itemsToReceive: assets(json['items_to_receive']),
-      timeCreated: _asInt(json['time_created']),
-      timeUpdated: _asInt(json['time_updated']),
-      expirationTime: _asInt(json['expiration_time']),
-      escrowEndDate: _asInt(json['escrow_end_date']),
+      timeCreated: asInt(json['time_created']),
+      timeUpdated: asInt(json['time_updated']),
+      expirationTime: asInt(json['expiration_time']),
+      escrowEndDate: asInt(json['escrow_end_date']),
     );
   }
 }
@@ -157,11 +158,4 @@ class TradeOffersPage {
     return TradeOffersPage(
         offers('trade_offers_received'), offers('trade_offers_sent'));
   }
-}
-
-int _asInt(dynamic v) {
-  if (v is int) return v;
-  if (v is String) return int.tryParse(v) ?? 0;
-  if (v is double) return v.toInt();
-  return 0;
 }

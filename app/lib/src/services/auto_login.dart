@@ -1,5 +1,4 @@
-import 'dart:convert';
-
+import '../core/jwt.dart';
 import '../core/models/steam_guard_account.dart';
 import '../core/protocol/steam_auth_session.dart';
 import 'debug_log.dart';
@@ -73,23 +72,12 @@ class AutoLogin {
   /// [skew] — i.e. worth refreshing proactively.
   static bool accessTokenStale(String? jwt,
       {Duration skew = const Duration(minutes: 15)}) {
-    if (jwt == null || jwt.isEmpty) return true;
-    final parts = jwt.split('.');
-    if (parts.length < 2) return true;
-    try {
-      var p = parts[1].replaceAll('-', '+').replaceAll('_', '/');
-      while (p.length % 4 != 0) {
-        p += '=';
-      }
-      final payload =
-          jsonDecode(utf8.decode(base64.decode(p))) as Map<String, dynamic>;
-      final exp = payload['exp'];
-      if (exp is! int) return true;
-      final expiry = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
-      return DateTime.now().add(skew).isAfter(expiry);
-    } catch (_) {
-      return true;
-    }
+    final payload = decodeJwtPayload(jwt);
+    if (payload == null) return true;
+    final exp = payload['exp'];
+    if (exp is! int) return true;
+    final expiry = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
+    return DateTime.now().add(skew).isAfter(expiry);
   }
 
   /// Ensures [account] has a usable access token. Tries the refresh token first;

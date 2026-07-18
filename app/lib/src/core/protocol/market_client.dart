@@ -1,9 +1,8 @@
-import 'dart:math';
-
 import '../../services/debug_log.dart';
 import '../../services/steam_api_client.dart';
 import '../models/steam_guard_account.dart';
 import '../models/steam_item.dart';
+import 'community_session.dart';
 
 /// Result of listing an item for sale.
 class SellResult {
@@ -24,19 +23,6 @@ class MarketClient {
   final SteamApiClient api;
   MarketClient(this.api);
 
-  final _rand = Random.secure();
-
-  String _newSessionId() {
-    const hex = '0123456789abcdef';
-    return List.generate(24, (_) => hex[_rand.nextInt(16)]).join();
-  }
-
-  Map<String, String> _cookies(SteamGuardAccount a, String sessionId) => {
-        'steamLoginSecure': '${a.steamId}||${a.session.accessToken ?? ''}',
-        'sessionid': sessionId,
-        'mobileClient': 'android',
-      };
-
   String _inventoryReferer(SteamGuardAccount a) =>
       '${SteamApiClient.communityBase}/profiles/${a.steamId}/inventory';
 
@@ -45,12 +31,12 @@ class MarketClient {
   Future<List<double>> priceHistory(
       SteamGuardAccount account, int appid, String marketHashName,
       {int points = 60}) async {
-    final sid = _newSessionId();
+    final sid = newCommunitySessionId();
     try {
       final json = await api.communityGetJson(
         '/market/pricehistory/',
         {'appid': '$appid', 'market_hash_name': marketHashName},
-        cookies: _cookies(account, sid),
+        cookies: communityCookies(account, sessionId: sid),
       );
       if (json['success'] != true) return const [];
       final prices = (json['prices'] as List?) ?? const [];
@@ -90,7 +76,7 @@ class MarketClient {
   Future<SellResult> sell(
       SteamGuardAccount account, InventoryItem item, int priceReceive,
       {String? assetId}) async {
-    final sid = _newSessionId();
+    final sid = newCommunitySessionId();
     final json = await api.communityPostJson(
       '/market/sellitem/',
       {
@@ -101,7 +87,7 @@ class MarketClient {
         'amount': '1',
         'price': '$priceReceive',
       },
-      cookies: _cookies(account, sid),
+      cookies: communityCookies(account, sessionId: sid),
       referer: _inventoryReferer(account),
     );
     final ok = json['success'] == true;
@@ -119,11 +105,11 @@ class MarketClient {
   /// The account's active listings.
   Future<List<MarketListing>> myListings(SteamGuardAccount account,
       {int count = 100}) async {
-    final sid = _newSessionId();
+    final sid = newCommunitySessionId();
     final json = await api.communityGetJson(
       '/market/mylistings/',
       {'norender': '1', 'count': '$count', 'l': api.steamLanguage},
-      cookies: _cookies(account, sid),
+      cookies: communityCookies(account, sessionId: sid),
     );
     final listings = (json['listings'] as List?) ?? const [];
     return listings
@@ -134,12 +120,12 @@ class MarketClient {
 
   /// Cancels/removes an active listing.
   Future<bool> cancel(SteamGuardAccount account, String listingId) async {
-    final sid = _newSessionId();
+    final sid = newCommunitySessionId();
     try {
       final json = await api.communityPostJson(
         '/market/removelisting/$listingId',
         {'sessionid': sid},
-        cookies: _cookies(account, sid),
+        cookies: communityCookies(account, sessionId: sid),
         referer: '${SteamApiClient.communityBase}/market/',
       );
       final ok = isCancelSuccess(json);

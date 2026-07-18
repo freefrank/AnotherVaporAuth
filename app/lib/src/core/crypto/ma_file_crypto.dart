@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:isolate';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:pointycastle/export.dart';
+
+import 'secure_random.dart';
 
 /// Encrypts and decrypts `*.maFile` payloads, byte-for-byte compatible with the
 /// legacy C# `FileEncryptor` (Steam Desktop Authenticator .NET).
@@ -20,22 +21,12 @@ class MaFileCrypto {
   static const int keySizeBytes = 32;
   static const int ivLength = 16;
 
-  static final Random _rng = Random.secure();
-
   /// 8-byte cryptographically random salt, base64 encoded.
-  static String getRandomSalt() => base64.encode(_randomBytes(saltLength));
+  static String getRandomSalt() => base64.encode(secureRandomBytes(saltLength));
 
   /// 16-byte cryptographically random IV, base64 encoded.
   static String getInitializationVector() =>
-      base64.encode(_randomBytes(ivLength));
-
-  static Uint8List _randomBytes(int n) {
-    final b = Uint8List(n);
-    for (var i = 0; i < n; i++) {
-      b[i] = _rng.nextInt(256);
-    }
-    return b;
-  }
+      base64.encode(secureRandomBytes(ivLength));
 
   /// PBKDF2-HMAC-SHA1 key derivation. Exposed for cross-implementation tests
   /// (RFC 6070 vectors). Defaults match the maFile scheme (50000 rounds, 32B).

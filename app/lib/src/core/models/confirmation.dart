@@ -1,3 +1,5 @@
+import '../json_coerce.dart';
+
 /// A pending mobile confirmation as returned by `/mobileconf/getlist`.
 enum ConfirmationType {
   unknown,
@@ -44,7 +46,7 @@ class Confirmation {
       headline: (json['headline'] ?? '') as String,
       summary: (json['summary'] as List?)?.map((e) => '$e').toList() ??
           const <String>[],
-      creationTime: _asInt(json['creation_time']),
+      creationTime: asInt(json['creation_time']),
       icon: (json['icon'] ?? '') as String,
     );
   }
@@ -54,7 +56,7 @@ class Confirmation {
   // 5 phone number change, 6 account recovery, 9 web API key creation,
   // 11 join Steam family.
   static ConfirmationType _mapType(dynamic raw) {
-    switch (_asInt(raw)) {
+    switch (asInt(raw)) {
       case 1:
         return ConfirmationType.other;
       case 2:
@@ -74,12 +76,5 @@ class Confirmation {
       default:
         return ConfirmationType.unknown;
     }
-  }
-
-  static int _asInt(dynamic v) {
-    if (v is int) return v;
-    if (v is String) return int.tryParse(v) ?? 0;
-    if (v is double) return v.toInt();
-    return 0;
   }
 }

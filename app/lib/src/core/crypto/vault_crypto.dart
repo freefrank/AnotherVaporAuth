@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:hashlib/hashlib.dart' as hashlib;
 import 'package:pointycastle/export.dart';
+
+import 'secure_random.dart';
 
 /// AVA's internal at-rest encryption for the `maFiles/` vault.
 ///
@@ -32,21 +33,12 @@ class VaultCrypto {
   /// old wraps keep opening and get re-wrapped on their next unlock.
   static const int pinKdfIterations = 1;
 
-  static final Random _rng = Random.secure();
-
-  static Uint8List _randomBytes(int n) {
-    final b = Uint8List(n);
-    for (var i = 0; i < n; i++) {
-      b[i] = _rng.nextInt(256);
-    }
-    return b;
-  }
-
   /// A fresh random 256-bit DEK.
-  static Uint8List generateDek() => _randomBytes(dekLength);
+  static Uint8List generateDek() => secureRandomBytes(dekLength);
 
   /// A fresh random 16-byte salt, base64 encoded (for [wrapDek]).
-  static String randomSaltB64() => base64.encode(_randomBytes(pinSaltLength));
+  static String randomSaltB64() =>
+      base64.encode(secureRandomBytes(pinSaltLength));
 
   /// Derives the PIN key-encryption key with PBKDF2-HMAC-SHA256.
   ///
@@ -62,7 +54,7 @@ class VaultCrypto {
 
   /// AES-256-GCM encrypt [plain] under [key]; returns nonce||ct||tag (base64).
   static String _seal(Uint8List key, Uint8List plain) {
-    final nonce = _randomBytes(nonceLength);
+    final nonce = secureRandomBytes(nonceLength);
     final cipher = GCMBlockCipher(AESEngine())
       ..init(true, AEADParameters(KeyParameter(key), macSizeBits, nonce,
           Uint8List(0)));

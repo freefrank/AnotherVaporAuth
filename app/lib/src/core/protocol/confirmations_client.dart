@@ -3,6 +3,7 @@ import '../../services/steam_time.dart';
 import '../models/confirmation.dart';
 import '../models/steam_guard_account.dart';
 import '../steam_totp.dart';
+import 'community_session.dart';
 
 /// Fetches and acts on Steam mobile confirmations (`steamcommunity.com/mobileconf`).
 ///
@@ -26,7 +27,7 @@ class ConfirmationsClient {
       json = await api.communityGetJson(
         '/mobileconf/getlist',
         query,
-        cookies: _cookies(account),
+        cookies: communityCookies(account, confirmationVariant: true),
       );
     } on CommunityAuthException {
       // HTTP-level session rejection == needauth: same re-auth path.
@@ -65,7 +66,7 @@ class ConfirmationsClient {
     final json = await api.communityPostJson(
       '/mobileconf/ajaxop',
       query,
-      cookies: _cookies(account),
+      cookies: communityCookies(account, confirmationVariant: true),
     );
     return json['success'] == true;
   }
@@ -95,7 +96,7 @@ class ConfirmationsClient {
       final json = await api.communityPostJson(
         '/mobileconf/multiajaxop',
         query,
-        cookies: _cookies(account),
+        cookies: communityCookies(account, confirmationVariant: true),
       );
       if (json['success'] == true) {
         return BatchResult(confs.length, 0);
@@ -135,15 +136,6 @@ class ConfirmationsClient {
       'k': hash,
       't': '$time',
       'm': 'react',
-    };
-  }
-
-  Map<String, String> _cookies(SteamGuardAccount account) {
-    final token = account.session.accessToken ?? '';
-    return {
-      'steamLoginSecure': '${account.steamId}||$token',
-      'mobileClient': 'android',
-      'mobileClientVersion': '777777 3.6.4',
     };
   }
 }

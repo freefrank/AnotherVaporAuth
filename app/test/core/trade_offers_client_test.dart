@@ -1,7 +1,7 @@
 import 'package:ava/src/core/models/session_data.dart';
 import 'package:ava/src/core/models/steam_guard_account.dart';
 import 'package:ava/src/core/models/trade_offer.dart';
-import 'package:ava/src/core/protocol/qr_approval_client.dart'
+import 'package:ava/src/core/protocol/community_session.dart'
     show MissingAccessTokenException;
 import 'package:ava/src/core/protocol/trade_offers_client.dart';
 import 'package:ava/src/services/steam_api_client.dart';

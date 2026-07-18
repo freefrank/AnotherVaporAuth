@@ -1,14 +1,9 @@
 // Steam economy models for the inventory + market feature.
 
+import '../json_coerce.dart';
+
 const String _imageBase =
     'https://community.fastly.steamstatic.com/economy/image/';
-
-int _asInt(dynamic v) {
-  if (v is int) return v;
-  if (v is String) return int.tryParse(v) ?? 0;
-  if (v is double) return v.toInt();
-  return 0;
-}
 
 double _asDouble(dynamic v) {
   if (v is num) return v.toDouble();
@@ -43,12 +38,12 @@ class WalletInfo {
 
   /// Parses the `g_rgWalletInfo` object (values are strings).
   factory WalletInfo.fromJson(Map<String, dynamic> j) => WalletInfo(
-        currency: _asInt(j['wallet_currency']),
+        currency: asInt(j['wallet_currency']),
         steamFeePct: _asDouble(j['wallet_fee_percent']),
         publisherFeePct: _asDouble(j['wallet_publisher_fee_percent_default']),
-        marketMinimum: _asInt(j['wallet_market_minimum']),
+        marketMinimum: asInt(j['wallet_market_minimum']),
         currencyIncrement:
-            _asInt(j['wallet_currency_increment']).clamp(1, 1 << 30),
+            asInt(j['wallet_currency_increment']).clamp(1, 1 << 30),
       );
 }
 
@@ -133,14 +128,14 @@ class MarketListing {
     final asset = (j['asset'] as Map<String, dynamic>?) ?? const {};
     return MarketListing(
       listingId: '${j['listingid']}',
-      appid: _asInt(asset['appid']),
+      appid: asInt(asset['appid']),
       marketHashName: (asset['market_hash_name'] ?? '') as String,
       name: (asset['name'] ?? asset['market_name'] ?? '') as String,
       iconUrl: _icon(asset['icon_url'] as String?),
-      buyerPrice: _asInt(j['price']),
-      fee: _asInt(j['fee']),
-      createdAt: _asInt(j['time_created']),
-      active: _asInt(j['active']) == 1,
+      buyerPrice: asInt(j['price']),
+      fee: asInt(j['fee']),
+      createdAt: asInt(j['time_created']),
+      active: asInt(j['active']) == 1,
     );
   }
 }

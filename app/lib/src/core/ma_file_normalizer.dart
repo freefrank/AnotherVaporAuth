@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'json_coerce.dart';
+
 /// Normalizes common maFile variants into the shape used by SteamAuth/SDA.
 ///
 /// The model layer intentionally preserves unknown keys for round-tripping, so
@@ -32,10 +34,10 @@ class MaFileNormalizer {
     String? sourceName,
   }) {
     final session = _sessionMap(json);
-    if (_asInt(session['SteamID']) != 0) return;
+    if (asInt(session['SteamID']) != 0) return;
 
     for (final key in _steamIdKeys) {
-      final steamId = _asInt(json[key]);
+      final steamId = asInt(json[key]);
       if (steamId != 0) {
         session['SteamID'] = steamId;
         json['Session'] = session;
@@ -94,14 +96,6 @@ class MaFileNormalizer {
       r'(^|[^0-9])(7656119[0-9]{10})([^0-9]|$)',
     ).firstMatch(sourceName);
     return match == null ? 0 : int.tryParse(match.group(2)!) ?? 0;
-  }
-
-  static int _asInt(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    if (value is double) return value.toInt();
-    if (value is String) return int.tryParse(value.trim()) ?? 0;
-    return 0;
   }
 
   static void _normalizeSharedSecret(Map<String, dynamic> json) {

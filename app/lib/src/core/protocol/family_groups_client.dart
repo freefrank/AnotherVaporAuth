@@ -5,7 +5,7 @@ import '../../services/steam_api_client.dart';
 import '../models/family_group.dart';
 import '../models/steam_guard_account.dart';
 import '../proto/protobuf_wire.dart';
-import 'qr_approval_client.dart' show MissingAccessTokenException;
+import 'community_session.dart';
 
 /// Steam Family Groups (`IFamilyGroupsService`, webui protobuf surface).
 /// Field numbers follow SteamDatabase/Protobufs webui/service_familygroups.proto
@@ -15,17 +15,9 @@ class FamilyGroupsClient {
   final SteamApiClient api;
   FamilyGroupsClient(this.api);
 
-  String _requireToken(SteamGuardAccount account) {
-    final token = account.session.accessToken;
-    if (token == null || token.isEmpty) {
-      throw const MissingAccessTokenException();
-    }
-    return token;
-  }
-
   /// This account's family situation: current group + pending invites.
   Future<FamilyUserState> forUser(SteamGuardAccount account) async {
-    final token = _requireToken(account);
+    final token = requireAccessToken(account);
     final req = ProtoWriter()
       ..writeUint64(1, account.steamId) // steamid (uint64 varint, NOT fixed64)
       ..writeBool(2, true); // include_family_group_response
@@ -75,7 +67,7 @@ class FamilyGroupsClient {
   /// Read-only group snapshot (name, members, slots, cooldown).
   Future<FamilyGroupInfo> groupInfo(
       SteamGuardAccount account, int familyGroupId) async {
-    final token = _requireToken(account);
+    final token = requireAccessToken(account);
     final req = ProtoWriter()..writeUint64(1, familyGroupId);
     final reader = await api.callProtobuf(
       'IFamilyGroupsService',
@@ -92,7 +84,7 @@ class FamilyGroupsClient {
   /// null and the UI simply hides the dynamic check rows.
   Future<InviteChecks?> inviteChecks(
       SteamGuardAccount account, int familyGroupId) async {
-    final token = _requireToken(account);
+    final token = requireAccessToken(account);
     final req = ProtoWriter()
       ..writeUint64(1, familyGroupId)
       ..writeFixed64(2, account.steamId); // steamid (fixed64 here!)
@@ -120,7 +112,7 @@ class FamilyGroupsClient {
   /// nonce field, so [FamilyInvite.inviteId] is sent as the nonce — the best
   /// available candidate; flagged for real-device verification.
   Future<JoinResult> join(SteamGuardAccount account, FamilyInvite invite) async {
-    final token = _requireToken(account);
+    final token = requireAccessToken(account);
     final req = ProtoWriter()
       ..writeUint64(1, invite.familyGroupId)
       ..writeUint64(2, invite.inviteId); // nonce
@@ -151,7 +143,7 @@ class FamilyGroupsClient {
     required int familyGroupId,
     required int inviteId,
   }) async {
-    final token = _requireToken(account);
+    final token = requireAccessToken(account);
     final req = ProtoWriter()
       ..writeUint64(1, familyGroupId)
       ..writeUint64(2, inviteId)

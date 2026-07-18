@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:ava/src/core/models/session_data.dart';
 import 'package:ava/src/core/models/steam_guard_account.dart';
 import 'package:ava/src/core/proto/protobuf_wire.dart';
+import 'package:ava/src/core/protocol/community_session.dart'
+    show MissingAccessTokenException;
 import 'package:ava/src/core/protocol/qr_approval_client.dart';
 import 'package:ava/src/services/steam_api_client.dart';
 import 'package:flutter_test/flutter_test.dart';

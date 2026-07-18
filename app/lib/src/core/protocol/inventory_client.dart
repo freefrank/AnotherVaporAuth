@@ -1,10 +1,11 @@
 import 'dart:convert';
-import 'dart:math';
 
 import '../../services/debug_log.dart';
 import '../../services/steam_api_client.dart';
+import '../json_coerce.dart';
 import '../models/steam_guard_account.dart';
 import '../models/steam_item.dart';
+import 'community_session.dart';
 
 /// One page of inventory items plus pagination state.
 class InventoryPage {
@@ -28,23 +29,11 @@ class InventoryClient {
   final SteamApiClient api;
   InventoryClient(this.api);
 
-  final _rand = Random.secure();
-  String _sessionId() {
-    const hex = '0123456789abcdef';
-    return List.generate(24, (_) => hex[_rand.nextInt(16)]).join();
-  }
-
-  Map<String, String> _cookies(SteamGuardAccount a) => {
-        'steamLoginSecure': '${a.steamId}||${a.session.accessToken ?? ''}',
-        'sessionid': _sessionId(),
-        'mobileClient': 'android',
-      };
-
   /// Fetches the game picker + wallet info by scraping the inventory page.
   Future<InventoryOverview> overview(SteamGuardAccount account) async {
     final html = await api.communityGetText(
       '/profiles/${account.steamId}/inventory/',
-      cookies: _cookies(account),
+      cookies: communityCookies(account),
     );
     final apps = _extractJsonObject(html, 'g_rgAppContextData');
     final walletJson = _extractJsonObject(html, 'g_rgWalletInfo');
@@ -62,7 +51,7 @@ class InventoryClient {
         if (ctxRaw is! Map) return;
         ctxRaw.forEach((cid, craw) {
           if (craw is! Map) return;
-          final count = _asInt(craw['asset_count']);
+          final count = asInt(craw['asset_count']);
           if (count <= 0) return;
           games.add(InventoryGame(
             appid: int.tryParse(appid) ?? 0,
@@ -94,7 +83,7 @@ class InventoryClient {
         'count': '$count',
         'start_assetid': ?startAssetId,
       },
-      cookies: _cookies(account),
+      cookies: communityCookies(account),
     );
     final assets = (json['assets'] as List?) ?? const [];
     final descriptions = (json['descriptions'] as List?) ?? const [];
@@ -111,18 +100,18 @@ class InventoryClient {
       if (d == null) continue;
       final feeApp = d['market_fee'];
       items.add(InventoryItem(
-        appid: _asInt(m['appid']),
+        appid: asInt(m['appid']),
         contextId: '${m['contextid']}',
         assetId: '${m['assetid']}',
         classId: '${m['classid']}',
         instanceId: '${m['instanceid']}',
-        amount: _asInt(m['amount']),
+        amount: asInt(m['amount']),
         marketHashName: (d['market_hash_name'] ?? '') as String,
         name: (d['name'] ?? '') as String,
         type: (d['type'] ?? '') as String,
         iconUrl: itemImageUrl(d['icon_url'] as String?),
-        marketable: _asInt(d['marketable']) == 1,
-        tradable: _asInt(d['tradable']) == 1,
+        marketable: asInt(d['marketable']) == 1,
+        tradable: asInt(d['tradable']) == 1,
         publisherFeePct: feeApp is num ? feeApp.toDouble() : null,
       ));
     }
@@ -173,12 +162,5 @@ class InventoryClient {
       }
     }
     return null;
-  }
-
-  static int _asInt(dynamic v) {
-    if (v is int) return v;
-    if (v is String) return int.tryParse(v) ?? 0;
-    if (v is double) return v.toInt();
-    return 0;
   }
 }

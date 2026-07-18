@@ -1,10 +1,8 @@
-import 'dart:math';
-
 import '../../services/debug_log.dart';
 import '../../services/steam_api_client.dart';
 import '../models/steam_guard_account.dart';
 import '../models/trade_offer.dart';
-import 'qr_approval_client.dart' show MissingAccessTokenException;
+import 'community_session.dart';
 
 /// Result of accepting a trade offer.
 class TradeAcceptResult {
@@ -25,26 +23,6 @@ class TradeOffersClient {
   final SteamApiClient api;
   TradeOffersClient(this.api);
 
-  final _rand = Random.secure();
-  String _newSessionId() {
-    const hex = '0123456789abcdef';
-    return List.generate(24, (_) => hex[_rand.nextInt(16)]).join();
-  }
-
-  Map<String, String> _cookies(SteamGuardAccount a, String sessionId) => {
-        'steamLoginSecure': '${a.steamId}||${a.session.accessToken ?? ''}',
-        'sessionid': sessionId,
-        'mobileClient': 'android',
-      };
-
-  String _requireToken(SteamGuardAccount account) {
-    final token = account.session.accessToken;
-    if (token == null || token.isEmpty) {
-      throw const MissingAccessTokenException();
-    }
-    return token;
-  }
-
   /// Safely narrows a decoded-JSON value to `Map<String, dynamic>`. A plain
   /// `as Map<String, dynamic>?` cast throws when the value is a
   /// `Map<dynamic, dynamic>` (e.g. an empty `{}` literal in tests, or some
@@ -57,7 +35,7 @@ class TradeOffersClient {
   /// descriptions joined. Historical == the "历史" segment.
   Future<TradeOffersPage> fetch(SteamGuardAccount account,
       {bool historical = false}) async {
-    final token = _requireToken(account);
+    final token = requireAccessToken(account);
     final json = await api.apiGetJson(
       'IEconService',
       'GetTradeOffers',
@@ -79,7 +57,7 @@ class TradeOffersClient {
 
   /// Count of pending received offers (tab badge).
   Future<int> pendingReceivedCount(SteamGuardAccount account) async {
-    final token = _requireToken(account);
+    final token = requireAccessToken(account);
     final json = await api.apiGetJson(
         'IEconService', 'GetTradeOffersSummary', const {},
         accessToken: token);
@@ -106,8 +84,8 @@ class TradeOffersClient {
   /// follows — the caller routes the user to the confirmations tab.
   Future<TradeAcceptResult> accept(
       SteamGuardAccount account, TradeOffer offer) async {
-    _requireToken(account);
-    final sid = _newSessionId();
+    requireAccessToken(account);
+    final sid = newCommunitySessionId();
     final Map<String, dynamic> json;
     try {
       json = await api.communityPostJson(
@@ -119,7 +97,7 @@ class TradeOffersClient {
           'partner': '${offer.partnerSteamId}',
           'captcha': '',
         },
-        cookies: _cookies(account, sid),
+        cookies: communityCookies(account, sessionId: sid),
         referer: '${SteamApiClient.communityBase}/tradeoffer/${offer.id}/',
       );
     } on CommunityAuthException {
@@ -163,13 +141,13 @@ class TradeOffersClient {
 
   Future<bool> _writeOp(
       SteamGuardAccount account, String offerId, String op) async {
-    _requireToken(account);
-    final sid = _newSessionId();
+    requireAccessToken(account);
+    final sid = newCommunitySessionId();
     try {
       final json = await api.communityPostJson(
         '/tradeoffer/$offerId/$op',
         {'sessionid': sid},
-        cookies: _cookies(account, sid),
+        cookies: communityCookies(account, sessionId: sid),
         referer: '${SteamApiClient.communityBase}/tradeoffer/$offerId/',
       );
       if (json['needauth'] == true || json['needsauth'] == true) return false;

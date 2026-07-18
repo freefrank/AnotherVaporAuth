@@ -1,3 +1,4 @@
+import '../json_coerce.dart';
 import '../steam_totp.dart';
 import 'session_data.dart';
 
@@ -83,12 +84,12 @@ class SteamGuardAccount {
       serialNumber: json['serial_number'] as String?,
       revocationCode: json['revocation_code'] as String?,
       uri: json['uri'] as String?,
-      serverTime: _asInt(json['server_time']),
+      serverTime: asInt(json['server_time']),
       accountName: json['account_name'] as String?,
       tokenGid: json['token_gid'] as String?,
       identitySecret: json['identity_secret'] as String?,
       secret1: json['secret_1'] as String?,
-      status: _asInt(json['status']),
+      status: asInt(json['status']),
       deviceId: json['device_id'] as String?,
       fullyEnrolled: json['fully_enrolled'] == true,
       avatarUrl: json['avatar_url'] as String?,
@@ -144,13 +145,5 @@ class SteamGuardAccount {
       throw StateError('Account has no shared_secret');
     }
     return SteamTotp.generateAuthCode(sharedSecret!, time);
-  }
-
-  static int _asInt(dynamic v) {
-    if (v == null) return 0;
-    if (v is int) return v;
-    if (v is String) return int.tryParse(v) ?? 0;
-    if (v is double) return v.toInt();
-    return 0;
   }
 }

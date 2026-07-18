@@ -1,3 +1,5 @@
+import '../json_coerce.dart';
+
 /// Steam web session stored inside a maFile under the `Session` key.
 ///
 /// The modern SteamAuth/SteamKit flow uses [steamId] + [accessToken] +
@@ -40,7 +42,7 @@ class SessionData {
       if (!_known.contains(entry.key)) extra[entry.key] = entry.value;
     }
     return SessionData(
-      steamId: _asInt(json['SteamID']),
+      steamId: asInt(json['SteamID']),
       accessToken: json['AccessToken'] as String?,
       refreshToken: json['RefreshToken'] as String?,
       extra: extra,
@@ -53,12 +55,4 @@ class SessionData {
         if (accessToken != null) 'AccessToken': accessToken,
         if (refreshToken != null) 'RefreshToken': refreshToken,
       };
-
-  static int _asInt(dynamic v) {
-    if (v == null) return 0;
-    if (v is int) return v;
-    if (v is String) return int.tryParse(v) ?? 0;
-    if (v is double) return v.toInt();
-    return 0;
-  }
 }

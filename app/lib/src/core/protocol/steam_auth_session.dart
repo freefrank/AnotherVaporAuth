@@ -1,9 +1,9 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
 import '../../services/debug_log.dart';
 import '../../services/steam_api_client.dart';
 import '../crypto/steam_rsa.dart';
+import '../jwt.dart';
 import '../models/session_data.dart';
 import '../proto/protobuf_wire.dart';
 
@@ -235,20 +235,9 @@ class SteamAuthSession {
 
   /// Extracts the steamid (`sub`) from a Steam JWT access/refresh token.
   static int? steamIdFromJwt(String? jwt) {
-    if (jwt == null || jwt.isEmpty) return null;
-    final parts = jwt.split('.');
-    if (parts.length < 2) return null;
-    try {
-      var p = parts[1].replaceAll('-', '+').replaceAll('_', '/');
-      while (p.length % 4 != 0) {
-        p += '=';
-      }
-      final payload =
-          jsonDecode(utf8.decode(base64.decode(p))) as Map<String, dynamic>;
-      return int.tryParse('${payload['sub']}');
-    } catch (_) {
-      return null;
-    }
+    final payload = decodeJwtPayload(jwt);
+    if (payload == null) return null;
+    return int.tryParse('${payload['sub']}');
   }
 
   // device_details: matches the Steam mobile app (os_type AndroidUnknown,
