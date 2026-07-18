@@ -22,19 +22,32 @@ class SettingsStore {
   // dir sees no external edits) and _update publishes to it after each write.
   Map<String, dynamic>? _cache;
 
-  Future<Map<String, dynamic>> _read() async => _cache ??= await _readDisk();
+  Future<Map<String, dynamic>> _read() async {
+    final c = _cache;
+    if (c != null) return c;
+    final fresh = await _readDisk();
+    // Cache only a real disk result. A transient IO/parse failure (null)
+    // must not poison the cache as {}: a later _update would read-modify-
+    // write that empty map and wipe every other key (locale, device id,
+    // entitlement JWT) from a file that is actually intact.
+    if (fresh != null) _cache = fresh;
+    return fresh ?? const {};
+  }
 
-  Future<Map<String, dynamic>> _readDisk() async {
+  /// {} when the file simply doesn't exist yet (a real empty store, safe to
+  /// cache); null on a read/parse failure, so the next read retries disk.
+  Future<Map<String, dynamic>?> _readDisk() async {
     try {
       final f = await _file();
       if (!await f.exists()) return {};
       return jsonDecode(await f.readAsString()) as Map<String, dynamic>;
     } catch (_) {
-      return {};
+      return null;
     }
   }
 
-  Future<void> _write(Map<String, dynamic> data) async {
+  /// Returns whether the write actually landed on disk.
+  Future<bool> _write(Map<String, dynamic> data) async {
     try {
       final f = await _file();
       await f.parent.create(recursive: true);
@@ -42,8 +55,10 @@ class SettingsStore {
       // entitlement JWT and the device id Pro is bound to — a torn write
       // must never truncate it.
       await StorageProvider.replaceFileAtomic(f.path, jsonEncode(data));
+      return true;
     } catch (_) {
       // best-effort; a failed write leaves the previous contents intact
+      return false;
     }
   }
 
@@ -59,8 +74,14 @@ class SettingsStore {
       // concurrent loads never observe a half-applied mutation.
       final data = Map<String, dynamic>.of(await _read());
       mutate(data);
-      await _write(data);
-      _cache = data;
+      if (await _write(data)) {
+        _cache = data;
+      } else {
+        // The write never landed: drop the cache so the next read goes back
+        // to the still-intact file instead of serving (and later persisting)
+        // a mutation that only ever existed in memory.
+        _cache = null;
+      }
     });
     // Keep the chain alive even if this update fails.
     _chain = task.catchError((_) {});

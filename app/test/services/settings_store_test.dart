@@ -14,6 +14,22 @@ class _TmpStorage extends StorageProvider {
   Future<String> maFilesDir() async => p.join(dir, 'maFiles');
 }
 
+/// 注入瞬时 IO 故障:前 [failuresLeft] 次解析目录时抛异常,之后恢复正常。
+/// SettingsStore 的读和写都要先过 maFilesDir,所以这一个开关能同时
+/// 模拟"读失败"和"写失败"。
+class _FlakyStorage extends _TmpStorage {
+  int failuresLeft;
+  _FlakyStorage(super.dir, {this.failuresLeft = 0});
+  @override
+  Future<String> maFilesDir() async {
+    if (failuresLeft > 0) {
+      failuresLeft--;
+      throw const FileSystemException('transient IO error');
+    }
+    return super.maFilesDir();
+  }
+}
+
 void main() {
   test('hold-confirm and haptics default to true and persist', () async {
     final tmp = await Directory.systemTemp.createTemp('ava_settings');
@@ -109,6 +125,55 @@ void main() {
       await store.saveLocale('en');
       expect(await store.loadDeviceId(), 'device-1');
       expect(await store.loadLocale(), 'en');
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
+
+  test(
+      'REGRESSION: a transient read failure is not cached as {} — the next '
+      'load sees the intact file again', () async {
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      // Seed real persisted values first.
+      final seeder = SettingsStore(_TmpStorage(tmp.path));
+      await seeder.saveLocale('zh');
+      await seeder.saveEntitlementToken('jwt-raw');
+
+      // First read hits the transient failure → defaults for THIS call only.
+      final store = SettingsStore(_FlakyStorage(tmp.path, failuresLeft: 1));
+      expect(await store.loadLocale(), isNull);
+
+      // The failure cleared: the retry must see disk, not a poisoned {}
+      // cache (which a later _update would persist, wiping every key).
+      expect(await store.loadLocale(), 'zh');
+      expect(await store.loadEntitlementToken(), 'jwt-raw');
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
+
+  test(
+      'REGRESSION: a failed write is not published to the cache — loads '
+      'reflect disk, and the next save persists cleanly', () async {
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      final storage = _FlakyStorage(tmp.path);
+      final store = SettingsStore(storage);
+      await store.saveEntitlementToken('old-jwt'); // also primes the cache
+
+      // The write fails in flight: the mutation never reached disk, so
+      // memory must not keep serving it as if it had.
+      storage.failuresLeft = 1;
+      await store.saveEntitlementToken('phantom-jwt');
+      expect(await store.loadEntitlementToken(), 'old-jwt');
+
+      // And a later successful save starts from disk, not the phantom.
+      await store.saveLocale('zh');
+      expect(await store.loadEntitlementToken(), 'old-jwt');
+      expect(
+          await SettingsStore(_TmpStorage(tmp.path)).loadEntitlementToken(),
+          'old-jwt');
     } finally {
       await tmp.delete(recursive: true);
     }
