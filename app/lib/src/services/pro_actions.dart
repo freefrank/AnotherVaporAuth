@@ -15,10 +15,17 @@ import 'play_channel.dart';
 class ProResult {
   final bool ok;
   final String? code;
+
+  /// Occupied device-class slots carried by the worker's refusal body
+  /// ('code_activation_limit' attaches them) — lets the UI say which class
+  /// holds the slot instead of a dead-end "try later".
+  final List<EntitlementActivation>? activations;
+
   const ProResult.success()
       : ok = true,
-        code = null;
-  const ProResult.fail(this.code) : ok = false;
+        code = null,
+        activations = null;
+  const ProResult.fail(this.code, {this.activations}) : ok = false;
 }
 
 /// Orchestrates purchase / redeem / rewarded flows: native play channel →
@@ -54,7 +61,7 @@ class ProActions {
     } on PlatformException catch (e) {
       return ProResult.fail(e.code);
     } on EntitlementApiException catch (e) {
-      return ProResult.fail(e.code);
+      return ProResult.fail(e.code, activations: e.activations);
     } catch (e) {
       dlog('pro: action failed: $e');
       return const ProResult.fail('network');

@@ -225,6 +225,16 @@ void main() {
     expect(adopted, isEmpty);
   });
 
+  test('redeemBeta: the refusal\'s slot map survives into the result', () async {
+    // The worker attaches the occupied classes to make the refusal
+    // actionable; dropping them here would leave the paywall with only the
+    // static "switched devices too often" copy.
+    final r = await actions.redeemBeta('capped');
+    expect(r.activations, hasLength(1));
+    expect(r.activations!.single.deviceClass, 'android');
+    expect(r.activations!.single.activatedAt, DateTime.utc(2026, 7, 16));
+  });
+
   test('adopt failure surfaces bad_token', () async {
     actions = ProActions(
       api: api,

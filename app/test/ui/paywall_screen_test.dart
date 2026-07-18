@@ -7,6 +7,8 @@ import 'package:ava/src/app/providers.dart';
 import 'package:ava/src/app/theme.dart';
 import 'package:ava/src/core/entitlement.dart';
 import 'package:ava/src/services/entitlement_store.dart';
+import 'package:ava/src/services/play_channel.dart';
+import 'package:ava/src/services/pro_actions.dart';
 import 'package:ava/src/services/storage_provider.dart';
 import 'package:ava/src/ui/paywall_screen.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +39,35 @@ class _StatusApi extends _NoApi {
       channel: 'beta', tier: 'pro', proUntil: 0, activations: activations);
 }
 
+/// Refuses redeemBeta with the worker's per-class-slot payload.
+class _CappedApi extends _NoApi {
+  @override
+  Future<String> redeemBeta(
+          {required String code,
+          required String deviceId,
+          required String deviceClass}) async =>
+      throw EntitlementApiException(429, 'code_activation_limit',
+          activations: [
+            EntitlementActivation(
+                deviceClass: 'android',
+                activatedAt: DateTime.utc(2026, 7, 12)),
+          ]);
+}
+
+/// _StatusApi whose redeemBeta hands out the given token — the happy
+/// redeem-then-see-your-slot path.
+class _RedeemApi extends _StatusApi {
+  final String token;
+  _RedeemApi(this.token, super.activations);
+
+  @override
+  Future<String> redeemBeta(
+          {required String code,
+          required String deviceId,
+          required String deviceClass}) async =>
+      token;
+}
+
 void main() {
   final mint = EntitlementMint();
   final now = DateTime.utc(2026, 7, 15, 12);
@@ -44,7 +75,10 @@ void main() {
   // NOTE: testWidgets runs under FakeAsync — real async file IO never
   // completes there, so everything below must stay synchronous (Sync temp
   // dirs, token seeding without touching SettingsStore).
-  Widget app(Directory tmp, {String? storedToken, EntitlementApi? api}) {
+  Widget app(Directory tmp,
+      {String? storedToken,
+      EntitlementApi? api,
+      EntitlementTokenController Function()? tokenController}) {
     final storage = MemoryStorageProvider(p.join(tmp.path, 'maFiles'));
     return ProviderScope(
       overrides: [
@@ -53,7 +87,19 @@ void main() {
         entitlementPublicKeyProvider.overrideWithValue(mint.publicKey),
         clockProvider.overrideWithValue(() => now),
         if (storedToken != null)
-          entitlementTokenProvider.overrideWith(() => _Seeded(storedToken)),
+          entitlementTokenProvider.overrideWith(() => _Seeded(storedToken))
+        else if (tokenController != null)
+          entitlementTokenProvider.overrideWith(tokenController),
+        // ProActions with no IO: deviceIdProvider's SettingsStore round-trip
+        // would hang under FakeAsync.
+        proActionsProvider.overrideWith((ref) => ProActions(
+              api: ref.read(entitlementApiProvider),
+              play: const PlayChannel(),
+              deviceId: () async => 'device-1',
+              adopt: (raw) =>
+                  ref.read(entitlementTokenProvider.notifier).adopt(raw),
+              deviceClass: 'android',
+            )),
       ],
       child: MaterialApp(
         theme: buildAvaTheme(AvaThemeVariant.neon),
@@ -110,6 +156,49 @@ void main() {
 
     expect(find.text('Active on: Android · Windows (this device)'),
         findsOneWidget);
+  });
+
+  testWidgets('code_activation_limit refusal names the occupied class + age',
+      (tester) async {
+    final tmp = Directory.systemTemp.createTempSync('ava_paywall');
+    addTearDown(() => tmp.deleteSync(recursive: true));
+    await tester.pumpWidget(app(tmp, api: _CappedApi()));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField).last, 'AVA-BETA-CAP');
+    await tester.tap(find.text('Redeem'));
+    await tester.pumpAndSettle();
+
+    // Not only the static "switched devices too often" copy: the occupied
+    // slot (2026-07-12, three days before the frozen clock) is spelled out.
+    expect(find.textContaining('In use: Android (3 days ago)'),
+        findsOneWidget);
+  });
+
+  testWidgets('in-screen redeem surfaces the activation row without reopening',
+      (tester) async {
+    final tmp = Directory.systemTemp.createTempSync('ava_paywall');
+    addTearDown(() => tmp.deleteSync(recursive: true));
+    await tester.pumpWidget(app(tmp,
+        api: _RedeemApi(mint.mint(now: now, lifetime: true), [
+          EntitlementActivation(
+              deviceClass: 'android',
+              activatedAt: DateTime.utc(2026, 7, 15),
+              thisDevice: true),
+        ]),
+        tokenController: _NoIoController.new));
+    await tester.pumpAndSettle();
+    expect(find.text('Free plan'), findsOneWidget);
+    expect(find.textContaining('Active on:'), findsNothing);
+
+    await tester.enterText(find.byType(TextField).last, 'AVA-BETA-OK');
+    await tester.tap(find.text('Redeem'));
+    await tester.pumpAndSettle();
+
+    // The free→pro flip must re-trigger the (initState-time bailed)
+    // activation fetch — no screen reopen required.
+    expect(find.text('Pro · lifetime'), findsOneWidget);
+    expect(find.text('Active on: Android (this device)'), findsOneWidget);
   });
 
   testWidgets('status fetch failure leaves the card without an activation row',
@@ -209,6 +298,45 @@ void main() {
           'Active on: ios');
     });
   });
+
+  group('paywallSlotOccupiedLine', () {
+    test('names the class with a relative age, per locale', () {
+      final acts = [
+        EntitlementActivation(
+            deviceClass: 'android', activatedAt: DateTime.utc(2026, 7, 12)),
+      ];
+      expect(paywallSlotOccupiedLine(AppLocalizationsEn(), acts, now),
+          'In use: Android (3 days ago)');
+      expect(paywallSlotOccupiedLine(AppLocalizationsZh(), acts, now),
+          '占用中：Android（3 天前）');
+    });
+
+    test('a same-day activation reads today, not 0 days ago', () {
+      final acts = [
+        EntitlementActivation(
+            deviceClass: 'windows',
+            activatedAt: DateTime.utc(2026, 7, 15, 8)),
+      ];
+      expect(paywallSlotOccupiedLine(AppLocalizationsEn(), acts, now),
+          'In use: Windows (today)');
+    });
+  });
+}
+
+/// Starts empty and adopts without SettingsStore IO or refresh timers —
+/// lets a redeem flip proStatus under FakeAsync.
+class _NoIoController extends EntitlementTokenController {
+  @override
+  EntitlementToken? build() => null;
+
+  @override
+  Future<bool> adopt(String raw) async {
+    final token = EntitlementToken.tryParse(raw,
+        publicKey: ref.read(entitlementPublicKeyProvider));
+    if (token == null) return false;
+    state = token;
+    return true;
+  }
 }
 
 /// Seeds a parsed token synchronously: no SettingsStore IO (would hang

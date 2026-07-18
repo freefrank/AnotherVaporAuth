@@ -38,23 +38,40 @@ String paywallErrorText(AppLocalizations l, String code) => switch (code) {
       _ => l.proErrGeneric(code),
     };
 
+String _deviceClassName(AppLocalizations l, String cls) => switch (cls) {
+      'android' => l.proDeviceClassAndroid,
+      'windows' => l.proDeviceClassWindows,
+      'linux' => l.proDeviceClassLinux,
+      'macos' => l.proDeviceClassMacos,
+      // Unknown class (newer worker vocabulary): the raw slug beats hiding
+      // an occupied slot.
+      _ => cls,
+    };
+
 /// "已激活：Android · Windows（本机）" — the status card's activation row.
 @visibleForTesting
 String paywallActivationsLine(
     AppLocalizations l, List<EntitlementActivation> activations) {
-  String name(String cls) => switch (cls) {
-        'android' => l.proDeviceClassAndroid,
-        'windows' => l.proDeviceClassWindows,
-        'linux' => l.proDeviceClassLinux,
-        'macos' => l.proDeviceClassMacos,
-        // Unknown class (newer worker vocabulary): the raw slug beats hiding
-        // an occupied slot.
-        _ => cls,
-      };
   final parts = activations.map((a) => a.thisDevice
-      ? l.proStatusClassThisDevice(name(a.deviceClass))
-      : name(a.deviceClass));
+      ? l.proStatusClassThisDevice(_deviceClassName(l, a.deviceClass))
+      : _deviceClassName(l, a.deviceClass));
   return l.proStatusActivations(parts.join(' · '));
+}
+
+/// "占用中：Android（3 天前）" — appended to the code_activation_limit
+/// refusal so the user sees which class holds the slot and since when,
+/// instead of only the static "switched devices too often" copy.
+@visibleForTesting
+String paywallSlotOccupiedLine(AppLocalizations l,
+    List<EntitlementActivation> activations, DateTime now) {
+  String when(DateTime at) {
+    final days = now.difference(at).inDays;
+    return days <= 0 ? l.proSlotToday : l.proSlotDaysAgo(days);
+  }
+
+  final parts = activations.map(
+      (a) => l.proSlotEntry(_deviceClassName(l, a.deviceClass), when(a.activatedAt)));
+  return l.proErrSlotOccupied(parts.join(' · '));
 }
 
 /// AVA Pro paywall: status, perks, and the channel's unlock paths.
@@ -106,12 +123,20 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     try {
       final result = await action(ref.read(proActionsProvider));
       if (!mounted) return;
+      // A success changes the slot map (this device just claimed one):
+      // refresh the status card's activation row without a screen reopen.
+      if (result.ok) _loadActivations();
       final l = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(result.ok
-            ? l.proResultSuccess
-            : paywallErrorText(l, result.code ?? 'unknown')),
-      ));
+      var text = result.ok
+          ? l.proResultSuccess
+          : paywallErrorText(l, result.code ?? 'unknown');
+      // code_activation_limit carries the occupied slots — show them.
+      if (!result.ok && (result.activations?.isNotEmpty ?? false)) {
+        text = '$text\n${paywallSlotOccupiedLine(
+            l, result.activations!, ref.read(clockProvider)())}';
+      }
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(text)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -140,6 +165,13 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // _loadActivations bails while free — a later flip to a pro tier
+    // (in-screen redeem, background refresh) must re-trigger the fetch.
+    ref.listen(proStatusProvider, (prev, next) {
+      if (prev == ProStatus.free && next != ProStatus.free) {
+        _loadActivations();
+      }
+    });
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).extension<AvaTokens>()!;
     final isPlay = avaChannel == AvaChannel.play;

@@ -1307,6 +1307,29 @@ class AppLocalizationsZh extends AppLocalizations {
       '该激活码近期更换设备过于频繁，请稍后再试，或联系 hi@dotslash.pro。';
 
   @override
+  String proErrSlotOccupied(Object slots) {
+    return '占用中：$slots';
+  }
+
+  @override
+  String proSlotEntry(Object name, Object time) {
+    return '$name（$time）';
+  }
+
+  @override
+  String get proSlotToday => '今天';
+
+  @override
+  String proSlotDaysAgo(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n 天前',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get proErrRevoked => '该权益已不再有效。如有疑问，请联系 hi@dotslash.pro。';
 
   @override

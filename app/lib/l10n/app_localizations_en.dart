@@ -1363,6 +1363,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'This code has switched devices too often recently. Try again later, or email hi@dotslash.pro.';
 
   @override
+  String proErrSlotOccupied(Object slots) {
+    return 'In use: $slots';
+  }
+
+  @override
+  String proSlotEntry(Object name, Object time) {
+    return '$name ($time)';
+  }
+
+  @override
+  String get proSlotToday => 'today';
+
+  @override
+  String proSlotDaysAgo(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n days ago',
+      one: '1 day ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get proErrRevoked =>
       'This entitlement is no longer active. If you think this is a mistake, email hi@dotslash.pro.';
 

@@ -2516,6 +2516,30 @@ abstract class AppLocalizations {
   /// **'This code has switched devices too often recently. Try again later, or email hi@dotslash.pro.'**
   String get proErrCodeActivationLimit;
 
+  /// No description provided for @proErrSlotOccupied.
+  ///
+  /// In en, this message translates to:
+  /// **'In use: {slots}'**
+  String proErrSlotOccupied(Object slots);
+
+  /// No description provided for @proSlotEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} ({time})'**
+  String proSlotEntry(Object name, Object time);
+
+  /// No description provided for @proSlotToday.
+  ///
+  /// In en, this message translates to:
+  /// **'today'**
+  String get proSlotToday;
+
+  /// No description provided for @proSlotDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 day ago} other{{n} days ago}}'**
+  String proSlotDaysAgo(int n);
+
   /// No description provided for @proErrRevoked.
   ///
   /// In en, this message translates to:
