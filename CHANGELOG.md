@@ -5,6 +5,25 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.91.1] — 2026-07-17
+
+### Changed
+- **Hold-to-confirm now responds the instant you press.** Holding to accept a
+  trade, join a family group, or confirm a mobile request used to look dead
+  for the first moment — nothing visibly moved, so it felt like a broken
+  button. Now the button grows slightly and its progress ring jumps straight
+  to the halfway mark the moment you touch it, then fills the rest as you
+  hold. The hold itself is exactly as long as before — only the feedback is
+  faster.
+
+—
+
+### 变更
+- **长按确认现在一按就有反应。** 长按接受交易、加入家庭组或确认手机请求时,
+  最初一刻按钮毫无动静,让人以为按钮坏了。现在手指一碰,按钮会微微放大、
+  进度环立刻跳到一半,余下部分随长按继续填满。长按时长与以前完全一致——
+  只是反馈更快了。
+
 ## [v0.91.0] — 2026-07-16
 
 ### Added
