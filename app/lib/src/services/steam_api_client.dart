@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
+import '../core/protocol/community_session.dart'
+    show MissingAccessTokenException;
 import '../core/protocol/eresult.dart';
 import '../core/proto/protobuf_wire.dart';
 import 'debug_log.dart';
@@ -79,13 +81,15 @@ class SteamApiClient {
     int version = 1,
   }) async {
     final url = '$apiBase/$iface/$method/v$version/';
-    final encoded = base64.encode(request.toBytes());
+    // toBytes() copies the builder's buffer on every call — serialize once.
+    final requestBytes = request.toBytes();
+    final encoded = base64.encode(requestBytes);
     final query = <String, dynamic>{
       'access_token': ?accessToken,
     };
 
     dlog('→ ${useGet ? 'GET' : 'POST'} $iface/$method '
-        '(${request.toBytes().length}B${accessToken != null ? ', +token' : ''})');
+        '(${requestBytes.length}B${accessToken != null ? ', +token' : ''})');
     try {
       Response<List<int>> resp;
       if (useGet) {
@@ -119,7 +123,8 @@ class SteamApiClient {
       final status = resp.statusCode ?? 0;
       if (eresult == null && (status < 200 || status >= 300)) {
         dlog('  ✗ $method HTTP $status with no x-eresult');
-        throw SteamApiException(2 /* Fail */, 'HTTP $status', method);
+        throw SteamApiException(2 /* Fail */, 'HTTP $status', method,
+            httpStatus: status);
       }
       return ProtoReader(Uint8List.fromList(resp.data ?? const []));
     } on DioException catch (e) {
@@ -152,7 +157,8 @@ class SteamApiClient {
       final body = resp.data ?? '';
       dlog('← $method  HTTP $status  ${body.length}B');
       if (status < 200 || status >= 300) {
-        throw SteamApiException(2 /* Fail */, 'HTTP $status', method);
+        throw SteamApiException(2 /* Fail */, 'HTTP $status', method,
+            httpStatus: status);
       }
       final decoded = body.isEmpty ? const <String, dynamic>{} : jsonDecode(body);
       return decoded is Map<String, dynamic> ? decoded : const {};
@@ -181,24 +187,33 @@ class SteamApiClient {
           },
         ),
       );
-      final body = resp.data ?? '';
-      dlog('← $path  HTTP ${resp.statusCode}  ${body.length}B');
-      final diagnostic = _gateCommunityStatus(resp, path);
-      if (diagnostic != null) return diagnostic;
-      if (body.isEmpty) return const {};
-      final decoded = jsonDecode(body);
-      // Some write endpoints (e.g. removelisting) reply 200 with a bare `[]` —
-      // treat a non-object body as a plain success.
-      if (decoded is! Map<String, dynamic>) return const {};
-      if (decoded['success'] != true) {
-        dlog('  ⚠ $path success=${decoded['success']} '
-            '${decoded['message'] ?? decoded['needauth'] ?? ''}');
-      }
-      return decoded;
+      return _decodeCommunityJson(resp, path);
     } on DioException catch (e) {
       dlog('  ✗ $path network: ${e.type.name} ${e.response?.statusCode ?? ''}');
       rethrow;
     }
+  }
+
+  /// Shared response handling for [communityGetJson] / [communityPostJson]:
+  /// runs the status gate, then decodes the 2xx body — empty body → `{}`,
+  /// and a `success != true` object is logged but still returned (the caller
+  /// decides what a soft failure means for its endpoint).
+  static Map<String, dynamic> _decodeCommunityJson(
+      Response<String> resp, String path) {
+    final body = resp.data ?? '';
+    dlog('← $path  HTTP ${resp.statusCode}  ${body.length}B');
+    final diagnostic = _gateCommunityStatus(resp, path);
+    if (diagnostic != null) return diagnostic;
+    if (body.isEmpty) return const {};
+    final decoded = jsonDecode(body);
+    // Some write endpoints (e.g. removelisting) reply 200 with a bare `[]` —
+    // treat a non-object body as a plain success.
+    if (decoded is! Map<String, dynamic>) return const {};
+    if (decoded['success'] != true) {
+      dlog('  ⚠ $path success=${decoded['success']} '
+          '${decoded['message'] ?? decoded['needauth'] ?? ''}');
+    }
+    return decoded;
   }
 
   /// Status gate for the community JSON helpers. Returns null for a 2xx (the
@@ -225,7 +240,8 @@ class SteamApiClient {
       final loc = resp.headers.value('location') ?? '';
       dlog('  ✗ $path HTTP $status → $loc');
       if (_isLoginRedirect(loc)) throw CommunityAuthException(status, path);
-      throw SteamApiException(2 /* Fail */, 'HTTP $status', path);
+      throw SteamApiException(2 /* Fail */, 'HTTP $status', path,
+          httpStatus: status);
     }
     final body = resp.data ?? '';
     if (body.isNotEmpty) {
@@ -240,7 +256,8 @@ class SteamApiClient {
       }
     }
     dlog('  ✗ $path HTTP $status');
-    throw SteamApiException(2 /* Fail */, 'HTTP $status', path);
+    throw SteamApiException(2 /* Fail */, 'HTTP $status', path,
+        httpStatus: status);
   }
 
   /// Whether a redirect Location targets Steam's login page. Matched on the
@@ -355,20 +372,7 @@ class SteamApiClient {
           },
         ),
       );
-      final body = resp.data ?? '';
-      dlog('← $path  HTTP ${resp.statusCode}  ${body.length}B');
-      final diagnostic = _gateCommunityStatus(resp, path);
-      if (diagnostic != null) return diagnostic;
-      if (body.isEmpty) return const {};
-      final decoded = jsonDecode(body);
-      // Some write endpoints (e.g. removelisting) reply 200 with a bare `[]` —
-      // treat a non-object body as a plain success.
-      if (decoded is! Map<String, dynamic>) return const {};
-      if (decoded['success'] != true) {
-        dlog('  ⚠ $path success=${decoded['success']} '
-            '${decoded['message'] ?? decoded['needauth'] ?? ''}');
-      }
-      return decoded;
+      return _decodeCommunityJson(resp, path);
     } on DioException catch (e) {
       dlog('  ✗ $path network: ${e.type.name} ${e.response?.statusCode ?? ''}');
       rethrow;
@@ -383,10 +387,25 @@ class SteamApiException implements Exception {
   final int eresult;
   final String message;
   final String method;
-  SteamApiException(this.eresult, this.message, this.method);
+
+  /// HTTP status when the failure was a bare non-2xx with no eresult (an
+  /// expired token surfaces as a naked 401/403); null for eresult failures.
+  /// Lets callers detect a dead session structurally ([isSessionDeadError])
+  /// instead of string-matching 'HTTP 401' out of [message].
+  final int? httpStatus;
+
+  SteamApiException(this.eresult, this.message, this.method, {this.httpStatus});
   @override
   String toString() => 'SteamApiException($method): $message (eresult=$eresult)';
 }
+
+/// True when [e] means the account's web session is dead — a missing/expired
+/// access token or a stale community cookie — so the caller should route to
+/// re-auth (and retry) instead of surfacing the raw error.
+bool isSessionDeadError(Object e) =>
+    e is MissingAccessTokenException ||
+    e is CommunityAuthException ||
+    (e is SteamApiException && (e.httpStatus == 401 || e.httpStatus == 403));
 
 /// steamcommunity.com rejected the request at the HTTP level — a redirect
 /// (to the login page) or a bare 401/403. The session cookie is stale or

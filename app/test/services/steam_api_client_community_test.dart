@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:ava/src/core/proto/protobuf_wire.dart';
+import 'package:ava/src/core/protocol/community_session.dart';
 import 'package:ava/src/services/steam_api_client.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -108,7 +110,8 @@ void main() {
         await expectLater(
           call(_client(404, '')),
           throwsA(isA<SteamApiException>()
-              .having((e) => e.message, 'message', 'HTTP 404')),
+              .having((e) => e.message, 'message', 'HTTP 404')
+              .having((e) => e.httpStatus, 'httpStatus', 404)),
         );
       });
 
@@ -193,6 +196,87 @@ void main() {
           '<html>ok</html>');
       expect(adapter.urls, hasLength(2));
       expect(adapter.urls[1], contains('/market/eligibilitycheck'));
+    });
+  });
+
+  group('callProtobuf httpStatus', () {
+    test('bare 401 with no x-eresult carries httpStatus 401', () async {
+      // The structural signal isSessionDeadError keys on — an expired token
+      // surfaces as a naked 401 with no eresult header.
+      await expectLater(
+        _client(401, '').callProtobuf('IAuthenticationService', 'Whatever',
+            request: ProtoWriter()),
+        throwsA(isA<SteamApiException>()
+            .having((e) => e.httpStatus, 'httpStatus', 401)),
+      );
+    });
+
+    test('eresult failure leaves httpStatus null', () async {
+      // A denied call with a real eresult is not a transport-level failure;
+      // httpStatus must stay null so it never reads as a dead session.
+      await expectLater(
+        _client(200, '', {
+          'x-eresult': ['15']
+        }).callProtobuf('IAuthenticationService', 'Whatever',
+            request: ProtoWriter()),
+        throwsA(isA<SteamApiException>()
+            .having((e) => e.eresult, 'eresult', 15)
+            .having((e) => e.httpStatus, 'httpStatus', isNull)),
+      );
+    });
+  });
+
+  group('apiGetJson', () {
+    test('bare 401 carries httpStatus 401', () async {
+      await expectLater(
+        _client(401, '').apiGetJson('IEconService', 'GetTradeOffers', {}),
+        throwsA(isA<SteamApiException>()
+            .having((e) => e.httpStatus, 'httpStatus', 401)),
+      );
+    });
+  });
+
+  group('isSessionDeadError', () {
+    test('MissingAccessTokenException means a dead session', () {
+      expect(isSessionDeadError(const MissingAccessTokenException()), isTrue);
+    });
+
+    test('CommunityAuthException means a dead session', () {
+      expect(
+          isSessionDeadError(
+              const CommunityAuthException(401, '/mobileconf/getlist')),
+          isTrue);
+    });
+
+    test('SteamApiException with httpStatus 401/403 means a dead session', () {
+      expect(
+          isSessionDeadError(SteamApiException(
+              2, 'HTTP 401', 'GetTradeOffers', httpStatus: 401)),
+          isTrue);
+      expect(
+          isSessionDeadError(SteamApiException(
+              2, 'HTTP 403', 'GetTradeOffers', httpStatus: 403)),
+          isTrue);
+    });
+
+    test('SteamApiException with httpStatus 404 does not', () {
+      expect(
+          isSessionDeadError(SteamApiException(
+              2, 'HTTP 404', 'GetTradeOffers', httpStatus: 404)),
+          isFalse);
+    });
+
+    test('eresult failure (null httpStatus) does not — even when the message '
+        'mentions HTTP 401', () {
+      // The old string-match on message would have misclassified this one.
+      expect(
+          isSessionDeadError(
+              SteamApiException(15, 'quoting "HTTP 401"', 'GetTradeOffers')),
+          isFalse);
+    });
+
+    test('unrelated errors do not', () {
+      expect(isSessionDeadError(const FormatException('nope')), isFalse);
     });
   });
 }
