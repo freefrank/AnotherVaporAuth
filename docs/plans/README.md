@@ -8,12 +8,13 @@
 
 | 计划 | 说明 | 状态 |
 |---|---|---|
-| [2026-07-16-paywall-prerequisites.md](2026-07-16-paywall-prerequisites.md) | Paywall 上线前置事项操作指南（六件事状态表） | 进行中：#1 建订阅商品、#6 内测码入库待做；#2 Google SA/OAuth **挂起**（2026-07-18） |
+| [2026-07-16-paywall-prerequisites.md](2026-07-16-paywall-prerequisites.md) | Paywall 上线前置事项操作指南（六件事状态表 + §7 按类激活） | 进行中：#1 建订阅商品、#6 内测码入库待做；#2 Google SA/OAuth **挂起**；§7 beta 码按类激活**代码就绪、待用户部署**（顺序不可颠倒，见文档） |
 
 ## 归档
 
 | 计划 | 发布 |
 |---|---|
+| [archive/2026-06-29-flutter-rewrite-plan.md](archive/2026-06-29-flutter-rewrite-plan.md) | 奠基实现（0.90 / 0.99，原 `app/PLAN.md`） |
 | [archive/2026-07-15-trade-offers-todo-center.md](archive/2026-07-15-trade-offers-todo-center.md) | v0.81.0 |
 | [archive/2026-07-15-family-groups.md](archive/2026-07-15-family-groups.md) | v0.82.0 |
 | [archive/2026-07-15-paywall-android.md](archive/2026-07-15-paywall-android.md) | v0.90.0（订阅购买链路挂起，见活跃表） |

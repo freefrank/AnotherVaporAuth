@@ -1,6 +1,9 @@
-# 实施计划 — SDA Flutter 重写（目标 0.90）
+# 实施计划 — 奠基跨平台实现（目标 0.90）〔已归档〕
 
-依据 spec：`docs/specs/2026-06-29-flutter-rewrite-design.md`
+> **归档说明**：AVA 的奠基实施计划，各阶段（0.90 / 0.99）均已完成、早被后续版本
+> 超越，仅作历史留存。AVA 是用 Flutter 从零写起的独立项目，灵感来自 Steam Desktop
+> Authenticator 但不共享其代码；进度以 CHANGELOG 与代码现状为准，本文不再回填。
+> 奠基设计见 `../../specs/2026-06-29-flutter-rewrite-design.md`。
 
 ## 阶段 & 进度
 
