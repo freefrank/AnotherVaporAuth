@@ -28,6 +28,7 @@ class _DeviceSessionsScreenState extends ConsumerState<DeviceSessionsScreen>
     with SessionRetryState {
   DeviceSessionList? _list;
   bool _loading = true;
+  bool _busy = false; // a revoke is in flight
   String? _error;
   bool _needsLogin = false;
 
@@ -116,16 +117,53 @@ class _DeviceSessionsScreenState extends ConsumerState<DeviceSessionsScreen>
             padding: context.rInsets(bottom: 8),
             child: _deviceCard(l, t, d, list.isCurrent(d)),
           ),
-        SizedBox(height: context.r(8)),
-        // Read-only page: the revoke capability isn't shipped, so we say so
-        // rather than render a button that does nothing (spec §Revoke).
-        AvaPanel(
-          padding: context.rInsets(all: 12),
-          child: Text(l.deviceSessionsRevokeComingSoon,
-              style: TextStyle(color: t.muted, fontSize: context.r(12))),
-        ),
       ],
     );
+  }
+
+  /// Confirms, then remotely signs [d] out and refreshes. Never called for the
+  /// current device (the card hides revoke for it — self-revoke would sign the
+  /// app out of the account).
+  Future<void> _revoke(AppLocalizations l, AvaTokens t, DeviceSession d) async {
+    if (_busy) return;
+    final name = d.description.isNotEmpty ? d.description : l.deviceUnnamed;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: Text(l.deviceRevokeConfirm(name)),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l.commonCancel)),
+          FilledButton(
+            style: FilledButton.styleFrom(
+                backgroundColor: t.bad,
+                foregroundColor: const Color(0xFF06060F)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l.deviceRevokeAction),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      await fetchWithAutoRefresh<void>(
+          widget.account, () => ref.read(sessionsClientProvider).revoke(
+                widget.account,
+                d,
+              ));
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(l.deviceRevokeDone(name))));
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      messenger
+          .showSnackBar(SnackBar(content: Text(l.deviceRevokeFailed('$e'))));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Widget _deviceCard(
@@ -180,6 +218,14 @@ class _DeviceSessionsScreenState extends ConsumerState<DeviceSessionsScreen>
               ],
             ),
           ),
+          // Revoke is offered for every device except this one — signing the
+          // current device out would log the app off the account.
+          if (!current)
+            IconButton(
+              tooltip: l.deviceRevokeAction,
+              icon: Icon(Icons.logout, size: context.r(18), color: t.bad),
+              onPressed: _busy ? null : () => _revoke(l, t, d),
+            ),
         ],
       ),
     );

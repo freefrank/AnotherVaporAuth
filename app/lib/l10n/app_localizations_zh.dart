@@ -498,7 +498,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deviceSessionsEmpty => '该账户没有已登录的设备。';
 
   @override
-  String get deviceSessionsRevokeComingSoon => '远程注销某个设备将在后续版本推出。';
+  String get deviceRevokeAction => '注销';
+
+  @override
+  String deviceRevokeConfirm(String name) {
+    return '将「$name」从你的 Steam 账户注销?该设备需要重新登录。';
+  }
+
+  @override
+  String deviceRevokeDone(String name) {
+    return '已注销「$name」。';
+  }
+
+  @override
+  String deviceRevokeFailed(String error) {
+    return '注销设备失败:$error';
+  }
 
   @override
   String get deviceCurrent => '(本机)';

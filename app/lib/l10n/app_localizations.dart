@@ -1004,11 +1004,29 @@ abstract class AppLocalizations {
   /// **'No active devices for this account.'**
   String get deviceSessionsEmpty;
 
-  /// No description provided for @deviceSessionsRevokeComingSoon.
+  /// No description provided for @deviceRevokeAction.
   ///
   /// In en, this message translates to:
-  /// **'Remotely signing a device out is coming in a future update.'**
-  String get deviceSessionsRevokeComingSoon;
+  /// **'Sign out'**
+  String get deviceRevokeAction;
+
+  /// No description provided for @deviceRevokeConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign \"{name}\" out of your Steam account? It will need to log in again.'**
+  String deviceRevokeConfirm(String name);
+
+  /// No description provided for @deviceRevokeDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed \"{name}\" out.'**
+  String deviceRevokeDone(String name);
+
+  /// No description provided for @deviceRevokeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t sign the device out: {error}'**
+  String deviceRevokeFailed(String error);
 
   /// No description provided for @deviceCurrent.
   ///

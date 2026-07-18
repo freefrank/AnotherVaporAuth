@@ -519,8 +519,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deviceSessionsEmpty => 'No active devices for this account.';
 
   @override
-  String get deviceSessionsRevokeComingSoon =>
-      'Remotely signing a device out is coming in a future update.';
+  String get deviceRevokeAction => 'Sign out';
+
+  @override
+  String deviceRevokeConfirm(String name) {
+    return 'Sign \"$name\" out of your Steam account? It will need to log in again.';
+  }
+
+  @override
+  String deviceRevokeDone(String name) {
+    return 'Signed \"$name\" out.';
+  }
+
+  @override
+  String deviceRevokeFailed(String error) {
+    return 'Couldn\'t sign the device out: $error';
+  }
 
   @override
   String get deviceCurrent => '(this device)';
