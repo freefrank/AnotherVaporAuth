@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'dart:typed_data';
+
+import 'package:crypto/crypto.dart';
 
 import '../../services/debug_log.dart';
 import '../../services/steam_api_client.dart';
@@ -14,11 +17,12 @@ import 'community_session.dart';
 /// `docs/specs/device-sessions.md`. All calls authenticate with the account's
 /// access token.
 ///
-/// Read-only for now: [enumerate] lists the account's logged-in devices.
-/// Revoking a specific device (`RevokeRefreshToken`) needs an HMAC `signature`
-/// over `token_id` whose derivation Steam does not document and no public
-/// reference implementation computes — deliberately not implemented until that
-/// scheme is verified (see the spec's §Revoke). Never guess it.
+/// [enumerate] lists the account's logged-in devices; [revoke] signs a device
+/// out remotely. The revoke `signature` scheme was reverse-engineered from the
+/// official Steam app (see `docs/specs/2026-07-18-device-sessions-design.md`
+/// §Revoke and memory `steam-revoke-signature`) — HMAC-SHA256 over the
+/// token_id's *decimal ASCII*, keyed with the shared secret; NOT the
+/// little-endian layout the QR-approve signature uses.
 class SessionsClient {
   final SteamApiClient api;
   SessionsClient(this.api);
@@ -54,6 +58,57 @@ class SessionsClient {
     return DeviceSessionList(
         devices: devices, requestingTokenId: requestingTokenId);
   }
+
+  /// Remotely signs [device] out of the account (`RevokeRefreshToken`).
+  ///
+  /// [permanent] true → `k_EAuthTokenRevokePermanent` (1, deauthorize); false →
+  /// `k_EAuthTokenRevokeLogout` (0). Steam answers a success with an empty body
+  /// (eresult OK); [callProtobuf] throws on any non-OK eresult, so returning
+  /// normally means it took — we never read a `success` bool.
+  ///
+  /// The caller must not pass the current device (`DeviceSessionList.isCurrent`)
+  /// — that would sign the app itself out; the UI hides revoke for it.
+  Future<void> revoke(SteamGuardAccount account, DeviceSession device,
+      {bool permanent = true}) async {
+    final token = requireAccessToken(account);
+    if (device.tokenId.isEmpty) {
+      throw ArgumentError('device has no token_id');
+    }
+    final signature = revokeSignature(account.sharedSecret, device.tokenId);
+    final req = ProtoWriter()
+      ..writeFixed64(1, _decimalToSignedInt64(device.tokenId)) // token_id
+      ..writeFixed64(2, account.steamId) // steamid
+      ..writeVarint(3, permanent ? 1 : 0) // revoke_action
+      ..writeBytes(4, signature); // signature (raw 32 HMAC bytes)
+    // RevokeRefreshToken is NOT a bConstMethod → POST (default useGet:false).
+    await api.callProtobuf(
+      'IAuthenticationService',
+      'RevokeRefreshToken',
+      request: req,
+      accessToken: token,
+    );
+    dlog('sessions revoke: token=${device.tokenId} '
+        'action=${permanent ? 'permanent' : 'logout'} OK');
+  }
+
+  /// The `signature` for [RevokeRefreshToken]: HMAC-SHA256 keyed with the
+  /// base64-decoded [sharedSecretB64], over the ASCII of [tokenIdDecimal] (the
+  /// token_id rendered in base 10). Reverse-engineered from Steam Android
+  /// 3.10.9 — deliberately NOT the little-endian integer layout the QR-approve
+  /// signature uses. Returns the raw 32 MAC bytes.
+  static Uint8List revokeSignature(String? sharedSecretB64, String tokenIdDecimal) {
+    final key = base64.decode((sharedSecretB64 ?? '').trim());
+    final msg = ascii.encode(tokenIdDecimal);
+    return Uint8List.fromList(Hmac(sha256, key).convert(msg).bytes);
+  }
+
+  /// token_id is stored as an unsigned decimal string (see [_uFixed64]); to
+  /// write it as a wire-1 fixed64 we need the Dart int with the same 64 bits.
+  /// BigInt.toInt() would clamp values above 2^63, so reinterpret the low 64
+  /// bits as signed first — [ProtoWriter.writeFixed64] re-widens negatives back
+  /// to the original unsigned bytes.
+  static int _decimalToSignedInt64(String decimal) =>
+      BigInt.parse(decimal).toSigned(64).toInt();
 
   DeviceSession _device(Uint8List bytes) {
     var tokenId = '';

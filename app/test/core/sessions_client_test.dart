@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:ava/src/core/models/device_session.dart';
 import 'package:ava/src/core/models/session_data.dart';
 import 'package:ava/src/core/models/steam_guard_account.dart';
 import 'package:ava/src/core/proto/protobuf_wire.dart';
@@ -32,8 +35,13 @@ class _FakeApi extends SteamApiClient {
   }
 }
 
+// key = 20 bytes 0..19, base64 — the shared secret the reference HMAC vectors
+// (python hmac) were computed with.
+const _secretB64 = 'AAECAwQFBgcICQoLDA0ODxAREhM=';
+
 SteamGuardAccount _account({String? token = 'tok'}) => SteamGuardAccount(
       accountName: 'acc',
+      sharedSecret: _secretB64,
       session: SessionData(
           steamId: 76561198000000123, accessToken: token, refreshToken: 'r'),
     );
@@ -142,6 +150,90 @@ void main() {
       final api = _FakeApi([_enumResp()]);
       expect(
         () => SessionsClient(api).enumerate(_account(token: null)),
+        throwsA(isA<MissingAccessTokenException>()),
+      );
+    });
+  });
+
+  group('revoke signature', () {
+    // Reference vectors computed independently (python hmac): key = 20 bytes
+    // 0..19 base64 (_secretB64), message = the token_id's decimal ASCII.
+    String hex(List<int> b) =>
+        b.map((x) => x.toRadixString(16).padLeft(2, '0')).join();
+
+    test('HMAC-SHA256 over decimal ASCII of a max-uint64 token_id', () {
+      final sig =
+          SessionsClient.revokeSignature(_secretB64, '18446744073709551615');
+      expect(hex(sig),
+          '509264759dccce32849f9e0f7d01b9aabfb2fa30142d2fd1c88545c9ab807640');
+      expect(sig, hasLength(32));
+    });
+
+    test('HMAC over a plain token_id', () {
+      final sig = SessionsClient.revokeSignature(_secretB64, '12345678901234567');
+      expect(hex(sig),
+          '16ef17d56e758c1b34feef3829509d7fbeef0906e27855fc91e02c473d102c46');
+    });
+  });
+
+  group('revoke', () {
+    // Empty response body = success (eresult OK); FakeApi returns it.
+    ProtoReader emptyResp() => ProtoReader(Uint8List(0));
+
+    test('POSTs RevokeRefreshToken with token_id/steamid/action/signature',
+        () async {
+      final api = _FakeApi([emptyResp()]);
+      const tokenId = '18446744073709551615';
+      final device = DeviceSession(
+        tokenId: tokenId,
+        description: 'Old phone',
+        timeUpdated: 1752000000,
+        platformType: 3,
+        loggedIn: true,
+      );
+      await SessionsClient(api).revoke(_account(), device);
+      expect(api.lastMethod, 'IAuthenticationService/RevokeRefreshToken');
+      expect(api.lastUseGet, isFalse); // POST, not const
+      expect(api.lastAccessToken, 'tok');
+      final req = ProtoReader(api.lastRequest!.toBytes()).parse();
+      // token_id fixed64 == max uint64 (round-trips through signed int).
+      expect(req[1]?.asFixed64, -1); // 0xFFFF...FF as signed
+      expect(req[2]?.asFixed64, 76561198000000123); // steamid
+      expect(req[3]?.asInt, 1); // permanent
+      // signature bytes match the independent HMAC vector.
+      final sig = req[4]!.bytes!;
+      expect(
+          sig
+              .map((x) => x.toRadixString(16).padLeft(2, '0'))
+              .join(),
+          '509264759dccce32849f9e0f7d01b9aabfb2fa30142d2fd1c88545c9ab807640');
+    });
+
+    test('logout action writes revoke_action 0', () async {
+      final api = _FakeApi([emptyResp()]);
+      final device = DeviceSession(
+        tokenId: '12345',
+        description: 'x',
+        timeUpdated: 0,
+        platformType: 1,
+        loggedIn: true,
+      );
+      await SessionsClient(api).revoke(_account(), device, permanent: false);
+      final req = ProtoReader(api.lastRequest!.toBytes()).parse();
+      expect(req[3]?.asInt, 0);
+    });
+
+    test('throws without an access token', () async {
+      final api = _FakeApi([emptyResp()]);
+      final device = DeviceSession(
+        tokenId: '12345',
+        description: 'x',
+        timeUpdated: 0,
+        platformType: 1,
+        loggedIn: true,
+      );
+      expect(
+        () => SessionsClient(api).revoke(_account(token: null), device),
         throwsA(isA<MissingAccessTokenException>()),
       );
     });
