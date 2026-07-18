@@ -5,6 +5,21 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.91.2] — 2026-07-17
+
+### Changed
+- About screen wording: AVA is now described as an independent project built
+  with Flutter, inspired by the classic Steam Desktop Authenticator — not a
+  "rewrite" of it. AVA shares no code with SDA and only keeps its `.maFile`
+  format compatible for easy migration.
+
+—
+
+### 变更
+- 关于页文案:AVA 现定位为受老牌工具 Steam Desktop Authenticator 启发、用
+  Flutter 打造的独立项目,不再表述为对它的"重写"。AVA 与 SDA 不共享任何代码,
+  仅保持 `.maFile` 格式兼容以便迁移。
+
 ## [v0.91.1] — 2026-07-17
 
 ### Changed
