@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -302,11 +303,19 @@ final deviceIdProvider = FutureProvider<String>((ref) async {
   return id;
 });
 
+/// Dev-only Pro unlock: a debug build passed `--dart-define=AVA_DEV_PRO=true`
+/// reports Pro so the paid skins/themes are viewable without a real
+/// entitlement. Double-gated — the define is absent from release builds AND
+/// tests (neither passes it), and [kDebugMode] is compile-time false in
+/// release/profile, so it can never ship or skew the gating tests.
+const _devProUnlock = bool.fromEnvironment('AVA_DEV_PRO') && kDebugMode;
+
 /// What the UI gates Pro features on. Schedules its own re-evaluation at
 /// the next moment the verdict can change (entitlement end, refresh
 /// deadline, end of offline grace): a token expiring while the app runs
 /// must flip Pro off without waiting for a restart.
 final proStatusProvider = Provider<ProStatus>((ref) {
+  if (_devProUnlock) return ProStatus.pro;
   final token = ref.watch(entitlementTokenProvider);
   final now = ref.read(clockProvider)();
   if (token != null) {
