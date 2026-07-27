@@ -5,7 +5,15 @@
 - **c** = commit:按主题拆分提交;commit message 末尾带 Co-Authored-By 与
   Claude-Session trailer。
 - **b** = bump:升版本号(`app/pubspec.yaml` 的 version)并补 CHANGELOG
-  中英条目。
+  中英条目。**写条目前必须先过一遍
+  `git log --oneline <上一次 version bump 的 commit>..HEAD`**,把每条 `fix(` /
+  `feat(` 拿出来问一句「用户会不会察觉」——会,就得进 `Fixed`/`Added`,不管
+  成因多内部。2026-07 有三轮审计约 65 项修复因「加固都是不可见的」这个未经
+  核实的假设而一条没写,其中包括每次启动都要重登、挂单价格差 100 倍、Pro 掉
+  回免费——全都是用户直接能撞上的。纯重构与真·不可见的加固不写。
+- **da** = doc-audit:调 `doc-audit` subagent 审计文档与现实的偏差(见
+  `.claude/agents/doc-audit.md`)。发版前(b 之前)跑一次;它只报告不改文案。
+  机器能判定的那部分由 `tool/docs_lint.py` 在 CI 里挡,不必等人跑。
 - **p** = push:push 前必须本地 CI 通过(`flutter analyze` 无问题 +
   `flutter test` 全绿)。
 - 可组合使用,如 **cbp**。
@@ -21,12 +29,19 @@
 - `~/sync` 是 ZFS 数据集(`stor/backup/freefrank/syncthing`)上的 **Syncthing
   folder**,同步守护进程在宿主机侧,本机看不到进程。跨机分发由它自动完成,
   **不需要手工 rsync**。
-- **`~/sync/.stignore` 会吃掉一批文件,别把它的表现误判成误删**:
-  - `*.lock`(第 36 行)——`app/pubspec.lock`、`installer/pubspec.lock` **不会
-    跨机同步**,在新机器上一律显示为 `D`(工作区删除)。lock 只能靠 **git**
-    传播:改动要提交进仓库,新机器上用 `git restore` 取回,不要当误删修掉。
-  - `build/`、`dist/`、`node_modules/` 等构建产物同样不同步——**`dist/` 的发布
-    物只存在于生成它的那台机器上**,别指望在别处看到。
+- `~/sync/.stignore` 顶部有两条**例外**(2026-07-26 加,必须排在被否定的规则
+  之前——Syncthing 按顺序匹配,第一条命中即生效):`!pubspec.lock` 放行锁文件、
+  `!/Git/AnotherVaporAuth/dist/**` + `!/Git/AnotherVaporAuth/dist` 放行发布物。
+  其余构建产物(`build/`、`node_modules/`)仍不同步。改这两条前先读下面这条。
+- **`flutter pub get` 一律带 `--enforce-lockfile`**。lock 缺失或与 pubspec
+  不一致时它会报错,而裸 `pub get` 会**静默重新解析并升级依赖**。2026-07-26
+  就这么翻过车:新机器上 lock 因 `.stignore` 没落地,裸 `pub get` 把传递依赖
+  `jni` 升到 1.0.1,其 `android/build.gradle` 调用了本项目没有的 `kotlin()`,
+  `bundlePlayRelease` 直接失败——而 `analyze`/`test` **全绿**,因为两者都不
+  走 Android Gradle。
+- **依赖升级必须单开批次,验证矩阵含"出包"**:`analyze` + `test` 只覆盖 Dart
+  层;插件问题只在 Gradle 构建和真机运行时现形(`flutter_secure_storage`、
+  `google_mobile_ads` 尤甚)。少了出包这一步就不算验证过。
 
 ## 构建渠道(Android 已拆 flavor)
 

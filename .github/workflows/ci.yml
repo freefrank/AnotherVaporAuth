@@ -24,6 +24,18 @@ jobs:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
-      - run: flutter pub get
+      # --enforce-lockfile: a bare `pub get` silently re-resolves and upgrades
+      # when the lockfile is missing or stale. That is how a transitive `jni`
+      # bump reached main on 2026-07-26 and broke `bundlePlayRelease` while
+      # analyze and test stayed green — neither of them touches Android Gradle.
+      - run: flutter pub get --enforce-lockfile
       - run: flutter analyze
-      - run: flutter test
+      - run: flutter test | tee ../test-output.txt
+
+      - name: Lint the docs against reality
+        working-directory: .
+        run: |
+          count=$(grep -oE '\+[0-9]+: All tests passed' test-output.txt \
+                  | grep -oE '[0-9]+' | tail -1)
+          echo "suite has ${count:-0} tests"
+          python3 tool/docs_lint.py "${count:-0}"
