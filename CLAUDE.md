@@ -9,36 +9,24 @@
 - **p** = push:push 前必须本地 CI 通过(`flutter analyze` 无问题 +
   `flutter test` 全绿)。
 - 可组合使用,如 **cbp**。
-- **s / sync** = 全量同步回 Windows 侧镜像:
-  - 目标:`/mnt/c/Users/freefrank/ownCloud/Git/AnotherVaporAuth/`
-  - 用 rsync 同步整个工作树,**包括**未提交更改、未跟踪文件、被 gitignore 的
-    工作资产(`store/`、`posts/`、`dist/`)以及**敏感文件**
-    (如 `app/android/key.properties`)。
-  - **排除**:`.git/`(镜像自己的 git 历史由 `git pull` 维护,不要覆盖)、
-    `app/build/`、`app/.dart_tool/`、`node_modules/`、
-    `app/linux/flutter/ephemeral/`。
-  - 镜像克隆已设 `core.fileMode=false`(NTFS 权限位噪音);`dist/`、`posts/`、
-    `store/` 在其 `.git/info/exclude` 里。
-  - **WSL 工作树是唯一正本**:sync 用 `--delete`,镜像侧单独多出的文件会被
-    删掉。要保留的文件(构建产物等)必须先放进 WSL 侧对应目录再 sync。
-    构建产物统一先落 `dist/`(如 `dist/AVA-v<版本>.aab`)。
-  - **s 的固定顺序**:①(若有新 push)镜像先 `git fetch origin &&
-    git reset --hard origin/main` 对齐历史;② 再 rsync 全量覆盖——
-    未提交更改、未跟踪文件、敏感文件全部以 WSL 工作树为准铺上去。
-    顺序不能反:先 rsync 再 reset 会把未提交内容从跟踪文件里抹掉。
-    不要用 pull(rsync 写入的未提交内容会让 pull 因"本地改动将被
-    覆盖"而中止)。
+- **s / sync** = **已废弃**(2026-07-26)。旧流程是把 WSL 工作树 rsync 回
+  `/mnt/c/.../ownCloud/Git/AnotherVaporAuth` 镜像;WSL 与该镜像现均已不存在,
+  同步改由 Syncthing 自动完成(见「工作树」)。若将来恢复多机手工同步再重写本条。
 
 ## 工作树
 
-- **编译正本是 WSL 原生盘 `~/SteamDesktopAuthenticator`**(目录沿用旧名,remote 已指
-  向 AnotherVaporAuth)。开发、`flutter analyze/test/build` 都在这里做——比镜像快得多
-  (analyze 约 9s vs 20s+)。
-- 会话默认 cwd 常是 **Windows 侧镜像**
-  `/mnt/c/Users/freefrank/ownCloud/Git/AnotherVaporAuth`(9P 挂载,慢);它只由 s
-  同步流程更新,不在上面编译。
-- 处理代码任务前先核对两棵树是否分歧
-  (`git -C ~/SteamDesktopAuthenticator log --oneline -1` vs 镜像 HEAD),有分歧先对齐。
+- **唯一工作树:`~/sync/Git/AnotherVaporAuth`**(主机 `claude`)。不再有 WSL
+  原生盘正本,也不再有 Windows 侧 ownCloud 镜像——开发、`flutter analyze/test/build`
+  全在这里做(冷启动 analyze ~57s / test 545 例 ~50s)。
+- `~/sync` 是 ZFS 数据集(`stor/backup/freefrank/syncthing`)上的 **Syncthing
+  folder**,同步守护进程在宿主机侧,本机看不到进程。跨机分发由它自动完成,
+  **不需要手工 rsync**。
+- **`~/sync/.stignore` 会吃掉一批文件,别把它的表现误判成误删**:
+  - `*.lock`(第 36 行)——`app/pubspec.lock`、`installer/pubspec.lock` **不会
+    跨机同步**,在新机器上一律显示为 `D`(工作区删除)。lock 只能靠 **git**
+    传播:改动要提交进仓库,新机器上用 `git restore` 取回,不要当误删修掉。
+  - `build/`、`dist/`、`node_modules/` 等构建产物同样不同步——**`dist/` 的发布
+    物只存在于生成它的那台机器上**,别指望在别处看到。
 
 ## 构建渠道(Android 已拆 flavor)
 
@@ -68,9 +56,10 @@
 ## 密钥与 .env
 
 - 本地密钥放仓库根 `.env`（git 忽略，权限 600），模板见 `.env.example`。
-  与 `app/android/key.properties` 一样：**不进 git，但会被 `s` 的 rsync 带到镜像**。
+  与 `app/android/key.properties` 一样：**不进 git**，靠 Syncthing 跨机同步
+  （`.stignore` 不挡它们）。
 - 目前只有 `SMTP_PASS`（`hi@dotslash.pro`，用于发内测码）。**正本是**
-  `ownCloud/Deployr/mailserver/CREDENTIALS.md` 的 `hi (dotSlash)` 行——那里改了
+  `~/sync/Deployr/mailserver/CREDENTIALS.md` 的 `hi (dotSlash)` 行——那里改了
   密码，`.env` 要同步改。该文件自己也记着"搭建期密码应轮换"。
 - 需要密码时从上述文件**管道取用**（`PASS=$(...)` → `SMTP_PASS="$PASS" cmd`），
   不打印明文、不写进对话。
@@ -100,8 +89,12 @@
   无线调试端口每次重开都会轮换——**每次真机操作前问用户当前端口**,不要复用旧值;
   任何 adb 命令必须显式 `-s` 指定设备;绝不卸载旧包 `app.ava.authenticator`;
   绝不在真机确认页点击接受/拒绝(含报价长按接受、家庭组长按加入等一切写操作)。
-- 签名密钥:`~/ava-upload.jks`(备份在 ownCloud 根),密码只存在
-  `app/android/key.properties`(git 忽略)——不进仓库、不进对话。
+- 签名密钥:构建用的工作副本是 `~/ava-upload.jks`(`key.properties` 的
+  `storeFile` 写死这条绝对路径),**正本/备份是 `~/sync/ava-upload.jks`**
+  ——`~/` 不同步,换机后工作副本会缺失,需从 `~/sync/` 拷回并 `chmod 600`,
+  否则 release 签名直接失败(gradle 只检查 `key.properties` 存在,不检查
+  keystore 文件存在)。entitlement 私钥 `~/sync/ava-entitlement-signing.pem` 同理。
+  密码只存在 `app/android/key.properties`(git 忽略)——不进仓库、不进对话。
 - **发布物必须 `flutter clean` 后构建**:2026-07-16 曾发生增量构建把过期的
   Dart AOT(libapp.so)打进"新"APK,导致连续多轮修复"装上没效果"——出
   dist 产物、以及排查"改了但行为没变"时,先 clean;真机验证要验**行为**,
