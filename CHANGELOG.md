@@ -57,6 +57,10 @@ automated releases.
 
 ## [v0.91.1] — 2026-07-17
 
+### Added
+- **Importing a maFile for an account you already have** now asks whether to
+  overwrite it, with an honest description of what survives the merge.
+
 ### Changed
 - **Hold-to-confirm now responds the instant you press.** Holding to accept a
   trade, join a family group, or confirm a mobile request used to look dead
@@ -66,13 +70,83 @@ automated releases.
   hold. The hold itself is exactly as long as before — only the feedback is
   faster.
 
+### Fixed
+
+Three rounds of adversarial audit landed in this release (51 + 34 + 19
+candidate findings, each independently re-verified before being acted on).
+Most of the outcome is invisible hardening; these are the parts you would
+have noticed.
+
+- **Renewed sign-in tokens now survive a restart.** Five screens "saved" a
+  refreshed session by writing only the account index, so the new token died
+  with the process and every launch repeated the sign-in dance.
+- **An expired session no longer disguises itself as something else.** Community
+  requests ignored the HTTP status, so a redirect to Steam's login page or an
+  empty 401 decoded as an empty success: cancelling a listing claimed to work
+  when it hadn't, and confirmations showed the alarming "wrong secret" message.
+  Authentication failures now lead to the sign-in prompt instead.
+- **Comma decimals no longer list an item at 100× the price.** The sell sheet
+  silently deleted `,`, turning "1,50" into "150". Comma is now accepted as a
+  decimal separator, and ambiguous thousands formatting is rejected outright.
+- **Pro no longer lapses to free when our signing key rotates.** An entitlement
+  that fails local verification is re-checked with the server and only discarded
+  on a definitive rejection. Pro also expires on time during long sessions, and
+  desktop builds no longer report themselves as Android devices.
+- **Moving an authenticator to this device can no longer lose the new secret.**
+  Leaving the screen mid-request could discard the only copy of the
+  freshly-issued secret — while the old authenticator was already dead. It is
+  now saved no matter what, and a failed save shows a recovery screen with the
+  new revocation code and secret in full, which system-back cannot dismiss.
+- **A lost account index is recoverable.** It used to dead-end on a raw error
+  screen; it now offers retry, a guarded reset, or an evidence-based rebuild.
+  Saving two accounts at once can no longer delete both encrypted copies, and
+  entries that fail to decrypt during an upgrade are preserved instead of
+  dropped.
+- **Batch listing tells the truth** about partial success, a session that
+  expires mid-batch, and partially completed auto-confirmations.
+- **Debug logs no longer leak roughly a third of Steam's secrets** — redaction
+  missed padded base64 containing `/`.
+- **A Steam password you deleted stays deleted.** A leftover copy from the
+  pre-vault keystore could bring it back.
+
 —
+
+### 新增
+- **导入一个你已经添加过的账户的 maFile** 时会先问你是否覆盖,并如实说明
+  合并后哪些信息会保留。
 
 ### 变更
 - **长按确认现在一按就有反应。** 长按接受交易、加入家庭组或确认手机请求时,
   最初一刻按钮毫无动静,让人以为按钮坏了。现在手指一碰,按钮会微微放大、
   进度环立刻跳到一半,余下部分随长按继续填满。长按时长与以前完全一致——
   只是反馈更快了。
+
+### 修复
+
+本版落地了三轮对抗式审计(候选发现 51 + 34 + 19 条,每条都经独立复核后才
+采纳)。绝大部分成果是你看不见的加固,下面这些是你**能感觉到**的部分。
+
+- **续期后的登录令牌现在能扛过重启了。** 有五处界面"保存"刷新后的会话时,
+  实际只写了账户索引——新令牌随进程一起消失,于是每次启动都要重登一遍。
+- **会话过期不再伪装成别的错误。** 社区请求此前无视 HTTP 状态码,跳转到
+  Steam 登录页或空的 401 都会被解析成"空的成功":取消挂单明明没成功却提示
+  成功,确认页则弹出吓人的"密钥错误"。现在认证失败会直接引导你重新登录。
+- **用逗号做小数点不会再把商品挂成 100 倍价格。** 卖出页此前会静默删掉
+  `,`,"1,50" 就变成了 "150"。现在逗号可作小数分隔符,写法有歧义的千分位
+  会被直接拒绝。
+- **签名密钥轮换不会再把 Pro 打回免费。** 本地验签失败的权益凭证会回服务器
+  复核,只有明确被拒才丢弃。长时间挂着不关时 Pro 也会按时到期,桌面版不再
+  把自己报成安卓设备。
+- **把验证器移到本设备不会再弄丢新密钥了。** 请求进行到一半时退出页面,可能
+  把刚换发的密钥的唯一副本丢掉——而此时旧验证器已经作废。现在无论如何都会
+  先存盘,存盘失败会摊出完整的新撤销代码与密钥,该页面按系统返回键也关不掉。
+- **账户索引丢了也能救回来。** 以前是一个死胡同般的原始报错页,现在提供重试、
+  受控重置、以及基于现有证据的重建。同时,两个账户同时保存不会再把两份加密
+  数据都删掉;升级过程中解密失败的条目会被原样保留而不是丢弃。
+- **批量挂单会如实汇报**部分成功、中途会话过期、以及只完成了一部分的自动确认。
+- **调试日志不再泄漏大约三分之一的 Steam 密钥**——此前脱敏漏掉了含 `/` 的
+  补位 base64。
+- **你删掉的 Steam 密码不会再自己回来。** 旧密钥库里残留的一份副本会让它复活。
 
 ## [v0.91.0] — 2026-07-16
 

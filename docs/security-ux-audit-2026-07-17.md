@@ -16,6 +16,13 @@ Three adversarially-verified review rounds, each finding independently re-verifi
 
 Final state: `flutter analyze` clean, 403 tests green (~+100 vs. baseline). Landed as commits `ca81ecf`..`2449363` (7 topic commits + 1 docs).
 
+**Shipped in v0.91.1.** The user-visible subset is written up in that release's
+`Fixed` section in `CHANGELOG.md` (added 2026-07-27 — the batch originally
+landed with no changelog entry at all, on the assumption that hardening is
+invisible; several items were not, e.g. re-signing-in on every launch and
+comma-decimal prices listing at 100×). Internal refactors and pure hardening
+stay undocumented there by design.
+
 ## What was fixed (by theme)
 
 **Irreversible data loss.** Move-in could discard the only copy of a freshly swapped-in `shared_secret` if the route was popped mid-request (`!mounted` early-return between the irreversible `moveInContinue` and `persistAccount`); now persists regardless of unmount, blocks pop only during the irreversible window, and a failed save arms a root-level rescue screen that survives system back. Concurrent `saveAccount` calls on a legacy encrypted store could delete both ciphertext slots (alt-slot two-phase commit raced on the shared manifest); AccountStore now serializes all writers behind a future-chained mutex with a post-await re-check before deletes. `migrateToVault` dropped entries whose maFile failed to decrypt; they are now preserved verbatim. A lost `manifest.json` was a dead-end raw-exception screen; it now boots into a recovery screen (retry / guarded reset / evidence-gated vault-manifest rebuild, mtime-aware slot choice).
