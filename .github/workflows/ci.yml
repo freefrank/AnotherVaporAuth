@@ -30,12 +30,26 @@ jobs:
       # analyze and test stayed green — neither of them touches Android Gradle.
       - run: flutter pub get --enforce-lockfile
       - run: flutter analyze
-      - run: flutter test | tee ../test-output.txt
+
+      # pipefail is mandatory here: without it the pipeline reports tee's exit
+      # code and a failing suite would pass CI.
+      - name: Test
+        run: |
+          set -o pipefail
+          flutter test | tee ../test-output.txt
 
       - name: Lint the docs against reality
         working-directory: .
         run: |
-          count=$(grep -oE '\+[0-9]+: All tests passed' test-output.txt \
-                  | grep -oE '[0-9]+' | tail -1)
-          echo "suite has ${count:-0} tests"
-          python3 tool/docs_lint.py "${count:-0}"
+          # flutter picks a different reporter under GitHub Actions
+          # ("🎉 545 tests passed.") than it does locally
+          # ("00:25 +545: All tests passed!"). Accept either.
+          count=$(grep -oE '(\+[0-9]+: All tests passed|[0-9]+ tests? passed)' \
+                  test-output.txt | grep -oE '[0-9]+' | tail -1)
+          if [ -z "$count" ]; then
+            echo "::error::could not read the test count from test-output.txt"
+            tail -5 test-output.txt
+            exit 1
+          fi
+          echo "suite has $count tests"
+          python3 tool/docs_lint.py "$count"
