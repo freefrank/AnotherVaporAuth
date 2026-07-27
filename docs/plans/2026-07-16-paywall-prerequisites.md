@@ -12,7 +12,7 @@
 | 3 | AdMob | App ID、两个单元 ID、SSV 回调 | ✅ 开户+建应用+双单元完成,真实 ID 已回填;app-ads.txt 双域上线;SSV 回调探测已修(worker 侧),后台保存待确认 |
 | 4 | 爱发电 | user_id、token、plan_id、主页 URL | ✅ secrets 已入 worker,sign 算法已实测核验,主页 URL 已回填;webhook 测试推送已修通,**后台保存待确认**;首笔真实订单联调待做 |
 | 5 | Cloudflare worker 部署 | D1/KV id、Ed25519 公钥、api 子域 | ✅ **已上线** `api.ava.dotslash.pro`,beta 码全链路验签通过;私钥备份于 ownCloud 根 `ava-entitlement-signing.pem` |
-| 6 | 内测名单 | 终身码清单(入 D1) | ⏳ 待名单导出后一条 SQL 插入 |
+| 6 | 内测名单 | 终身码清单(入 D1) | ✅ **已完成**(2026-07-26 查库核实:`beta_testers` 51 行,12 个已兑换);2026-07-16 已向 50 名内测成员各发一码 |
 
 **剩余关键路径**:2(Google SA + OAuth)→ 回填 `kGoogleServerClientId` +
 worker 三个 GOOGLE secrets → Play 沙盒联调订阅;1(建订阅商品)随时可做;
@@ -190,7 +190,11 @@ worker 已实现"一码四类端各一台"(commit `e77c3aa`,worker 测试 75 全
 `POST /v1/entitlement/status` 供 app 展示各端激活状态。**执行顺序不可颠倒**
 (新 worker 依赖新表;旧 worker 兼容新表,反向回滚安全):
 
-1. **预检(只读)**——确认 50 个已发码无"半程失败"残留行:
+1. ✅ **预检(只读)已跑,结果干净**(2026-07-26):12 行已兑换,孤儿行(有
+   `redeemed_by` 无 entitlement)0 条、有 entitlement 无 device 0 条——**无需
+   任何人工清理,可直接进第 2 步**。同批还确认 `activation_log` 表**尚不存在**,
+   即 migration 与新 worker 都还没上,生产仍是旧的"一码绑定首个设备"行为。
+   复核命令(会打印明文码,慎用):
    ```
    npx wrangler d1 execute ava-entitlement --remote --command "SELECT bt.code, bt.redeemed_by, e.id AS ent, d.device_class FROM beta_testers bt LEFT JOIN entitlements e ON e.channel='beta' AND e.subject=bt.code LEFT JOIN devices d ON d.entitlement_id=e.id WHERE bt.redeemed_by IS NOT NULL;"
    ```

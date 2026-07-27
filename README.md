@@ -67,7 +67,7 @@
   Android the launcher icon follows the active skin.
 - **First-run gesture tutorial** on touch devices (desktop gets right-click row
   menus instead).
-- **i18n** (English + 简体/繁體 Chinese) with more locales planned.
+- **i18n** (English + 简体中文) with more locales planned.
 - Fully **offline**: fonts and assets are bundled, nothing is downloaded at runtime.
 - **In-app Debug log** (Settings → Debug log) — a copyable network trace of the
   Steam flows for diagnostics.
@@ -90,9 +90,11 @@ Requires the Flutter SDK (3.44.x). See `app/README.md` for details.
 ```sh
 cd app
 flutter pub get
-flutter test                       # 251 tests
+flutter test                       # 545 tests
 flutter run -d linux               # or windows / macos
-flutter build apk --release --split-per-abi
+
+# Android ships in two flavors (play / cn); a build without --flavor fails.
+flutter build apk --release --split-per-abi --flavor cn --dart-define=AVA_CHANNEL=cn
 ```
 
 Desktop releases are built by GitHub Actions on every `v*` tag or manual

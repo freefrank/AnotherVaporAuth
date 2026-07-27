@@ -44,7 +44,7 @@
 - **动态头像** —— 拉取每个账户的 Steam 头像与头像框并播放（GIF 原生;APNG 自行解析并逐帧合成,正确处理每帧的偏移 / 混合 / dispose,带偏移的帧不再闪烁）。
 - **外观与皮肤** —— 朴素的**浅色 / 深色 / 跟随系统**外观,以及独立的**皮肤**层(无 / 霓虹赛博朋克 / 像素复古),每套皮肤都是数据驱动的特效包,各有专属氛围与下拉刷新;Android 上桌面图标跟随当前皮肤。
 - **首次启动手势教程**(触屏设备;桌面端改为账户行右键菜单)。
-- **多语言**（English + 简体/繁體中文），更多语言规划中。
+- **多语言**（English + 简体中文），更多语言规划中。
 - 完全**离线**：字体与资源全部打包，运行时不下载任何内容。
 - **应用内调试日志**（设置 → 调试日志）—— 可复制的 Steam 流程网络追踪，便于诊断。
 
@@ -65,9 +65,11 @@ Authenticator —— 仅供参考存档，AVA 与它不共享任何代码。
 ```sh
 cd app
 flutter pub get
-flutter test                       # 167 项测试
+flutter test                       # 545 项测试
 flutter run -d linux               # 或 windows / macos
-flutter build apk --release --split-per-abi
+
+# Android 分 play / cn 两个 flavor，不带 --flavor 的构建会直接失败。
+flutter build apk --release --split-per-abi --flavor cn --dart-define=AVA_CHANNEL=cn
 ```
 
 每推送一个 `v*` 标签（或手动触发），GitHub Actions 会自动构建桌面版发布，
