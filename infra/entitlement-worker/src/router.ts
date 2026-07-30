@@ -12,6 +12,17 @@ import {
   handleVipClaim,
 } from './logic';
 
+// Endpoints whose request body carries a *guessable* secret, so an attacker
+// gains from volume: a beta code is 32 bits of entropy and buys lifetime Pro,
+// an Afdian out_trade_no is a semi-sequential order number. The token-bearing
+// endpoints are deliberately absent — an Ed25519 signature is not guessable,
+// and throttling refresh would break legitimate clients.
+//
+// Note this brake is per Cloudflare location, so a caller spread across many
+// colos gets a correspondingly larger budget. It raises the cost of a naive
+// script; it is not a defence against a distributed attacker.
+const RATE_LIMITED = new Set(['POST /v1/beta/redeem', 'POST /v1/afdian/redeem']);
+
 function toResponse(res: Res): Response {
   if (res.body === null) return new Response(null, { status: res.status });
   return new Response(JSON.stringify(res.body), {
@@ -25,6 +36,13 @@ export async function route(request: Request, deps: Deps): Promise<Response> {
   const key = `${request.method} ${url.pathname}`;
 
   if (key === 'GET /v1/admob/ssv') return toResponse(await handleAdmobSsv(url, deps));
+
+  if (RATE_LIMITED.has(key)) {
+    const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
+    if (!(await deps.rateLimit.allow(`redeem:${ip}`))) {
+      return toResponse({ status: 429, body: { error: 'rate_limited' } });
+    }
+  }
 
   const post = async (handler: (body: unknown, deps: Deps) => Promise<Res>): Promise<Response> => {
     let body: unknown;

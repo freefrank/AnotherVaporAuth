@@ -20,6 +20,15 @@ EdDSA(Ed25519)JWT;客户端(`app/lib/src/core/entitlement.dart`)用内嵌公钥
 
 错误统一 `{error: string}`;签发成功统一 `{token: string}`。
 
+**限速**:`/v1/beta/redeem` 与 `/v1/afdian/redeem` 这两个「拿可猜的秘密换权益」
+的端点按来源 IP 限流(Workers 原生 `ratelimits` 绑定 `REDEEM_LIMITER`,
+8 次 / 60 秒),超出 429 `rate_limited`。带签名的端点(refresh / status)**故意
+不限**——Ed25519 签名猜不出来,限它只会误伤正常客户端。两点要如实记住:计数
+**按 Cloudflare 边缘节点**,分布在多个 colo 的攻击者能拿到成倍额度;计数器是
+**近似的**,实测会溢出到 10–12 次才拒(2026-07-30 线上验证)。它抬高的是脚本
+小子的成本,不是对分布式攻击的防御。绑定缺失时 **fail-open 并打 error 日志**
+——限速器坏掉不该把付费用户锁在门外(与 `aud` 校验相反,后者一律 fail-closed)。
+
 设备名额:**每权益每设备类(android/windows/linux/macos)一个**,新设备激活即
 REPLACE,旧设备下次 refresh 收 403 `device_revoked`。beta 码 / 爱发电这类
 **可转述凭据**的换机受激活次数约束:每(权益, 设备类)在滑动窗口
@@ -56,7 +65,8 @@ npx wrangler secret put AFDIAN_PLAN_ID
 npx wrangler secret put GOOGLE_SA_EMAIL
 npx wrangler secret put GOOGLE_SA_KEY             # service account 私钥(PEM 原文即可)
 npx wrangler secret put PLAY_PACKAGE_NAME         # pro.dotslash.ava
-# 可选:npx wrangler secret put GOOGLE_CLIENT_ID  # 锁定 id_token 的 aud
+npx wrangler secret put GOOGLE_CLIENT_ID          # Web OAuth client id;必填,
+                                                  # 未设置则 id_token 一律拒绝
 
 # 5. 可选 KV 配置
 npx wrangler kv key put --binding CONFIG VIP_DAYS 3   # 每次激励视频的 VIP 天数,默认 3
@@ -92,8 +102,10 @@ AdMob、KV 配置、时钟)通过 `Deps` 注入;`src/index.ts` 负责组装生�
 - **Play Developer API**:subscriptionsv2 响应(`subscriptionState` 取值、
   `lineItems[].expiryTime`)与订阅 acknowledge 要求(3 天不 ack 会自动退款,
   当前未调用 acknowledge)需对照官方文档核验。
-- **id_token aud**:目前只在设置了 `GOOGLE_CLIENT_ID` 时校验 aud,上线前应
-  配置该 secret 并强制。
+- ~~**id_token aud**~~:已于 2026-07-30 收口。`GOOGLE_CLIENT_ID` 生产已配置,
+  且校验改为 **fail-closed**——secret 缺失时 `verifyIdToken` 直接返回 null,
+  而不是跳过 aud 检查(旧写法 `if (cfg.clientId && …)` 会让删/改名 secret
+  静默移除一道鉴权)。
 - **月长**:爱发电按月订阅按 30 天/月折算(`MONTH_SECONDS`),如需自然月需改。
 - **workerd Ed25519 JWK 导出**:公钥从私钥 `exportKey('jwk').x` 推导,Node 下
   已测试通过;部署后应在 workerd 上冒烟验证一次 refresh 往返。

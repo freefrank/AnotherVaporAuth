@@ -6,7 +6,6 @@
 //   - subscriptionsv2 response shape (subscriptionState values, lineItems[].expiryTime)
 //   - the acknowledgement requirement (purchases.subscriptions must be
 //     acknowledged within 3 days or Play auto-refunds)
-//   - id_token `aud` pinning once GOOGLE_CLIENT_ID is provisioned
 
 import { b64ToBytes, b64urlToBytes, b64urlToJsonObject, bytesToB64url, jsonToB64url, utf8 } from './encoding';
 import type { GoogleSubscription } from './logic';
@@ -23,8 +22,9 @@ export interface GoogleConfig {
   /** Service-account private key: PEM ("-----BEGIN PRIVATE KEY-----") or bare base64 PKCS#8. */
   saKey: string;
   packageName: string;
-  /** Optional: pin id_token aud to the app's OAuth client id. */
-  clientId?: string;
+  /** The app's Web OAuth client id. Required: id_token `aud` is pinned to it,
+   * and an absent value fails verification rather than skipping the check. */
+  clientId: string;
   fetcher?: typeof fetch;
   now?: () => number;
 }
@@ -85,7 +85,12 @@ export function createGoogle(cfg: GoogleConfig): {
       if (iss !== 'https://accounts.google.com' && iss !== 'accounts.google.com') return null;
       const exp = claims['exp'];
       if (typeof exp !== 'number' || exp <= now()) return null;
-      if (cfg.clientId && claims['aud'] !== cfg.clientId) return null;
+      // Audience pinning is unconditional. Guarding this on `cfg.clientId`
+      // being set would mean a deleted/renamed GOOGLE_CLIENT_ID silently
+      // removes an authentication check instead of breaking loudly — the
+      // token would then only have to be *some* Google id_token, not one
+      // issued to this app (OIDC token substitution).
+      if (!cfg.clientId || claims['aud'] !== cfg.clientId) return null;
       const sub = claims['sub'];
       if (typeof sub !== 'string' || sub.length === 0) return null;
       return { sub };

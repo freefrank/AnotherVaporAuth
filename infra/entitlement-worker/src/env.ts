@@ -15,8 +15,13 @@ export interface Env {
   GOOGLE_SA_EMAIL: string;
   /** Play service-account private key (PEM or bare base64 PKCS#8). */
   GOOGLE_SA_KEY: string;
-  /** e.g. app.ava.authenticator */
+  /** e.g. pro.dotslash.ava */
   PLAY_PACKAGE_NAME: string;
-  /** Optional: pin Google id_token `aud` to the app's OAuth client id. */
-  GOOGLE_CLIENT_ID?: string;
+  /** The app's Web OAuth client id. Required — Google id_token `aud` is
+   * pinned to it, and verification fails outright when it is unset. */
+  GOOGLE_CLIENT_ID: string;
+
+  /** Per-IP brake on the secret-guessing redeem endpoints (wrangler.jsonc
+   * `ratelimits`). */
+  REDEEM_LIMITER?: RateLimit;
 }

@@ -68,13 +68,13 @@ function makeFetcher(jwk: JsonWebKey, backend: FakeBackend) {
   return { fetcher, calls };
 }
 
-async function makeGoogle(backend: FakeBackend = {}, clientId?: string) {
+async function makeGoogle(backend: FakeBackend = {}, clientId = 'client-1') {
   const rsa = await makeRsa();
   const { fetcher, calls } = makeFetcher(rsa.jwk, backend);
   const google = createGoogle({
     saEmail: 'sa@example.iam.gserviceaccount.com',
     saKey: `-----BEGIN PRIVATE KEY-----\n${rsa.pkcs8Base64}\n-----END PRIVATE KEY-----\n`,
-    packageName: 'app.ava.authenticator',
+    packageName: 'pro.dotslash.ava',
     clientId,
     fetcher,
     now: () => NOW,
@@ -103,6 +103,14 @@ describe('verifyIdToken', () => {
     const [h, , s] = good.split('.');
     const forged = `${h}.${jsonToB64url({ ...ID_CLAIMS, sub: 'attacker' })}.${s}`;
     expect(await google.verifyIdToken(forged)).toBeNull();
+  });
+
+  it('fails closed when clientId is unset — never skips the aud check', async () => {
+    // A dropped/renamed GOOGLE_CLIENT_ID must break loudly, not quietly turn
+    // audience pinning off and accept any Google-issued id_token.
+    const { google, rsa } = await makeGoogle({}, '');
+    const token = await signJwt(rsa.kp, { alg: 'RS256', kid: 'kid-1' }, ID_CLAIMS);
+    expect(await google.verifyIdToken(token)).toBeNull();
   });
 });
 

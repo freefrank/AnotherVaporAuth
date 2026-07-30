@@ -60,6 +60,12 @@ export interface Deps {
     /** True if this SSV transaction_id was already processed; marks it otherwise. */
     seenTransaction(id: string): Promise<boolean>;
   };
+  rateLimit: {
+    /** False when `key` has spent its attempt budget for the current window.
+     * Applied by the router to the endpoints that consume a *guessable*
+     * secret (see RATE_LIMITED there). */
+    allow(key: string): Promise<boolean>;
+  };
   /** Epoch seconds. */
   now(): number;
 }

@@ -68,6 +68,49 @@ describe('router', () => {
     expect(await res.json()).toEqual({ error: 'invalid_token' });
   });
 
+  it('429s the redeem endpoints once the per-IP budget is spent', async () => {
+    const keys: string[] = [];
+    const { deps } = await setup({
+      rateLimit: {
+        allow: async (k) => {
+          keys.push(k);
+          return false;
+        },
+      },
+    });
+    for (const path of ['/v1/beta/redeem', '/v1/afdian/redeem']) {
+      const res = await route(post(path, { code: 'AVA-BETA-00000000' }), deps);
+      expect(res.status).toBe(429);
+      expect(await res.json()).toEqual({ error: 'rate_limited' });
+    }
+    expect(keys).toEqual(['redeem:unknown', 'redeem:unknown']);
+  });
+
+  it('keys the redeem limit on the client IP, and leaves token endpoints alone', async () => {
+    const keys: string[] = [];
+    const { deps } = await setup({
+      rateLimit: {
+        allow: async (k) => {
+          keys.push(k);
+          return true;
+        },
+      },
+    });
+    const withIp = (path: string) =>
+      new Request(`https://w.example${path}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.7' },
+        body: JSON.stringify({ code: 'AVA-BETA-00000000' }),
+      }) as unknown as Request;
+
+    await route(withIp('/v1/beta/redeem'), deps);
+    expect(keys).toEqual(['redeem:203.0.113.7']);
+
+    // A signature-bearing endpoint is not guessable, so it is not throttled.
+    await route(withIp('/v1/token/refresh'), deps);
+    expect(keys).toEqual(['redeem:203.0.113.7']);
+  });
+
   it('serves GET /v1/admob/ssv with an empty 200 body', async () => {
     const { deps } = await setup();
     const res = await route(

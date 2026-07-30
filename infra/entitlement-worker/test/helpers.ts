@@ -195,6 +195,8 @@ export async function setup(overrides: Partial<Deps> = {}): Promise<TestContext>
         return false;
       },
     },
+    // Permissive by default; the router test overrides it to assert the 429.
+    rateLimit: { allow: async () => true },
     now: () => clock.t,
     ...overrides,
   };

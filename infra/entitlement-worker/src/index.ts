@@ -62,6 +62,21 @@ function buildDeps(env: Env): Deps {
         return false;
       },
     },
+    rateLimit: {
+      async allow(key: string): Promise<boolean> {
+        // Unlike the aud check in google.ts, this one fails OPEN when the
+        // binding is missing: a broken limiter must not lock paying users
+        // out of redeeming. The trade-off is deliberate — losing a brake
+        // costs abuse, losing an auth check costs correctness — so shout
+        // about it in the log instead of degrading silently.
+        if (!env.REDEEM_LIMITER) {
+          console.error('REDEEM_LIMITER binding missing — redeem endpoints unthrottled');
+          return true;
+        }
+        const { success } = await env.REDEEM_LIMITER.limit({ key });
+        return success;
+      },
+    },
     now,
   };
   return cachedDeps;
