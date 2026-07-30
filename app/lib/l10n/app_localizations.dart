@@ -326,6 +326,18 @@ abstract class AppLocalizations {
   /// **'Vibration ticks while holding to confirm and on completion.'**
   String get settingsHapticsDesc;
 
+  /// No description provided for @settingsBlockScreenshots.
+  ///
+  /// In en, this message translates to:
+  /// **'Block screenshots'**
+  String get settingsBlockScreenshots;
+
+  /// No description provided for @settingsBlockScreenshotsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Hides AVA from screenshots, screen recording and the recent-apps preview. Also blanks the window during screen sharing, and stops you attaching screenshots to feedback.'**
+  String get settingsBlockScreenshotsDesc;
+
   /// No description provided for @passkeyLabel.
   ///
   /// In en, this message translates to:
@@ -2767,6 +2779,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This code has switched devices too often recently. Try again later, or email hi@dotslash.pro.'**
   String get proErrCodeActivationLimit;
+
+  /// No description provided for @proErrRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Wait a minute and try again.'**
+  String get proErrRateLimited;
 
   /// No description provided for @proErrSlotOccupied.
   ///

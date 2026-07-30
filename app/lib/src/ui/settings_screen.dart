@@ -9,6 +9,7 @@ import '../app/theme.dart';
 import '../core/entitlement.dart';
 import '../services/feedback_service.dart';
 import '../services/debug_log.dart';
+import '../services/screen_security.dart';
 import 'debug_log_screen.dart';
 import 'paywall_screen.dart';
 import 'widgets/pin_field.dart';
@@ -92,6 +93,19 @@ class SettingsScreen extends ConsumerWidget {
                         ref.read(hapticsProvider.notifier).set(v),
                   ),
                 ),
+                // Block screenshots / screen recording (Android FLAG_SECURE).
+                // Off by default and hidden where the platform can't honour
+                // it — showing a dead switch is worse than showing none.
+                if (ScreenSecurity.supported)
+                  _Card(
+                    title: l.settingsBlockScreenshots,
+                    description: l.settingsBlockScreenshotsDesc,
+                    trailing: Switch(
+                      value: ref.watch(blockScreenshotsProvider),
+                      onChanged: (v) =>
+                          ref.read(blockScreenshotsProvider.notifier).set(v),
+                    ),
+                  ),
                 // Auto-confirm. Only the market-listing default is wired up —
                 // the legacy SDA "periodic checking / check all / auto-confirm
                 // trades" toggles were file-format fields with no behaviour in

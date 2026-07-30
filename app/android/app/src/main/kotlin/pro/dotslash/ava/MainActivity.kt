@@ -3,6 +3,7 @@ package pro.dotslash.ava
 import android.os.Build
 import android.view.RoundedCorner
 import android.view.WindowInsets
+import android.view.WindowManager
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -23,6 +24,30 @@ class MainActivity : FlutterFragmentActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "bottomCornerRadius" -> result.success(bottomCornerRadiusPx())
+                    else -> result.notImplemented()
+                }
+            }
+        // FLAG_SECURE, driven by the opt-in "block screenshots" setting.
+        // Off by default: it also blacks out the window for legitimate
+        // screen sharing and for the screenshots users attach to feedback,
+        // so it is the user's call, not ours. Pure AOSP API.
+        //
+        // The flag lives on the window and resets when the activity is
+        // recreated; Dart re-applies it on startup. The brief gap before
+        // that exposes nothing — the vault is locked at launch, so the
+        // first frames are the unlock screen, never a code.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ava/screen_security")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "setSecure" -> {
+                        val on = call.argument<Boolean>("enabled") ?: false
+                        if (on) {
+                            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                        } else {
+                            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                        }
+                        result.success(null)
+                    }
                     else -> result.notImplemented()
                 }
             }

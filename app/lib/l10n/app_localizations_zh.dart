@@ -128,6 +128,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsHapticsDesc => '长按确认过程中与完成时的触觉反馈。';
 
   @override
+  String get settingsBlockScreenshots => '禁止截屏';
+
+  @override
+  String get settingsBlockScreenshotsDesc =>
+      '让 AVA 不出现在截屏、录屏和最近任务预览里。代价是投屏时窗口会变黑，也没法再截图附到反馈里。';
+
+  @override
   String get passkeyLabel => '口令';
 
   @override
@@ -1457,6 +1464,9 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get proErrCodeActivationLimit =>
       '该激活码近期更换设备过于频繁，请稍后再试，或联系 hi@dotslash.pro。';
+
+  @override
+  String get proErrRateLimited => '尝试次数过多，请稍等一分钟再试。';
 
   @override
   String proErrSlotOccupied(Object slots) {

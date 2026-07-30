@@ -235,6 +235,7 @@ void main() {
       'code_invalid',
       'code_redeemed',
       'code_activation_limit',
+      'rate_limited',
       'revoked',
       'entitlement_ended',
       'subscription_invalid',
@@ -250,6 +251,7 @@ void main() {
       'code_invalid',
       'code_redeemed',
       'code_activation_limit',
+      'rate_limited',
       'revoked',
       'entitlement_ended',
       'order_invalid',
@@ -275,6 +277,8 @@ void main() {
       expect(paywallErrorText(en, 'code_redeemed'), en.proErrCodeRedeemed);
       expect(paywallErrorText(en, 'code_activation_limit'),
           en.proErrCodeActivationLimit);
+      // The router's per-IP 429 — must read as "slow down", not as a bad code.
+      expect(paywallErrorText(en, 'rate_limited'), en.proErrRateLimited);
     });
 
     test('order_invalid (the code the worker actually emits) is not generic',

@@ -261,4 +261,12 @@ class SettingsStore {
 
   Future<void> saveHaptics(bool enabled) =>
       _update((data) => data['haptics'] = enabled);
+
+  /// 阻止截屏/录屏开关（Android FLAG_SECURE，**默认关**）。
+  /// 与上面几个「默认开」的开关相反：缺省即 false，所以用 `== true`。
+  Future<bool> loadBlockScreenshots() async =>
+      (await _read())['block_screenshots'] == true;
+
+  Future<void> saveBlockScreenshots(bool enabled) =>
+      _update((data) => data['block_screenshots'] = enabled);
 }

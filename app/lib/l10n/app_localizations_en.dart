@@ -132,6 +132,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Vibration ticks while holding to confirm and on completion.';
 
   @override
+  String get settingsBlockScreenshots => 'Block screenshots';
+
+  @override
+  String get settingsBlockScreenshotsDesc =>
+      'Hides AVA from screenshots, screen recording and the recent-apps preview. Also blanks the window during screen sharing, and stops you attaching screenshots to feedback.';
+
+  @override
   String get passkeyLabel => 'Passkey';
 
   @override
@@ -1520,6 +1527,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get proErrCodeActivationLimit =>
       'This code has switched devices too often recently. Try again later, or email hi@dotslash.pro.';
+
+  @override
+  String get proErrRateLimited =>
+      'Too many attempts. Wait a minute and try again.';
 
   @override
   String proErrSlotOccupied(Object slots) {

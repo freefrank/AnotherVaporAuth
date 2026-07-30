@@ -42,6 +42,8 @@
   "settingsHoldConfirmDesc": "不可逆的接受类操作（交易、确认）需长按生效；关闭后单击立即生效，批量操作仍会弹窗确认。",
   "settingsHaptics": "震动反馈",
   "settingsHapticsDesc": "长按确认过程中与完成时的触觉反馈。",
+  "settingsBlockScreenshots": "禁止截屏",
+  "settingsBlockScreenshotsDesc": "让 AVA 不出现在截屏、录屏和最近任务预览里。代价是投屏时窗口会变黑，也没法再截图附到反馈里。",
   "passkeyLabel": "口令",
 
   "accountsEmpty": "暂无账户。导入 maFile 或登录以添加。",
@@ -528,6 +530,7 @@
   "proErrCodeInvalid": "激活码无效，请检查是否输错。",
   "proErrCodeRedeemed": "该激活码已在另一台设备上激活。如需换机使用，请发邮件至 hi@dotslash.pro。",
   "proErrCodeActivationLimit": "该激活码近期更换设备过于频繁，请稍后再试，或联系 hi@dotslash.pro。",
+  "proErrRateLimited": "尝试次数过多，请稍等一分钟再试。",
   "proErrSlotOccupied": "占用中：{slots}",
   "@proErrSlotOccupied": { "placeholders": { "slots": {} } },
   "proSlotEntry": "{name}（{time}）",

@@ -28,6 +28,7 @@ import '../services/debug_log.dart';
 import '../services/entitlement_store.dart';
 import '../services/play_channel.dart';
 import '../services/pro_actions.dart';
+import '../services/screen_security.dart';
 import '../services/session_manager.dart';
 import '../services/steam_api_client.dart';
 import '../services/steam_time.dart';
@@ -454,6 +455,32 @@ final hapticsProvider =
 class HapticsController extends PersistedSettingController<bool> {
   HapticsController()
       : super(true, (s) => s.loadHaptics(), (s, v) => s.saveHaptics(v));
+}
+
+/// 阻止截屏/录屏（Android FLAG_SECURE，**默认关**）。
+final blockScreenshotsProvider = NotifierProvider<BlockScreenshotsController,
+    bool>(BlockScreenshotsController.new);
+
+class BlockScreenshotsController extends PersistedSettingController<bool> {
+  BlockScreenshotsController()
+      : super(
+          kScreenSecurityDefault,
+          (s) => s.loadBlockScreenshots(),
+          (s, v) => s.saveBlockScreenshots(v),
+        );
+
+  @override
+  bool build() {
+    final initial = super.build();
+    // Covers both transitions that matter: the async load settling on a
+    // stored `true`, and the user flipping the switch.
+    listenSelf((_, next) => ScreenSecurity.apply(next));
+    // listenSelf only fires on *changes*, so push the starting value too —
+    // a recreated activity comes back with a fresh window whose flag is
+    // clear, and the notifier may already be holding the user's choice.
+    ScreenSecurity.apply(initial);
+    return initial;
+  }
 }
 
 /// The installed app version (from the platform package info).

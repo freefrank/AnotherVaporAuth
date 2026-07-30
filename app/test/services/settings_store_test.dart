@@ -46,6 +46,24 @@ void main() {
     }
   });
 
+  test('block-screenshots defaults to FALSE and persists', () async {
+    // The odd one out among the switches: an absent key must read as off, so
+    // this asserts the `== true` reading rather than the `!= false` one the
+    // neighbouring settings use. Getting that backwards would silently black
+    // out screen sharing for every existing install on upgrade.
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      final store = SettingsStore(_TmpStorage(tmp.path));
+      expect(await store.loadBlockScreenshots(), isFalse);
+      await store.saveBlockScreenshots(true);
+      expect(await store.loadBlockScreenshots(), isTrue);
+      await store.saveBlockScreenshots(false);
+      expect(await store.loadBlockScreenshots(), isFalse);
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
+
   test('concurrent saves of different keys do not lose updates', () async {
     final tmp = await Directory.systemTemp.createTemp('ava_settings');
     try {

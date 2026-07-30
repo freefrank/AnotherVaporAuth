@@ -34,6 +34,8 @@ String paywallErrorText(AppLocalizations l, String code) => switch (code) {
       // Pre per-class-slot workers only; kept for rollout overlap.
       'code_redeemed' => l.proErrCodeRedeemed,
       'code_activation_limit' => l.proErrCodeActivationLimit,
+      // The worker's per-IP brake on the redeem endpoints (HTTP 429).
+      'rate_limited' => l.proErrRateLimited,
       'revoked' || 'entitlement_ended' => l.proErrRevoked,
       _ => l.proErrGeneric(code),
     };
