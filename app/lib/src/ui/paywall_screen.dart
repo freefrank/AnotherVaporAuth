@@ -189,7 +189,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       appBar: AppBar(title: Text(l.paywallTitle)),
       body: SafeArea(
         child: ListView(
-          padding: context.rInsets(h: 16, v: 12),
+          padding: context.rSafeInsets(h: 16, v: 12),
           children: [
             _card(context, t,
                 title: _statusLine(l),

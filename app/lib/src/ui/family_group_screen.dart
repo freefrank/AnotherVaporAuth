@@ -236,7 +236,7 @@ class _FamilyGroupScreenState extends ConsumerState<FamilyGroupScreen>
     final holdEnabled = ref.watch(holdConfirmProvider);
     final hapticsEnabled = ref.watch(hapticsProvider);
     return ListView(
-      padding: context.rInsets(all: 16),
+      padding: context.rSafeInsets(all: 16),
       children: [
         if (invites.isNotEmpty) ...[
           Text(l.famInvitesSection.toUpperCase(),

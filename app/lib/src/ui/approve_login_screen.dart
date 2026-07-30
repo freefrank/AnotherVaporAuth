@@ -244,7 +244,7 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: SingleChildScrollView(
-            padding: context.rInsets(all: 24),
+            padding: context.rSafeInsets(all: 24),
             child: AvaPanel(
               padding: context.rInsets(all: 20),
               child: Column(

@@ -335,7 +335,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
     final footer = _moreItems || _loadingItems;
     return GridView.builder(
       controller: _scroll,
-      padding: context.rInsets(all: 12),
+      padding: context.rSafeInsets(all: 12),
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: context.r(110),
         mainAxisSpacing: context.r(10),
@@ -522,7 +522,7 @@ class _MyListingsTabState extends ConsumerState<_MyListingsTab> {
         return RefreshIndicator(
           onRefresh: () async => _refresh(),
           child: ListView.separated(
-            padding: context.rInsets(all: 12),
+            padding: context.rSafeInsets(all: 12),
             itemCount: listings.length,
             separatorBuilder: (_, _) => Divider(color: t.line, height: context.r(1)),
             itemBuilder: (context, i) {

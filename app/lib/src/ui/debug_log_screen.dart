@@ -47,7 +47,7 @@ class DebugLogScreen extends StatelessWidget {
           }
           return ListView.builder(
             reverse: true,
-            padding: context.rInsets(all: 12),
+            padding: context.rSafeInsets(all: 12),
             itemCount: lines.length,
             itemBuilder: (context, i) {
               final line = lines[lines.length - 1 - i];

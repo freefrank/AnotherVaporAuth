@@ -110,7 +110,7 @@ class _DeviceSessionsScreenState extends ConsumerState<DeviceSessionsScreen>
       );
     }
     return ListView(
-      padding: context.rInsets(all: 16),
+      padding: context.rSafeInsets(all: 16),
       children: [
         for (final d in list.devices)
           Padding(

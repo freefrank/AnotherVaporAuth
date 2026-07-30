@@ -296,7 +296,7 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
     final hapticsEnabled = ref.watch(hapticsProvider);
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: context.rInsets(left: 16, top: 8, right: 16, bottom: 16),
+      padding: context.rSafeInsets(left: 16, top: 8, right: 16, bottom: 16),
       itemCount: offers.length,
       itemBuilder: (context, i) {
         final offer = offers[i];

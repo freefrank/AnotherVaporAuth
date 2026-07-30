@@ -245,7 +245,7 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
         Expanded(
           child: ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: context.rInsets(left: 16, top: 4, right: 16, bottom: 16),
+            padding: context.rSafeInsets(left: 16, top: 4, right: 16, bottom: 16),
             itemCount: confs.length,
             itemBuilder: (context, i) => _ConfCard(
               key: ValueKey(confs[i].id),

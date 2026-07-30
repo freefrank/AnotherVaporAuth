@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../services/account_store.dart';
+import 'screen_corners.dart';
 import '../ui/home_screen.dart';
 import '../ui/move_in_rescue_screen.dart';
 import '../ui/privacy_consent_screen.dart';
@@ -86,7 +87,12 @@ class _AvaAppState extends ConsumerState<AvaApp> with WidgetsBindingObserver {
           data: mq.copyWith(
               textScaler: applyTextSize(mq.textScaler, textSize)),
           child: _SteamLanguageSync(
-            child: _Backdrop(child: child ?? const SizedBox()),
+            // Publishes the display's corner radius to every screen below —
+            // MediaQuery has no field for it, and it decides how far
+            // bottom-edge content has to stay clear of the physical corner.
+            child: ScreenCornersScope(
+              child: _Backdrop(child: child ?? const SizedBox()),
+            ),
           ),
         );
       },

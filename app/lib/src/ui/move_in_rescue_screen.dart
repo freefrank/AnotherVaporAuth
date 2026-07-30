@@ -65,7 +65,7 @@ class MoveInRescueScreen extends ConsumerWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: SingleChildScrollView(
-              padding: context.rInsets(all: 24),
+              padding: context.rSafeInsets(all: 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,

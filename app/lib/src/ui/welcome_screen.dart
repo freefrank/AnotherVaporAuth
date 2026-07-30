@@ -28,7 +28,7 @@ class WelcomeScreen extends ConsumerWidget {
             const Positioned.fill(child: SkinAmbient()),
             Center(
               child: SingleChildScrollView(
-                padding: context.rInsets(all: 28),
+                padding: context.rSafeInsets(all: 28),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 460),
                   child: Column(

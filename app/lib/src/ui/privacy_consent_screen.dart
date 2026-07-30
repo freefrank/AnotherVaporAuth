@@ -29,7 +29,7 @@ class PrivacyConsentScreen extends ConsumerWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: SingleChildScrollView(
-              padding: context.rInsets(all: 28),
+              padding: context.rSafeInsets(all: 28),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
