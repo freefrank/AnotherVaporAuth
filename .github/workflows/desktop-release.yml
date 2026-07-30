@@ -94,13 +94,27 @@ jobs:
         id: notes
         shell: bash
         working-directory: .
+        env:
+          # Match the version read from pubspec, NOT the tag. Tags are
+          # v<MAJOR.MINOR> (v1.0) while CHANGELOG headings carry the full
+          # version (## [v1.0.0]), so "## [" + tag + "]" matched nothing and
+          # fell through to the bare-tag fallback. v0.84 / v0.92 / v0.94 /
+          # v1.0 all shipped with an empty "Release vX" body because of it;
+          # v0.80.1 looked fine only because that tag happened to be
+          # three-part.
+          CHANGELOG_VERSION: v${{ steps.ver.outputs.v }}
         run: |
-          awk -v ver="$GITHUB_REF_NAME" '
+          awk -v ver="$CHANGELOG_VERSION" '
             index($0, "## [" ver "]")==1 {p=1; print; next}
             /^## \[/ {p=0}
             p {print}
           ' CHANGELOG.md > "$RUNNER_TEMP/RELEASE_NOTES.md"
-          [ -s "$RUNNER_TEMP/RELEASE_NOTES.md" ] || echo "Release $GITHUB_REF_NAME" > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          if [ ! -s "$RUNNER_TEMP/RELEASE_NOTES.md" ]; then
+            # Keep the fallback, but never let it be invisible again: four
+            # releases went out with useless notes and nothing said so.
+            echo "::warning::CHANGELOG.md has no '## [$CHANGELOG_VERSION]' section — release notes fall back to the bare tag name."
+            echo "Release $GITHUB_REF_NAME" > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          fi
           echo "path=$RUNNER_TEMP/RELEASE_NOTES.md" >> "$GITHUB_OUTPUT"
 
       - name: Attach to release
@@ -171,13 +185,27 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         id: notes
         working-directory: .
+        env:
+          # Match the version read from pubspec, NOT the tag. Tags are
+          # v<MAJOR.MINOR> (v1.0) while CHANGELOG headings carry the full
+          # version (## [v1.0.0]), so "## [" + tag + "]" matched nothing and
+          # fell through to the bare-tag fallback. v0.84 / v0.92 / v0.94 /
+          # v1.0 all shipped with an empty "Release vX" body because of it;
+          # v0.80.1 looked fine only because that tag happened to be
+          # three-part.
+          CHANGELOG_VERSION: v${{ steps.ver.outputs.v }}
         run: |
-          awk -v ver="$GITHUB_REF_NAME" '
+          awk -v ver="$CHANGELOG_VERSION" '
             index($0, "## [" ver "]")==1 {p=1; print; next}
             /^## \[/ {p=0}
             p {print}
           ' CHANGELOG.md > "$RUNNER_TEMP/RELEASE_NOTES.md"
-          [ -s "$RUNNER_TEMP/RELEASE_NOTES.md" ] || echo "Release $GITHUB_REF_NAME" > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          if [ ! -s "$RUNNER_TEMP/RELEASE_NOTES.md" ]; then
+            # Keep the fallback, but never let it be invisible again: four
+            # releases went out with useless notes and nothing said so.
+            echo "::warning::CHANGELOG.md has no '## [$CHANGELOG_VERSION]' section — release notes fall back to the bare tag name."
+            echo "Release $GITHUB_REF_NAME" > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          fi
           echo "path=$RUNNER_TEMP/RELEASE_NOTES.md" >> "$GITHUB_OUTPUT"
 
       - name: Attach to release
