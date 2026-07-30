@@ -16,8 +16,10 @@ lib/src/
     crypto/             # MaFileCrypto (PBKDF2+AES-CBC), SteamRsa
     proto/              # minimal protobuf wire codec
     models/             # SteamGuardAccount, SessionData, Manifest, Confirmation
-    protocol/           # SteamAuthSession, ConfirmationsClient,
-                        #   AuthenticatorLinker, QrApprovalClient
+    protocol/           # 10 Steam clients — SteamAuthSession, Confirmations,
+                        #   AuthenticatorLinker, QrApproval, TradeOffers,
+                        #   Market, Inventory, FamilyGroups, Sessions, StoreKey
+                        #   (+ eresult / community_session: shared helpers)
     steam_totp.dart     # auth code + confirmation hash
   services/             # StorageProvider, AccountStore, SteamApiClient,
                         #   SteamTime, SessionManager
@@ -26,7 +28,7 @@ lib/src/
 l10n/                   # ARB localizations (en, zh)
 ```
 
-## Status (0.92.0)
+## Status (0.93.6)
 
 Implemented and statically verified end-to-end:
 
@@ -49,12 +51,17 @@ Implemented and statically verified end-to-end:
 - **QR approve** external sign-ins (direction B; scan on mobile / paste on desktop)
 - **Device sessions** — list every signed-in device/browser and remotely sign one
   out (`IAuthenticationService/EnumerateTokens` + `RevokeRefreshToken`)
+- **Redeem Steam product keys** — the store's own `/account/ajaxregisterkey/`
+  (there is no Web API equivalent; see `docs/specs/2026-07-27-redeem-key-design.md`),
+  with `EPurchaseResultDetail` mapped to per-reason copy. **Success path verified
+  on a live account** (2026-07-29); the individual rejection codes and the
+  receipt's field spelling are still unconfirmed
 - **AVA Pro** — channel split (`play` / `cn` flavors), Ed25519 entitlement tokens
   verified offline, paywalled skins, AdMob banner + rewarded VIP (play only)
 - i18n (English + 简体中文 — two ARBs; `zh_TW`/`zh_HK` fall back to the
   simplified strings), system or manual language
 
-Verification: `flutter analyze` clean, **545 tests pass** (crypto RFC vectors,
+Verification: `flutter analyze` clean, **588 tests pass** (crypto RFC vectors,
 TOTP/confirmation cross-impl vectors, protobuf round-trip incl. family-groups
 codec, trade-offer/model JSON, hold-button haptics, AccountStore end-to-end,
 entitlement signature/grace/clock-skew, sessions-client revoke HMAC vectors,
@@ -78,8 +85,8 @@ Both **Linux desktop and Android release builds are verified**:
   armeabi-v7a 21.7 MB, x86_64 28.3 MB. No NDK required.
 
 ```sh
-flutter pub get
-flutter test                       # 545 tests
+flutter pub get --enforce-lockfile
+flutter test                       # 588 tests
 flutter build linux --release      # build/linux/x64/release/bundle (~27MB)
 flutter run -d linux               # or windows / macos
 

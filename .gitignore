@@ -390,3 +390,6 @@ skills-lock.json
 # debug manifest never reaches the repo. Must re-include the directory itself:
 # git cannot re-include a file whose parent directory is excluded.
 !app/android/app/src/debug/
+
+# wrangler's local state/cache (created by `wrangler tail`/`dev`, per worker dir).
+.wrangler/

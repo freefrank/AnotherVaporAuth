@@ -25,7 +25,7 @@
 
 - **唯一工作树:`~/sync/Git/AnotherVaporAuth`**(主机 `claude`)。不再有 WSL
   原生盘正本,也不再有 Windows 侧 ownCloud 镜像——开发、`flutter analyze/test/build`
-  全在这里做(冷启动 analyze ~57s / test 545 例 ~50s)。
+  全在这里做(冷启动 analyze ~57s / test 588 例 ~60s)。
 - `~/sync` 是 ZFS 数据集(`stor/backup/freefrank/syncthing`)上的 **Syncthing
   folder**,同步守护进程在宿主机侧,本机看不到进程。跨机分发由它自动完成,
   **不需要手工 rsync**。
@@ -59,8 +59,23 @@
     (预览付费皮肤);该 define 双重防呆(release/测试都不传 + `kDebugMode` 编译期
     为假),绝不会漏进发布版或干扰门控测试。
 - 不带 `--flavor` 的 Android 构建会直接失败;`flutter test/analyze` 与桌面
-  构建不受影响。cn 包绝不允许包含 ads/billing/GMS 依赖(发布前用
-  `apkanalyzer` 验收)。
+  构建不受影响。
+- **cn 包绝不允许包含 ads / billing 依赖**;**GMS 类是允许的**(2026-07-27
+  确认:国行机型普遍集成 GMS)。原条文写的是「ads/billing/GMS 一律不许」,
+  但 cn 包里那 700 多个 `com.google.android.gms.*` 里 93% 来自 `mobile_scanner`
+  打包的 ML Kit 条码识别(`mlkit_vision_barcode_bundled`,扫 Steam 登录二维码
+  用,本地识别),自 0.92 及更早就在,不是回归。要挡的是变现组件,不是 GMS 本身。
+- **验收必须用 `apkanalyzer dex packages`,不能扫 zip 条目名**:release APK 的
+  类全在 `classes*.dex` 里,按条目名 grep `com/google/android/gms` 恒为 0——
+  那不是「干净」,那是这个检查从原理上就看不见类。2026-07-27 就这么误报过一次。
+
+  ```sh
+  AK=~/Android/Sdk/cmdline-tools/latest/bin/apkanalyzer
+  $AK dex packages --defined-only dist/<包>.apk | awk '$1=="P"' \
+    | grep -Ei "\.ads|admob|billing|com\.android\.vending"   # 必须为空
+  $AK manifest print dist/<包>.apk | grep -E "versionName|versionCode|package="
+  ~/Android/Sdk/build-tools/*/apksigner verify --print-certs -v dist/<包>.apk
+  ```
 
 ## 文档位置
 
@@ -78,6 +93,14 @@
   密码，`.env` 要同步改。该文件自己也记着"搭建期密码应轮换"。
 - 需要密码时从上述文件**管道取用**（`PASS=$(...)` → `SMTP_PASS="$PASS" cmd`），
   不打印明文、不写进对话。
+- **发信失败先查证书，别先怀疑密码**。发内测码（`send_beta_codes.py`）与应用内
+  反馈（`infra/feedback-worker`）都经 `mx.deployr.ca:588` + STARTTLS。2026-07-29
+  该主机的 Let's Encrypt 证书到期未续，严格校验的客户端（Cloudflare Workers）
+  握手直接失败，worker 回 502 `send failed`——**根本走不到 AUTH**，与密码无关。
+  同一张证书还覆盖 `mail.deployr.ca` / `mail.dotslash.pro` / `mail.freshes.ca`
+  的 588 与 993，故障面是整套邮件服务；证书与密码均以 `~/sync/Deployr/mailserver/`
+  为正本。**`openssl s_client` 默认既不校验主机名、也不因过期中断**——它能跑通
+  AUTH 并不证明证书有效，查有效期须加 `-verify_return_error -verify_hostname <host>`。
 
 ## 内测激活码（beta redeem）
 
@@ -102,7 +125,9 @@
   部署真机只用 `flutter run` 或 `adb -s <设备> install -r`。
 - 用户折叠屏(192.168.1.83)装有**真实 Steam 账户数据**:
   无线调试端口每次重开都会轮换——**每次真机操作前问用户当前端口**,不要复用旧值;
-  任何 adb 命令必须显式 `-s` 指定设备;绝不卸载旧包 `app.ava.authenticator`;
+  任何 adb 命令必须显式 `-s` 指定设备;**绝不卸载 `pro.dotslash.ava`**
+  (2026-07-28 修正:此处原写 `app.ava.authenticator`,那个包名在本仓库
+  查无出处——一条指向不存在的包的护栏等于没有护栏);
   绝不在真机确认页点击接受/拒绝(含报价长按接受、家庭组长按加入等一切写操作)。
 - 签名密钥:构建用的工作副本是 `~/ava-upload.jks`(`key.properties` 的
   `storeFile` 写死这条绝对路径),**正本/备份是 `~/sync/ava-upload.jks`**
@@ -119,8 +144,25 @@
   循环。桌面图标跟随皮肤的功能因此于 0.90.1 整体下线,回归须找到运行中
   零组件写入的方案;新增会自动初始化的依赖(如 WorkManager)要检查其
   启动期组件写入行为。
+- **新加滚动视图一律用 `context.rSafeInsets(...)`,不要用 `rInsets`**:
+  targetSdk 是 36,Android 15 起强制边到边,Android 16 **忽略
+  `windowOptOutEdgeToEdgeEnforcement`**——退不回去。Flutter 只在
+  `BoxScrollView.padding` 为 **null** 时才自动补系统栏 inset,一旦传了显式
+  padding(本项目每处都传)就静默失效,内容会钻到状态栏/手势条底下。
+  `rSafeInsets` 会自适配:有 AppBar 时 Scaffold 已摘掉 top,它自动退化成只补
+  底部;它同时会避开**屏幕圆角**——Flutter 的 MediaQuery **没有任何字段**描述圆角
+  半径(padding/viewPadding/systemGestureInsets 都只管系统栏与挖孔),AVA 通过
+  `ava/display` 通道读 Android 的 `WindowInsets.getRoundedCorner()`(API 31+,
+  低版本与桌面回落 0),见 `lib/src/app/screen_corners.dart`。圆角与系统 inset
+  取 **max 不是相加**——手势条那 24dp 本就落在圆角弧线扫过的高度里。
+  Scaffold 自己定位的组件(FAB)用 `context.cornerOvershoot`,因为
+  `FloatingActionButtonLocation` 已经抬过 `minViewPadding.bottom` 了。2026-07-28 一次性修了 18 处(其中一处是 `ListView.separated`,
+  第一轮 grep 只匹配了 `ListView(`/`ListView.builder(` 而漏掉,由 doc-audit 抓出)。
 - 模拟器测试用官方 AVD `ava_test`(emulator-5554),数据可随意处置;
-  mock 账户 PIN 123456。
+  mock 账户 PIN 123456。**但本机(`claude`)当前没有模拟器**——`~/Android/Sdk/`
+  没装 `emulator` 组件,`~/.android/avd/` 不存在(2026-07-26 单工作树迁移的
+  残留)。要用得先 `sdkmanager` 装 emulator + system-image 再建 AVD;在此之前
+  UI 改动只能靠真机 dev 包验证。
 - **折叠屏上的 AVA 是 Play 版,本地构建永远装不上去**:Play App Signing 用
   Google 持有的密钥重签名,本地只有 upload key,`install -r` 必然
   `INSTALL_FAILED_UPDATE_INCOMPATIBLE`,唯一"解法"是卸载=清空真实 maFiles。

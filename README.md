@@ -40,8 +40,10 @@
   awaiting a decision: **Confirmations** (trade / market, batch accept/reject, native
   JSON, no WebView), **Trade offers** (received / sent / history, expandable cards
   with both sides' items, gift / one-sided / escrow banners, accept then hand off to
-  the matching mobileconf), and **Invites** (Steam Family invites with pre-join checks;
-  read-only family group page from the account menu). *(family flow is experimental)*
+  the matching mobileconf).
+- **Steam Family groups** — a read-only group page (members, roles, slots, cooldown)
+  from an account's menu, where incoming invites also live: pre-join checks first,
+  then hold-to-join. *(experimental)*
 - **Hold-to-confirm** — every irreversible accept (a trade offer, a confirmation, a
   family join) is one press-and-hold with accelerating haptics; toggle it and the
   haptics off in Settings.
@@ -63,8 +65,14 @@
   frame's offset / blend / dispose, so offset-based frames don't flicker).
 - **Appearance & skins** — a plain **Light / Dark / follow-system** appearance,
   and separately a **skin** layer (None / Neon cyberpunk / Pixel retro), each
-  skin a data-driven effect pack with its own ambience and pull-to-refresh; on
-  Android the launcher icon follows the active skin.
+  skin a data-driven effect pack with its own ambience and pull-to-refresh.
+- **Device management** — see every device and browser session signed into an
+  account (platform, rough location, last activity) and sign any of them out
+  remotely. The current device is marked and can't sign itself out.
+- **Redeem Steam keys** — activate a product key on an account from its menu,
+  with Steam's own rejection reasons spelled out (mistyped, already owned,
+  already used, wrong country, needs the base game, rate-limited). Activation is
+  permanent, so it always confirms first and never retries a key by itself.
 - **First-run gesture tutorial** on touch devices (desktop gets right-click row
   menus instead).
 - **i18n** (English + 简体中文) with more locales planned.
@@ -89,8 +97,8 @@ Requires the Flutter SDK (3.44.x). See `app/README.md` for details.
 
 ```sh
 cd app
-flutter pub get
-flutter test                       # 545 tests
+flutter pub get --enforce-lockfile
+flutter test                       # 588 tests
 flutter run -d linux               # or windows / macos
 
 # Android ships in two flavors (play / cn); a build without --flavor fails.

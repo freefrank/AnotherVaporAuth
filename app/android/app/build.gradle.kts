@@ -119,7 +119,11 @@ flutter {
 dependencies {
     // Play-channel-only Google services. Every entry below MUST stay
     // `playImplementation`: the hard requirement is that the cn flavor's APK
-    // physically contains no GMS/billing/ads classes. The matching Kotlin
+    // physically contains no billing/ads classes. (GMS itself is *allowed* in
+    // cn — 93% of the GMS classes in that APK are mobile_scanner's bundled
+    // ML Kit barcode reader, used offline for the Steam login QR. Reading this
+    // comment as "no GMS at all" is what produced a false regression report on
+    // 2026-07-27; see CLAUDE.md 构建渠道.) The matching Kotlin
     // sources live in src/play/kotlin/ and are reached from src/main only via
     // one reflection probe in MainActivity.
     "playImplementation"("com.android.billingclient:billing-ktx:8.0.0")

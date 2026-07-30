@@ -5,6 +5,139 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.93.6] — 2026-07-29
+
+### Fixed
+- **"Check your network" is no longer shown when the network is fine.** When
+  the feedback service itself is the thing that broke, AVA now says so
+  instead of sending you after a fault on your end. A reply that isn't from
+  the service at all — a captive portal, a block page — is reported too, and
+  used to fail silently with nothing written to the debug log.
+
+—
+
+### 修复
+- **网络明明正常时不再提示「请检查网络」。** 出问题的是反馈服务本身时,AVA 会
+  直说,而不是让你去排查自己这端。若答复根本不是来自反馈服务(强制门户、
+  拦截页),现在也会报出来——这种情况以前会静默失败,调试日志里什么都不留。
+
+## [v0.93.5] — 2026-07-29
+
+### Fixed
+- **A failed feedback report now says why.** "Couldn't send, check your
+  network" was shown for every failure — including ones where the relay had
+  answered and explained itself. Its reason is now surfaced, and the attempt
+  is written to the debug log, so a report that won't send can actually be
+  diagnosed. The build/platform line attached to a report also no longer
+  comes out blank if the version lookup hiccups.
+
+—
+
+### 修复
+- **反馈发送失败时会说明原因了。** 以前任何失败都只显示「发送失败,请检查网络」
+  ——包括中转服务已经答复并给出了原因的情况。现在会把它的原因显示出来,并把
+  这次尝试写进调试日志,发不出去时才有得排查。反馈附带的版本 / 平台信息在
+  版本号读取失败时也不会再是空的。
+
+## [v0.93.4] — 2026-07-28
+
+### Fixed
+- **Redeeming a Steam key failed immediately with a bare "HTTP 302".** The
+  store hands out its own cookies on first contact and bounces the request
+  back once before it will accept anything; AVA now loads the activation page
+  first, exactly as a browser does, and sends the key with the session Steam
+  issued.
+- **Errors that end in a Steam redirect now name where it went** instead of
+  showing a bare status code — on every screen that talks to Steam, not just
+  key redemption.
+
+—
+
+### 修复
+- **兑换 Steam 密钥一提交就报「HTTP 302」。** 商店在首次接触时会下发自己的
+  cookie 并把请求弹回一次,之后才肯受理;AVA 现在会像浏览器一样先加载激活
+  页面,再带着 Steam 下发的会话提交密钥。
+- **被 Steam 重定向而失败的请求现在会写明跳去了哪里**,不再只显示一个状态码
+  ——所有与 Steam 通信的页面都适用,不限于兑换密钥。
+
+## [v0.93.3] — 2026-07-28
+
+### Fixed
+- **The bottom of the app is no longer clipped by the screen's rounded
+  corners.** On phones with a curved display the last row of a list, and the
+  settings button in the bottom-right corner, could be cut off by the corner
+  itself — and on the home screen nothing was keeping content clear of the
+  gesture pill either. AVA now asks Android for the actual corner radius of
+  the display it is on — re-reading it after a foldable is unfolded — and lays
+  out tappable elements inside it.
+
+—
+
+### 修复
+- **应用底部不再被屏幕圆角切掉。** 曲面屏机型上,列表最后一行与右下角的设置
+  按钮可能被圆角本身截断;主屏上也没有任何东西让内容避开手势小横条。现在 AVA
+  会向 Android 查询当前屏幕的真实圆角半径(折叠屏展开后会重新查询),并据此把
+  可点击的元素排布在圆角以内。
+
+## [v0.93.2] — 2026-07-28
+
+### Fixed
+- **The Market's "My listings" tab was missed by the previous fix** — its last
+  listing could still sit under the gesture handle. Every scrolling screen is
+  now covered, this one included.
+
+—
+
+### 修复
+- **市场页「我的在售」页签上一版漏修了** —— 最后一条在售仍可能被手势条压住。
+  现在所有滚动页面都已覆盖,包括这一处。
+
+## [v0.93.1] — 2026-07-28
+
+### Fixed
+- **Content no longer slides under the status bar or the gesture handle on
+  Android 15 and 16.** Those versions draw every app edge-to-edge and can't be
+  opted out of, so scrolled content — the top of a long login form, the last
+  card in a list — was ending up behind the system bars. Every scrolling screen
+  now insets itself.
+
+—
+
+### 修复
+- **Android 15 / 16 上内容不再钻到状态栏和手势条底下。** 这两个版本强制全屏
+  边到边(且无法关闭),导致滚动后的内容——长登录表单的顶部、列表的最后一张
+  卡片——被系统栏盖住。现在所有滚动页面都会自行留出安全边距。
+
+## [v0.93.0] — 2026-07-27
+
+### Added
+- **Redeem a Steam key from the account menu.** Paste or type a product key,
+  confirm, and it's activated on that account — the products it grants are
+  listed straight back to you. Steam's own rejection reasons are spelled out
+  (mistyped code, already owned, already used, wrong country, needs the base
+  game, rate-limited) instead of a bare error number. Activation is permanent,
+  so it always asks once before submitting and never retries a key by itself.
+
+### Changed
+- **The long-press account menu is shorter.** It used to repeat what the swipe
+  gestures already do — to-dos (swipe right), refresh / export / remove (swipe
+  left) — which buried the entries that have no other way in. It now lists only
+  Market, Family group, Devices, and Redeem key. Nothing was lost: the swipes
+  are unchanged, and the desktop right-click menu still carries every action.
+
+—
+
+### 新增
+- **在账户菜单里兑换 Steam 密钥。** 粘贴或输入产品密钥,确认后即激活到该账户,
+  并直接列出到手的产品。Steam 的拒绝理由会写成人话(输错、已拥有、已被使用、
+  地区不符、需要本体游戏、被限流),而不是甩一个错误码。激活不可撤销,因此
+  提交前必定二次确认,失败也绝不自动重试。
+
+### 变更
+- **长按账户菜单变短了。** 它原本重复了滑动手势已有的入口——待办(右滑)、
+  刷新 / 导出 / 删除(左滑)——把只有这里才能进的功能埋在了下面。现在只列
+  市场、家庭组、设备、兑换密钥。功能一个没少:手势照旧,桌面右键菜单仍是全套。
+
 ## [v0.92.0] — 2026-07-18
 
 ### Added

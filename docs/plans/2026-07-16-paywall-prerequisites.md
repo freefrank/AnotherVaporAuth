@@ -11,7 +11,7 @@
 | 2 | Google Cloud SA + OAuth | SA 邮箱/JSON 密钥、Web client_id | ⏸️ **挂起**(2026-07-18 决定,恢复时从 §2 继续;仍是订阅购买链路的唯一阻塞项) |
 | 3 | AdMob | App ID、两个单元 ID、SSV 回调 | ✅ 开户+建应用+双单元完成,真实 ID 已回填;app-ads.txt 双域上线;SSV 回调探测已修(worker 侧),后台保存待确认 |
 | 4 | 爱发电 | user_id、token、plan_id、主页 URL | ✅ secrets 已入 worker,sign 算法已实测核验,主页 URL 已回填;webhook 测试推送已修通,**后台保存待确认**;首笔真实订单联调待做 |
-| 5 | Cloudflare worker 部署 | D1/KV id、Ed25519 公钥、api 子域 | ✅ **已上线** `api.ava.dotslash.pro`,beta 码全链路验签通过;私钥备份于 ownCloud 根 `ava-entitlement-signing.pem` |
+| 5 | Cloudflare worker 部署 | D1/KV id、Ed25519 公钥、api 子域 | ✅ **已上线** `api.ava.dotslash.pro`,beta 码全链路验签通过;私钥正本 `~/sync/ava-entitlement-signing.pem`(2026-07-28 更正:原写 ownCloud 根,该镜像已不存在) |
 | 6 | 内测名单 | 终身码清单(入 D1) | ✅ **已完成**(2026-07-26 查库核实:`beta_testers` 51 行,12 个已兑换);2026-07-16 已向 50 名内测成员各发一码 |
 
 **剩余关键路径**:2(Google SA + OAuth)→ 回填 `kGoogleServerClientId` +
