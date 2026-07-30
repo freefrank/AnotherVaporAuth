@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/providers.dart';
 import '../app/route_observer.dart';
+import '../app/screen_corners.dart';
 import '../app/theme.dart';
 import 'skin_spec.dart';
 
@@ -179,7 +180,13 @@ class _SkinAmbientState extends ConsumerState<SkinAmbient>
     _updateRunning();
     if (spec == null || spec.ambient.isEmpty) return const SizedBox.shrink();
     final tokens = Theme.of(context).extension<AvaTokens>()!;
-    final topInset = MediaQuery.paddingOf(context).top;
+    // Both ends take max(system inset, corner radius): the arc is not in
+    // MediaQuery, and on a rounded display it reaches further than the
+    // gesture pill does.
+    final sysPad = MediaQuery.paddingOf(context);
+    final cornerRadius = ScreenCorners.bottomOf(context);
+    final topInset = math.max(sysPad.top, cornerRadius);
+    final bottomInset = math.max(sysPad.bottom, cornerRadius);
     return IgnorePointer(
       // Own layer so the per-frame repaint doesn't force the whole screen
       // subtree to repaint with it.
@@ -201,6 +208,7 @@ class _SkinAmbientState extends ConsumerState<SkinAmbient>
                 phaseOf: () => _phase,
                 tokens: tokens,
                 topInset: topInset,
+                bottomInset: bottomInset,
                 repaint: _frame,
               ),
             );
@@ -217,12 +225,14 @@ class _AmbientPainter extends CustomPainter {
   final double Function() phaseOf;
   final AvaTokens tokens;
   final double topInset;
+  final double bottomInset;
   _AmbientPainter({
     required this.spec,
     required this.rain,
     required this.phaseOf,
     required this.tokens,
     required this.topInset,
+    required this.bottomInset,
     required Listenable repaint,
   }) : super(repaint: repaint);
 
@@ -247,7 +257,9 @@ class _AmbientPainter extends CustomPainter {
         case StarfieldSpec s:
           _starfield(canvas, size, s, phase);
         case BracketsSpec s:
-          _brackets(canvas, size, s, safeTopInset: s.safeTop ? topInset : 0);
+          _brackets(canvas, size, s,
+              safeTopInset: s.safeTop ? topInset : 0,
+              safeBottomInset: s.safeTop ? bottomInset : 0);
         case TicksSpec _:
         case LabelsSpec _:
         case RecDotSpec _:
@@ -389,8 +401,9 @@ class _AmbientPainter extends CustomPainter {
   }
 
   void _brackets(Canvas canvas, Size size, BracketsSpec s,
-      {double safeTopInset = 0}) {
-    paintBrackets(canvas, size, s, tokens, safeTopInset: safeTopInset);
+      {double safeTopInset = 0, double safeBottomInset = 0}) {
+    paintBrackets(canvas, size, s, tokens,
+        safeTopInset: safeTopInset, safeBottomInset: safeBottomInset);
   }
 
   void _topFade(Canvas canvas, Size size) {
@@ -426,15 +439,22 @@ class _AmbientPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_AmbientPainter old) => // frames come via `repaint`
-      old.spec != spec || old.tokens != tokens || old.topInset != topInset;
+      old.spec != spec ||
+      old.tokens != tokens ||
+      old.topInset != topInset ||
+      old.bottomInset != bottomInset;
 }
 
 /// Shared bracket painting (ambient chunky rects / overlay thin lines).
 void paintBrackets(Canvas canvas, Size size, BracketsSpec s, AvaTokens tokens,
-    {double safeTopInset = 0}) {
+    {double safeTopInset = 0, double safeBottomInset = 0}) {
   final w = size.width, h = size.height;
   final color = s.color.resolve(tokens).withValues(alpha: s.alpha);
   final m = s.margin, arm = s.arm, th = s.thickness;
+  // The bottom pair used to sit at a flat `h - m` from the physical edge while
+  // only the top pair got an inset — so on a rounded display the arc sliced
+  // straight through them. Both ends need one.
+  final bm = m + safeBottomInset;
   if (s.style == 'rect') {
     final fp = Paint()..color = color;
     final tm = m + safeTopInset;
@@ -442,10 +462,10 @@ void paintBrackets(Canvas canvas, Size size, BracketsSpec s, AvaTokens tokens,
     canvas.drawRect(Rect.fromLTWH(m, tm, th, arm), fp);
     canvas.drawRect(Rect.fromLTWH(w - m - arm, tm, arm, th), fp);
     canvas.drawRect(Rect.fromLTWH(w - m - th, tm, th, arm), fp);
-    canvas.drawRect(Rect.fromLTWH(m, h - m - th, arm, th), fp);
-    canvas.drawRect(Rect.fromLTWH(m, h - m - arm, th, arm), fp);
-    canvas.drawRect(Rect.fromLTWH(w - m - arm, h - m - th, arm, th), fp);
-    canvas.drawRect(Rect.fromLTWH(w - m - th, h - m - arm, th, arm), fp);
+    canvas.drawRect(Rect.fromLTWH(m, h - bm - th, arm, th), fp);
+    canvas.drawRect(Rect.fromLTWH(m, h - bm - arm, th, arm), fp);
+    canvas.drawRect(Rect.fromLTWH(w - m - arm, h - bm - th, arm, th), fp);
+    canvas.drawRect(Rect.fromLTWH(w - m - th, h - bm - arm, th, arm), fp);
   } else {
     final stroke = Paint()
       ..color = color
@@ -458,8 +478,8 @@ void paintBrackets(Canvas canvas, Size size, BracketsSpec s, AvaTokens tokens,
 
     corner(Offset(m, m + safeTopInset), 1, 1);
     corner(Offset(w - m, m + safeTopInset), -1, 1);
-    corner(Offset(m, h - m), 1, -1);
-    corner(Offset(w - m, h - m), -1, -1);
+    corner(Offset(m, h - bm), 1, -1);
+    corner(Offset(w - m, h - bm), -1, -1);
   }
 }
 
@@ -534,11 +554,20 @@ class _SkinOverlayState extends ConsumerState<SkinOverlay>
     if (spec == null || spec.overlay.isEmpty) return const SizedBox.shrink();
     final tokens = Theme.of(context).extension<AvaTokens>()!;
     // Keep the HUD chrome (brackets, ticks, labels) inside the safe area so
-    // it doesn't collide with the status bar or gesture bar.
+    // it doesn't collide with the status bar or the gesture bar — and inside
+    // the display's rounded corners, which MediaQuery does not describe at
+    // all. The brackets are drawn *at* the padding's corners, so the arc
+    // clipped them even when the system insets were honoured; the bottom pair
+    // is where it shows, the top being covered by the taller status-bar inset.
+    final sys = MediaQuery.paddingOf(context);
+    final corner = ScreenCorners.bottomOf(context);
     return IgnorePointer(
       child: RepaintBoundary(
         child: Padding(
-          padding: MediaQuery.paddingOf(context),
+          padding: sys.copyWith(
+            top: math.max(sys.top, corner),
+            bottom: math.max(sys.bottom, corner),
+          ),
           child: CustomPaint(
             size: Size.infinite,
             painter: _OverlayPainter(

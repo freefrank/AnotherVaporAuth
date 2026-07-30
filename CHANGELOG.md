@@ -5,6 +5,19 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.93.8] — 2026-07-30
+
+### Fixed
+- **The skin's corner brackets are no longer sliced by the screen's rounded
+  corners.** The two at the bottom sat flat against the physical edge while
+  only the top pair was inset, so the curve cut straight through them.
+
+—
+
+### 修复
+- **皮肤的四角装饰框不再被屏幕圆角切掉。** 底部那两个原本紧贴物理边缘,只有
+  顶部两个留了边距,于是圆角弧线正好从它们身上切过去。
+
 ## [v0.93.7] — 2026-07-29
 
 ### Fixed
