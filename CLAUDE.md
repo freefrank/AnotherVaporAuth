@@ -16,11 +16,11 @@
   机器能判定的那部分由 `tool/docs_lint.py` 在 CI 里挡,不必等人跑。
 - **p** = push:push 前必须本地 CI 通过(`flutter analyze` 无问题 +
   `flutter test` 全绿)。
-- **发 Play 轨道时,发布名(release name)必须写成 `<versionCode> (<版本号>)`**
-  ——历史四条都是这个格式:`51 (0.94.0)`、`38 (0.91.0)`、`34 (0.90.0)`。
-  2026-07-30 发 0.99.0 到 beta 时我只写了 `0.99.0`,少了 code 前缀;
-  `play-store-mcp` 的 `deploy_app*` **不暴露 release name 参数**,是从 AAB 的
-  versionName 推的,所以用 MCP 发完要去控制台把发布名改回该格式。
+- ~~**发 Play 轨道时发布名必须写成 `<versionCode> (<版本号>)`**~~ ——
+  **2026-07-30 用户宣布该约定作废,以后不必改名。** 历史条目
+  (`51 (0.94.0)`、`38 (0.91.0)`、`34 (0.90.0)`)保持原样不用回改;
+  `play-store-mcp` 的 `deploy_app*` 从 AAB 的 versionName 推发布名,
+  现在直接采用它推出来的值即可,发完**不需要**再去控制台改。
 - **发布说明每语言上限 500 字符**,超了整个 commit 被 403 拒(报
   `notes in language en-US with length N, which is too long`),不是截断。
   2026-07-30 发 1.0.0 时 563 字被拒过一次,压到 489 才过。发布说明正本在
@@ -35,7 +35,7 @@
 
 - **唯一工作树:`~/sync/Git/AnotherVaporAuth`**(主机 `claude`)。不再有 WSL
   原生盘正本,也不再有 Windows 侧 ownCloud 镜像——开发、`flutter analyze/test/build`
-  全在这里做(冷启动 analyze ~57s / test 597 例 ~60s)。
+  全在这里做(冷启动 analyze ~57s / test 606 例 ~60s)。
 - `~/sync` 是 ZFS 数据集(`stor/backup/freefrank/syncthing`)上的 **Syncthing
   folder**,同步守护进程在宿主机侧,本机看不到进程。跨机分发由它自动完成,
   **不需要手工 rsync**。

@@ -25,7 +25,7 @@ lib/src/
                         #   SteamTime, SessionManager
   app/                  # Riverpod providers, app shell, settings store
   ui/                   # Material 3 screens (visual style intentionally minimal)
-l10n/                   # ARB localizations (en, zh)
+l10n/                   # ARB localizations (en, zh, zh_Hant, de, fr, es, ru)
 ```
 
 ## Status (1.0.0)
@@ -62,10 +62,17 @@ Implemented and statically verified end-to-end:
   verified offline, paywalled skins, AdMob banner + rewarded VIP (play only)
 - **Block screenshots** — opt-in `FLAG_SECURE` toggle (Android only; off by
   default, since it also blanks screen sharing and feedback screenshots)
-- i18n (English + 简体中文 — two ARBs; `zh_TW`/`zh_HK` fall back to the
-  simplified strings), system or manual language
+- i18n — **seven locales**: English, 简体中文, 繁體中文, Deutsch, Français,
+  Español, Русский. Each is translated from the English template, not machine
+  converted; `zh_Hant` uses Taiwan vocabulary and `zh_HK` matches it by script
+  rather than falling back to Simplified. System or manual language; the
+  stored choice is a full BCP-47 tag, so the script subtag survives a restart.
+  Adding a locale means touching **three** unconnected places — the ARB, the
+  `kSelectableLocales` picker list, and `steamLanguageFor()` (miss the last
+  and Steam-served item names stay English); `test/app/locales_test.dart`
+  fails if they drift apart
 
-Verification: `flutter analyze` clean, **597 tests pass** (crypto RFC vectors,
+Verification: `flutter analyze` clean, **606 tests pass** (crypto RFC vectors,
 TOTP/confirmation cross-impl vectors, protobuf round-trip incl. family-groups
 codec, trade-offer/model JSON, hold-button haptics, AccountStore end-to-end,
 entitlement signature/grace/clock-skew, sessions-client revoke HMAC vectors,
@@ -92,7 +99,7 @@ Both **Linux desktop and Android release builds are verified**:
 
 ```sh
 flutter pub get --enforce-lockfile
-flutter test                       # 597 tests
+flutter test                       # 606 tests
 flutter build linux --release      # build/linux/x64/release/bundle (~27MB)
 flutter run -d linux               # or windows / macos
 

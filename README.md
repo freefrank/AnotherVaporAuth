@@ -75,7 +75,7 @@
   permanent, so it always confirms first and never retries a key by itself.
 - **First-run gesture tutorial** on touch devices (desktop gets right-click row
   menus instead).
-- **i18n** (English + 简体中文) with more locales planned.
+- **i18n** — English, 简体中文, 繁體中文, Deutsch, Français, Español, Русский.
 - Fully **offline**: fonts and assets are bundled, nothing is downloaded at runtime.
 - **In-app Debug log** (Settings → Debug log) — a copyable network trace of the
   Steam flows for diagnostics.
@@ -98,7 +98,7 @@ Requires the Flutter SDK (3.44.x). See `app/README.md` for details.
 ```sh
 cd app
 flutter pub get --enforce-lockfile
-flutter test                       # 597 tests
+flutter test                       # 606 tests
 flutter run -d linux               # or windows / macos
 
 # Android ships in two flavors (play / cn); a build without --flavor fails.

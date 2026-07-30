@@ -224,27 +224,38 @@ class SettingsScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                // Language
+                // Language. Each entry names itself in its own language —
+                // someone who landed in a language they can't read has to be
+                // able to find their way out.
+                //
+                // runSpacing matters here and not on the other choice rows:
+                // this Wrap holds enough chips to break onto several lines,
+                // and without it the wrapped rows sit flush against each other.
                 _Card(
                   title: l.settingsLanguage,
                   child: Wrap(
                     spacing: context.r(8),
+                    runSpacing: context.r(8),
                     children: [
                       _choice(context, t, l.settingsLanguageSystem,
                           locale == null,
                           () => ref
                               .read(localeProvider.notifier)
                               .setLocale(null)),
-                      _choice(context, t, 'English',
-                          locale?.languageCode == 'en',
-                          () => ref
-                              .read(localeProvider.notifier)
-                              .setLocale(const Locale('en'))),
-                      _choice(context, t, '简体中文',
-                          locale?.languageCode == 'zh',
-                          () => ref
-                              .read(localeProvider.notifier)
-                              .setLocale(const Locale('zh'))),
+                      for (final entry in kSelectableLocales)
+                        _choice(
+                            context,
+                            t,
+                            entry.label,
+                            // Compare the full subtags, not just the language:
+                            // both Chinese entries are 'zh', so a
+                            // languageCode-only test would light up whichever
+                            // came first no matter which is actually selected.
+                            locale?.languageCode == entry.locale.languageCode &&
+                                locale?.scriptCode == entry.locale.scriptCode,
+                            () => ref
+                                .read(localeProvider.notifier)
+                                .setLocale(entry.locale)),
                     ],
                   ),
                 ),

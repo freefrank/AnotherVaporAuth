@@ -50,7 +50,7 @@
   会写成人话(输错、已拥有、已被使用、地区不符、需要本体游戏、被限流)。
   激活不可撤销,因此提交前必定二次确认,失败也绝不自动重试。
 - **首次启动手势教程**(触屏设备;桌面端改为账户行右键菜单)。
-- **多语言**（English + 简体中文），更多语言规划中。
+- **多语言**（English、简体中文、繁體中文、Deutsch、Français、Español、Русский）。
 - 完全**离线**：字体与资源全部打包，运行时不下载任何内容。
 - **应用内调试日志**（设置 → 调试日志）—— 可复制的 Steam 流程网络追踪，便于诊断。
 
@@ -71,7 +71,7 @@ Authenticator —— 仅供参考存档，AVA 与它不共享任何代码。
 ```sh
 cd app
 flutter pub get --enforce-lockfile
-flutter test                       # 597 项测试
+flutter test                       # 606 项测试
 flutter run -d linux               # 或 windows / macos
 
 # Android 分 play / cn 两个 flavor，不带 --flavor 的构建会直接失败。

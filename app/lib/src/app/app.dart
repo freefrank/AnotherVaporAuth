@@ -101,6 +101,22 @@ class _AvaAppState extends ConsumerState<AvaApp> with WidgetsBindingObserver {
   }
 }
 
+/// Steam's own language slug for [locale]. These are Valve's names, not ISO
+/// codes, so every locale AVA ships an ARB for needs an arm here — miss one
+/// and that user reads the UI in their language while Steam-served strings
+/// (item names, confirmation headlines) come back English.
+///
+/// Traditional Chinese must reach `tchinese`: falling through to `schinese`
+/// would put Simplified item names inside an otherwise Traditional UI.
+String steamLanguageFor(Locale locale) => switch (locale.languageCode) {
+      'zh' => locale.scriptCode == 'Hant' ? 'tchinese' : 'schinese',
+      'de' => 'german',
+      'fr' => 'french',
+      'es' => 'spanish',
+      'ru' => 'russian',
+      _ => 'english',
+    };
+
 /// Mirrors the resolved app locale onto [SteamApiClient.steamLanguage] so
 /// Steam-served strings (confirmation headlines, item names) match the UI
 /// language. Runs inside MaterialApp where Localizations is available.
@@ -110,9 +126,8 @@ class _SteamLanguageSync extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final code = Localizations.localeOf(context).languageCode;
     ref.read(apiClientProvider).steamLanguage =
-        code == 'zh' ? 'schinese' : 'english';
+        steamLanguageFor(Localizations.localeOf(context));
     return child;
   }
 }

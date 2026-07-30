@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart' show kDebugMode, visibleForTesting;
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -429,14 +429,57 @@ class LocaleController extends PersistedSettingController<Locale?> {
       : super(
           // Follow the system until (and unless) a stored override loads.
           null,
-          (s) async {
-            final code = await s.loadLocale();
-            return code == null ? null : Locale(code);
-          },
-          (s, v) => s.saveLocale(v?.languageCode),
+          (s) async => localeFromTag(await s.loadLocale()),
+          // Persist the full BCP-47 tag. Storing only languageCode silently
+          // dropped the script subtag, so picking 繁體中文 came back as
+          // 简体中文 on the next launch — 'zh-Hant' collapsed to 'zh'.
+          (s, v) => s.saveLocale(v?.toLanguageTag()),
         );
 
   Future<void> setLocale(Locale? locale) => set(locale);
+}
+
+/// One row of the settings language picker.
+class SelectableLocale {
+  /// The language's name in that language — a user stranded in a script they
+  /// cannot read still has to be able to pick their way back out.
+  final String label;
+  final Locale locale;
+  const SelectableLocale(this.label, this.locale);
+}
+
+/// Every locale AVA ships an ARB for, in picker order. Adding a language means
+/// touching three places: the ARB, this list, and the Steam language map in
+/// `_SteamLanguageSync` (app.dart) — miss the last one and the UI translates
+/// while Steam-served item names stay English.
+const kSelectableLocales = <SelectableLocale>[
+  SelectableLocale('English', Locale('en')),
+  SelectableLocale('简体中文', Locale('zh')),
+  SelectableLocale('繁體中文',
+      Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant')),
+  SelectableLocale('Deutsch', Locale('de')),
+  SelectableLocale('Français', Locale('fr')),
+  SelectableLocale('Español', Locale('es')),
+  SelectableLocale('Русский', Locale('ru')),
+];
+
+/// Parses a stored locale tag ('en', 'zh', 'zh-Hant') back into a [Locale].
+///
+/// A four-letter subtag is a script (Hant/Hans); anything else is ignored,
+/// since AVA ships no country-specific locales. Plain language codes are the
+/// pre-1.0 stored format and still parse, so upgrades keep their choice.
+@visibleForTesting
+Locale? localeFromTag(String? tag) {
+  if (tag == null || tag.isEmpty) return null;
+  final parts = tag.split(RegExp('[-_]'));
+  final language = parts.first;
+  if (language.isEmpty) return null;
+  for (final part in parts.skip(1)) {
+    if (part.length == 4) {
+      return Locale.fromSubtags(languageCode: language, scriptCode: part);
+    }
+  }
+  return Locale(language);
 }
 
 /// 长按确认开关（默认开），持久化到 app_settings.json。

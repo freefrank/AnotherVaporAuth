@@ -527,6 +527,19 @@ void main() {
       expect(container.read(hapticsProvider), isFalse);
     });
 
+    test('a Traditional Chinese choice survives a restart', () async {
+      // REGRESSION: saveLocale used to persist only languageCode, so 'zh-Hant'
+      // was written as 'zh' and the next launch silently served Simplified.
+      File(p.join(tmp.path, 'app_settings.json'))
+          .writeAsStringSync(jsonEncode({'locale': 'zh-Hant'}));
+      final container = containerWithStorage();
+
+      await settle(() => container.read(localeProvider) != null);
+      final locale = container.read(localeProvider)!;
+      expect(locale.languageCode, 'zh');
+      expect(locale.scriptCode, 'Hant');
+    });
+
     test('an unknown stored enum name keeps the default', () async {
       File(p.join(tmp.path, 'app_settings.json')).writeAsStringSync(
           jsonEncode({'brightness_mode': 'blurple'}));
@@ -610,6 +623,37 @@ void main() {
       // The clean manifest was committed and the orphan payload dropped.
       expect(storage.files.containsKey('manifest.json'), isTrue);
       expect(storage.files.containsKey('111.maFile'), isFalse);
+    });
+  });
+
+  group('localeFromTag', () {
+    test('parses the tags AVA actually stores', () {
+      expect(localeFromTag(null), isNull);
+      expect(localeFromTag(''), isNull);
+      // Pre-1.0 stored format — plain language codes must keep working, or
+      // every existing install loses its language choice on upgrade.
+      expect(localeFromTag('en'), const Locale('en'));
+      expect(localeFromTag('zh'), const Locale('zh'));
+
+      final hant = localeFromTag('zh-Hant')!;
+      expect(hant.languageCode, 'zh');
+      expect(hant.scriptCode, 'Hant');
+      // Underscore form, in case anything ever wrote toString() instead.
+      expect(localeFromTag('zh_Hant'), hant);
+    });
+
+    test('round-trips through the tag actually persisted', () {
+      const picked =
+          Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant');
+      expect(localeFromTag(picked.toLanguageTag()), picked);
+    });
+
+    test('a country subtag is ignored, not mistaken for a script', () {
+      // AVA ships no country-specific locales; zh-TW must not become a
+      // Locale whose scriptCode is 'TW' (which would match no ARB at all).
+      final tw = localeFromTag('zh-TW')!;
+      expect(tw.languageCode, 'zh');
+      expect(tw.scriptCode, isNull);
     });
   });
 }
