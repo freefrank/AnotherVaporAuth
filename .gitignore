@@ -393,3 +393,7 @@ skills-lock.json
 
 # wrangler's local state/cache (created by `wrangler tail`/`dev`, per worker dir).
 .wrangler/
+
+# Downloaded service-account / provider credentials. Never in git; the repo
+# already lives under ~/sync, so Syncthing carries them between machines.
+secrets/

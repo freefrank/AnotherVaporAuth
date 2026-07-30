@@ -8,7 +8,8 @@
 
 | 计划 | 说明 | 状态 |
 |---|---|---|
-| [2026-07-16-paywall-prerequisites.md](2026-07-16-paywall-prerequisites.md) | Paywall 上线前置事项操作指南（六件事状态表 + §7 按类激活） | 进行中：#1 建订阅商品待做（#6 内测码 2026-07-26 查库确认**已完成**）；#2 Google SA/OAuth **挂起**；§7 beta 码按类激活**代码就绪、待用户部署**——预检已跑通且无残留，D1 里 `activation_log` 表尚不存在，可直接执行 migration + deploy |
+| [2026-07-16-paywall-prerequisites.md](2026-07-16-paywall-prerequisites.md) | Paywall 上线前置事项操作指南（六件事状态表 + §7 按类激活） | 进行中：#1 订阅商品与 #2 Google SA/OAuth **均已落地（2026-07-30）**，只剩 Play 沙盒联调；§7 beta 码按类激活**代码就绪、待用户部署**——预检已跑通且无残留，D1 里 `activation_log` 表尚不存在，可直接执行 migration + deploy |
+| [2026-07-30-google-oauth-checklist.md](2026-07-30-google-oauth-checklist.md) | Google Cloud SA + OAuth 的逐步解冻清单（prerequisites §2 展开） | **已完成（2026-07-30）**：凭据全部就位、`kGoogleServerClientId` 已回填并随 v0.99.0 出包。表格内留有已核实的 client_id 与两个 SHA-1 |
 
 ## 归档
 

@@ -28,7 +28,7 @@ lib/src/
 l10n/                   # ARB localizations (en, zh)
 ```
 
-## Status (0.94.0)
+## Status (0.99.0)
 
 Implemented and statically verified end-to-end:
 

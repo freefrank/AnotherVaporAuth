@@ -5,6 +5,22 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.99.0] — 2026-07-30
+
+### Added
+- **AVA Pro subscription on the Google Play version.** Signing in and
+  subscribing were previously answered with "not available in this build";
+  the Play build can now reach them. The lifetime beta codes and the Afdian
+  route are unchanged, and nothing about your Steam accounts depends on any
+  of it.
+
+—
+
+### 新增
+- **Google Play 版的 AVA Pro 订阅。** 登录与订阅此前一律回「当前构建尚未开通
+  此功能」,现在 Play 版可以走通这条路。终身内测码与爱发电通道不变,Steam
+  账户相关的功能与这些都无关。
+
 ## [v0.94.0] — 2026-07-30
 
 ### Added

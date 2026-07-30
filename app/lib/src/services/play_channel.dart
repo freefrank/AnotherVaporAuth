@@ -12,9 +12,20 @@ import '../core/channel.dart';
 const kPlaySubscriptionProductId = 'ava_pro_monthly';
 
 /// Google Cloud OAuth *web* client id used to mint id_tokens for the
-/// entitlement worker. Empty until the prerequisite lands; sign-in fails
-/// with 'not_configured' while empty.
-const kGoogleServerClientId = '';
+/// entitlement worker.
+///
+/// Must be the **Web** client, not the Android one: Credential Manager's
+/// `serverClientId` only accepts a web client, and the worker pins the
+/// id_token's `aud` to this same value (`google.ts` verifyIdToken). The two
+/// Android clients — one per signing certificate, upload key and Play app
+/// signing — have to exist for sign-in to work but are never named in code.
+///
+/// Not a secret: it ships in every APK and is extractable from one. Empty
+/// disables the whole Play sign-in path (see [PlayChannel.signInConfigured]),
+/// which is why it is a plain const rather than a --dart-define that a build
+/// could silently forget to pass.
+const kGoogleServerClientId =
+    '77413736058-gc4sojuhdi4svnsajlagh7acpeqjb5mo.apps.googleusercontent.com';
 
 // Ad units: real IDs serve only in release builds; debug/profile always use
 // Google's official TEST units — clicking real ads while developing counts
