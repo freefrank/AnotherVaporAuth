@@ -28,7 +28,7 @@ lib/src/
 l10n/                   # ARB localizations (en, zh)
 ```
 
-## Status (0.99.0)
+## Status (1.0.0)
 
 Implemented and statically verified end-to-end:
 
@@ -60,10 +60,12 @@ Implemented and statically verified end-to-end:
   receipt's field spelling are still unconfirmed
 - **AVA Pro** — channel split (`play` / `cn` flavors), Ed25519 entitlement tokens
   verified offline, paywalled skins, AdMob banner + rewarded VIP (play only)
+- **Block screenshots** — opt-in `FLAG_SECURE` toggle (Android only; off by
+  default, since it also blanks screen sharing and feedback screenshots)
 - i18n (English + 简体中文 — two ARBs; `zh_TW`/`zh_HK` fall back to the
   simplified strings), system or manual language
 
-Verification: `flutter analyze` clean, **592 tests pass** (crypto RFC vectors,
+Verification: `flutter analyze` clean, **597 tests pass** (crypto RFC vectors,
 TOTP/confirmation cross-impl vectors, protobuf round-trip incl. family-groups
 codec, trade-offer/model JSON, hold-button haptics, AccountStore end-to-end,
 entitlement signature/grace/clock-skew, sessions-client revoke HMAC vectors,
@@ -90,7 +92,7 @@ Both **Linux desktop and Android release builds are verified**:
 
 ```sh
 flutter pub get --enforce-lockfile
-flutter test                       # 592 tests
+flutter test                       # 597 tests
 flutter build linux --release      # build/linux/x64/release/bundle (~27MB)
 flutter run -d linux               # or windows / macos
 

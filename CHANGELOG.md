@@ -5,6 +5,42 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v1.0.0] — 2026-07-30
+
+### Added
+- **Block screenshots (Android, off by default).** A new switch in Settings
+  keeps AVA out of screenshots, screen recordings and the recent-apps
+  preview. It stays off unless you turn it on, because the same flag also
+  blanks the window while you are sharing your screen and stops you attaching
+  a screenshot to a feedback report — a fair trade for some people, not for
+  everyone.
+
+### Security
+- **Redeeming a code is now rate-limited.** Repeated attempts against the
+  beta-code and Afdian order endpoints are throttled per address, and the app
+  says "too many attempts, wait a minute" instead of reporting a bad code. A
+  lifetime beta code could previously be guessed at whatever rate a script
+  could manage.
+- **A misconfiguration can no longer weaken Google sign-in.** The server ties
+  each sign-in token to AVA's own OAuth client; that check used to be skipped
+  — rather than refusing the sign-in — if the client id ever went missing from
+  the deployment.
+
+—
+
+### 新增
+- **禁止截屏(Android,默认关)。** 设置里新增一个开关,打开后 AVA 不会出现在
+  截屏、录屏和最近任务预览里。默认不开,因为同一个标志也会让你投屏时窗口变黑、
+  没法再截图附到反馈里——有人觉得值,有人不觉得,所以交给你决定。
+
+### 安全
+- **兑换激活码加了频率限制。** 内测码与爱发电订单两个接口按来源地址限流,应用
+  会提示「尝试次数过多,请稍等一分钟」,而不是报激活码无效。此前一个终身内测码
+  可以被脚本以任意速度猜。
+- **配置失误不再能削弱 Google 登录校验。** 服务端会把每个登录令牌绑定到 AVA
+  自己的 OAuth 客户端;这项检查以前会在客户端 id 从部署里缺失时**跳过**,而不是
+  拒绝登录。
+
 ## [v0.99.0] — 2026-07-30
 
 ### Added
