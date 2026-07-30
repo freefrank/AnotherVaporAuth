@@ -32,6 +32,7 @@ import 'device_sessions_screen.dart';
 import 'family_group_screen.dart';
 import 'login_screen.dart';
 import 'market/market_screen.dart';
+import 'redeem_key_screen.dart';
 import 'settings_screen.dart';
 import 'tutorial.dart';
 
@@ -343,10 +344,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // everywhere else. Never rendered on screens with confirm actions.
       bottomNavigationBar: const AvaBannerSlot(),
       // Header removed — settings is a floating button in the bottom-right.
-      floatingActionButton: _SettingsFab(
-        label: l.navSettings,
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+      // endFloat already lifts the FAB clear of minViewPadding.bottom, so the
+      // gesture pill is handled — but it sits in the bottom-*right* corner,
+      // exactly where the display's arc cuts in. Nudge it up by the part of
+      // the corner the system inset doesn't already cover.
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: context.cornerOvershoot),
+        child: _SettingsFab(
+          label: l.navSettings,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          ),
         ),
       ),
       body: ScanlineOverlay(
@@ -617,6 +625,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         Navigator.of(context).push(MaterialPageRoute(
             builder: (_) => DeviceSessionsScreen(account: account)));
         break;
+      case 'redeem':
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => RedeemKeyScreen(account: account)));
+        break;
       case 'remove':
         final t = Theme.of(context).extension<AvaTokens>()!;
         final ok = await showDialog<bool>(
@@ -703,7 +715,7 @@ class _Sidebar extends StatelessWidget {
               parent: BouncingScrollPhysics()),
           // Bottom clearance so the floating settings button doesn't cover the
           // last row.
-          padding: context.rInsets(left: 8, right: 8, top: 4, bottom: 78),
+          padding: context.rSafeInsets(left: 8, right: 8, top: 4, bottom: 78),
           itemCount: accounts.length,
           itemBuilder: (context, i) {
             final row = _SidebarRow(
@@ -734,7 +746,7 @@ class _Sidebar extends StatelessWidget {
       buildDefaultDragHandles: false,
       physics:
           const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      padding: context.rInsets(left: 8, right: 8, top: 4, bottom: 78),
+      padding: context.rSafeInsets(left: 8, right: 8, top: 4, bottom: 78),
       itemCount: accounts.length,
       // onReorderItem already adjusts the target index for the removed item.
       onReorderItem: (from, to) {
@@ -962,7 +974,12 @@ class _SidebarRow extends StatelessWidget {
   });
 
   /// Desktop/mouse path for the swipe + long-press actions: a right-click
-  /// context menu with the same entries.
+  /// context menu.
+  ///
+  /// Deliberately still lists the swipe actions (confirmations / refresh /
+  /// export / remove) that the touch sheet drops — with a mouse this menu is
+  /// the *only* discoverable way to reach them. The sidebar's refresh button
+  /// is a global avatar refresh, not this account's re-login.
   Future<void> _contextMenu(BuildContext context, Offset at) async {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).extension<AvaTokens>()!;
@@ -991,6 +1008,7 @@ class _SidebarRow extends StatelessWidget {
         item('market', Icons.inventory_2_outlined, l.actionMarket),
         item('family', Icons.family_restroom, l.famAccountAction),
         item('devices', Icons.devices_outlined, l.deviceSessionsAction),
+        item('redeem', Icons.vpn_key_outlined, l.keyRedeemAction),
         item('login', Icons.refresh, l.commonRefresh),
         item('export', Icons.ios_share, l.commonExport),
         item('remove', Icons.delete_outline, l.commonDelete, color: t.bad),
@@ -1000,8 +1018,13 @@ class _SidebarRow extends StatelessWidget {
   }
 
   /// Touch path for the long-press menu: a centered, phone-friendly sheet (big
-  /// tappable rows) instead of the desktop cursor popup. Same actions as
-  /// [_contextMenu].
+  /// tappable rows) instead of the desktop cursor popup.
+  ///
+  /// Only lists what the swipe panes *don't* already offer. Confirmations
+  /// (swipe right), refresh / export / remove (swipe left) used to be repeated
+  /// here, which made the sheet long enough to bury the actions that have no
+  /// other touch entry point. [_contextMenu] still carries the full set —
+  /// see the note there.
   Future<void> _actionSheet(BuildContext context) async {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).extension<AvaTokens>()!;
@@ -1081,14 +1104,10 @@ class _SidebarRow extends StatelessWidget {
                         letterSpacing: 0.5),
                   ),
                 ),
-                row(Icons.verified_user_outlined, l.actionConfirmations,
-                    'confirm'),
                 row(Icons.inventory_2_outlined, l.actionMarket, 'market'),
                 row(Icons.family_restroom, l.famAccountAction, 'family'),
                 row(Icons.devices_outlined, l.deviceSessionsAction, 'devices'),
-                row(Icons.refresh, l.commonRefresh, 'login'),
-                row(Icons.ios_share, l.commonExport, 'export'),
-                row(Icons.delete_outline, l.commonDelete, 'remove', color: t.bad),
+                row(Icons.vpn_key_outlined, l.keyRedeemAction, 'redeem'),
               ],
             ),
           ),

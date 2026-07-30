@@ -563,6 +563,74 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deviceAgeNow => '刚刚';
 
   @override
+  String get keyRedeemAction => '兑换密钥';
+
+  @override
+  String get keyRedeemTitle => '兑换 Steam 密钥';
+
+  @override
+  String keyRedeemFor(String account) {
+    return '激活到 $account';
+  }
+
+  @override
+  String get keyRedeemHint => 'XXXXX-XXXXX-XXXXX';
+
+  @override
+  String get keyRedeemPaste => '粘贴';
+
+  @override
+  String get keyRedeemSubmit => '兑换';
+
+  @override
+  String get keyRedeemNote =>
+      '激活不可撤销，产品会直接加进这个账户。连续几个密钥被拒后 Steam 会封锁激活约一小时，提交前请先核对。';
+
+  @override
+  String keyRedeemConfirm(String account) {
+    return '把这个密钥激活到 $account？之后无法撤销，也无法转到别的账户。';
+  }
+
+  @override
+  String get keyRedeemDone => '密钥已激活。';
+
+  @override
+  String get keyRedeemGranted => '已加入库：';
+
+  @override
+  String get keyRedeemNoProducts => 'Steam 接受了密钥但没有返回产品名，请到该账户的库里确认。';
+
+  @override
+  String get keyRedeemNetworkError =>
+      '连不上 Steam。如果是请求超时，Steam 可能已经处理过了——再试这枚密钥前，请先到该账户的库里确认。';
+
+  @override
+  String get keyErrInvalid => 'Steam 不认识这个密钥。请检查是否输错——0 与 O、1 与 I 很容易看混。';
+
+  @override
+  String get keyErrAlreadyOwned => '该账户已拥有这个产品。';
+
+  @override
+  String get keyErrAlreadyActivated => '这个密钥已被使用过——可能是本账户，也可能是别的账户。';
+
+  @override
+  String get keyErrRegionLocked => '该产品无法在此账户所在的国家/地区激活。';
+
+  @override
+  String get keyErrNeedsBaseProduct => '这是 DLC 或资料片，需要该账户先拥有本体游戏。';
+
+  @override
+  String get keyErrNeedsPs3Login => '该产品需要先在 PlayStation®3 主机上游玩过才能激活。';
+
+  @override
+  String get keyErrRateLimited => '最近被拒的密钥太多，Steam 会封锁激活约一小时，请稍后再试。';
+
+  @override
+  String keyErrUnknown(int code) {
+    return 'Steam 拒绝了这个密钥（代码 $code）。';
+  }
+
+  @override
   String get loginOrApprove => '…或直接在 Steam 手机 App 点「允许」。';
 
   @override
@@ -626,6 +694,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get feedbackFailed => '发送失败，请检查网络后重试。';
+
+  @override
+  String feedbackRefused(String reason) {
+    return '中转服务拒绝了这条反馈:$reason';
+  }
+
+  @override
+  String feedbackRelayDown(String reason) {
+    return '反馈服务自身出了故障($reason)。你的网络没问题,请稍后再试。';
+  }
 
   @override
   String get feedbackAttachLog => '附加调试日志';

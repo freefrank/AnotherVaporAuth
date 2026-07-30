@@ -18,6 +18,7 @@ import 'debug_log.dart';
 class SteamApiClient {
   static const String apiBase = 'https://api.steampowered.com';
   static const String communityBase = 'https://steamcommunity.com';
+  static const String storeBase = 'https://store.steampowered.com';
 
   /// Whether [url] is a Steam-owned HTTPS origin we may keep sending session
   /// cookies (`steamLoginSecure` etc.) to while following a redirect chain.
@@ -240,7 +241,11 @@ class SteamApiClient {
       final loc = resp.headers.value('location') ?? '';
       dlog('  ✗ $path HTTP $status → $loc');
       if (_isLoginRedirect(loc)) throw CommunityAuthException(status, path);
-      throw SteamApiException(2 /* Fail */, 'HTTP $status', path,
+      // Carry the target into the message: a bare "HTTP 302" tells the user
+      // (and the debug log) nothing, and the store's *self*-redirect — its way
+      // of saying "take these cookies and come back" — is indistinguishable
+      // from any other bounce without it.
+      throw SteamApiException(2 /* Fail */, 'HTTP $status → $loc', path,
           httpStatus: status);
     }
     final body = resp.data ?? '';
@@ -375,6 +380,119 @@ class SteamApiClient {
       return _decodeCommunityJson(resp, path);
     } on DioException catch (e) {
       dlog('  ✗ $path network: ${e.type.name} ${e.response?.statusCode ?? ''}');
+      rethrow;
+    }
+  }
+
+  /// Warms up a `store.steampowered.com` session and returns the cookie jar to
+  /// use for the follow-up request.
+  ///
+  /// The store answers a request carrying unfamiliar cookies by `Set-Cookie`ing
+  /// `steamCountry` + `browserid` and redirecting — **even when
+  /// `steamLoginSecure` is perfectly valid**. A browser absorbs those and
+  /// retries transparently; we have no cookie jar, so a first POST straight at
+  /// an ajax endpoint comes back as a bare 302 to itself and never runs. Doing
+  /// this GET first is what makes the POST reach the endpoint.
+  ///
+  /// Any `sessionid` Steam hands back replaces the caller's generated one: the
+  /// store is stricter than the community host, which only cross-checks that
+  /// the cookie and the form field agree.
+  ///
+  /// Redirects are followed only while they stay on a Steam origin (a rogue
+  /// redirect would otherwise carry `steamLoginSecure` off-site), and a bounce
+  /// to the login page throws [CommunityAuthException] so the caller re-auths
+  /// instead of POSTing into a dead session.
+  Future<Map<String, String>> storeBootstrap(
+    String path,
+    Map<String, String> cookies,
+  ) async {
+    final jar = <String, String>{...cookies};
+    void absorb(Response resp) {
+      for (final sc in resp.headers['set-cookie'] ?? const <String>[]) {
+        final kv = sc.split(';').first.trim();
+        final i = kv.indexOf('=');
+        if (i > 0) jar[kv.substring(0, i)] = kv.substring(i + 1);
+      }
+    }
+
+    var url = '$storeBase$path';
+    dlog('→ GET(bootstrap) store$path');
+    var resp = await _dio.get<String>(url,
+        options: Options(
+          responseType: ResponseType.plain,
+          headers: {'Cookie': _cookieHeader(jar)},
+        ));
+    absorb(resp);
+    var hops = 0;
+    while ((resp.statusCode ?? 0) >= 300 &&
+        (resp.statusCode ?? 0) < 400 &&
+        hops++ < 4) {
+      final loc = resp.headers.value('location');
+      if (loc == null || loc.isEmpty) break;
+      url = Uri.parse(url).resolve(loc).toString();
+      if (_isLoginRedirect(url)) {
+        dlog('  ✗ store$path bounced to login (stale session?)');
+        throw CommunityAuthException(resp.statusCode ?? 302, 'store$path');
+      }
+      if (!isSteamOrigin(url)) {
+        dlog('  ✕ refused off-origin redirect $url');
+        break;
+      }
+      dlog('  ↪ bootstrap redirect');
+      resp = await _dio.get<String>(url,
+          options: Options(
+            responseType: ResponseType.plain,
+            headers: {'Cookie': _cookieHeader(jar)},
+          ));
+      absorb(resp);
+    }
+    // Cookie *names* only — steamLoginSecure and sessionid are credentials.
+    dlog('  store session: ${jar.keys.join(", ")}');
+    return jar;
+  }
+
+  /// Like [communityPostJson] but against `store.steampowered.com` — the store
+  /// hosts its own ajax endpoints (`/account/ajaxregisterkey/`) that the
+  /// community host does not serve.
+  ///
+  /// Status handling is shared with the community helpers on purpose: the
+  /// store answers a stale session with a 302 to the login page, which
+  /// [_gateCommunityStatus] turns into [CommunityAuthException] so callers
+  /// route to re-auth instead of parsing the login HTML as a failed
+  /// activation. Note the store reports *endpoint-level* success as
+  /// `success: 1` (an int), not `true`, so callers must read the numeric
+  /// result themselves rather than trusting the shared `success != true` log.
+  ///
+  /// `X-Requested-With` is the plain `XMLHttpRequest` a browser sends, NOT the
+  /// `com.valvesoftware.android.steam.community` package marker the community
+  /// helpers use: these are the store's own page-backing ajax endpoints, and
+  /// the community app's marker is what makes Steam serve the stripped
+  /// mobile-app layout instead of the JSON we asked for.
+  Future<Map<String, dynamic>> storePostJson(
+    String path,
+    Map<String, dynamic> form, {
+    Map<String, String>? cookies,
+    String? referer,
+  }) async {
+    dlog('→ POST store$path');
+    try {
+      final resp = await _dio.post<String>(
+        '$storeBase$path',
+        data: form,
+        options: Options(
+          responseType: ResponseType.plain,
+          contentType: Headers.formUrlEncodedContentType,
+          listFormat: ListFormat.multi,
+          headers: {
+            if (cookies != null) 'Cookie': _cookieHeader(cookies),
+            'Referer': ?referer,
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        ),
+      );
+      return _decodeCommunityJson(resp, 'store$path');
+    } on DioException catch (e) {
+      dlog('  ✗ store$path network: ${e.type.name} ${e.response?.statusCode ?? ''}');
       rethrow;
     }
   }

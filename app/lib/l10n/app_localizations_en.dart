@@ -584,6 +584,81 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deviceAgeNow => 'just now';
 
   @override
+  String get keyRedeemAction => 'Redeem key';
+
+  @override
+  String get keyRedeemTitle => 'Redeem a Steam key';
+
+  @override
+  String keyRedeemFor(String account) {
+    return 'Activating on $account';
+  }
+
+  @override
+  String get keyRedeemHint => 'XXXXX-XXXXX-XXXXX';
+
+  @override
+  String get keyRedeemPaste => 'Paste';
+
+  @override
+  String get keyRedeemSubmit => 'Redeem';
+
+  @override
+  String get keyRedeemNote =>
+      'Activation is permanent and adds the product to this account. Steam blocks activations for about an hour after a few rejected keys, so check the code before submitting.';
+
+  @override
+  String keyRedeemConfirm(String account) {
+    return 'Activate this key on $account? It can\'t be undone or moved to another account afterwards.';
+  }
+
+  @override
+  String get keyRedeemDone => 'Key activated.';
+
+  @override
+  String get keyRedeemGranted => 'Added to the library:';
+
+  @override
+  String get keyRedeemNoProducts =>
+      'Steam accepted the key but didn\'t name the product. Check the account\'s library.';
+
+  @override
+  String get keyRedeemNetworkError =>
+      'Couldn\'t reach Steam. If the request timed out, Steam may still have processed it — check the account\'s library before trying the key again.';
+
+  @override
+  String get keyErrInvalid =>
+      'Steam doesn\'t recognize this code. Check it for typos — letters and digits like 0/O and 1/I are easy to mix up.';
+
+  @override
+  String get keyErrAlreadyOwned => 'This account already owns the product.';
+
+  @override
+  String get keyErrAlreadyActivated =>
+      'This key has already been used — on this account or another one.';
+
+  @override
+  String get keyErrRegionLocked =>
+      'This product can\'t be activated in the account\'s country.';
+
+  @override
+  String get keyErrNeedsBaseProduct =>
+      'This is DLC or an expansion; the account needs the base game first.';
+
+  @override
+  String get keyErrNeedsPs3Login =>
+      'This product has to be played on a PlayStation®3 system before it can be activated.';
+
+  @override
+  String get keyErrRateLimited =>
+      'Too many rejected keys recently. Steam blocks activations for about an hour — try again later.';
+
+  @override
+  String keyErrUnknown(int code) {
+    return 'Steam rejected the key (code $code).';
+  }
+
+  @override
   String get loginOrApprove => '…or just tap “Allow” in your Steam mobile app.';
 
   @override
@@ -653,6 +728,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get feedbackFailed =>
       'Couldn\'t send. Check your network and try again.';
+
+  @override
+  String feedbackRefused(String reason) {
+    return 'The relay refused this report: $reason';
+  }
+
+  @override
+  String feedbackRelayDown(String reason) {
+    return 'The feedback service is having trouble on its end ($reason). Your network is fine — please try again later.';
+  }
 
   @override
   String get feedbackAttachLog => 'Attach debug log';

@@ -1106,6 +1106,126 @@ abstract class AppLocalizations {
   /// **'just now'**
   String get deviceAgeNow;
 
+  /// No description provided for @keyRedeemAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Redeem key'**
+  String get keyRedeemAction;
+
+  /// No description provided for @keyRedeemTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Redeem a Steam key'**
+  String get keyRedeemTitle;
+
+  /// No description provided for @keyRedeemFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Activating on {account}'**
+  String keyRedeemFor(String account);
+
+  /// No description provided for @keyRedeemHint.
+  ///
+  /// In en, this message translates to:
+  /// **'XXXXX-XXXXX-XXXXX'**
+  String get keyRedeemHint;
+
+  /// No description provided for @keyRedeemPaste.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get keyRedeemPaste;
+
+  /// No description provided for @keyRedeemSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Redeem'**
+  String get keyRedeemSubmit;
+
+  /// No description provided for @keyRedeemNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Activation is permanent and adds the product to this account. Steam blocks activations for about an hour after a few rejected keys, so check the code before submitting.'**
+  String get keyRedeemNote;
+
+  /// No description provided for @keyRedeemConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate this key on {account}? It can\'t be undone or moved to another account afterwards.'**
+  String keyRedeemConfirm(String account);
+
+  /// No description provided for @keyRedeemDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Key activated.'**
+  String get keyRedeemDone;
+
+  /// No description provided for @keyRedeemGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to the library:'**
+  String get keyRedeemGranted;
+
+  /// No description provided for @keyRedeemNoProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam accepted the key but didn\'t name the product. Check the account\'s library.'**
+  String get keyRedeemNoProducts;
+
+  /// No description provided for @keyRedeemNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach Steam. If the request timed out, Steam may still have processed it — check the account\'s library before trying the key again.'**
+  String get keyRedeemNetworkError;
+
+  /// No description provided for @keyErrInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam doesn\'t recognize this code. Check it for typos — letters and digits like 0/O and 1/I are easy to mix up.'**
+  String get keyErrInvalid;
+
+  /// No description provided for @keyErrAlreadyOwned.
+  ///
+  /// In en, this message translates to:
+  /// **'This account already owns the product.'**
+  String get keyErrAlreadyOwned;
+
+  /// No description provided for @keyErrAlreadyActivated.
+  ///
+  /// In en, this message translates to:
+  /// **'This key has already been used — on this account or another one.'**
+  String get keyErrAlreadyActivated;
+
+  /// No description provided for @keyErrRegionLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This product can\'t be activated in the account\'s country.'**
+  String get keyErrRegionLocked;
+
+  /// No description provided for @keyErrNeedsBaseProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'This is DLC or an expansion; the account needs the base game first.'**
+  String get keyErrNeedsBaseProduct;
+
+  /// No description provided for @keyErrNeedsPs3Login.
+  ///
+  /// In en, this message translates to:
+  /// **'This product has to be played on a PlayStation®3 system before it can be activated.'**
+  String get keyErrNeedsPs3Login;
+
+  /// No description provided for @keyErrRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many rejected keys recently. Steam blocks activations for about an hour — try again later.'**
+  String get keyErrRateLimited;
+
+  /// No description provided for @keyErrUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam rejected the key (code {code}).'**
+  String keyErrUnknown(int code);
+
   /// No description provided for @loginOrApprove.
   ///
   /// In en, this message translates to:
@@ -1225,6 +1345,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t send. Check your network and try again.'**
   String get feedbackFailed;
+
+  /// No description provided for @feedbackRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'The relay refused this report: {reason}'**
+  String feedbackRefused(String reason);
+
+  /// No description provided for @feedbackRelayDown.
+  ///
+  /// In en, this message translates to:
+  /// **'The feedback service is having trouble on its end ({reason}). Your network is fine — please try again later.'**
+  String feedbackRelayDown(String reason);
 
   /// No description provided for @feedbackAttachLog.
   ///

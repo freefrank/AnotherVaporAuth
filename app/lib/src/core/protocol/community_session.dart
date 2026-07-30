@@ -55,3 +55,15 @@ Map<String, String> communityCookies(
       'mobileClient': 'android',
       if (confirmationVariant) 'mobileClientVersion': '777777 3.6.4',
     };
+
+/// The cookie set for `store.steampowered.com` requests.
+///
+/// Same `steamLoginSecure` shape as the community host (Steam's login is
+/// unified across both), plus the `sessionid` that store write endpoints
+/// cross-check against the form field. Deliberately *without* `mobileClient`:
+/// the store serves a stripped mobile-app layout to that marker, and its ajax
+/// endpoints are not part of it.
+Map<String, String> storeCookies(SteamGuardAccount a, {String? sessionId}) => {
+      'steamLoginSecure': '${a.steamId}||${a.session.accessToken ?? ''}',
+      'sessionid': sessionId ?? newCommunitySessionId(),
+    };

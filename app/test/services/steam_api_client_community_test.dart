@@ -25,6 +25,27 @@ class _FakeAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
+/// Records the outgoing request so the store helper's URL/headers can be
+/// asserted, then replays a canned body.
+class _CapturingAdapter implements HttpClientAdapter {
+  final String body;
+  RequestOptions? seen;
+  _CapturingAdapter(this.body);
+
+  @override
+  Future<ResponseBody> fetch(RequestOptions options,
+      Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
+    seen = options;
+    return ResponseBody.fromString(body, 200,
+        headers: {
+          'content-type': ['application/json'],
+        });
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
 SteamApiClient _client(int status, String body,
     [Map<String, List<String>> headers = const {}]) {
   final dio = Dio(BaseOptions(validateStatus: (s) => s != null && s < 500))
@@ -134,8 +155,11 @@ void main() {
           call(_client(302, '', {
             'location': ['/market/eligibilitycheck/?goto=%2Fmarket%2F']
           })),
-          throwsA(isA<SteamApiException>()
-              .having((e) => e.message, 'message', 'HTTP 302')),
+          // The target is part of the message on purpose: a bare "HTTP 302"
+          // left the store's self-redirect indistinguishable from any other
+          // bounce, which cost a debugging round on 2026-07-28.
+          throwsA(isA<SteamApiException>().having((e) => e.message, 'message',
+              'HTTP 302 → /market/eligibilitycheck/?goto=%2Fmarket%2F')),
         );
       });
 
@@ -277,6 +301,48 @@ void main() {
 
     test('unrelated errors do not', () {
       expect(isSessionDeadError(const FormatException('nope')), isFalse);
+    });
+  });
+
+  group('storePostJson', () {
+    /// The store hosts its own ajax endpoints; posting them at the community
+    /// origin (or with the community app's X-Requested-With marker) is how you
+    /// get a stripped mobile layout back instead of JSON.
+    test('targets store.steampowered.com with a browser XHR marker', () async {
+      final adapter = _CapturingAdapter('{"success":1}');
+      final dio = Dio(BaseOptions(validateStatus: (s) => s != null && s < 500))
+        ..httpClientAdapter = adapter;
+      final api = SteamApiClient(dio: dio);
+
+      final json = await api.storePostJson(
+        '/account/ajaxregisterkey/',
+        {'product_key': 'ABCDE', 'sessionid': 'sid'},
+        cookies: {'sessionid': 'sid'},
+        referer: 'https://store.steampowered.com/account/registerkey',
+      );
+
+      expect(json['success'], 1);
+      expect(adapter.seen!.method, 'POST');
+      expect(adapter.seen!.uri.toString(),
+          'https://store.steampowered.com/account/ajaxregisterkey/');
+      expect(adapter.seen!.headers['X-Requested-With'], 'XMLHttpRequest');
+      expect(adapter.seen!.headers['Cookie'], 'sessionid=sid');
+      expect(adapter.seen!.headers['Referer'],
+          'https://store.steampowered.com/account/registerkey');
+      expect(adapter.seen!.contentType,
+          startsWith('application/x-www-form-urlencoded'));
+    });
+
+    test('a redirect to the login page is a stale session, not a rejection',
+        () async {
+      // Otherwise the login HTML would be parsed as "Steam refused the key".
+      final api = _client(302, '', {
+        'location': ['https://store.steampowered.com/login/?redir=account'],
+      });
+      await expectLater(
+        api.storePostJson('/account/ajaxregisterkey/', const {}),
+        throwsA(isA<CommunityAuthException>()),
+      );
     });
   });
 }

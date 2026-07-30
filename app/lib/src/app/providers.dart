@@ -15,6 +15,7 @@ import '../core/protocol/family_groups_client.dart';
 import '../core/protocol/inventory_client.dart';
 import '../core/protocol/market_client.dart';
 import '../core/protocol/sessions_client.dart';
+import '../core/protocol/store_key_client.dart';
 import '../core/protocol/trade_offers_client.dart';
 import '../services/account_store.dart';
 import '../skins/skin_spec.dart';
@@ -85,6 +86,10 @@ final familyGroupsClientProvider = Provider<FamilyGroupsClient>(
 /// Device / session management (read-only device list; IAuthenticationService).
 final sessionsClientProvider = Provider<SessionsClient>(
     (ref) => SessionsClient(ref.read(apiClientProvider)));
+
+/// Steam product-key (CD key) activation via the store's ajax endpoint.
+final storeKeyClientProvider = Provider<StoreKeyClient>(
+    (ref) => StoreKeyClient(ref.read(apiClientProvider)));
 
 /// Time alignment hook (overridable in tests to avoid network).
 final timeAlignerProvider =
