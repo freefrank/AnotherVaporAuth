@@ -46,15 +46,22 @@ class MainActivity : FlutterFragmentActivity() {
     }
 
     /// The larger of the two bottom corner radii, in **physical pixels** (Dart
-    /// divides by devicePixelRatio). 0 when the platform can't tell us:
-    /// `getRoundedCorner` is API 31+, and `rootWindowInsets` is null until the
-    /// decor view is attached.
+    /// divides by devicePixelRatio).
     ///
-    /// Read fresh on every call rather than cached at startup — this app runs
+    ///  - `-1` — ask again later. `rootWindowInsets` is null until the decor
+    ///    view is attached to the window, and Dart's first query happens
+    ///    during the very first build, well before that. Returning 0 here made
+    ///    "not ready yet" indistinguishable from "this display is square", and
+    ///    Dart cached the 0 forever because nothing afterwards changed the
+    ///    metrics. That is the bug this value exists to fix.
+    ///  - `0` — API < 31, or a display with no rounded corners.
+    ///  - `> 0` — the radius.
+    ///
+    /// Read fresh on every call rather than cached at startup: this app runs
     /// on a foldable, and folding swaps to a display with a different radius.
     private fun bottomCornerRadiusPx(): Int {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return 0
-        val insets = window?.decorView?.rootWindowInsets ?: return 0
+        val insets = window?.decorView?.rootWindowInsets ?: return -1
         return radiusOf(insets)
     }
 

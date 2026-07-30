@@ -5,6 +5,24 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v0.93.7] — 2026-07-29
+
+### Fixed
+- **The rounded-corner fix from v0.93.3 never actually took effect.** AVA asked
+  Android for the corner radius before the window was ready, read the "not yet"
+  answer as "this screen has square corners", and never asked again — so the
+  settings button and the last row of a list were still clipped by the corner.
+  It now keeps asking until the display answers, and records what it got in the
+  debug log.
+
+—
+
+### 修复
+- **v0.93.3 那次圆角修复其实完全没生效。** AVA 在窗口尚未就绪时就去问 Android
+  圆角半径,把「还没准备好」当成了「这块屏没有圆角」,而且之后再也不问——于是
+  设置按钮和列表最后一行照旧被圆角切掉。现在会一直问到屏幕给出答复为止,并把
+  拿到的值记进调试日志。
+
 ## [v0.93.6] — 2026-07-29
 
 ### Fixed

@@ -25,7 +25,7 @@
 
 - **唯一工作树:`~/sync/Git/AnotherVaporAuth`**(主机 `claude`)。不再有 WSL
   原生盘正本,也不再有 Windows 侧 ownCloud 镜像——开发、`flutter analyze/test/build`
-  全在这里做(冷启动 analyze ~57s / test 588 例 ~60s)。
+  全在这里做(冷启动 analyze ~57s / test 592 例 ~60s)。
 - `~/sync` 是 ZFS 数据集(`stor/backup/freefrank/syncthing`)上的 **Syncthing
   folder**,同步守护进程在宿主机侧,本机看不到进程。跨机分发由它自动完成,
   **不需要手工 rsync**。
@@ -94,11 +94,11 @@
 - 需要密码时从上述文件**管道取用**（`PASS=$(...)` → `SMTP_PASS="$PASS" cmd`），
   不打印明文、不写进对话。
 - **发信失败先查证书，别先怀疑密码**。发内测码（`send_beta_codes.py`）与应用内
-  反馈（`infra/feedback-worker`）都经 `mx.deployr.ca:588` + STARTTLS。2026-07-29
+  反馈（`infra/feedback-worker`）都经 `mx.deployr.ca:592` + STARTTLS。2026-07-29
   该主机的 Let's Encrypt 证书到期未续，严格校验的客户端（Cloudflare Workers）
   握手直接失败，worker 回 502 `send failed`——**根本走不到 AUTH**，与密码无关。
   同一张证书还覆盖 `mail.deployr.ca` / `mail.dotslash.pro` / `mail.freshes.ca`
-  的 588 与 993，故障面是整套邮件服务；证书与密码均以 `~/sync/Deployr/mailserver/`
+  的 592 与 993，故障面是整套邮件服务；证书与密码均以 `~/sync/Deployr/mailserver/`
   为正本。**`openssl s_client` 默认既不校验主机名、也不因过期中断**——它能跑通
   AUTH 并不证明证书有效，查有效期须加 `-verify_return_error -verify_hostname <host>`。
 

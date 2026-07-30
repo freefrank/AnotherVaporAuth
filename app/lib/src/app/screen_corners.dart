@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+
+import '../services/debug_log.dart';
 
 /// The display's bottom rounded-corner radius, published to the widget tree.
 ///
@@ -57,34 +61,76 @@ class _ScreenCornersScopeState extends State<ScreenCornersScope>
     with WidgetsBindingObserver {
   double _radiusPx = 0;
 
+  /// Retries left for a platform that answered "not ready" (-1). Bounded so a
+  /// device that never attaches insets can't retry for the life of the process.
+  int _retries = 8;
+  Timer? _retry;
+
+  /// ~1 frame at 60Hz. The decor view normally has its insets within one or
+  /// two of these; 8 tries covers roughly the first quarter second.
+  static const _retryInterval = Duration(milliseconds: 16);
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // initState runs during the first build, before Android has attached
+    // window insets to the decor view — the first answer is normally -1.
     _refresh();
   }
 
   @override
   void dispose() {
+    _retry?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   @override
-  void didChangeMetrics() => _refresh();
+  void didChangeMetrics() {
+    // A fold/unfold swaps to a panel with a different radius. Re-arm the
+    // retries too: the new display's insets take a moment to settle.
+    _retries = 8;
+    _refresh();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Coming back from the background is the other moment a stale 0 can be
+    // corrected without the user doing anything.
+    if (state == AppLifecycleState.resumed) _refresh();
+  }
 
   Future<void> _refresh() async {
     if (defaultTargetPlatform != TargetPlatform.android) return;
     int px;
     try {
       px = await widget.channel.invokeMethod<int>('bottomCornerRadius') ?? 0;
-    } catch (_) {
+    } catch (e) {
       // MissingPluginException on a host without the channel, or any platform
-      // error: a missing radius must degrade to the old edge-to-edge layout,
-      // never to a crash on a screen the user is looking at.
+      // error: a missing radius degrades to the old edge-to-edge layout rather
+      // than crashing a screen the user is looking at — but it must not do so
+      // silently, which is how a channel that never answered went unnoticed.
+      dlog('screen-corners: query failed ($e)');
       return;
     }
-    if (!mounted || px == _radiusPx) return;
+    if (!mounted) return;
+    if (px < 0) {
+      // Insets aren't attached yet. Retry on a timer rather than a post-frame
+      // callback: the latter only fires if something else is already driving
+      // frames, and at this point in startup nothing is — the retry chain
+      // silently stalled after exactly one attempt.
+      if (_retries-- <= 0) {
+        dlog('screen-corners: insets never became available');
+        return;
+      }
+      _retry?.cancel();
+      _retry = Timer(_retryInterval, _refresh);
+      return;
+    }
+    if (px == _radiusPx) return;
+    dlog('screen-corners: bottom radius ${px}px '
+        '(${(px / MediaQuery.devicePixelRatioOf(context)).toStringAsFixed(1)}dp)');
     setState(() => _radiusPx = px.toDouble());
   }
 

@@ -61,7 +61,7 @@ Implemented and statically verified end-to-end:
 - i18n (English + 简体中文 — two ARBs; `zh_TW`/`zh_HK` fall back to the
   simplified strings), system or manual language
 
-Verification: `flutter analyze` clean, **588 tests pass** (crypto RFC vectors,
+Verification: `flutter analyze` clean, **592 tests pass** (crypto RFC vectors,
 TOTP/confirmation cross-impl vectors, protobuf round-trip incl. family-groups
 codec, trade-offer/model JSON, hold-button haptics, AccountStore end-to-end,
 entitlement signature/grace/clock-skew, sessions-client revoke HMAC vectors,
@@ -86,7 +86,7 @@ Both **Linux desktop and Android release builds are verified**:
 
 ```sh
 flutter pub get --enforce-lockfile
-flutter test                       # 588 tests
+flutter test                       # 592 tests
 flutter build linux --release      # build/linux/x64/release/bundle (~27MB)
 flutter run -d linux               # or windows / macos
 
