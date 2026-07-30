@@ -57,7 +57,7 @@ class SettingsScreen extends ConsumerWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
             child: ListView(
-              padding: context.rInsets(all: 16),
+              padding: context.rSafeInsets(all: 16),
               children: [
                 // Encryption
                 _Card(
@@ -526,10 +526,21 @@ class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
       );
       navigator.pop();
       messenger.showSnackBar(SnackBar(content: Text(l.feedbackSent)));
-    } catch (_) {
+    } catch (e) {
+      // Show *why*. "Check your network and retry" was the same message for a
+      // relay that rejected the report, a relay that couldn't be reached, and
+      // a malformed reply — so a failure left nothing to act on, in the UI or
+      // in the debug log.
       if (mounted) {
         setState(() => _sending = false);
-        messenger.showSnackBar(SnackBar(content: Text(l.feedbackFailed)));
+        final detail = switch (e) {
+          FeedbackException(transport: true) => l.feedbackFailed,
+          FeedbackException(relayFault: true, :final message) =>
+            l.feedbackRelayDown(message),
+          FeedbackException(:final message) => l.feedbackRefused(message),
+          _ => l.feedbackFailed,
+        };
+        messenger.showSnackBar(SnackBar(content: Text(detail)));
       }
     }
   }
