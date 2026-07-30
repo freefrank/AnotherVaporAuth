@@ -68,6 +68,23 @@
 - **验收必须用 `apkanalyzer dex packages`,不能扫 zip 条目名**:release APK 的
   类全在 `classes*.dex` 里,按条目名 grep `com/google/android/gms` 恒为 0——
   那不是「干净」,那是这个检查从原理上就看不见类。2026-07-27 就这么误报过一次。
+- **但 dex 检查在 release 上同样会假阴性:R8 会重写包路径。** 2026-07-30 实测
+  cnRelease 的 `mapping.txt` 里 4218 个类被重命名、只有 382 个恒等映射,
+  `com.google.android.gms.auth.api.signin.internal.Storage` 变成了 `d3.a`。
+  当天按 `com/google/android/ump` 搜 AAB 的 dex 报「缺失」,而 `proguard.map`
+  里 `UserMessagingPlatform.loadAndShowConsentFormIfRequired` 明明在——**两次
+  误判,同一个原理:检查手段看不见目标 ≠ 目标不存在。**
+  **权威依据是 `app/build/app/outputs/mapping/<变体>/mapping.txt`**(左侧是
+  混淆前的原始类名,不受 R8 影响),AAB 里则是
+  `BUNDLE-METADATA/com.android.tools.build.obfuscation/proguard.map`:
+
+  ```sh
+  # cn 渠道门禁:必须为 0
+  grep -cE "^com\.google\.android\.gms\.ads|^com\.android\.billingclient|^com\.google\.android\.ump" \
+    app/build/app/outputs/mapping/cnRelease/mapping.txt
+  ```
+
+  dex 扫描仍可作为**辅助**(未被 keep 的类看不到),但不能单独作为通过条件。
 
   ```sh
   AK=~/Android/Sdk/cmdline-tools/latest/bin/apkanalyzer
@@ -94,11 +111,11 @@
 - 需要密码时从上述文件**管道取用**（`PASS=$(...)` → `SMTP_PASS="$PASS" cmd`），
   不打印明文、不写进对话。
 - **发信失败先查证书，别先怀疑密码**。发内测码（`send_beta_codes.py`）与应用内
-  反馈（`infra/feedback-worker`）都经 `mx.deployr.ca:592` + STARTTLS。2026-07-29
+  反馈（`infra/feedback-worker`）都经 `mx.deployr.ca:587` + STARTTLS。2026-07-29
   该主机的 Let's Encrypt 证书到期未续，严格校验的客户端（Cloudflare Workers）
   握手直接失败，worker 回 502 `send failed`——**根本走不到 AUTH**，与密码无关。
   同一张证书还覆盖 `mail.deployr.ca` / `mail.dotslash.pro` / `mail.freshes.ca`
-  的 592 与 993，故障面是整套邮件服务；证书与密码均以 `~/sync/Deployr/mailserver/`
+  的 587 与 993，故障面是整套邮件服务；证书与密码均以 `~/sync/Deployr/mailserver/`
   为正本。**`openssl s_client` 默认既不校验主机名、也不因过期中断**——它能跑通
   AUTH 并不证明证书有效，查有效期须加 `-verify_return_error -verify_hostname <host>`。
 
@@ -156,7 +173,7 @@
   低版本与桌面回落 0),见 `lib/src/app/screen_corners.dart`。圆角与系统 inset
   取 **max 不是相加**——手势条那 24dp 本就落在圆角弧线扫过的高度里。
   Scaffold 自己定位的组件(FAB)用 `context.cornerOvershoot`,因为
-  `FloatingActionButtonLocation` 已经抬过 `minViewPadding.bottom` 了。2026-07-28 一次性修了 18 处(其中一处是 `ListView.separated`,
+  `FloatingActionButtonLocation` 已经抬过 `minViewPadding.bottom` 了。2026-07-28 一次性排查过全部滚动视图(其中一处是 `ListView.separated`,
   第一轮 grep 只匹配了 `ListView(`/`ListView.builder(` 而漏掉,由 doc-audit 抓出)。
 - 模拟器测试用官方 AVD `ava_test`(emulator-5554),数据可随意处置;
   mock 账户 PIN 123456。**但本机(`claude`)当前没有模拟器**——`~/Android/Sdk/`

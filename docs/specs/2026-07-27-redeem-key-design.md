@@ -1,8 +1,8 @@
 # 兑换 Steam 密钥（Redeem Key）设计
 
-- 状态：**已实现，等待真机实弹验证**（2026-07-27）。请求形状已对照 Valve 自己的
-  `registerkey.js` 核实；响应侧仍有两个字段名无法确定，**尚未在真实账户上跑通**
-  ——见 §字段名有两套 与 §待验证。
+- 状态：**已实现并真机验证通过**（2026-07-29，随 v0.94.0 发布）。真实账户激活
+  成功、收据里的产品名正常列出——`line_item_description` 那套字段名是对的，
+  `packageName` 兼容分支从未命中，已删除。
 - 来源：账户动作菜单扩展；同批次一并精简了触摸端长按菜单（见 §菜单精简）。
 - 参考：Valve `store.steampowered.com/public/javascript/registerkey.js`、
   SteamKit `EPurchaseResultDetail`、ArchiSteamFarm `ArchiHandler.RedeemKey`、
@@ -105,17 +105,15 @@ product_key=XXXXX-XXXXX-XXXXX&sessionid=<sid>
 
 ### 字段名有两套，两套都读
 
-`purchase_receipt_info` 里的结果码与产品名，protobuf 与 web 抓包给出的拼法不
-一致，而我们**无法实测**是哪一套：
+### 字段名：产品名已定，结果码仍两套都读
 
-| 内容 | protobuf（`CStore_PurchaseReceiptInfo`） | web 抓包 | 我们的做法 |
-|---|---|---|---|
-| 结果码 | `result_detail`（字段 4） | `resultdetail` | 两个都试 |
-| 产品名 | `line_item_description`（字段 3） | `packageName` | 两个都试，前者优先 |
+**产品名 = `line_item_description`**（2026-07-29 真机确认：成功回执里产品名
+正常列出）。这与 protobuf 字段 3 和 `registerkey.js` 实际读取的字段一致，两个
+独立来源都对上了；只来自第三方抓包的 `packageName` 兼容分支从未命中，已删除。
 
-`line_item_description` 有两个独立来源背书（protobuf 字段名 + `registerkey.js`
-实际读取的字段），所以它优先；`packageName` 只来自第三方抓包，留作兜底。真机
-验证后应删掉落空的那一套。
+结果码仍两套都读——真机只跑通了成功路径（detail=0 走的是顶层
+`purchase_result_details`），失败分支里收据自带的那份到底叫 `result_detail`
+（protobuf 字段 4）还是 `resultdetail`（web 抓包）尚未触发过，保留兜底。
 
 ### `purchase_result_details` 结果码
 
@@ -184,7 +182,8 @@ product_key=XXXXX-XXXXX-XXXXX&sessionid=<sid>
    `steamLoginSecure`~~ —— **2026-07-28 间接证实可用**：真机上带该 cookie 的请求
    被 302 回自身（缺 cookie），而**匿名**请求被 302 到 `/login/`。既然商店没把我们
    赶去登录，说明它认了这个 token。
-2. 收据里结果码与产品名的实际拼法——见 §字段名有两套，验证后删掉落空的那套。
+2. ~~收据里产品名的拼法~~ —— **2026-07-29 已确认 `line_item_description`**，
+   `packageName` 分支已删。失败分支里收据自带的结果码拼法仍未触发过。
 3. 结果码 9 / 13 / 14 / 15 / 24 / 36 / 53 的实际取值。SteamKit 的枚举可信，但
    商店 web 层是否原样透传未验证；若有偏差，改 `KeyRedeemResult.errorFor` 并补
    上表。

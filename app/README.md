@@ -28,7 +28,7 @@ lib/src/
 l10n/                   # ARB localizations (en, zh)
 ```
 
-## Status (0.93.6)
+## Status (0.94.0)
 
 Implemented and statically verified end-to-end:
 
@@ -38,11 +38,13 @@ Implemented and statically verified end-to-end:
 - Import existing `.maFile`
 - **Pending center** (tabbed): trade/market confirmations with **batch**
   accept/reject; **trade offers** (received/sent/history, expandable cards,
-  accept via `IEconService` + community endpoints); **family-group invites**
-  (discovery, pre-join checks, hold-to-join, `IFamilyGroupsService`)
+  accept via `IEconService` + community endpoints). Two tabs since v0.92.0 —
+  family-group invites moved to the family group screen
 - **Hold-to-confirm** control (settings-aware) for every irreversible accept,
   with accelerating haptics; **Hold to confirm** / **Haptic feedback** toggles
-- Read-only **family group** page (members, roles, slots, cooldown)
+- **Family group** page (members, roles, slots, cooldown) — read-only apart
+  from the incoming invites it now hosts: pre-join checks, then hold-to-join
+  (`IFamilyGroupsService`)
 - Inventory browse + Community Market list/cancel with live fees
 - Login (username/password + **QR login**), Steam Guard code, session refresh
 - Add authenticator (phone → SMS → revocation confirm)
@@ -81,8 +83,10 @@ scheme should likewise be checked against a live capture before production use.
 Both **Linux desktop and Android release builds are verified**:
 
 - Linux desktop: release bundle ~27 MB (AOT).
-- Android release APK: universal 71 MB; split-per-abi arm64 25.8 MB,
-  armeabi-v7a 21.7 MB, x86_64 28.3 MB. No NDK required.
+- Android release: cn universal APK 85 MiB, play AAB 79 MiB (v0.94.0). Debug
+  builds are far larger — 186 MB universal, 119 MB with
+  `--target-platform android-arm64`, since `lib/` is ~71% of them.
+  No NDK required.
 
 ```sh
 flutter pub get --enforce-lockfile

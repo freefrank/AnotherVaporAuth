@@ -117,10 +117,11 @@ class KeyRedeemResult {
     if (items is List) {
       for (final item in items) {
         if (item is! Map) continue;
-        // `line_item_description` is what registerkey.js reads and what the
-        // protobuf calls field 3; `packageName` appears in third-party
-        // captures. Same disagreement as the detail field — try both.
-        final name = item['line_item_description'] ?? item['packageName'];
+        // `line_item_description`: what registerkey.js reads, what the protobuf
+        // calls field 3, and — confirmed on a live account 2026-07-29 — what
+        // production actually sends. The `packageName` spelling from
+        // third-party captures never matched and is no longer tried.
+        final name = item['line_item_description'];
         if (name is String && name.trim().isNotEmpty) products.add(name.trim());
       }
     }

@@ -181,7 +181,11 @@ void main() {
       expect(r.products, ['Half-Life']);
     });
 
-    test('packageName is accepted as the alternate line-item spelling', () {
+    test('packageName is NOT read — production sends line_item_description', () {
+      // Confirmed on a live account 2026-07-29: the receipt named the product,
+      // via line_item_description. The packageName spelling came only from
+      // third-party captures, never matched, and reading it would now just be
+      // a path no reply can reach.
       final r = KeyRedeemResult.parse(const {
         'success': 1,
         'purchase_receipt_info': {
@@ -190,7 +194,7 @@ void main() {
           ],
         },
       });
-      expect(r.products, ['Team Fortress 2']);
+      expect(r.products, isEmpty);
     });
   });
 

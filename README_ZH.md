@@ -115,8 +115,10 @@ AVA 是一个用 Flutter 从零写起的独立项目 —— 既非 fork 也非�
 
 ## 隐私
 
-本应用没有后端：所有数据都留在你的设备上，唯一的网络连接是直连 Valve 的 Steam
-服务器。详见[隐私政策](PRIVACY_ZH.md)（[English](PRIVACY.md)）。
+你的 Steam 数据没有后端：账户、密钥与验证码全部留在设备上，所有 Steam 请求直连
+Valve。另有三处服务会联网，写在这里而不是藏起来——Pro 权益校验、应用内反馈（仅在
+你按下发送时）、以及 Play 版免费档的广告。详见[隐私政策](PRIVACY_ZH.md)
+（[English](PRIVACY.md)）。
 
 ## 许可
 

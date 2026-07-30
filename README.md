@@ -147,9 +147,11 @@ existing users can migrate. Steam auth protocol references:
 
 ## Privacy
 
-The app has no backend: all data stays on your device and the only network
-connections are directly to Valve's Steam servers. See the full
-[Privacy Policy](PRIVACY.md) ([简体中文](PRIVACY_ZH.md)).
+Your Steam data has no backend: accounts, secrets and codes stay on your device
+and every Steam request goes straight to Valve. Three other services are
+involved and are named here rather than buried — Pro entitlement checks, in-app
+feedback (only when you press send), and ads on the Play build's free tier. The
+full [Privacy Policy](PRIVACY.md) ([简体中文](PRIVACY_ZH.md)) covers each.
 
 ## License
 
