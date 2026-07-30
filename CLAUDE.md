@@ -21,6 +21,11 @@
   2026-07-30 发 0.99.0 到 beta 时我只写了 `0.99.0`,少了 code 前缀;
   `play-store-mcp` 的 `deploy_app*` **不暴露 release name 参数**,是从 AAB 的
   versionName 推的,所以用 MCP 发完要去控制台把发布名改回该格式。
+- **发布说明每语言上限 500 字符**,超了整个 commit 被 403 拒(报
+  `notes in language en-US with length N, which is too long`),不是截断。
+  2026-07-30 发 1.0.0 时 563 字被拒过一次,压到 489 才过。发布说明正本在
+  `dist/release-notes-v<版本>.txt`——**该目录 git 忽略**,只靠 Syncthing 同步,
+  所以这条上限记在这里而不是那边。
 - 可组合使用,如 **cbp**。
 - **s / sync** = **已废弃**(2026-07-26)。旧流程是把 WSL 工作树 rsync 回
   `/mnt/c/.../ownCloud/Git/AnotherVaporAuth` 镜像;WSL 与该镜像现均已不存在,

@@ -178,7 +178,9 @@ GCP 的 Android 型 OAuth 客户端**只有一个 SHA-1 字段**,一个客户端
 - [x] Play Console → 设置 → **许可测试** → 加自己的 Google 邮箱
       (这些账号购买不扣真钱、退订即时生效)
 - [x] 订阅商品 `ava_pro_monthly` 已创建并**激活**(见 prerequisites §1)
-- [ ] 沙盒走一遍:登录 → 订阅 → worker 验 `purchaseToken` → 签发权益 → 客户端解锁
+- [x] 沙盒走一遍:登录 → 订阅 → worker 验 `purchaseToken` → 签发权益 → 客户端解锁
+      —— **2026-07-30 用户实测通过**。这是清单的最后一项,也是「1.0 就是订阅
+      通过」的实质判据;至此 production 轨道解除阻塞。
 
 ---
 
