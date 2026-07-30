@@ -55,6 +55,9 @@ worker 验 purchaseToken 和 Google 登录都靠这一步。
 4. **Play Console 授权 SA**:Play Console → 用户和权限 → 邀请新用户 →
    填 SA 邮箱 → 账号权限至少勾 **"查看应用信息"+"查看财务数据"**
    (订阅状态查询需要财务权限),范围限定 AVA 一个应用即可。
+   > **2026-07-30 实际已放宽到含写权限**,以便 `play-store-mcp` 发版与改商店
+   > 文案。注意这把 SA 同时是 worker 的 `GOOGLE_SA_KEY`,泄露后果已从
+   > 「读订阅」升级为「推生产包」。要收窄就给 MCP 单独建 SA。
    授权生效可能滞后几分钟到几小时,期间 API 回 401/403 不要慌。
 5. **OAuth 同意屏幕**:API 与服务 → OAuth 同意屏幕 → External,scope 只要
    默认的 email/profile/openid;**发布状态改成"正式(In production)"**,
