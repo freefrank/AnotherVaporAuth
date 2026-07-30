@@ -100,6 +100,20 @@
 - 完成的计划归档到 `docs/plans/archive/`（标题下加归档说明；索引见 `docs/plans/README.md`）。
   审计记录在 `docs/` 根（`*-audit-*.md`），结论型决策同步进对应 memory。
 
+## 隐私政策（改一处不够，要改两处）
+
+- **正本**：仓库根 `PRIVACY.md` / `PRIVACY_ZH.md`（当前生效日期 2026-07-16，
+  12 节，含「AVA Pro 订阅」与「广告（仅 Play 版免费档）」）。
+- **线上**：`https://ava.dotslash.pro/privacy/`，源文件是**另一个仓库**里的
+  `~/sync/Git/dotslashpro/ava/public/privacy/index.html`——**手工维护的静态页，
+  没有生成脚本**。改了 `PRIVACY.md` 必须同步改它，否则 Play 商店条目指向的
+  政策会和应用实际行为脱节。
+- 2026-07-30 删掉了 `docs/privacy.html`：它停在 07-02、只有 10 节、缺的正是
+  订阅与广告两节，而且**根本不是线上那份**。留着只会让人以为改它就能更新线上。
+- README 里那段隐私概述也要跟着核：2026-07-30 前它写着「没有后端，唯一的网络
+  连接是直连 Valve」，与本仓库自己的 `PRIVACY.md` 直接矛盾（还有权益校验、
+  反馈、Play 版广告三处）。
+
 ## 密钥与 .env
 
 - 本地密钥放仓库根 `.env`（git 忽略，权限 600），模板见 `.env.example`。
