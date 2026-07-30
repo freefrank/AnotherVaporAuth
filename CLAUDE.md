@@ -16,6 +16,11 @@
   机器能判定的那部分由 `tool/docs_lint.py` 在 CI 里挡,不必等人跑。
 - **p** = push:push 前必须本地 CI 通过(`flutter analyze` 无问题 +
   `flutter test` 全绿)。
+- **发 Play 轨道时,发布名(release name)必须写成 `<versionCode> (<版本号>)`**
+  ——历史四条都是这个格式:`51 (0.94.0)`、`38 (0.91.0)`、`34 (0.90.0)`。
+  2026-07-30 发 0.99.0 到 beta 时我只写了 `0.99.0`,少了 code 前缀;
+  `play-store-mcp` 的 `deploy_app*` **不暴露 release name 参数**,是从 AAB 的
+  versionName 推的,所以用 MCP 发完要去控制台把发布名改回该格式。
 - 可组合使用,如 **cbp**。
 - **s / sync** = **已废弃**(2026-07-26)。旧流程是把 WSL 工作树 rsync 回
   `/mnt/c/.../ownCloud/Git/AnotherVaporAuth` 镜像;WSL 与该镜像现均已不存在,
