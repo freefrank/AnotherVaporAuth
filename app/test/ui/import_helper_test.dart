@@ -39,6 +39,10 @@ class _FakeShare extends SharePlatform {
   final bool throwOnShare;
   String? sharedPath;
   bool existedDuringShare = false;
+  /// The containing directory's permission bits *while the share is running* —
+  /// after it, the export flow has already removed the directory, so a stat
+  /// from the test body would read 0 and assert nothing.
+  int dirModeDuringShare = -1;
 
   @override
   Future<ShareResult> shareXFiles(
@@ -50,6 +54,7 @@ class _FakeShare extends SharePlatform {
   }) async {
     sharedPath = files.single.path;
     existedDuringShare = File(sharedPath!).existsSync();
+    dirModeDuringShare = File(sharedPath!).parent.statSync().mode & 0x1FF;
     if (throwOnShare) {
       throw Exception('share failed');
     }
@@ -154,6 +159,38 @@ void main() {
 
       expect(fakeShare.sharedPath, isNotNull);
       expect(File(fakeShare.sharedPath!).existsSync(), isFalse);
+    },
+  );
+
+  testWidgets(
+    'the plaintext maFile lives in a private, unguessable directory',
+    (tester) async {
+      // It used to be written straight into the shared temp dir as
+      // "$accountName.maFile" — a path another local user could predict, read
+      // during the share window, or pre-plant a symlink at. The directory,
+      // not the file mode, is what protects it: a umask-derived 0644 file is
+      // still unreachable inside a 0700 directory.
+      final fakeShare = _FakeShare();
+      SharePlatform.instance = fakeShare;
+
+      await _runExportFlow(tester, _account());
+
+      final shared = File(fakeShare.sharedPath!);
+      final parent = shared.parent;
+      expect(parent.path, isNot(tempDir.path),
+          reason: 'must not sit directly in the shared temp dir');
+      final name = parent.path.split(Platform.pathSeparator).last;
+      expect(name, startsWith('export-'));
+      // 16 random hex chars — enough that nothing can pre-exist at the path.
+      expect(RegExp(r'^export-[0-9a-f]{16}$').hasMatch(name), isTrue,
+          reason: 'directory name was "$name"');
+      if (!Platform.isWindows) {
+        expect(fakeShare.dirModeDuringShare, 0x1C0, // 0700
+            reason: 'directory mode was '
+                '${fakeShare.dirModeDuringShare.toRadixString(8)}');
+      }
+      // And the whole directory goes away with the file.
+      expect(parent.existsSync(), isFalse);
     },
   );
 

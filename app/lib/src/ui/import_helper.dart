@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../l10n/app_localizations.dart';
 import '../app/providers.dart';
 import '../app/theme.dart';
+import '../core/crypto/secure_random.dart';
 import '../core/models/steam_guard_account.dart';
 import '../services/session_manager.dart';
 import 'login_screen.dart';
@@ -235,9 +236,11 @@ Future<void> exportMaFileFlow(
     ),
   );
   if (confirmed != true) return;
-  // Path of the plaintext maFile written below, if we get that far — kept
-  // outside the try so the finally block can always find it for cleanup.
+  // Path of the plaintext maFile written below, and the private directory
+  // holding it — kept outside the try so the finally block can always find
+  // them for cleanup.
   String? path;
+  Directory? dir;
   try {
     final raw = (account.accountName ?? '').trim();
     final base = raw.isEmpty ? '${account.steamId}' : raw;
@@ -245,8 +248,32 @@ Future<void> exportMaFileFlow(
     final json = const JsonEncoder.withIndent(
       '  ',
     ).convert(account.toExportJson(includePassword: includePassword));
-    final dir = await getTemporaryDirectory();
-    path = '${dir.path}/$safe.maFile';
+    // This file is plaintext: shared_secret, identity_secret, revocation code
+    // and the Steam session token. The system temp dir is world-readable on
+    // Linux (/tmp or $TMPDIR) and `$accountName.maFile` is guessable from the
+    // account name, so another local user could both *predict* the path and
+    // read it during the share, or pre-plant a symlink there.
+    //
+    // Both problems go away by putting it in a fresh directory with an
+    // unguessable name: nothing can pre-exist at a random path, and the 0700
+    // on the directory keeps the file unreadable regardless of the file's own
+    // umask-derived mode. Dart cannot pass a mode to Directory.create, so the
+    // chmod follows creation — the window that leaves open is harmless
+    // precisely because the name is not guessable.
+    //
+    // Android is unaffected either way (getTemporaryDirectory is the
+    // app-private cache dir), but there is no reason to special-case it.
+    final tmpRoot = await getTemporaryDirectory();
+    final jail = Directory('${tmpRoot.path}/export-${secureRandomHex(16)}');
+    await jail.create(recursive: true);
+    dir = jail;
+    if (!Platform.isWindows) {
+      // Best-effort: on a platform without chmod the random name still stands.
+      try {
+        await Process.run('chmod', ['700', jail.path]);
+      } catch (_) {}
+    }
+    path = '${jail.path}/$safe.maFile';
     await File(path).writeAsString(json);
     // Share is asynchronous on every platform; we must await its result
     // before deleting, or the receiving app may not have finished reading
@@ -261,12 +288,13 @@ Future<void> exportMaFileFlow(
   } finally {
     // This maFile is plaintext (Steam session token, shared_secret…). Never
     // leave it behind in the temp dir — clean it up whether the share sheet
-    // succeeded, was cancelled, or the export itself threw.
-    if (path != null) {
+    // succeeded, was cancelled, or the export itself threw. Remove the whole
+    // private directory, so a rename or a second file inside it cannot
+    // survive either.
+    if (dir != null) {
       try {
-        final tmp = File(path);
-        if (await tmp.exists()) {
-          await tmp.delete();
+        if (await dir.exists()) {
+          await dir.delete(recursive: true);
         }
       } catch (_) {
         // Best-effort cleanup; a failure here shouldn't mask the export's
