@@ -21,12 +21,112 @@ class InstallEngine {
           Platform.environment['LOCALAPPDATA'] ?? r'C:\', 'Programs', 'AVA')
       : p.join(Platform.environment['HOME'] ?? '/tmp', 'ava-install-dryrun');
 
+  /// Name of the file listing everything [install] wrote, one relative path
+  /// per line. Uninstall deletes exactly this list — never the directory
+  /// wholesale.
+  static const manifestName = 'ava-install.manifest';
+
+  /// Why [dir] must not be used as an install target, or null if it is fine.
+  ///
+  /// The install directory is a free-text field, and uninstall used to delete
+  /// whatever it pointed at as long as `ava.exe` and `data\` were present. A
+  /// user who typed (or browsed to) their Documents folder therefore got their
+  /// Documents folder deleted on uninstall — unrecoverable, and entirely
+  /// plausible since many installers append their own subfolder to whatever
+  /// you pick and this one does not.
+  ///
+  /// Returns a message meant for the UI, not a log.
+  static String? validateInstallDir(String dir) {
+    final raw = dir.trim();
+    if (raw.isEmpty) return 'Choose an install folder.';
+    if (!p.isAbsolute(raw)) return 'Enter a full path, not a relative one.';
+
+    final norm = p.normalize(raw);
+    // A volume root ("C:\", "/") has no parent to fall back to and holds
+    // everything on the drive.
+    if (p.equals(norm, p.rootPrefix(norm))) {
+      return 'Refusing to install to a drive root. Pick a subfolder.';
+    }
+
+    for (final protected in _protectedDirs()) {
+      if (p.equals(norm, protected)) {
+        return 'Refusing to install to ${p.basename(protected)} — '
+            'uninstall would remove the whole folder. Pick a subfolder.';
+      }
+    }
+
+    // An existing directory with unrelated content in it: installing here
+    // would mix our files into someone else's folder, and even a manifest
+    // uninstall leaves the user wondering what happened.
+    final existing = Directory(norm);
+    if (existing.existsSync()) {
+      final entries = existing.listSync();
+      final ours = File(p.join(norm, manifestName)).existsSync() ||
+          looksLikeInstallDir(norm);
+      if (entries.isNotEmpty && !ours) {
+        return 'That folder already contains other files. '
+            'Pick an empty or new folder.';
+      }
+    }
+    return null;
+  }
+
+  /// Directories that must never *be* the install target (a subfolder of them
+  /// is fine). Missing environment variables simply drop out.
+  static List<String> _protectedDirs() {
+    final env = Platform.environment;
+    final home = env['USERPROFILE'] ?? env['HOME'];
+    return <String>[
+      for (final v in [
+        env['USERPROFILE'],
+        env['HOME'],
+        env['SystemRoot'],
+        env['windir'],
+        env['ProgramFiles'],
+        env['ProgramFiles(x86)'],
+        env['ProgramData'],
+        env['LOCALAPPDATA'],
+        env['APPDATA'],
+        env['PUBLIC'],
+      ])
+        if (v != null && v.trim().isNotEmpty) p.normalize(v),
+      if (home != null)
+        for (final leaf in const [
+          'Desktop',
+          'Documents',
+          'Downloads',
+          'Pictures',
+          'Music',
+          'Videos',
+          'OneDrive',
+        ])
+          p.normalize(p.join(home, leaf)),
+    ];
+  }
+
+  /// Rejects a zip entry whose name would escape [dir] — absolute paths, `..`
+  /// segments, or a drive/UNC prefix. The payload is ours, but a tampered
+  /// installer binary is exactly the case worth surviving.
+  static String? resolveEntry(String dir, String name) {
+    if (name.isEmpty) return null;
+    if (p.isAbsolute(name) || name.contains('\\\\') || name.contains(':')) {
+      return null;
+    }
+    final target = p.normalize(p.join(dir, name));
+    final root = '${p.normalize(dir)}${p.separator}';
+    return p.isWithin(p.normalize(dir), target) || target.startsWith(root)
+        ? target
+        : null;
+  }
+
   static Future<void> install({
     required String dir,
     required bool desktopShortcut,
     required void Function(String line) log,
     required void Function(double p01) progress,
   }) async {
+    final bad = validateInstallDir(dir);
+    if (bad != null) throw StateError(bad);
     log('loading payload');
     final data = await rootBundle.load('assets/payload.zip');
     final zip = ZipDecoder().decodeBytes(
@@ -41,10 +141,18 @@ class InstallEngine {
     final total = files.fold<int>(0, (s, f) => s + f.size);
     var done = 0;
     await Directory(dir).create(recursive: true);
+    // Everything we create, relative to `dir` — the uninstaller deletes this
+    // list and nothing else.
+    final written = <String>[];
     for (final f in files) {
-      final out = File(p.join(dir, f.name));
+      final target = resolveEntry(dir, f.name);
+      if (target == null) {
+        throw StateError('payload entry escapes the install folder: ${f.name}');
+      }
+      final out = File(target);
       await out.parent.create(recursive: true);
       await out.writeAsBytes(f.content as List<int>);
+      written.add(p.relative(target, from: dir));
       done += f.size;
       log(f.name);
       progress(done / total * 0.85);
@@ -59,6 +167,10 @@ class InstallEngine {
     log('writing uninstaller');
     final uninstaller = p.join(dir, 'uninstall.exe');
     await File(Platform.resolvedExecutable).copy(uninstaller);
+    written.add('uninstall.exe');
+    // Written last and listing itself, so uninstall can clean up completely.
+    written.add(manifestName);
+    await File(p.join(dir, manifestName)).writeAsString(written.join('\n'));
     progress(0.90);
     log('creating shortcuts');
     await _shortcut('Programs', p.join(dir, 'ava.exe'), dir);
@@ -70,6 +182,70 @@ class InstallEngine {
     await _registerUninstall(dir, uninstaller, total ~/ 1024);
     progress(1.0);
     log('install complete');
+  }
+
+  /// Removes exactly what [install] recorded in [manifestName], then prunes
+  /// the directories that are left empty, and finally the install folder
+  /// itself — only if nothing else remains in it.
+  ///
+  /// Anything the user put in the folder survives. The previous behaviour was
+  /// `Directory(dir).delete(recursive: true)` guarded only by "does ava.exe
+  /// and data\ exist", which turns any folder someone installed into — their
+  /// Documents, say — into collateral damage.
+  ///
+  /// Falls back to the old wholesale delete **only** when there is no
+  /// manifest, i.e. the install predates this change. That fallback keeps the
+  /// existing guard and is the one path that can still over-delete; it exists
+  /// so upgrades from an older install can still be uninstalled at all.
+  static Future<void> removeInstalled(
+    String dir, {
+    required void Function(String line) log,
+  }) async {
+    final manifest = File(p.join(dir, manifestName));
+    if (!manifest.existsSync()) {
+      log('no manifest (pre-1.0 install) — removing the folder wholesale');
+      if (!looksLikeInstallDir(dir)) {
+        throw StateError('$dir does not look like an AVA install — aborting');
+      }
+      await Directory(dir).delete(recursive: true);
+      return;
+    }
+
+    final entries = (await manifest.readAsLines())
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+    final dirs = <String>{};
+    for (final rel in entries) {
+      // A tampered manifest must not reach outside the install folder.
+      final target = resolveEntry(dir, rel);
+      if (target == null) {
+        log('skipping out-of-tree manifest entry: $rel');
+        continue;
+      }
+      final f = File(target);
+      if (f.existsSync()) await f.delete();
+      dirs.add(p.dirname(target));
+    }
+    // Deepest first, so a directory whose children were just removed is
+    // considered after them.
+    final ordered = dirs.toList()
+      ..sort((a, b) => b.split(p.separator).length - a.split(p.separator).length);
+    for (final d in ordered) {
+      final directory = Directory(d);
+      if (!directory.existsSync()) continue;
+      if (directory.listSync().isEmpty && p.isWithin(dir, d)) {
+        await directory.delete();
+      }
+    }
+    final root = Directory(dir);
+    if (root.existsSync()) {
+      if (root.listSync().isEmpty) {
+        await root.delete();
+      } else {
+        log('left ${root.listSync().length} file(s) that were not ours');
+      }
+    }
   }
 
   /// Sanity check before uninstalling: only ever delete a folder that
@@ -162,7 +338,7 @@ foreach (\$sf in @('Programs','Desktop')) {
     var deleted = false;
     for (var i = 0; i < 30 && !deleted; i++) {
       try {
-        await Directory(dir).delete(recursive: true);
+        await removeInstalled(dir, log: log);
         deleted = true;
       } catch (_) {
         // Stage 1 (uninstall.exe) may still be exiting and holding its lock.

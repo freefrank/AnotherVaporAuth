@@ -287,12 +287,20 @@ class _InstallerScreenState extends State<InstallerScreen>
           controller: _path,
           style: Fx.text(13, color: Fx.cyan),
           cursorColor: Fx.magenta,
+          // Re-validate as they type: the warning has to be visible *before*
+          // the install button, not after the folder is already populated.
+          onChanged: (_) => setState(() {}),
           decoration: const InputDecoration(
               border: InputBorder.none,
               isDense: true,
               contentPadding: EdgeInsets.symmetric(vertical: 12)),
         ),
       ),
+      if (InstallEngine.validateInstallDir(_path.text) != null) ...[
+        const SizedBox(height: 8),
+        Text(InstallEngine.validateInstallDir(_path.text)!,
+            style: Fx.text(12, color: Fx.magenta)),
+      ],
       const SizedBox(height: 14),
       _check('CREATE DESKTOP SHORTCUT', _desktopShortcut,
           (v) => setState(() => _desktopShortcut = v)),
@@ -303,7 +311,16 @@ class _InstallerScreenState extends State<InstallerScreen>
         const Spacer(),
         PixelButton('EXIT', color: Fx.dim, onTap: () => exit(0)),
         const SizedBox(width: 12),
-        PixelButton('INSTALL', onTap: _start),
+        // Disabled rather than hidden, so the reason stays on screen next to
+        // the button that will not work. engine.install() re-checks anyway —
+        // this is the affordance, not the guard.
+        PixelButton('INSTALL',
+            color: InstallEngine.validateInstallDir(_path.text) == null
+                ? Fx.cyan
+                : Fx.dim,
+            onTap: InstallEngine.validateInstallDir(_path.text) == null
+                ? _start
+                : null),
       ]),
     ]);
   }
