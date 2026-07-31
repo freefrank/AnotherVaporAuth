@@ -35,7 +35,7 @@
 
 - **唯一工作树:`~/sync/Git/AnotherVaporAuth`**(主机 `claude`)。不再有 WSL
   原生盘正本,也不再有 Windows 侧 ownCloud 镜像——开发、`flutter analyze/test/build`
-  全在这里做(冷启动 analyze ~57s / test 606 例 ~60s)。
+  全在这里做(冷启动 analyze ~57s / test 607 例 ~60s)。
 - `~/sync` 是 ZFS 数据集(`stor/backup/freefrank/syncthing`)上的 **Syncthing
   folder**,同步守护进程在宿主机侧,本机看不到进程。跨机分发由它自动完成,
   **不需要手工 rsync**。

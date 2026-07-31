@@ -72,7 +72,7 @@ Implemented and statically verified end-to-end:
   and Steam-served item names stay English); `test/app/locales_test.dart`
   fails if they drift apart
 
-Verification: `flutter analyze` clean, **606 tests pass** (crypto RFC vectors,
+Verification: `flutter analyze` clean, **607 tests pass** (crypto RFC vectors,
 TOTP/confirmation cross-impl vectors, protobuf round-trip incl. family-groups
 codec, trade-offer/model JSON, hold-button haptics, AccountStore end-to-end,
 entitlement signature/grace/clock-skew, sessions-client revoke HMAC vectors,
@@ -99,7 +99,7 @@ Both **Linux desktop and Android release builds are verified**:
 
 ```sh
 flutter pub get --enforce-lockfile
-flutter test                       # 606 tests
+flutter test                       # 607 tests
 flutter build linux --release      # build/linux/x64/release/bundle (~27MB)
 flutter run -d linux               # or windows / macos
 

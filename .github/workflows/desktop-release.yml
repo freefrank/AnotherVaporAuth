@@ -8,8 +8,9 @@ on:
   push:
     tags: ['v*']
 
+# Read by default; only the jobs that attach release assets widen it.
 permissions:
-  contents: write
+  contents: read
 
 env:
   FLUTTER_VERSION: '3.44.4'
@@ -17,19 +18,26 @@ env:
 jobs:
   windows:
     name: Windows x64
+    permissions:
+      contents: write   # attaches the setup exe to the Release
     runs-on: windows-latest
     defaults:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          # Keep GITHUB_TOKEN out of .git/config: every later step in the
+          # job — including the third-party installer this workflow
+          # downloads and runs — would otherwise inherit push access.
+          persist-credentials: false
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2  # v2
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
-      - run: flutter pub get
+      - run: flutter pub get --enforce-lockfile
       - run: flutter build windows --release
 
       - name: Read version
@@ -51,7 +59,7 @@ jobs:
       - name: Build installer app
         working-directory: installer
         run: |
-          flutter pub get
+          flutter pub get --enforce-lockfile
           flutter build windows --release --dart-define=AVA_VERSION=${{ steps.ver.outputs.v }}
 
       - name: Install Enigma Virtual Box
@@ -65,6 +73,21 @@ jobs:
             Start-Sleep 5
           }
           if ((Get-Item $out).Length -le 5MB) { throw 'enigmavb.exe download failed/truncated' }
+
+          # This installer runs with the job's credentials and its output is
+          # what users execute, so "it downloaded" is not good enough. The
+          # vendor publishes no digest and the URL is unversioned, so a pinned
+          # SHA-256 would break on every upstream release; the Authenticode
+          # signature is the control that survives version bumps.
+          $sig = Get-AuthenticodeSignature $out
+          if ($sig.Status -ne 'Valid') {
+            throw "enigmavb.exe signature is $($sig.Status) — refusing to run it"
+          }
+          $subject = $sig.SignerCertificate.Subject
+          if ($subject -notmatch 'Enigma') {
+            throw "enigmavb.exe signed by an unexpected publisher: $subject"
+          }
+          Write-Host "enigmavb.exe signature OK — $subject"
           Start-Process $out -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
 
       - name: Pack single-file setup exe
@@ -84,7 +107,7 @@ jobs:
           }
           reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\AVA /v UninstallString
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: AVA-v${{ steps.ver.outputs.v }}-windows-x64-setup
           path: AVA-v${{ steps.ver.outputs.v }}-windows-x64-setup.exe
@@ -119,13 +142,15 @@ jobs:
 
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2
         with:
           files: AVA-v${{ steps.ver.outputs.v }}-windows-x64-setup.exe
           body_path: ${{ steps.notes.outputs.path }}
 
   linux-appimage:
     name: Linux AppImage
+    permissions:
+      contents: write   # attaches the AppImage to the Release
     # 24.04: Flutter 3.44's Linux build passes clang≥17-only warning flags
     # (-Wno-deprecated-literal-operator), which 22.04's clang 14 rejects.
     runs-on: ubuntu-24.04
@@ -133,18 +158,23 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          # Keep GITHUB_TOKEN out of .git/config: every later step in the
+          # job — including the third-party installer this workflow
+          # downloads and runs — would otherwise inherit push access.
+          persist-credentials: false
 
       - name: Install build deps
         run: sudo apt-get update && sudo apt-get install -y ninja-build libgtk-3-dev clang cmake pkg-config libsecret-1-dev libjsoncpp-dev
         working-directory: .
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2  # v2
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
-      - run: flutter pub get
+      - run: flutter pub get --enforce-lockfile
       - run: flutter build linux --release
 
       - name: Read version
@@ -172,11 +202,18 @@ jobs:
           Categories=Utility;Security;
           Terminal=false
           EOF
-          curl -sL -o appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          # Pinned release + digest, not `continuous`. This binary runs with
+          # the job's credentials and its output is what users install, so a
+          # moving download is a direct path into every AppImage we ship.
+          # Bump both lines together; the digest is on the release asset.
+          curl -sL -o appimagetool \
+            https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          echo 'ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  appimagetool' \
+            | sha256sum -c -
           chmod +x appimagetool
           APPIMAGE_EXTRACT_AND_RUN=1 ARCH=x86_64 ./appimagetool AppDir "AVA-v${{ steps.ver.outputs.v }}-linux-x86_64.AppImage"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: AVA-v${{ steps.ver.outputs.v }}-linux-x86_64.AppImage
           path: app/AVA-v${{ steps.ver.outputs.v }}-linux-x86_64.AppImage
@@ -210,7 +247,7 @@ jobs:
 
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2
         with:
           files: app/AVA-v${{ steps.ver.outputs.v }}-linux-x86_64.AppImage
           body_path: ${{ steps.notes.outputs.path }}

@@ -8,8 +8,9 @@ on:
   push:
     tags: ['v*']
 
+# Read by default; only the jobs that attach release assets widen it.
 permissions:
-  contents: write
+  contents: read
 
 env:
   FLUTTER_VERSION: '3.44.4'
@@ -17,19 +18,26 @@ env:
 jobs:
   portable:
     name: Single-file exe
+    permissions:
+      contents: write   # attaches the portable exe to the Release
     runs-on: windows-latest
     defaults:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          # Keep GITHUB_TOKEN out of .git/config: every later step in the
+          # job — including the third-party installer this workflow
+          # downloads and runs — would otherwise inherit push access.
+          persist-credentials: false
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2  # v2
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
-      - run: flutter pub get
+      - run: flutter pub get --enforce-lockfile
       - run: flutter build windows --release
 
       - name: Read version
@@ -47,6 +55,21 @@ jobs:
             Start-Sleep 5
           }
           if ((Get-Item $out).Length -le 5MB) { throw 'enigmavb.exe download failed/truncated' }
+
+          # This installer runs with the job's credentials and its output is
+          # what users execute, so "it downloaded" is not good enough. The
+          # vendor publishes no digest and the URL is unversioned, so a pinned
+          # SHA-256 would break on every upstream release; the Authenticode
+          # signature is the control that survives version bumps.
+          $sig = Get-AuthenticodeSignature $out
+          if ($sig.Status -ne 'Valid') {
+            throw "enigmavb.exe signature is $($sig.Status) — refusing to run it"
+          }
+          $subject = $sig.SignerCertificate.Subject
+          if ($subject -notmatch 'Enigma') {
+            throw "enigmavb.exe signed by an unexpected publisher: $subject"
+          }
+          Write-Host "enigmavb.exe signature OK — $subject"
           Start-Process $out -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
 
       - name: Pack single-file exe
@@ -64,13 +87,13 @@ jobs:
           if (-not $p) { throw 'packed exe did not stay running' }
           $p | Stop-Process
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
           name: AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable
           path: AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable.exe
 
       - name: Attach to release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2
         with:
           files: AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable.exe

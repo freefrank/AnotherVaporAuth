@@ -17,9 +17,9 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2  # v2
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -37,6 +37,24 @@ jobs:
         run: |
           set -o pipefail
           flutter test | tee ../test-output.txt
+
+      # The installer and the entitlement worker had no CI coverage at all
+      # until 2026-07-30, so the guards added with them — manifest-scoped
+      # uninstall, the purchase-token binding — could have rotted unnoticed.
+      - name: Installer tests
+        working-directory: installer
+        run: |
+          set -o pipefail
+          flutter pub get --enforce-lockfile
+          flutter test
+
+      - name: Entitlement worker tests
+        working-directory: infra/entitlement-worker
+        run: |
+          set -o pipefail
+          npm ci
+          npm run typecheck
+          npm test
 
       - name: Lint the docs against reality
         working-directory: .
