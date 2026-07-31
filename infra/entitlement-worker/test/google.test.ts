@@ -119,12 +119,16 @@ describe('getSubscription', () => {
     const { google, calls } = await makeGoogle({
       subscription: {
         subscriptionState: 'SUBSCRIPTION_STATE_ACTIVE',
-        lineItems: [{ expiryTime: '2027-01-01T00:00:00Z' }],
+        lineItems: [
+          { expiryTime: '2027-01-01T00:00:00Z', productId: 'ava_pro_monthly' },
+        ],
       },
     });
     expect(await google.getSubscription('ptok')).toEqual({
       valid: true,
       expiresAt: Math.floor(Date.parse('2027-01-01T00:00:00Z') / 1000),
+      // Surfaced so the caller can reject a valid token for another product.
+      productIds: ['ava_pro_monthly'],
     });
     // exercised the SA OAuth exchange first
     expect(calls.some((u) => u.includes('oauth2.googleapis.com/token'))).toBe(true);
@@ -133,7 +137,11 @@ describe('getSubscription', () => {
 
   it('treats expired/paused/missing subscriptions as invalid', async () => {
     const expired = await makeGoogle({ subscriptionStatus: 404 });
-    expect(await expired.google.getSubscription('ptok')).toEqual({ valid: false, expiresAt: 0 });
+    expect(await expired.google.getSubscription('ptok')).toEqual({
+      valid: false,
+      expiresAt: 0,
+      productIds: [],
+    });
 
     const paused = await makeGoogle({
       subscription: {

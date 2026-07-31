@@ -27,6 +27,10 @@ export interface GoogleSubscription {
   valid: boolean;
   /** Epoch seconds; 0 when unknown. */
   expiresAt: number;
+  /** Product ids the token actually bought (`lineItems[].productId`). Checked
+   * against the expected subscription so a valid token for some *other*
+   * product under the same package cannot buy Pro. */
+  productIds: string[];
 }
 
 export interface Deps {
@@ -47,6 +51,9 @@ export interface Deps {
   };
   config: {
     afdianPlanId(): string;
+    /** The Play subscription that grants Pro — must equal the client's
+     * `kPlaySubscriptionProductId` (play_channel.dart). */
+    playProductId(): string;
     /** VIP days granted per rewarded ad (KV `VIP_DAYS`, default 3). */
     vipDays(): Promise<number>;
     /** Sliding window for the per-class activation bound, in days
@@ -243,17 +250,47 @@ export async function handlePlayVerify(body: unknown, deps: Deps): Promise<Res> 
   const now = deps.now();
   const sub = await deps.google.getSubscription(purchaseToken);
   if (!sub.valid || sub.expiresAt <= now) return err(403, 'subscription_invalid');
+  // A token is only proof of *some* purchase under this package. Without this
+  // check, any other subscription product the app might ever sell would also
+  // unlock Pro.
+  if (!sub.productIds.includes(deps.config.playProductId())) {
+    return err(403, 'subscription_invalid');
+  }
 
-  const ent = await deps.store.upsertEntitlement({
-    channel: 'play',
-    subject: g.sub,
-    tier: 'pro',
-    proUntil: sub.expiresAt,
-    playPurchaseToken: purchaseToken,
-    now,
-  });
+  // The id_token and the purchase token are verified independently — Google
+  // exposes no link between them — so nothing here proves the caller is the
+  // account that paid. What stops a shared token from minting Pro for
+  // everyone it is passed to is the unique index on play_purchase_token: the
+  // second subject to present it fails to insert. That is deliberately left
+  // to the database rather than a read-then-write check in this function,
+  // which two concurrent verifies could both pass.
+  let ent;
+  try {
+    ent = await deps.store.upsertEntitlement({
+      channel: 'play',
+      subject: g.sub,
+      tier: 'pro',
+      proUntil: sub.expiresAt,
+      playPurchaseToken: purchaseToken,
+      now,
+    });
+  } catch (e) {
+    if (isUniqueViolation(e)) return err(403, 'purchase_token_bound');
+    throw e;
+  }
   await deps.store.claimDevice(ent.id, deviceClass, deviceId, now);
   return issueToken(deps, ent, deviceId, deviceClass);
+}
+
+/** Whether a store error is a unique-constraint rejection.
+ *
+ * D1 surfaces these as a plain Error whose message carries SQLite's text, so
+ * matching on the message is the only handle available. Kept deliberately
+ * narrow: anything else must keep propagating to the 500 handler rather than
+ * be mistaken for "someone else owns this token". */
+function isUniqueViolation(e: unknown): boolean {
+  const m = e instanceof Error ? e.message : String(e);
+  return /UNIQUE constraint failed/i.test(m);
 }
 
 /** POST /v1/afdian/redeem {order_no, device_id, device_class} */

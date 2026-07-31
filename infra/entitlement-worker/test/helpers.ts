@@ -30,6 +30,19 @@ export class MemoryStore implements Store {
   }
 
   async upsertEntitlement(i: UpsertEntitlementInput): Promise<EntitlementRow> {
+    // Models migration 0003's unique index on play_purchase_token. Without it
+    // the cross-account reuse tests would pass against a store that is more
+    // permissive than production — i.e. for the wrong reason.
+    if (i.playPurchaseToken != null) {
+      const holder = this.ents.find(
+        (e) =>
+          e.playPurchaseToken === i.playPurchaseToken &&
+          !(e.channel === i.channel && e.subject === i.subject),
+      );
+      if (holder) {
+        throw new Error('D1_ERROR: UNIQUE constraint failed: entitlements.play_purchase_token');
+      }
+    }
     let e = this.ents.find((e) => e.channel === i.channel && e.subject === i.subject);
     if (e) {
       e.tier = i.tier;
@@ -176,7 +189,11 @@ export async function setup(overrides: Partial<Deps> = {}): Promise<TestContext>
     tokens,
     google: {
       verifyIdToken: async () => ({ sub: 'google-sub-1' }),
-      getSubscription: async () => ({ valid: true, expiresAt: clock.t + 30 * 86400 }),
+      getSubscription: async () => ({
+        valid: true,
+        expiresAt: clock.t + 30 * 86400,
+        productIds: ['ava_pro_monthly'],
+      }),
     },
     afdian: {
       queryOrder: async (no) => afdianOrders.get(no) ?? null,
@@ -184,6 +201,7 @@ export async function setup(overrides: Partial<Deps> = {}): Promise<TestContext>
     admob: { verify: async () => true },
     config: {
       afdianPlanId: () => 'plan-pro',
+      playProductId: () => 'ava_pro_monthly',
       vipDays: async () => 3,
       activationWindowDays: async () => 90,
       activationCap: async () => 3, // tests pin a small cap (prod default is 5)

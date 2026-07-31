@@ -34,6 +34,65 @@ async function playVerified(ctx: TestContext, body: Partial<typeof PLAY_BODY> = 
 }
 
 describe('play verify', () => {
+  it('REGRESSION: a shared purchase token cannot mint Pro for a second account',
+    async () => {
+      // The whole point of migration 0003. verifyIdToken and getSubscription
+      // are checked independently and Google exposes no link between them, so
+      // before the unique index one real subscriber could hand their token to
+      // any number of people and each got their own entitlement.
+      const ctx = await setup();
+      expect((await playVerified(ctx)).status).toBe(200);
+
+      ctx.deps.google.verifyIdToken = async () => ({ sub: 'google-sub-2' });
+      const res = await playVerified(ctx);
+      expect(res.status).toBe(403);
+      expect(res.body).toEqual({ error: 'purchase_token_bound' });
+      // …and the second account got nothing, not even a revoked shell.
+      expect(await ctx.store.getEntitlement('play', 'google-sub-2')).toBeNull();
+    });
+
+  it('the original subscriber may re-verify the same token as often as they like',
+    async () => {
+      const ctx = await setup();
+      expect((await playVerified(ctx)).status).toBe(200);
+      expect((await playVerified(ctx)).status).toBe(200);
+      expect((await playVerified(ctx, { device_id: 'dev-B' })).status).toBe(200);
+    });
+
+  it('rejects a valid subscription to some other product', async () => {
+    // A token is only proof of *some* purchase under this package.
+    const ctx = await setup();
+    ctx.deps.google.getSubscription = async () => ({
+      valid: true,
+      expiresAt: NOW + 30 * 86400,
+      productIds: ['ava_pro_yearly_someday'],
+    });
+    const res = await playVerified(ctx);
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: 'subscription_invalid' });
+  });
+
+  it('rejects a subscription that names no product at all', async () => {
+    const ctx = await setup();
+    ctx.deps.google.getSubscription = async () => ({
+      valid: true,
+      expiresAt: NOW + 30 * 86400,
+      productIds: [],
+    });
+    expect((await playVerified(ctx)).status).toBe(403);
+  });
+
+  it('a store failure that is NOT a unique violation still surfaces as 500',
+    async () => {
+      // isUniqueViolation must stay narrow: swallowing every store error as
+      // purchase_token_bound would hide real outages behind a plausible 403.
+      const ctx = await setup();
+      ctx.deps.store.upsertEntitlement = async () => {
+        throw new Error('D1_ERROR: network unreachable');
+      };
+      await expect(playVerified(ctx)).rejects.toThrow('network unreachable');
+    });
+
   it('issues a token with the full claim set', async () => {
     const ctx = await setup();
     const res = await playVerified(ctx);
@@ -64,7 +123,11 @@ describe('play verify', () => {
     expect(await playVerified(ctx)).toEqual({ status: 401, body: { error: 'invalid_id_token' } });
 
     const ctx2 = await setup();
-    ctx2.deps.google.getSubscription = async () => ({ valid: false, expiresAt: 0 });
+    ctx2.deps.google.getSubscription = async () => ({
+      valid: false,
+      expiresAt: 0,
+      productIds: [],
+    });
     expect(await playVerified(ctx2)).toEqual({
       status: 403,
       body: { error: 'subscription_invalid' },
@@ -164,7 +227,7 @@ describe('token refresh', () => {
     ctx.clock.t = NOW + 31 * 86400; // past pro_until
     ctx.deps.google.getSubscription = async (pt) => {
       expect(pt).toBe('ptok-1'); // uses the stored purchase token
-      return { valid: true, expiresAt: NOW + 61 * 86400 };
+      return { valid: true, expiresAt: NOW + 61 * 86400, productIds: ['ava_pro_monthly'] };
     };
     const res = await handleRefresh({ token, device_id: 'dev-A' }, ctx.deps);
     const claims = decodeClaims(tokenOf(res));
@@ -176,7 +239,11 @@ describe('token refresh', () => {
     const ctx = await setup();
     const token = tokenOf(await playVerified(ctx));
     ctx.clock.t = NOW + 31 * 86400;
-    ctx.deps.google.getSubscription = async () => ({ valid: false, expiresAt: 0 });
+    ctx.deps.google.getSubscription = async () => ({
+      valid: false,
+      expiresAt: 0,
+      productIds: [],
+    });
     expect(await handleRefresh({ token, device_id: 'dev-A' }, ctx.deps)).toEqual({
       status: 403,
       body: { error: 'entitlement_ended' },

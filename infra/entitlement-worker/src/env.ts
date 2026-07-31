@@ -17,6 +17,9 @@ export interface Env {
   GOOGLE_SA_KEY: string;
   /** e.g. pro.dotslash.ava */
   PLAY_PACKAGE_NAME: string;
+  /** Optional override for the Pro subscription's product id; defaults to
+   * `ava_pro_monthly`. Not a secret — it must match the shipped client. */
+  PLAY_PRODUCT_ID?: string;
   /** The app's Web OAuth client id. Required — Google id_token `aud` is
    * pinned to it, and verification fails outright when it is unset. */
   GOOGLE_CLIENT_ID: string;

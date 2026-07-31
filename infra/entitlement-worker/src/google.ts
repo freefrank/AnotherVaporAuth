@@ -152,10 +152,10 @@ export function createGoogle(cfg: GoogleConfig): {
         `${ANDROID_PUBLISHER}/applications/${encodeURIComponent(cfg.packageName)}` +
         `/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`;
       const res = await fetcher(url, { headers: { authorization: `Bearer ${token}` } });
-      if (!res.ok) return { valid: false, expiresAt: 0 };
+      if (!res.ok) return { valid: false, expiresAt: 0, productIds: [] };
       const j = (await res.json()) as {
         subscriptionState?: string;
-        lineItems?: { expiryTime?: string }[];
+        lineItems?: { expiryTime?: string; productId?: string }[];
       };
       // Canceled-but-not-expired users keep access until expiryTime; the
       // caller additionally compares expiresAt against `now`.
@@ -165,14 +165,19 @@ export function createGoogle(cfg: GoogleConfig): {
         'SUBSCRIPTION_STATE_CANCELED',
       ];
       let expiresAt = 0;
+      // Which product this token actually bought. Without it a valid token for
+      // any other subscription under the same package would be accepted as
+      // Pro; the caller checks it against the expected product id.
+      const productIds: string[] = [];
       for (const li of j.lineItems ?? []) {
         const t = Date.parse(li.expiryTime ?? '');
         if (!Number.isNaN(t)) expiresAt = Math.max(expiresAt, Math.floor(t / 1000));
+        if (li.productId) productIds.push(li.productId);
       }
       const valid = okStates.includes(j.subscriptionState ?? '') && expiresAt > 0;
-      return { valid, expiresAt };
+      return { valid, expiresAt, productIds };
     } catch {
-      return { valid: false, expiresAt: 0 };
+      return { valid: false, expiresAt: 0, productIds: [] };
     }
   }
 

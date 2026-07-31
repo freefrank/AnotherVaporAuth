@@ -15,6 +15,7 @@ const DEFAULT_VIP_DAYS = 3;
 const DEFAULT_ACTIVATION_WINDOW_DAYS = 90;
 const DEFAULT_ACTIVATION_CAP = 5;
 const SSV_TXN_TTL_SECONDS = 7 * 86400;
+const DEFAULT_PLAY_PRODUCT_ID = 'ava_pro_monthly';
 
 /** Lazily imports the signing key once per isolate. */
 function lazyTokenService(secret: string): TokenService {
@@ -49,6 +50,9 @@ function buildDeps(env: Env): Deps {
     admob: createAdmob({ kv: env.CONFIG }),
     config: {
       afdianPlanId: () => env.AFDIAN_PLAN_ID,
+      // Must match kPlaySubscriptionProductId in play_channel.dart. Overridable
+      // by env so a renamed Play product does not need a code deploy.
+      playProductId: () => env.PLAY_PRODUCT_ID || DEFAULT_PLAY_PRODUCT_ID,
       vipDays: () => kvNumber('VIP_DAYS', DEFAULT_VIP_DAYS),
       activationWindowDays: () =>
         kvNumber('ACTIVATION_WINDOW_DAYS', DEFAULT_ACTIVATION_WINDOW_DAYS),

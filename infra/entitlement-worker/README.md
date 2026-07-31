@@ -10,7 +10,7 @@ EdDSA(Ed25519)JWT;客户端(`app/lib/src/core/entitlement.dart`)用内嵌公钥
 | 端点 | 说明 |
 | --- | --- |
 | `POST /v1/token/refresh` `{token, device_id}` | 轮换 token。旧 token 可过期但签名必须有效。403:`revoked` / `device_revoked`(同类新设备已把名额顶掉)/ `entitlement_ended` / `invalid_token` |
-| `POST /v1/play/verify` `{id_token, purchase_token, device_id, device_class}` | 验 Google id_token + Play 订阅,upsert 权益并占设备名额,签 token |
+| `POST /v1/play/verify` `{id_token, purchase_token, device_id, device_class}` | 验 Google id_token + Play 订阅,upsert 权益并占设备名额,签 token。**购买令牌与账户是一对一绑定的**:令牌已属于另一个 Google `sub` → 403 `purchase_token_bound`;订阅的 `productId` 不是 `ava_pro_monthly`(可用 `PLAY_PRODUCT_ID` 覆盖)→ 403 `subscription_invalid` |
 | `POST /v1/afdian/redeem` `{order_no, device_id, device_class}` | 通过爱发电开放平台核验订单;订单绑定他人 → 403 `order_bound` |
 | `POST /v1/afdian/webhook` | 爱发电续订推送。推送无签名,靠回查 query-order 鉴别真伪;响应 `{ec:200}` |
 | `POST /v1/beta/redeem` `{code, device_id, device_class}` | beta 码兑换,签终身 pro(pro=0);按设备类占名额(同 Play),同类换机为受限 REPLACE,超出激活上限 403 `code_activation_limit`(附 `activations` 名额表,只含类与时间戳);`redeemed_by` 仅留作首兑审计,不再作门禁 |
@@ -28,6 +28,14 @@ EdDSA(Ed25519)JWT;客户端(`app/lib/src/core/entitlement.dart`)用内嵌公钥
 **近似的**,实测会溢出到 10–12 次才拒(2026-07-30 线上验证)。它抬高的是脚本
 小子的成本,不是对分布式攻击的防御。绑定缺失时 **fail-open 并打 error 日志**
 ——限速器坏掉不该把付费用户锁在门外(与 `aud` 校验相反,后者一律 fail-closed)。
+
+**购买令牌绑定**(2026-07-30 加固):`verifyIdToken` 与 `getSubscription` 是**互相
+独立**的两次校验,Google 也不暴露二者之间的关联——所以「这个令牌属于这个账户」
+在协议层是无法证明的。真正拦住共享令牌的是 `entitlements.play_purchase_token`
+上的**唯一索引**(migration 0003):第二个 `sub` 拿同一个令牌来换,INSERT 直接失败,
+`logic.ts` 把它翻成 403 `purchase_token_bound`。**这条约束刻意放在数据库而不是
+代码里**——两个并发请求可以同时通过「先读后写」的检查,但不可能同时满足唯一索引。
+加固前:一个真实订阅者把令牌发给任意多人,每人用自己的 Google 账户都能拿到独立的 Pro。
 
 设备名额:**每权益每设备类(android/windows/linux/macos)一个**,新设备激活即
 REPLACE,旧设备下次 refresh 收 403 `device_revoked`。beta 码 / 爱发电这类
