@@ -91,17 +91,30 @@ android {
     }
 }
 
-// Fail closed: a Play bundle built without the upload key would be silently
-// debug-signed and rejected (or worse, archived as a broken release artifact).
+// Fail closed on anything shippable built without the upload key.
+//
+// The AAB was already covered: it would be debug-signed and rejected by Play.
+// The release *APK* was not, and that is the more dangerous of the two — the
+// cn channel ships an APK directly to users, and the Android debug keystore's
+// password is a published constant. A debug-signed AVA in someone's hands can
+// be replaced by an update anyone is able to sign.
+//
+// `flutter run --release` on a machine with no key still has a way through,
+// because refusing that outright would be obnoxious — but it has to be asked
+// for by name, so it can never happen to a build that was meant to ship.
+val allowDebugSigning = (project.findProperty("allowDebugSigning") as String?) == "true"
 gradle.taskGraph.whenReady {
-    val aabTask = Regex("^bundle\\w*Release$") // bundleRelease, bundle<Flavor>Release
-    if (!hasReleaseSigning &&
-        allTasks.any { it.project == project && aabTask.matches(it.name) }
+    // bundleRelease / bundle<Flavor>Release, assembleRelease / assemble<Flavor>Release
+    val shippable = Regex("^(bundle|assemble)\\w*Release$")
+    if (!hasReleaseSigning && !allowDebugSigning &&
+        allTasks.any { it.project == project && shippable.matches(it.name) }
     ) {
         throw GradleException(
-            "Release bundle requested but android/key.properties is missing — " +
-                "the AAB would be debug-signed. Provide the upload key " +
-                "(see android/key.properties.example) or build a debug bundle instead."
+            "A release artifact was requested but android/key.properties is " +
+                "missing — it would be signed with the public Android debug " +
+                "key. Provide the upload key (see android/key.properties.example), " +
+                "or pass -PallowDebugSigning=true if this build is only ever " +
+                "going to run on your own machine."
         )
     }
 }
