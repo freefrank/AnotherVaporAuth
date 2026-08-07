@@ -762,6 +762,20 @@ describe('entitlement status', () => {
 });
 
 describe('admob ssv + vip claim', () => {
+  it('grants nothing when the callback carries no transaction_id', async () => {
+    // Replay protection used to be conditional on the field being present
+    // (`if (txn && seen(txn))`), so a signed callback without one fell
+    // straight through the gate and minted VIP on every delivery.
+    const ctx = await setup();
+    const url = new URL(
+      'https://w.example/v1/admob/ssv?ad_network=1&reward_amount=1' +
+        '&reward_item=vip&user_id=dev-A&signature=s&key_id=1',
+    );
+    const res = await handleAdmobSsv(url, ctx.deps);
+    expect(res.status).toBe(200);
+    expect(await ctx.store.getEntitlement('play', 'dev-A')).toBeNull();
+  });
+
   const ssvUrl = (txn: string) =>
     new URL(
       `https://w.example/v1/admob/ssv?ad_network=1&ad_unit=2&reward_amount=1&reward_item=vip` +

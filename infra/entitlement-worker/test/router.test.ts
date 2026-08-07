@@ -111,6 +111,52 @@ describe('router', () => {
     expect(keys).toEqual(['redeem:203.0.113.7']);
   });
 
+  it('413s a body larger than the cap, before parsing it', async () => {
+    // The per-field checks live downstream of JSON.parse, so without this an
+    // unauthenticated caller could spend the isolate's CPU on megabytes.
+    const { deps } = await setup();
+    const huge = 'x'.repeat(40 * 1024);
+    const res = await route(post('/v1/token/refresh', { token: huge }), deps);
+    expect(res.status).toBe(413);
+    expect(await res.json()).toEqual({ error: 'body_too_large' });
+  });
+
+  it('413s on a declared Content-Length over the cap even if the body is small',
+    async () => {
+      const { deps } = await setup();
+      const req = new Request('https://w.example/v1/token/refresh', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'content-length': '999999' },
+        body: JSON.stringify({ token: 'small' }),
+      }) as unknown as Request;
+      const res = await route(req, deps);
+      expect(res.status).toBe(413);
+    });
+
+  it('a normal-sized body still gets through', async () => {
+    const { deps } = await setup();
+    const res = await route(post('/v1/entitlement/status', { token: 'garbage' }), deps);
+    expect(res.status).toBe(403); // reached the handler, not the size gate
+  });
+
+  it('sets HSTS on every response, including the empty-bodied one', async () => {
+    // The custom domain answers plain HTTP too, and these responses carry
+    // entitlement tokens.
+    const { deps } = await setup();
+    const json = await route(post('/v1/entitlement/status', { token: 'x' }), deps);
+    expect(json.headers.get('strict-transport-security'))
+      .toBe('max-age=63072000; includeSubDomains');
+
+    const empty = await route(
+      new Request(
+        'https://w.example/v1/admob/ssv?ad_network=1&transaction_id=t1&user_id=dev-A&signature=s&key_id=1',
+      ) as unknown as Request,
+      deps,
+    );
+    expect(await empty.text()).toBe('');
+    expect(empty.headers.get('strict-transport-security')).toBeTruthy();
+  });
+
   it('serves GET /v1/admob/ssv with an empty 200 body', async () => {
     const { deps } = await setup();
     const res = await route(

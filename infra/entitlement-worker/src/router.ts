@@ -23,11 +23,32 @@ import {
 // script; it is not a defence against a distributed attacker.
 const RATE_LIMITED = new Set(['POST /v1/beta/redeem', 'POST /v1/afdian/redeem']);
 
+/// Generous ceiling for the largest legitimate body (a Google id_token plus a
+/// Play purchase token is a couple of KB).
+const MAX_BODY_BYTES = 32 * 1024;
+
+/// Sent on every response. The API carries entitlement tokens and Google
+/// id_tokens, and the custom domain answers plain HTTP as well as HTTPS — so
+/// without this a client that ever resolves the bare host over http:// keeps
+/// doing it. Two years, subdomains included; no `preload` since that is a
+/// one-way commitment for the whole apex.
+const SECURITY_HEADERS = {
+  'content-type': 'application/json',
+  'strict-transport-security': 'max-age=63072000; includeSubDomains',
+} as const;
+
 function toResponse(res: Res): Response {
-  if (res.body === null) return new Response(null, { status: res.status });
+  if (res.body === null) {
+    return new Response(null, {
+      status: res.status,
+      headers: {
+        'strict-transport-security': SECURITY_HEADERS['strict-transport-security'],
+      },
+    });
+  }
   return new Response(JSON.stringify(res.body), {
     status: res.status,
-    headers: { 'content-type': 'application/json' },
+    headers: SECURITY_HEADERS,
   });
 }
 
@@ -47,7 +68,21 @@ export async function route(request: Request, deps: Deps): Promise<Response> {
   const post = async (handler: (body: unknown, deps: Deps) => Promise<Res>): Promise<Response> => {
     let body: unknown;
     try {
-      body = await request.json();
+      // Every body here is a handful of tokens and ids — a few hundred bytes.
+      // Bound it before parsing: the field checks downstream only run *after*
+      // JSON.parse has already walked whatever arrived, so an unauthenticated
+      // caller could otherwise spend the isolate's CPU on megabytes of it.
+      // Content-Length catches the ordinary case cheaply; the text length
+      // catches a chunked body that never declares one.
+      const declared = Number(request.headers.get('content-length') ?? '0');
+      if (declared > MAX_BODY_BYTES) {
+        return toResponse({ status: 413, body: { error: 'body_too_large' } });
+      }
+      const raw = await request.text();
+      if (raw.length > MAX_BODY_BYTES) {
+        return toResponse({ status: 413, body: { error: 'body_too_large' } });
+      }
+      body = JSON.parse(raw);
     } catch {
       return toResponse({ status: 400, body: { error: 'bad_request' } });
     }

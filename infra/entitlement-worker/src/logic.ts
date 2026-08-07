@@ -503,8 +503,15 @@ export async function handleAdmobSsv(url: URL, deps: Deps): Promise<Res> {
   if (!(await deps.admob.verify(url))) return err(403, 'invalid_signature');
 
   // Google retries the callback; don't grant the same transaction twice.
+  //
+  // The identifier is REQUIRED to grant, not merely checked when present:
+  // `if (txn && seen(txn))` let a signed callback that carried no
+  // transaction_id fall straight through the replay gate and mint VIP every
+  // time it was delivered. Google always sends one on a real reward, so
+  // refusing without it costs nothing.
   const txn = url.searchParams.get('transaction_id');
-  if (txn && (await deps.replay.seenTransaction(txn))) return { status: 200, body: null };
+  if (!txn) return { status: 200, body: null };
+  if (await deps.replay.seenTransaction(txn)) return { status: 200, body: null };
 
   const now = deps.now();
   const existing = await deps.store.getEntitlement('play', deviceId);
