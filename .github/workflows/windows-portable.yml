@@ -27,9 +27,9 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
         with:
-          # Keep GITHUB_TOKEN out of .git/config: every later step in the
-          # job — including the third-party installer this workflow
-          # downloads and runs — would otherwise inherit push access.
+          # Keep GITHUB_TOKEN out of .git/config: it would otherwise be
+          # readable by every later step in the job, and the release attach
+          # step gets its credential from the action's own env instead.
           persist-credentials: false
 
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2  # v2
@@ -45,47 +45,43 @@ jobs:
         shell: bash
         run: echo "v=$(grep '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)" >> "$GITHUB_OUTPUT"
 
-      - name: Install Enigma Virtual Box
-        shell: pwsh
-        run: |
-          $out = "$env:TEMP\enigmavb.exe"
-          foreach ($i in 1..3) {
-            curl.exe -sL -o $out https://enigmaprotector.com/assets/files/enigmavb.exe
-            if ((Get-Item $out -ErrorAction SilentlyContinue).Length -gt 5MB) { break }
-            Start-Sleep 5
-          }
-          if ((Get-Item $out).Length -le 5MB) { throw 'enigmavb.exe download failed/truncated' }
-
-          # This installer runs with the job's credentials and its output is
-          # what users execute, so "it downloaded" is not good enough. The
-          # vendor publishes no digest and the URL is unversioned, so a pinned
-          # SHA-256 would break on every upstream release; the Authenticode
-          # signature is the control that survives version bumps.
-          $sig = Get-AuthenticodeSignature $out
-          if ($sig.Status -ne 'Valid') {
-            throw "enigmavb.exe signature is $($sig.Status) — refusing to run it"
-          }
-          $subject = $sig.SignerCertificate.Subject
-          if ($subject -notmatch 'Enigma') {
-            throw "enigmavb.exe signed by an unexpected publisher: $subject"
-          }
-          Write-Host "enigmavb.exe signature OK — $subject"
-          Start-Process $out -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
-
+      # NSIS is preinstalled on the runner image, so unlike the vendor tool it
+      # replaced there is nothing to download and nothing to verify at build
+      # time. See tool/portable.nsi for why the installer job cannot use it.
       - name: Pack single-file exe
         shell: pwsh
         working-directory: .
-        run: ./tool/pack_portable.ps1 -ReleaseDir app/build/windows/x64/runner/Release -Output "AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable.exe"
+        run: |
+          $src = (Resolve-Path app/build/windows/x64/runner/Release).Path
+          $out = Join-Path (Get-Location).Path "AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable.exe"
+          $ico = (Resolve-Path app/windows/runner/resources/app_icon.ico).Path
+          $makensis = (Get-Command makensis -ErrorAction SilentlyContinue).Source
+          if (-not $makensis) {
+            $makensis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+          }
+          if (-not (Test-Path $makensis)) { throw "makensis not found" }
+          & $makensis /V2 "/DSRCDIR=$src" "/DOUTFILE=$out" "/DICONFILE=$ico" `
+            "/DAPPVER=${{ steps.ver.outputs.v }}" tool/portable.nsi
+          if ($LASTEXITCODE -ne 0) { throw "makensis exited $LASTEXITCODE" }
+          if (-not (Test-Path $out)) { throw "makensis produced no output" }
+          "packed {0:N1} MB" -f ((Get-Item $out).Length / 1MB)
 
       - name: Smoke test
         shell: pwsh
         working-directory: .
         run: |
           Start-Process "AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable.exe"
-          Start-Sleep 8
-          $p = Get-Process "AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable" -ErrorAction SilentlyContinue
-          if (-not $p) { throw 'packed exe did not stay running' }
-          $p | Stop-Process
+          Start-Sleep 12
+          # The outer stub stays alive only because it is ExecWait-ing on the
+          # app, so its survival is already evidence the app launched...
+          $outer = Get-Process "AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable" -ErrorAction SilentlyContinue
+          if (-not $outer) { throw 'packed exe did not stay running' }
+          # ...but assert the unpacked app directly too, so a stub that hangs
+          # for its own reasons cannot pass for a working build.
+          $inner = Get-Process ava -ErrorAction SilentlyContinue
+          if (-not $inner) { throw 'the unpacked ava.exe never started' }
+          $inner | Stop-Process -Force
+          $outer | Stop-Process -Force
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
