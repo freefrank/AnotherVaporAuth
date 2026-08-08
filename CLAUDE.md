@@ -25,7 +25,13 @@
   `notes in language en-US with length N, which is too long`),不是截断。
   2026-07-30 发 1.0.0 时 563 字被拒过一次,压到 489 才过。发布说明正本在
   `dist/release-notes-v<版本>.txt`——**该目录 git 忽略**,只靠 Syncthing 同步,
-  所以这条上限记在这里而不是那边。
+  所以这条上限记在这里而不是那边。计长度时把 `\n` 按 CRLF 算(每行 +1)留余量。
+- **发布说明的语言与商店条目的语言是两套东西**(2026-08-08 实测):发布说明
+  可以给任意 Play 支持的语言,**不要求该语言有商店条目**——1.0.1 一次提交了
+  en-US / zh-CN / zh-TW / de-DE / fr-FR / es-ES / ru-RU 七种,全部被接受。
+  但**商店条目(标题 / 简介 / 完整描述)目前只有 en-US 与 zh-CN**,所以德/法/
+  西/俄/繁中用户看到的更新说明是母语、商店页却是英文。要补齐得每语言写
+  标题 30 字符 + 简介 80 字符 + 完整描述 4000 字符(现有英文描述约 2000 字)。
 - 可组合使用,如 **cbp**。
 - **s / sync** = **已废弃**(2026-07-26)。旧流程是把 WSL 工作树 rsync 回
   `/mnt/c/.../ownCloud/Git/AnotherVaporAuth` 镜像;WSL 与该镜像现均已不存在,
@@ -35,7 +41,7 @@
 
 - **唯一工作树:`~/sync/Git/AnotherVaporAuth`**(主机 `claude`)。不再有 WSL
   原生盘正本,也不再有 Windows 侧 ownCloud 镜像——开发、`flutter analyze/test/build`
-  全在这里做(冷启动 analyze ~57s / test 607 例 ~60s)。
+  全在这里做(冷启动 analyze ~57s / test 609 例 ~60s)。
 - `~/sync` 是 ZFS 数据集(`stor/backup/freefrank/syncthing`)上的 **Syncthing
   folder**,同步守护进程在宿主机侧,本机看不到进程。跨机分发由它自动完成,
   **不需要手工 rsync**。

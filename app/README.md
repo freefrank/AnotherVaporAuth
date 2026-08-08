@@ -28,7 +28,7 @@ lib/src/
 l10n/                   # ARB localizations (en, zh, zh_Hant, de, fr, es, ru)
 ```
 
-## Status (1.0.0)
+## Status (1.0.1)
 
 Implemented and statically verified end-to-end:
 
@@ -62,6 +62,13 @@ Implemented and statically verified end-to-end:
   verified offline, paywalled skins, AdMob banner + rewarded VIP (play only)
 - **Block screenshots** — opt-in `FLAG_SECURE` toggle (Android only; off by
   default, since it also blanks screen sharing and feedback screenshots)
+- **Versioned privacy consent** — the first-run notice is tracked by revision,
+  not a boolean, so changing what it *says* re-asks instead of relying on
+  agreement to different wording. Someone who accepted an earlier revision
+  gets a "what changed" screen rather than the first-run welcome, and Agree
+  stays disabled until the notice has been scrolled to the end (a notice that
+  fits the viewport enables it immediately — see
+  `test/widget/app_smoke_test.dart`)
 - i18n — **seven locales**: English, 简体中文, 繁體中文, Deutsch, Français,
   Español, Русский. Each is translated from the English template, not machine
   converted; `zh_Hant` uses Taiwan vocabulary and `zh_HK` matches it by script
@@ -72,7 +79,7 @@ Implemented and statically verified end-to-end:
   and Steam-served item names stay English); `test/app/locales_test.dart`
   fails if they drift apart
 
-Verification: `flutter analyze` clean, **607 tests pass** (crypto RFC vectors,
+Verification: `flutter analyze` clean, **609 tests pass** (crypto RFC vectors,
 TOTP/confirmation cross-impl vectors, protobuf round-trip incl. family-groups
 codec, trade-offer/model JSON, hold-button haptics, AccountStore end-to-end,
 entitlement signature/grace/clock-skew, sessions-client revoke HMAC vectors,
@@ -99,7 +106,7 @@ Both **Linux desktop and Android release builds are verified**:
 
 ```sh
 flutter pub get --enforce-lockfile
-flutter test                       # 607 tests
+flutter test                       # 609 tests
 flutter build linux --release      # build/linux/x64/release/bundle (~27MB)
 flutter run -d linux               # or windows / macos
 

@@ -5,6 +5,65 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v1.0.1] — 2026-08-07
+
+### Added
+- **Five more languages: 繁體中文, Deutsch, Français, Español, Русский.**
+  Each is translated from English rather than machine-converted — the
+  Traditional Chinese uses Taiwan vocabulary, not a character swap of the
+  Simplified text. Pick one in Settings → Language; the choice now survives a
+  restart correctly, which it did not for Traditional Chinese.
+
+### Changed
+- **The privacy notice on first run was wrong, and has been rewritten.** It
+  said AVA "has no backend of its own" and "connects only to Valve's Steam
+  servers". Neither was true: there are two services the developer runs — Pro
+  entitlement checks, and feedback delivery when you press send — and the Play
+  build shows ads on the free tier. **Nothing about what the app does has
+  changed; only the description of it.** All of this was already spelled out
+  in the full Privacy Policy, which the notice now matches.
+- **If you accepted the old notice, AVA asks once more.** You get a short
+  explanation of what was wrong rather than the first-run welcome screen.
+  Consent is now tracked per revision, so a future change to the notice can
+  ask again instead of quietly relying on agreement to different wording.
+- **Agree stays disabled until you have scrolled to the end** of the notice.
+
+### Fixed
+- **Uninstalling the Windows build no longer removes files it did not
+  install.** It used to delete the entire install folder, so anyone who had
+  pointed the installer at an existing folder — Documents, say — lost that
+  folder's contents. It now removes only what it wrote, keeps everything else,
+  and refuses to install into a drive root, your home folder, or any folder
+  that already has unrelated files in it.
+- **Redeeming a code too many times now says so** instead of reporting the
+  code as invalid.
+
+—
+
+### 新增
+- **新增五种语言:繁體中文、Deutsch、Français、Español、Русский。**
+  都是从英文翻译的,不是机器转换——繁體中文用的是台湾用语,而不是把简体做
+  字符替换。在「设置 → 语言」里选;语言选择现在能正确扛过重启,此前繁體中文
+  是不行的。
+
+### 变更
+- **首次启动的隐私说明写错了,已重写。** 它此前写着 AVA「没有自己的后端」
+  「只连接 Valve 的 Steam 服务器」。两句都不成立:开发者自己运行着两个服务
+  ——Pro 权益校验,以及你按下发送时的反馈投递——Play 版免费档还会显示广告。
+  **应用的行为没有任何变化,变的只是对它的描述。** 这些内容在完整的隐私政策
+  里本来就写着,现在是说明追上了政策。
+- **同意过旧说明的用户会被再问一次。** 看到的是一段「哪里写错了」的简短说明,
+  而不是首次启动的欢迎页。同意状态现在按版本记录,所以以后再改说明可以重新
+  征求,而不是默默沿用对另一段文字的同意。
+- **必须滑到说明末尾,「同意」按钮才可点。**
+
+### 修复
+- **卸载 Windows 版不会再删掉不是它装的文件。** 此前是整个安装目录递归删除,
+  所以把安装路径指到已有文件夹(比如「文档」)的人,卸载时会连里面的东西一起
+  失去。现在只删自己写入的文件,其余原样保留;并且拒绝安装到盘符根目录、用户
+  主目录,或任何已经有别的文件的文件夹。
+- **兑换激活码次数过多时会如实说明**,而不是报告激活码无效。
+
 ## [v1.0.0] — 2026-07-30
 
 ### Added
