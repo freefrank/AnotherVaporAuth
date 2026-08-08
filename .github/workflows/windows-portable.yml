@@ -1,8 +1,8 @@
 name: Windows portable
 
 # Dedicated packaging workflow: builds the Windows app and packs it into a
-# single-file portable exe with Enigma Virtual Box (tool/pack_portable.ps1).
-# Account data still goes to the per-user data directory.
+# single-file portable exe with NSIS (tool/portable.nsi). Account data still
+# goes to the per-user data directory.
 on:
   workflow_dispatch:
   push:
@@ -45,9 +45,19 @@ jobs:
         shell: bash
         run: echo "v=$(grep '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)" >> "$GITHUB_OUTPUT"
 
-      # NSIS is preinstalled on the runner image, so unlike the vendor tool it
-      # replaced there is nothing to download and nothing to verify at build
-      # time. See tool/portable.nsi for why the installer job cannot use it.
+      # NSIS is NOT in the windows-latest (Server 2025) image — it was in
+      # 2022, which is what an out-of-date reading of the image manifest will
+      # tell you. Install it from Chocolatey at a pinned version: choco is on
+      # the image and verifies the package checksum itself, so this is still
+      # a long way from the unversioned, undigested vendor download it
+      # replaced — but it is a download, and the comment should say so.
+      - name: Install NSIS
+        shell: pwsh
+        run: |
+          choco install nsis --version=3.12.0 -y --no-progress
+          if ($LASTEXITCODE -ne 0) { throw "choco install nsis exited $LASTEXITCODE" }
+
+      # See tool/portable.nsi for why the installer job cannot use this.
       - name: Pack single-file exe
         shell: pwsh
         working-directory: .
@@ -55,11 +65,15 @@ jobs:
           $src = (Resolve-Path app/build/windows/x64/runner/Release).Path
           $out = Join-Path (Get-Location).Path "AVA-v${{ steps.ver.outputs.v }}-windows-x64-portable.exe"
           $ico = (Resolve-Path app/windows/runner/resources/app_icon.ico).Path
+          # choco does not refresh this session's PATH, so look in the known
+          # install location too before giving up.
           $makensis = (Get-Command makensis -ErrorAction SilentlyContinue).Source
-          if (-not $makensis) {
-            $makensis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+          foreach ($c in @("${env:ProgramFiles(x86)}\NSIS\makensis.exe",
+                           "${env:ProgramFiles}\NSIS\makensis.exe")) {
+            if (-not $makensis -and (Test-Path $c)) { $makensis = $c }
           }
-          if (-not (Test-Path $makensis)) { throw "makensis not found" }
+          if (-not $makensis) { throw "makensis not found after installing NSIS" }
+          & $makensis /VERSION
           & $makensis /V2 "/DSRCDIR=$src" "/DOUTFILE=$out" "/DICONFILE=$ico" `
             "/DAPPVER=${{ steps.ver.outputs.v }}" tool/portable.nsi
           if ($LASTEXITCODE -ne 0) { throw "makensis exited $LASTEXITCODE" }
