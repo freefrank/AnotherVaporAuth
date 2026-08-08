@@ -3,7 +3,6 @@
   "appTitle": "AVA",
   "navAccounts": "Cuentas",
   "navSettings": "Ajustes",
-
   "unlockTitle": "Desbloquear",
   "unlockPrompt": "Introduce tu clave de cifrado",
   "unlockButton": "Desbloquear",
@@ -42,11 +41,9 @@
   "settingsBlockScreenshots": "Bloquear capturas",
   "settingsBlockScreenshotsDesc": "Oculta AVA en las capturas, la grabación de pantalla y la vista de apps recientes. También deja la ventana en negro al compartir pantalla y te impide adjuntar capturas a los comentarios.",
   "passkeyLabel": "Clave de cifrado",
-
   "accountsEmpty": "Aún no hay cuentas. Importa un maFile o inicia sesión para añadir una.",
   "emptyAddAccount": "Añadir cuenta",
   "accountReady": "Lista",
-
   "tutCodeTitle": "Código en vivo",
   "tutCodeBody": "Toca el código grande para copiarlo. Toca el nombre de la cuenta para alternar entre usuario / apodo / SteamID.",
   "tutSwipeRightTitle": "Desliza a la derecha → confirmaciones",
@@ -73,7 +70,6 @@
   "codeCopied": "Código de inicio de sesión copiado al portapapeles",
   "copied": "Copiado al portapapeles",
   "copySteamId": "Copiar SteamID",
-
   "pendingTitle": "Pendientes",
   "pendingTabConfirmations": "Confirmaciones",
   "pendingTabOffers": "Ofertas",
@@ -204,7 +200,6 @@
   "addErrBadSms": "El código SMS no es correcto, inténtalo de nuevo.",
   "debugLog": "Registro de depuración",
   "debugLogDesc": "Traza de red para diagnosticar inicios de sesión / confirmaciones",
-
   "feedbackTitle": "Comentarios",
   "feedbackDesc": "¿Has encontrado un fallo o tienes una idea? Cuéntaselo directamente al desarrollador o abre una incidencia en GitHub para debatirlo en público.",
   "feedbackSend": "Enviar comentarios",
@@ -230,7 +225,6 @@
   "commonOpen": "Abrir",
   "commonClear": "Vaciar",
   "addErrFinalize": "Error al finalizar: {detail}",
-
   "loginTitle": "Iniciar sesión en Steam",
   "loginUsername": "Nombre de usuario",
   "loginPassword": "Contraseña",
@@ -254,7 +248,6 @@
   "loginStepDone": "Listo",
   "loginWaitingDesc": "Aprueba este inicio de sesión en la app móvil de Steam. También puedes usar un código por correo o iniciar sesión con QR.",
   "loginFailed": "Error al iniciar sesión: {error}",
-
   "approveTitle": "Aprobar inicio de sesión",
   "approveScanPrompt": "Escanea el código QR que aparece en el dispositivo donde quieres iniciar sesión.",
   "approvePastePrompt": "O pega aquí el enlace del código QR",
@@ -266,7 +259,6 @@
   "approveLocation": "Ubicación",
   "approveDevice": "Dispositivo",
   "approveWarnStranger": "¿No has iniciado tú este acceso? Recházalo.",
-
   "importTitle": "Importar cuenta",
   "importPickFile": "Elegir un .maFile",
   "importSuccess": "Cuenta importada.",
@@ -293,7 +285,6 @@
   "exportWarnTitle": "¿Exportar el maFile sin cifrar?",
   "exportWarnBody": "El .maFile exportado NO está cifrado. Contiene los secretos de Steam Guard de esta cuenta y su código de revocación: cualquiera que tenga el archivo puede apoderarse de tu autenticador. Guárdalo en un lugar seguro y bórralo cuando termines.",
   "exportIncludePassword": "Incluir también la contraseña de Steam guardada (no recomendado)",
-
   "addAuthTitle": "Añadir autenticador",
   "addAuthPhonePrompt": "Introduce tu número de teléfono (con prefijo del país)",
   "addAuthSmsPrompt": "Introduce el código SMS enviado a tu teléfono",
@@ -304,7 +295,6 @@
   "addAuthStepPhone": "Teléfono",
   "addAuthStepSms": "Activar",
   "addAuthStepRevocation": "Revocación",
-
   "addPresentTitle": "Esta cuenta ya tiene un autenticador",
   "addPresentIntro": "Steam solo permite un autenticador móvil por cuenta. Elimina el actual y luego toca Reintentar.",
   "addPresentStep1": "¿Aún tienes el teléfono antiguo o la app de Steam? Ábrela → Steam Guard → Eliminar autenticador.",
@@ -313,7 +303,6 @@
   "addPresentManageUrl": "store.steampowered.com/twofactor/manage",
   "addPresentCopiedUrl": "Enlace copiado",
   "addPresentFallbackTitle": "¿No recibes el correo?",
-
   "addMoveInButton": "Mover el autenticador a este dispositivo",
   "addMoveInBlurb": "Steam enviará un código al correo de esta cuenta. Sin retención de intercambios de 15 días.",
   "addMoveInSending": "Enviando el código…",
@@ -335,7 +324,6 @@
   "commonRefresh": "Actualizar",
   "commonExport": "Exportar",
   "commonDelete": "Eliminar",
-
   "settingsEncryption": "Cifrado",
   "settingsEncryptionDesc": "Tus maFiles locales se cifran con una clave aleatoria de 256 bits (AES-256-GCM) guardada en el Keystore del dispositivo; tu PIN de 6 dígitos la desbloquea.",
   "settingsThemeDesc": "Cambia el estilo de toda la interfaz.",
@@ -361,7 +349,6 @@
   "themePixel": "Pixel",
   "themeDark": "Oscuro",
   "themeLight": "Claro",
-
   "settingsAbout": "Acerca de",
   "aboutTagline": "Un autenticador de Steam Guard de código abierto, hecho con Flutter.",
   "aboutSourceCode": "Código fuente",
@@ -369,7 +356,10 @@
   "aboutLicense": "Licencia",
   "aboutPrivacy": "Política de Privacidad",
   "privacyConsentTitle": "Tu privacidad",
-  "privacyConsentBody": "AVA guarda todos tus datos en este dispositivo. No tiene servidor propio, solo se conecta a los servidores de Steam de Valve y no hace ningún seguimiento ni analítica. Si continúas, aceptas la Política de Privacidad.",
+  "privacyConsentBody": "AVA guarda tus cuentas de Steam y sus secretos en este dispositivo: nunca se suben a ningún sitio y no hay que crear ninguna cuenta. Las peticiones de Steam van directas a Valve. Dos servicios propios del desarrollador solo se contactan cuando hacen falta: la comprobación de la licencia Pro y los comentarios (solo cuando pulsas Enviar). La versión de Play además muestra anuncios en el plan gratuito. No hay ningún seguimiento ni analítica. Todo esto está detallado en la Política de Privacidad: al continuar, la aceptas.",
+  "privacyUpdateTitle": "Política de Privacidad actualizada",
+  "privacyUpdateBody": "El aviso que aceptaste antes describía AVA como una app sin servidor propio que solo se conecta con Valve. Eso no era exacto y ya está corregido: el funcionamiento de la app no ha cambiado, solo la descripción. Lee a continuación el aviso vigente.",
+  "privacyConsentScrollHint": "Desplázate hasta el final para continuar",
   "privacyConsentRead": "Leer la Política de Privacidad completa",
   "privacyConsentAgree": "Aceptar y continuar",
   "privacyConsentExit": "Salir",
@@ -405,7 +395,6 @@
   "aboutLicenses": "Licencias de código abierto",
   "aboutCredits": "Créditos",
   "aboutCreditsBody": "Inspirado en Steam Desktop Authenticator y compatible con su formato maFile. Desarrollado de forma independiente con Flutter, Riverpod, Dio, PointyCastle, mobile_scanner, image y otras bibliotecas de código abierto.",
-
   "actionLogin": "Iniciar sesión / renovar sesión",
   "actionConfirmations": "Pendientes",
   "actionRemove": "Quitar cuenta",

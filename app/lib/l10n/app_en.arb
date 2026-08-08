@@ -3,23 +3,26 @@
   "appTitle": "AVA",
   "navAccounts": "Accounts",
   "navSettings": "Settings",
-
   "unlockTitle": "Unlock",
   "unlockPrompt": "Enter your encryption passkey",
   "unlockButton": "Unlock",
   "unlockInvalid": "That passkey is invalid.",
   "unlockWithBiometric": "Unlock with biometrics / device PIN",
-  "unlockLoading": "Decrypting\u2026",
+  "unlockLoading": "Decrypting…",
   "unlockCantUnlock": "Can't unlock?",
   "resetVaultTitle": "Reset encrypted data",
-  "resetVaultBody": "This deletes every account entry and encryption key stored on this device; afterwards you re-import your maFile backups. Your Steam accounts and their authenticators are not affected.\n\nUse this when the correct PIN keeps being rejected \u2014 typically after a backup restore or phone migration, since the hardware key never leaves the original device, restored data can never be decrypted.\n\nThis cannot be undone.",
+  "resetVaultBody": "This deletes every account entry and encryption key stored on this device; afterwards you re-import your maFile backups. Your Steam accounts and their authenticators are not affected.\n\nUse this when the correct PIN keeps being rejected — typically after a backup restore or phone migration, since the hardware key never leaves the original device, restored data can never be decrypted.\n\nThis cannot be undone.",
   "resetVaultConfirm": "Delete & reset",
   "storeErrorTitle": "Stored data can't be read",
   "storeErrorBody": "AVA's local account database (manifest.json) is missing or corrupt. This can happen after an interrupted write or a partial restore. Retry first; if it keeps failing, reset and re-import your maFile backups.",
   "storeRepair": "Attempt repair",
   "storeActionFailed": "Action failed: {error}",
   "@storeActionFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "pinSetupTitle": "Set unlock PIN",
   "pinSetupPrompt": "Protect AVA with a 6-digit PIN. You'll enter it (or your fingerprint) to unlock.",
@@ -45,11 +48,9 @@
   "settingsBlockScreenshots": "Block screenshots",
   "settingsBlockScreenshotsDesc": "Hides AVA from screenshots, screen recording and the recent-apps preview. Also blanks the window during screen sharing, and stops you attaching screenshots to feedback.",
   "passkeyLabel": "Passkey",
-
   "accountsEmpty": "No accounts yet. Import a maFile or log in to add one.",
   "emptyAddAccount": "Add account",
   "accountReady": "Ready",
-
   "tutCodeTitle": "Live token",
   "tutCodeBody": "Tap the big code to copy it. Tap the account name to cycle username / nickname / SteamID.",
   "tutSwipeRightTitle": "Swipe right → confirmations",
@@ -76,7 +77,6 @@
   "codeCopied": "Login code copied to clipboard",
   "copied": "Copied to clipboard",
   "copySteamId": "Copy SteamID",
-
   "pendingTitle": "Pending",
   "pendingTabConfirmations": "Confirmations",
   "pendingTabOffers": "Trade offers",
@@ -91,13 +91,31 @@
   "confAcceptAll": "Accept all",
   "confRejectAll": "Reject all",
   "confAcceptAllConfirm": "Accept all {count} confirmations?",
-  "@confAcceptAllConfirm": { "placeholders": { "count": { "type": "int" } } },
+  "@confAcceptAllConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "confRejectAllConfirm": "Reject all {count} confirmations?",
-  "@confRejectAllConfirm": { "placeholders": { "count": { "type": "int" } } },
+  "@confRejectAllConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "confAcceptAllWarn": "This approves every pending trade and market listing at once. Make sure you recognize all of them.",
   "confRejectAllWarn": "This cancels every pending confirmation at once.",
   "confPending": "{count} pending",
-  "@confPending": { "placeholders": { "count": { "type": "int" } } },
+  "@confPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "confAllProcessed": "All processed",
   "confTypeTrade": "Trade",
   "confTypeMarket": "Market listing",
@@ -109,11 +127,22 @@
   "confTypeFeatureOptOut": "Feature opt-out",
   "confProcessing": "Processing {count} confirmation(s)…",
   "@confProcessing": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "confResult": "{ok} succeeded, {fail} failed",
   "@confResult": {
-    "placeholders": { "ok": { "type": "int" }, "fail": { "type": "int" } }
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "fail": {
+        "type": "int"
+      }
+    }
   },
   "confNeedsLogin": "Session expired — sign in again to refresh this account.",
   "confRejected": "Steam rejected the confirmation request. This usually means the maFile does not match the authenticator currently on the account (common with purchased accounts) — remove the authenticator and link it again, or import the right maFile. A large clock drift can also cause this.",
@@ -132,23 +161,62 @@
   "offerAccepted": "Offer accepted — confirm it in the Confirmations tab",
   "offerAcceptedNoConf": "Offer accepted.",
   "offerActionFailed": "Action failed: {msg}",
-  "@offerActionFailed": { "placeholders": { "msg": { "type": "String" } } },
+  "@offerActionFailed": {
+    "placeholders": {
+      "msg": {
+        "type": "String"
+      }
+    }
+  },
   "offerDeclined": "Offer declined.",
   "offerCanceled": "Offer canceled.",
   "pendingTabInvites": "Invites",
   "famInviteTitle": "「{groupName}」 invited you to join",
-  "@famInviteTitle": {"placeholders": {"groupName": {"type": "String"}}},
+  "@famInviteTitle": {
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
   "famInviteTitleGeneric": "Family group invite",
   "famInviteFrom": "Invited by {inviter}",
-  "@famInviteFrom": {"placeholders": {"inviter": {"type": "String"}}},
+  "@famInviteFrom": {
+    "placeholders": {
+      "inviter": {
+        "type": "String"
+      }
+    }
+  },
   "famInviteRole": "Role: {role}",
-  "@famInviteRole": {"placeholders": {"role": {"type": "String"}}},
+  "@famInviteRole": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
   "famInviteSlots": "Members {used}/{total}",
-  "@famInviteSlots": {"placeholders": {"used": {"type": "int"}, "total": {"type": "int"}}},
+  "@famInviteSlots": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "famRoleAdult": "Adult",
   "famRoleChild": "Child",
   "famRoleUnknown": "Role #{n}",
-  "@famRoleUnknown": {"placeholders": {"n": {"type": "int"}}},
+  "@famRoleUnknown": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "famPreflightTitle": "Join checks",
   "famCheckWalletMatch": "Wallet region matches",
   "famCheckWalletMismatch": "Wallet region doesn't match — Steam restricts joining",
@@ -156,7 +224,13 @@
   "famCheckIpMismatch": "IP doesn't match your usual location",
   "famCheckCooldown": "Joining locks family-group switching for 1 year (Steam cooldown)",
   "famJoinRestricted": "Steam blocked this join (restriction {code})",
-  "@famJoinRestricted": {"placeholders": {"code": {"type": "int"}}},
+  "@famJoinRestricted": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
   "famInviteJoinHold": "Hold to join",
   "famInviteAwaiting2fa": "Waiting for confirmation — check the Confirmations tab",
   "famInviteJoined": "Joined ✓",
@@ -164,14 +238,35 @@
   "famJoinSent": "Join requested — confirm it in the Confirmations tab",
   "famJoinDone": "Joined the family group.",
   "famJoinFailed": "Join failed: {msg}",
-  "@famJoinFailed": {"placeholders": {"msg": {"type": "String"}}},
+  "@famJoinFailed": {
+    "placeholders": {
+      "msg": {
+        "type": "String"
+      }
+    }
+  },
   "famInvitesEmpty": "No pending family invites.",
   "famAccountAction": "Family group",
   "famNotInGroup": "This account isn't in a family group.",
   "famSummaryMembers": "Members {used}/{total}",
-  "@famSummaryMembers": {"placeholders": {"used": {"type": "int"}, "total": {"type": "int"}}},
+  "@famSummaryMembers": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "famSummaryCooldown": "Cooldown {days}d",
-  "@famSummaryCooldown": {"placeholders": {"days": {"type": "int"}}},
+  "@famSummaryCooldown": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "famInvitesSection": "Invites",
   "famSectionMembers": "Members",
   "famMemberYou": "(you)",
@@ -182,37 +277,91 @@
   "deviceSessionsEmpty": "No active devices for this account.",
   "deviceRevokeAction": "Sign out",
   "deviceRevokeConfirm": "Sign \"{name}\" out of your Steam account? It will need to log in again.",
-  "@deviceRevokeConfirm": {"placeholders": {"name": {"type": "String"}}},
+  "@deviceRevokeConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "deviceRevokeDone": "Signed \"{name}\" out.",
-  "@deviceRevokeDone": {"placeholders": {"name": {"type": "String"}}},
+  "@deviceRevokeDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "deviceRevokeFailed": "Couldn't sign the device out: {error}",
-  "@deviceRevokeFailed": {"placeholders": {"error": {"type": "String"}}},
+  "@deviceRevokeFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "deviceCurrent": "(this device)",
   "deviceSignedOut": "signed out",
   "deviceUnnamed": "Unknown device",
   "deviceLastSeen": "active {age} ago",
-  "@deviceLastSeen": {"placeholders": {"age": {"type": "String"}}},
+  "@deviceLastSeen": {
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
   "devicePlatformSteam": "Steam client",
   "devicePlatformWeb": "Web browser",
   "devicePlatformMobile": "Mobile app",
   "devicePlatformUnknown": "Unknown",
   "deviceAgeDays": "{n}d",
-  "@deviceAgeDays": {"placeholders": {"n": {"type": "int"}}},
+  "@deviceAgeDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "deviceAgeHours": "{n}h",
-  "@deviceAgeHours": {"placeholders": {"n": {"type": "int"}}},
+  "@deviceAgeHours": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "deviceAgeMinutes": "{n}m",
-  "@deviceAgeMinutes": {"placeholders": {"n": {"type": "int"}}},
+  "@deviceAgeMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "deviceAgeNow": "just now",
   "keyRedeemAction": "Redeem key",
   "keyRedeemTitle": "Redeem a Steam key",
   "keyRedeemFor": "Activating on {account}",
-  "@keyRedeemFor": {"placeholders": {"account": {"type": "String"}}},
+  "@keyRedeemFor": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
   "keyRedeemHint": "XXXXX-XXXXX-XXXXX",
   "keyRedeemPaste": "Paste",
   "keyRedeemSubmit": "Redeem",
   "keyRedeemNote": "Activation is permanent and adds the product to this account. Steam blocks activations for about an hour after a few rejected keys, so check the code before submitting.",
   "keyRedeemConfirm": "Activate this key on {account}? It can't be undone or moved to another account afterwards.",
-  "@keyRedeemConfirm": {"placeholders": {"account": {"type": "String"}}},
+  "@keyRedeemConfirm": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
   "keyRedeemDone": "Key activated.",
   "keyRedeemGranted": "Added to the library:",
   "keyRedeemNoProducts": "Steam accepted the key but didn't name the product. Check the account's library.",
@@ -225,7 +374,13 @@
   "keyErrNeedsPs3Login": "This product has to be played on a PlayStation®3 system before it can be activated.",
   "keyErrRateLimited": "Too many rejected keys recently. Steam blocks activations for about an hour — try again later.",
   "keyErrUnknown": "Steam rejected the key (code {code}).",
-  "@keyErrUnknown": {"placeholders": {"code": {"type": "int"}}},
+  "@keyErrUnknown": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
   "loginOrApprove": "…or just tap “Allow” in your Steam mobile app.",
   "addErrPresent": "This account already has an authenticator.",
   "addErrConfirmEmail": "Please confirm the email Steam sent, then retry.",
@@ -233,11 +388,16 @@
   "addErrRateLimited": "Too many attempts. Please wait a while and try again.",
   "addErrFailed": "Failed to add authenticator.",
   "addErrSaveFailed": "Couldn't save the authenticator to this device, so setup was stopped before it took effect. Write down this revocation code and remove the pending authenticator from your account, then try again: {code}",
-  "@addErrSaveFailed": { "placeholders": { "code": { "type": "String" } } },
+  "@addErrSaveFailed": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
   "addErrBadSms": "Wrong SMS code, please try again.",
   "debugLog": "Debug log",
   "debugLogDesc": "Network trace for diagnosing login / confirmations",
-
   "feedbackTitle": "Feedback",
   "feedbackDesc": "Found a bug or have an idea? Send it straight to the developer, or open a GitHub issue for public discussion.",
   "feedbackSend": "Send feedback",
@@ -248,15 +408,29 @@
   "feedbackAttachNote": "Sent along with your message: {meta}",
   "@feedbackAttachNote": {
     "placeholders": {
-      "meta": {"type": "String"}
+      "meta": {
+        "type": "String"
+      }
     }
   },
   "feedbackSent": "Feedback sent — thank you!",
   "feedbackFailed": "Couldn't send. Check your network and try again.",
   "feedbackRefused": "The relay refused this report: {reason}",
-  "@feedbackRefused": {"placeholders": {"reason": {"type": "String"}}},
+  "@feedbackRefused": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "feedbackRelayDown": "The feedback service is having trouble on its end ({reason}). Your network is fine — please try again later.",
-  "@feedbackRelayDown": {"placeholders": {"reason": {"type": "String"}}},
+  "@feedbackRelayDown": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "feedbackAttachLog": "Attach debug log",
   "feedbackAttachLogHint": "Recent network trace; may include account names / SteamIDs",
   "feedbackLogConsentBody": "The debug log contains recent network-trace lines from this session. It may include your account names and SteamIDs — never your secrets, tokens or passwords. It is sent only together with this report, as described in the Privacy Policy.",
@@ -270,8 +444,13 @@
   "commonOpen": "Open",
   "commonClear": "Clear",
   "addErrFinalize": "Finalize failed: {detail}",
-  "@addErrFinalize": { "placeholders": { "detail": { "type": "String" } } },
-
+  "@addErrFinalize": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
   "loginTitle": "Log in to Steam",
   "loginUsername": "Username",
   "loginPassword": "Password",
@@ -296,9 +475,12 @@
   "loginWaitingDesc": "Approve this sign in on the Steam mobile app. You can also use an email code or QR sign-in.",
   "loginFailed": "Login failed: {error}",
   "@loginFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
-
   "approveTitle": "Approve sign in",
   "approveScanPrompt": "Scan the QR code shown on the device you want to sign in.",
   "approvePastePrompt": "Or paste the QR code link here",
@@ -310,22 +492,33 @@
   "approveLocation": "Location",
   "approveDevice": "Device",
   "approveWarnStranger": "Didn't start this sign-in yourself? Reject it.",
-
   "importTitle": "Import account",
   "importPickFile": "Choose a .maFile",
   "importSuccess": "Account imported.",
   "importFailed": "Failed to import: {error}",
   "@importFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "importDuplicateTitle": "Account already exists",
   "importDuplicateBody": "This maFile is for {name}, which is already on this device. Overwrite the stored account with the imported file? Its cached avatar, saved password, and existing session are kept when the file doesn't include them.",
   "@importDuplicateBody": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "importDuplicateBodyUnreadable": "This maFile is for {name}, which exists on this device but its stored data can no longer be read. Importing will replace it entirely.",
   "@importDuplicateBodyUnreadable": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "importDuplicateOverwrite": "Overwrite",
   "importSessionDeadTitle": "Activate this account?",
@@ -337,7 +530,14 @@
   "loginRequestTitle": "Approve sign-in?",
   "loginRequestBody": "{device} is signing in to your Steam account from {location}.",
   "@loginRequestBody": {
-    "placeholders": { "device": { "type": "String" }, "location": { "type": "String" } }
+    "placeholders": {
+      "device": {
+        "type": "String"
+      },
+      "location": {
+        "type": "String"
+      }
+    }
   },
   "loginRequestApprove": "Allow",
   "loginRequestDeny": "Deny",
@@ -347,26 +547,32 @@
   "loginDenied": "Sign-in denied.",
   "exportFailed": "Failed to export: {error}",
   "@exportFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "exportWarnTitle": "Export unencrypted maFile?",
   "exportWarnBody": "The exported .maFile is NOT encrypted. It holds this account’s Steam Guard secrets and revocation code — anyone with the file can take over your authenticator. Store it somewhere safe and delete it when done.",
   "exportIncludePassword": "Also include the saved Steam password (not recommended)",
-
   "addAuthTitle": "Add authenticator",
   "addAuthPhonePrompt": "Enter your phone number (with country code)",
   "addAuthSmsPrompt": "Enter the SMS code sent to your phone",
   "addAuthEmailPrompt": "Enter the activation code Steam emailed you",
   "addAuthRevocationWarn": "Write down your revocation code: {code}",
   "@addAuthRevocationWarn": {
-    "placeholders": { "code": { "type": "String" } }
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
   },
   "addAuthConfirmRevocation": "Re-enter your revocation code to confirm you saved it",
   "addAuthLinked": "Authenticator linked successfully.",
   "addAuthStepPhone": "Phone",
   "addAuthStepSms": "Activate",
   "addAuthStepRevocation": "Revocation",
-
   "addPresentTitle": "This account already has an authenticator",
   "addPresentIntro": "Steam allows only one mobile authenticator per account. Remove the existing one, then tap Retry.",
   "addPresentStep1": "Still have the old phone or Steam app? Open it → Steam Guard → Remove Authenticator.",
@@ -375,7 +581,6 @@
   "addPresentManageUrl": "store.steampowered.com/twofactor/manage",
   "addPresentCopiedUrl": "Link copied",
   "addPresentFallbackTitle": "Can't receive the email?",
-
   "addMoveInButton": "Move the authenticator to this device",
   "addMoveInBlurb": "Steam will email this account a code. No 15-day trade hold.",
   "addMoveInSending": "Sending the code…",
@@ -387,7 +592,14 @@
   "addErrBadChallengeCode": "That code isn't right. Check the email and try again.",
   "addMoveInSaveFailed": "The authenticator moved to this account, but AVA could NOT save it to this device. Your old authenticator is already dead, so these are the only copies — write them down NOW before closing this screen.\n\nRevocation code: {code}\n\nSecret: {secret}",
   "@addMoveInSaveFailed": {
-    "placeholders": { "code": { "type": "String" }, "secret": { "type": "String" } }
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "secret": {
+        "type": "String"
+      }
+    }
   },
   "addMoveInCopySecrets": "Copy",
   "addMoveInCopied": "Copied",
@@ -400,7 +612,6 @@
   "commonRefresh": "Refresh",
   "commonExport": "Export",
   "commonDelete": "Delete",
-
   "settingsEncryption": "Encryption",
   "settingsEncryptionDesc": "Your local maFiles are encrypted with a random 256-bit key (AES-256-GCM) held in the device Keystore; your 6-digit PIN unlocks it.",
   "settingsThemeDesc": "Switch the whole UI style.",
@@ -426,7 +637,6 @@
   "themePixel": "Pixel",
   "themeDark": "Dark",
   "themeLight": "Light",
-
   "settingsAbout": "About",
   "aboutTagline": "An open-source Steam Guard authenticator, built with Flutter.",
   "aboutSourceCode": "Source code",
@@ -434,7 +644,10 @@
   "aboutLicense": "License",
   "aboutPrivacy": "Privacy policy",
   "privacyConsentTitle": "Your privacy",
-  "privacyConsentBody": "AVA keeps all of your data on this device. It has no backend of its own, connects only to Valve's Steam servers, and does no tracking or analytics. By continuing, you accept the Privacy Policy.",
+  "privacyConsentBody": "AVA keeps your Steam accounts and secrets on this device — they are never uploaded, and there is no account to create. Steam requests go straight to Valve. Two of the developer's own services are contacted only when they are needed: Pro entitlement checks, and feedback (only when you press send). The Play version also shows ads on the free tier. There is no tracking or analytics. All of it is spelled out in the Privacy Policy — by continuing, you accept it.",
+  "privacyUpdateTitle": "Privacy Policy updated",
+  "privacyUpdateBody": "The notice you agreed to earlier described AVA as having no backend of its own and connecting only to Valve. That was not accurate, and it has been corrected — nothing about the app changed, only the description. Please read the current notice below.",
+  "privacyConsentScrollHint": "Scroll to the end to continue",
   "privacyConsentRead": "Read the full Privacy Policy",
   "privacyConsentAgree": "Agree & continue",
   "privacyConsentExit": "Exit",
@@ -456,16 +669,49 @@
   "marketListed": "Listed — confirm it to finish.",
   "marketListedDone": "Listed and confirmed.",
   "marketListedPartial": "Listed {listed} of {total} — the rest failed; confirm any pending in Confirmations.",
-  "@marketListedPartial": { "placeholders": { "listed": { "type": "int" }, "total": { "type": "int" } } },
+  "@marketListedPartial": {
+    "placeholders": {
+      "listed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "marketListedSessionExpired": "Listed {listed} of {total}, then the session expired — sign in again and confirm them.",
-  "@marketListedSessionExpired": { "placeholders": { "listed": { "type": "int" }, "total": { "type": "int" } } },
+  "@marketListedSessionExpired": {
+    "placeholders": {
+      "listed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "marketConfirmPartial": "Listed — {ok} of {total} confirmed; finish the rest in Confirmations.",
-  "@marketConfirmPartial": { "placeholders": { "ok": { "type": "int" }, "total": { "type": "int" } } },
+  "@marketConfirmPartial": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "marketAutoConfirm": "Auto-confirm the listing",
   "marketQuantity": "Quantity",
   "marketMax": "Max",
   "marketListFailed": "Listing failed: {error}",
-  "@marketListFailed": { "placeholders": { "error": { "type": "String" } } },
+  "@marketListFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "marketInvalidPrice": "Enter a valid price.",
   "marketCancel": "Cancel listing",
   "marketCancelled": "Listing cancelled.",
@@ -474,7 +720,6 @@
   "aboutLicenses": "Open-source licenses",
   "aboutCredits": "Credits",
   "aboutCreditsBody": "Inspired by Steam Desktop Authenticator and compatible with its maFile format. Independently built with Flutter, Riverpod, Dio, PointyCastle, mobile_scanner, image and other open-source libraries.",
-
   "actionLogin": "Log in / refresh session",
   "actionConfirmations": "Pending",
   "actionRemove": "Remove account",
@@ -491,14 +736,30 @@
   "proOpen": "View AVA Pro",
   "proStatusFree": "Free plan",
   "proStatusPro": "Pro · until {date}",
-  "@proStatusPro": { "placeholders": { "date": {} } },
+  "@proStatusPro": {
+    "placeholders": {
+      "date": {}
+    }
+  },
   "proStatusVip": "VIP · until {date}",
-  "@proStatusVip": { "placeholders": { "date": {} } },
+  "@proStatusVip": {
+    "placeholders": {
+      "date": {}
+    }
+  },
   "proStatusLifetime": "Pro · lifetime",
   "proStatusActivations": "Active on: {classes}",
-  "@proStatusActivations": { "placeholders": { "classes": {} } },
+  "@proStatusActivations": {
+    "placeholders": {
+      "classes": {}
+    }
+  },
   "proStatusClassThisDevice": "{name} (this device)",
-  "@proStatusClassThisDevice": { "placeholders": { "name": {} } },
+  "@proStatusClassThisDevice": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "proDeviceClassAndroid": "Android",
   "proDeviceClassWindows": "Windows",
   "proDeviceClassLinux": "Linux",
@@ -531,18 +792,37 @@
   "proErrDeviceRevoked": "This device's slot was taken by a newer activation.",
   "proErrNoVip": "Reward not confirmed yet — try again in a minute.",
   "proErrGeneric": "Failed: {code}",
-  "@proErrGeneric": { "placeholders": { "code": {} } },
+  "@proErrGeneric": {
+    "placeholders": {
+      "code": {}
+    }
+  },
   "proErrCodeInvalid": "Code not recognized — check it for typos.",
   "proErrCodeRedeemed": "This code is already active on another device. To move it here, email hi@dotslash.pro.",
   "proErrCodeActivationLimit": "This code has switched devices too often recently. Try again later, or email hi@dotslash.pro.",
   "proErrRateLimited": "Too many attempts. Wait a minute and try again.",
   "proErrSlotOccupied": "In use: {slots}",
-  "@proErrSlotOccupied": { "placeholders": { "slots": {} } },
+  "@proErrSlotOccupied": {
+    "placeholders": {
+      "slots": {}
+    }
+  },
   "proSlotEntry": "{name} ({time})",
-  "@proSlotEntry": { "placeholders": { "name": {}, "time": {} } },
+  "@proSlotEntry": {
+    "placeholders": {
+      "name": {},
+      "time": {}
+    }
+  },
   "proSlotToday": "today",
   "proSlotDaysAgo": "{n, plural, =1{1 day ago} other{{n} days ago}}",
-  "@proSlotDaysAgo": { "placeholders": { "n": { "type": "int" } } },
+  "@proSlotDaysAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "proErrRevoked": "This entitlement is no longer active. If you think this is a mistake, email hi@dotslash.pro.",
   "privacyOptions": "Privacy options",
   "skinProNotice": "Neon & Pixel skins are now Pro perks. Your selection is kept and comes back with Pro.",

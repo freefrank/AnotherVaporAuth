@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:ava/src/app/settings_store.dart';
@@ -59,6 +60,36 @@ void main() {
       expect(await store.loadBlockScreenshots(), isTrue);
       await store.saveBlockScreenshots(false);
       expect(await store.loadBlockScreenshots(), isFalse);
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
+
+  test('privacy consent is versioned, and a pre-versioning install reads as v1',
+      () async {
+    // The migration that matters: installs from before versioning stored only
+    // `privacy_accepted: true`. Reading that as "accepted the current
+    // version" would silently carry consent across a notice that says
+    // something different; reading it as 0 would re-onboard a long-time user
+    // from scratch. It has to land on 1 — the version whose text they saw.
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      final store = SettingsStore(_TmpStorage(tmp.path));
+      expect(await store.loadPrivacyAcceptedVersion(), 0); // never accepted
+
+      File(p.join(tmp.path, 'app_settings.json'))
+          .writeAsStringSync(jsonEncode({'privacy_accepted': true}));
+      final legacy = SettingsStore(_TmpStorage(tmp.path));
+      expect(await legacy.loadPrivacyAcceptedVersion(), 1);
+
+      await legacy.savePrivacyAcceptedVersion(2);
+      expect(await legacy.loadPrivacyAcceptedVersion(), 2);
+      // The legacy flag is kept, so an older build does not re-prompt.
+      final raw = jsonDecode(
+              File(p.join(tmp.path, 'app_settings.json')).readAsStringSync())
+          as Map<String, dynamic>;
+      expect(raw['privacy_accepted'], isTrue);
+      expect(raw['privacy_version'], 2);
     } finally {
       await tmp.delete(recursive: true);
     }

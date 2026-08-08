@@ -36,12 +36,74 @@ void main() {
     // First run: the Privacy Policy consent gate is shown before anything else.
     expect(find.byType(PrivacyConsentScreen), findsOneWidget);
 
-    // Accept it (the single FilledButton). State updates synchronously.
+    // Agree is disabled until the notice has been read to the end, so the
+    // button is both off-screen and inert at this point.
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNull,
+      reason: 'Agree must not be tappable before scrolling to the end',
+    );
+
+    // Scroll the notice to its end, which both reveals the button and opens
+    // the gate.
+    await tester.scrollUntilVisible(find.byType(FilledButton), 200,
+        scrollable: find.byType(Scrollable).first);
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -400));
+    await tester.pump();
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNotNull,
+      reason: 'reaching the end must enable Agree',
+    );
+
     await tester.tap(find.byType(FilledButton));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
     // A PIN is mandatory: an empty/unencrypted store then boots to PIN setup.
+    expect(find.byType(SetupPinScreen), findsOneWidget);
+  });
+
+  testWidgets(
+      'REGRESSION: when the notice fits the viewport, Agree is enabled with '
+      'no scrolling', (tester) async {
+    // The classic way this pattern breaks: gating on "scrolled to the bottom"
+    // without handling content that never scrolls leaves the button dead
+    // forever on a tablet or a desktop window. Nothing in the UI would hint
+    // at why, and the user could not get past the first screen at all.
+    tester.view.physicalSize = const Size(1000, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          storageProvider.overrideWithValue(MemoryStorageProvider()),
+          timeAlignerProvider.overrideWithValue(() async {}),
+          tickProvider.overrideWith((ref) => Stream<int>.value(1700000000)),
+        ],
+        child: const AvaApp(),
+      ),
+    );
+    await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byType(PrivacyConsentScreen), findsOneWidget);
+    // No scrolling happened, and none was possible.
+    final scrollable = tester.widget<Scrollable>(find.byType(Scrollable).first);
+    expect(scrollable.controller!.position.maxScrollExtent, 0);
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNotNull,
+      reason: 'a notice with nothing to scroll must not block Agree',
+    );
+
+    await tester.tap(find.byType(FilledButton));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(SetupPinScreen), findsOneWidget);
   });
 

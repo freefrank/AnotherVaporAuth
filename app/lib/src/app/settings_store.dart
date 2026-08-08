@@ -142,12 +142,30 @@ class SettingsStore {
         }
       });
 
-  /// Whether the user has accepted the Privacy Policy (first-run gate).
-  Future<bool> loadPrivacyAccepted() async =>
-      (await _read())['privacy_accepted'] == true;
+  /// Which revision of the Privacy Policy notice the user has accepted.
+  ///
+  /// `0` = never accepted. Versioned rather than a boolean so a later change
+  /// to what the notice *says* can ask again instead of silently relying on
+  /// consent given to different wording — which is exactly what happened
+  /// through v1, whose text claimed AVA had no backend of its own.
+  ///
+  /// Migration: installs from before versioning stored `privacy_accepted:
+  /// true` and nothing else. That reads as **v1**, not as the current
+  /// version, so those users get the "policy updated" screen rather than
+  /// either being re-onboarded from scratch or silently carried over.
+  Future<int> loadPrivacyAcceptedVersion() async {
+    final data = await _read();
+    final v = data['privacy_version'];
+    if (v is int) return v;
+    return data['privacy_accepted'] == true ? 1 : 0;
+  }
 
-  Future<void> savePrivacyAccepted(bool accepted) =>
-      _update((data) => data['privacy_accepted'] = accepted);
+  /// Records acceptance of [version]. The legacy boolean is written too, so
+  /// downgrading to an older build does not re-prompt from scratch.
+  Future<void> savePrivacyAcceptedVersion(int version) => _update((data) {
+        data['privacy_version'] = version;
+        data['privacy_accepted'] = true;
+      });
 
   /// Whether the one-time post-import backup reminder has been shown.
   Future<bool> loadBackupReminderShown() async =>

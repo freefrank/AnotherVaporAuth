@@ -567,35 +567,59 @@ final tickProvider = StreamProvider<int>((ref) async* {
 });
 
 /// Top-level app data after bootstrap.
+/// Revision of the Privacy Policy notice shown on the consent screen.
+///
+/// Bump this whenever the *substance* of what the notice tells the user
+/// changes — not for typo fixes. Everyone who accepted an older revision then
+/// sees the "policy updated" variant of the screen before continuing.
+///
+///  1. Original first-run notice. Claimed AVA "has no backend of its own"
+///     and "connects only to Valve's Steam servers", neither of which was
+///     true — there are two developer-run services, and the Play build shows
+///     ads. Consent obtained under it does not carry over.
+///  2. Corrected notice naming both services and the ads (2026-08).
+const int kPrivacyNoticeVersion = 2;
+
 class AppData {
   final AccountStore store;
   final List<SteamGuardAccount> accounts;
   final bool locked; // encrypted and not yet unlocked
   final String? passKey; // held in memory only while unlocked
-  final bool privacyAccepted; // first-run Privacy Policy gate
+  /// Which revision of the Privacy Policy notice this install has accepted;
+  /// 0 = never. See [kPrivacyNoticeVersion].
+  final int privacyVersion;
 
   const AppData({
     required this.store,
     required this.accounts,
     required this.locked,
     this.passKey,
-    this.privacyAccepted = true,
+    this.privacyVersion = kPrivacyNoticeVersion,
   });
 
   bool get encrypted => store.encrypted;
+
+  /// Whether the current notice has been accepted — the gate for showing the
+  /// app at all, and for touching the network.
+  bool get privacyAccepted => privacyVersion >= kPrivacyNoticeVersion;
+
+  /// Accepted an *earlier* notice: they have used AVA before, so the screen
+  /// should tell them what changed rather than onboard them again.
+  bool get privacyNeedsUpdate =>
+      privacyVersion > 0 && privacyVersion < kPrivacyNoticeVersion;
 
   AppData copyWith({
     List<SteamGuardAccount>? accounts,
     bool? locked,
     String? passKey,
-    bool? privacyAccepted,
+    int? privacyVersion,
   }) =>
       AppData(
         store: store,
         accounts: accounts ?? this.accounts,
         locked: locked ?? this.locked,
         passKey: passKey ?? this.passKey,
-        privacyAccepted: privacyAccepted ?? this.privacyAccepted,
+        privacyVersion: privacyVersion ?? this.privacyVersion,
       );
 }
 
@@ -634,8 +658,9 @@ class AppController extends AsyncNotifier<AppData> {
   Future<AppData> build() async {
     final storage = ref.read(storageProvider);
     final store = await AccountStore.load(storage);
-    final privacyAccepted =
-        await ref.read(settingsStoreProvider).loadPrivacyAccepted();
+    final privacyVersion =
+        await ref.read(settingsStoreProvider).loadPrivacyAcceptedVersion();
+    final privacyAccepted = privacyVersion >= kPrivacyNoticeVersion;
     // No network until the Privacy Policy is accepted.
     if (privacyAccepted) {
       unawaited(ref.read(timeAlignerProvider)());
@@ -646,7 +671,7 @@ class AppController extends AsyncNotifier<AppData> {
           store: store,
           accounts: const [],
           locked: true,
-          privacyAccepted: privacyAccepted);
+          privacyVersion: privacyVersion);
     }
     final accounts = await store.getAllAccounts();
     if (privacyAccepted) {
@@ -657,7 +682,7 @@ class AppController extends AsyncNotifier<AppData> {
         store: store,
         accounts: accounts,
         locked: false,
-        privacyAccepted: privacyAccepted);
+        privacyVersion: privacyVersion);
   }
 
   /// Last-resort escape hatch for a vault that can no longer be decrypted
@@ -675,15 +700,17 @@ class AppController extends AsyncNotifier<AppData> {
     ref.invalidateSelf();
   }
 
-  /// Records first-run acceptance of the Privacy Policy, then kicks off the
-  /// network work that was held back until consent. Updates state immediately
-  /// and persists in the background.
+  /// Records acceptance of the current notice, then kicks off the network
+  /// work that was held back until consent. Updates state immediately and
+  /// persists in the background.
   Future<void> acceptPrivacy() async {
     final data = state.value;
     if (data != null) {
-      state = AsyncData(data.copyWith(privacyAccepted: true));
+      state = AsyncData(data.copyWith(privacyVersion: kPrivacyNoticeVersion));
     }
-    unawaited(ref.read(settingsStoreProvider).savePrivacyAccepted(true));
+    unawaited(ref
+        .read(settingsStoreProvider)
+        .savePrivacyAcceptedVersion(kPrivacyNoticeVersion));
     unawaited(ref.read(timeAlignerProvider)());
     Future.microtask(refreshSessions);
     Future.microtask(refreshAvatars);

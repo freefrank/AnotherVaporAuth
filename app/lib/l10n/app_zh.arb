@@ -3,13 +3,12 @@
   "appTitle": "AVA",
   "navAccounts": "账户",
   "navSettings": "设置",
-
   "unlockTitle": "解锁",
   "unlockPrompt": "请输入加密口令",
   "unlockButton": "解锁",
   "unlockInvalid": "口令无效。",
   "unlockWithBiometric": "用指纹 / 设备密码解锁",
-  "unlockLoading": "正在解锁\u2026",
+  "unlockLoading": "正在解锁…",
   "unlockCantUnlock": "无法解锁？",
   "resetVaultTitle": "重置加密数据",
   "resetVaultBody": "将删除本机存储的全部账户条目与加密密钥，之后需要重新导入你的 maFile 备份。你的 Steam 账户和已绑定的验证器不受影响。\n\n适用于正确 PIN 一直被拒的情况——通常发生在备份恢复或换机迁移之后：硬件密钥不会离开原设备，恢复出来的数据永远无法解密。\n\n此操作无法撤销。",
@@ -19,7 +18,11 @@
   "storeRepair": "尝试修复",
   "storeActionFailed": "操作失败：{error}",
   "@storeActionFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "pinSetupTitle": "设置解锁 PIN",
   "pinSetupPrompt": "用 6 位 PIN 保护 AVA。解锁时输入它（或用指纹）。",
@@ -45,11 +48,9 @@
   "settingsBlockScreenshots": "禁止截屏",
   "settingsBlockScreenshotsDesc": "让 AVA 不出现在截屏、录屏和最近任务预览里。代价是投屏时窗口会变黑，也没法再截图附到反馈里。",
   "passkeyLabel": "口令",
-
   "accountsEmpty": "暂无账户。导入 maFile 或登录以添加。",
   "emptyAddAccount": "添加账户",
   "accountReady": "已就绪",
-
   "tutCodeTitle": "实时令牌",
   "tutCodeBody": "点击大号令牌即可复制;点击账户名可在用户名 / 昵称 / SteamID 间切换。",
   "tutSwipeRightTitle": "右滑 → 交易确认",
@@ -76,7 +77,6 @@
   "codeCopied": "验证码已复制到剪贴板",
   "copied": "已复制到剪贴板",
   "copySteamId": "复制 SteamID",
-
   "pendingTitle": "待办",
   "pendingTabConfirmations": "确认",
   "pendingTabOffers": "报价",
@@ -91,13 +91,31 @@
   "confAcceptAll": "全部接受",
   "confRejectAll": "全部拒绝",
   "confAcceptAllConfirm": "接受全部 {count} 项确认?",
-  "@confAcceptAllConfirm": { "placeholders": { "count": { "type": "int" } } },
+  "@confAcceptAllConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "confRejectAllConfirm": "拒绝全部 {count} 项确认?",
-  "@confRejectAllConfirm": { "placeholders": { "count": { "type": "int" } } },
+  "@confRejectAllConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "confAcceptAllWarn": "将一次性批准所有待处理的交易与市场上架,请确认你认识其中每一项。",
   "confRejectAllWarn": "将一次性取消所有待处理的确认。",
   "confPending": "{count} 项待确认",
-  "@confPending": { "placeholders": { "count": { "type": "int" } } },
+  "@confPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "confAllProcessed": "已全部处理",
   "confTypeTrade": "交易",
   "confTypeMarket": "市场上架",
@@ -109,11 +127,22 @@
   "confTypeFeatureOptOut": "功能退出",
   "confProcessing": "正在处理 {count} 条确认…",
   "@confProcessing": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "confResult": "成功 {ok} 条，失败 {fail} 条",
   "@confResult": {
-    "placeholders": { "ok": { "type": "int" }, "fail": { "type": "int" } }
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "fail": {
+        "type": "int"
+      }
+    }
   },
   "confNeedsLogin": "会话已失效 —— 请重新登录该账户以刷新。",
   "confRejected": "Steam 拒绝了确认请求。这通常说明 maFile 与账户当前的验证器不匹配（购入账户较常见）——请移除验证器后重新绑定，或导入正确的 maFile；设备时间偏差过大也会导致此问题。",
@@ -132,23 +161,62 @@
   "offerAccepted": "已接受报价 — 请到「确认」页签完成确认",
   "offerAcceptedNoConf": "已接受报价。",
   "offerActionFailed": "操作失败：{msg}",
-  "@offerActionFailed": { "placeholders": { "msg": { "type": "String" } } },
+  "@offerActionFailed": {
+    "placeholders": {
+      "msg": {
+        "type": "String"
+      }
+    }
+  },
   "offerDeclined": "已拒绝报价。",
   "offerCanceled": "已取消报价。",
   "pendingTabInvites": "邀请",
   "famInviteTitle": "「{groupName}」邀请你加入家庭组",
-  "@famInviteTitle": {"placeholders": {"groupName": {"type": "String"}}},
+  "@famInviteTitle": {
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
   "famInviteTitleGeneric": "家庭组邀请",
   "famInviteFrom": "邀请人：{inviter}",
-  "@famInviteFrom": {"placeholders": {"inviter": {"type": "String"}}},
+  "@famInviteFrom": {
+    "placeholders": {
+      "inviter": {
+        "type": "String"
+      }
+    }
+  },
   "famInviteRole": "角色：{role}",
-  "@famInviteRole": {"placeholders": {"role": {"type": "String"}}},
+  "@famInviteRole": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
   "famInviteSlots": "成员 {used}/{total}",
-  "@famInviteSlots": {"placeholders": {"used": {"type": "int"}, "total": {"type": "int"}}},
+  "@famInviteSlots": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "famRoleAdult": "成人",
   "famRoleChild": "儿童",
   "famRoleUnknown": "角色 #{n}",
-  "@famRoleUnknown": {"placeholders": {"n": {"type": "int"}}},
+  "@famRoleUnknown": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "famPreflightTitle": "加入前预检",
   "famCheckWalletMatch": "钱包地区一致",
   "famCheckWalletMismatch": "钱包地区不一致 —— Steam 限制加入",
@@ -156,7 +224,13 @@
   "famCheckIpMismatch": "IP 与常用地点不符",
   "famCheckCooldown": "加入后 1 年内不能更换家庭组（官方冷却）",
   "famJoinRestricted": "Steam 阻止了此次加入（限制码 {code}）",
-  "@famJoinRestricted": {"placeholders": {"code": {"type": "int"}}},
+  "@famJoinRestricted": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
   "famInviteJoinHold": "加入（长按）",
   "famInviteAwaiting2fa": "等待确认 —— 请到「确认」页签处理",
   "famInviteJoined": "已加入 ✓",
@@ -164,14 +238,35 @@
   "famJoinSent": "已发起加入 —— 请到「确认」页签完成确认",
   "famJoinDone": "已加入家庭组。",
   "famJoinFailed": "加入失败：{msg}",
-  "@famJoinFailed": {"placeholders": {"msg": {"type": "String"}}},
+  "@famJoinFailed": {
+    "placeholders": {
+      "msg": {
+        "type": "String"
+      }
+    }
+  },
   "famInvitesEmpty": "没有待处理的家庭组邀请。",
   "famAccountAction": "家庭组",
   "famNotInGroup": "该账户不在任何家庭组中。",
   "famSummaryMembers": "成员 {used}/{total}",
-  "@famSummaryMembers": {"placeholders": {"used": {"type": "int"}, "total": {"type": "int"}}},
+  "@famSummaryMembers": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "famSummaryCooldown": "冷却 {days} 天",
-  "@famSummaryCooldown": {"placeholders": {"days": {"type": "int"}}},
+  "@famSummaryCooldown": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "famInvitesSection": "邀请",
   "famSectionMembers": "成员",
   "famMemberYou": "（你）",
@@ -182,37 +277,91 @@
   "deviceSessionsEmpty": "该账户没有已登录的设备。",
   "deviceRevokeAction": "注销",
   "deviceRevokeConfirm": "将「{name}」从你的 Steam 账户注销?该设备需要重新登录。",
-  "@deviceRevokeConfirm": {"placeholders": {"name": {"type": "String"}}},
+  "@deviceRevokeConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "deviceRevokeDone": "已注销「{name}」。",
-  "@deviceRevokeDone": {"placeholders": {"name": {"type": "String"}}},
+  "@deviceRevokeDone": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "deviceRevokeFailed": "注销设备失败:{error}",
-  "@deviceRevokeFailed": {"placeholders": {"error": {"type": "String"}}},
+  "@deviceRevokeFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "deviceCurrent": "(本机)",
   "deviceSignedOut": "已登出",
   "deviceUnnamed": "未知设备",
   "deviceLastSeen": "{age}前活跃",
-  "@deviceLastSeen": {"placeholders": {"age": {"type": "String"}}},
+  "@deviceLastSeen": {
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
   "devicePlatformSteam": "Steam 客户端",
   "devicePlatformWeb": "网页浏览器",
   "devicePlatformMobile": "手机 App",
   "devicePlatformUnknown": "未知",
   "deviceAgeDays": "{n} 天",
-  "@deviceAgeDays": {"placeholders": {"n": {"type": "int"}}},
+  "@deviceAgeDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "deviceAgeHours": "{n} 小时",
-  "@deviceAgeHours": {"placeholders": {"n": {"type": "int"}}},
+  "@deviceAgeHours": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "deviceAgeMinutes": "{n} 分钟",
-  "@deviceAgeMinutes": {"placeholders": {"n": {"type": "int"}}},
+  "@deviceAgeMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "deviceAgeNow": "刚刚",
   "keyRedeemAction": "兑换密钥",
   "keyRedeemTitle": "兑换 Steam 密钥",
   "keyRedeemFor": "激活到 {account}",
-  "@keyRedeemFor": {"placeholders": {"account": {"type": "String"}}},
+  "@keyRedeemFor": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
   "keyRedeemHint": "XXXXX-XXXXX-XXXXX",
   "keyRedeemPaste": "粘贴",
   "keyRedeemSubmit": "兑换",
   "keyRedeemNote": "激活不可撤销，产品会直接加进这个账户。连续几个密钥被拒后 Steam 会封锁激活约一小时，提交前请先核对。",
   "keyRedeemConfirm": "把这个密钥激活到 {account}？之后无法撤销，也无法转到别的账户。",
-  "@keyRedeemConfirm": {"placeholders": {"account": {"type": "String"}}},
+  "@keyRedeemConfirm": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
   "keyRedeemDone": "密钥已激活。",
   "keyRedeemGranted": "已加入库：",
   "keyRedeemNoProducts": "Steam 接受了密钥但没有返回产品名，请到该账户的库里确认。",
@@ -225,7 +374,13 @@
   "keyErrNeedsPs3Login": "该产品需要先在 PlayStation®3 主机上游玩过才能激活。",
   "keyErrRateLimited": "最近被拒的密钥太多，Steam 会封锁激活约一小时，请稍后再试。",
   "keyErrUnknown": "Steam 拒绝了这个密钥（代码 {code}）。",
-  "@keyErrUnknown": {"placeholders": {"code": {"type": "int"}}},
+  "@keyErrUnknown": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
   "loginOrApprove": "…或直接在 Steam 手机 App 点「允许」。",
   "addErrPresent": "该账户已有验证器。",
   "addErrConfirmEmail": "请先确认 Steam 发送的邮件，然后重试。",
@@ -233,11 +388,16 @@
   "addErrRateLimited": "尝试次数过多，请稍后再试。",
   "addErrFailed": "添加验证器失败。",
   "addErrSaveFailed": "无法把验证器保存到本机，已在生效前停止设置。请记下这个撤销码,并从你的账户移除这个待处理的验证器,然后重试:{code}",
-  "@addErrSaveFailed": { "placeholders": { "code": { "type": "String" } } },
+  "@addErrSaveFailed": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
   "addErrBadSms": "短信验证码错误，请重试。",
   "debugLog": "调试日志",
   "debugLogDesc": "用于诊断登录 / 确认的网络追踪",
-
   "feedbackTitle": "反馈",
   "feedbackDesc": "发现 bug 或有想法？直接发给开发者；想公开讨论也可以去 GitHub 提 issue。",
   "feedbackSend": "发送反馈",
@@ -249,9 +409,21 @@
   "feedbackSent": "已发送，感谢反馈！",
   "feedbackFailed": "发送失败，请检查网络后重试。",
   "feedbackRefused": "中转服务拒绝了这条反馈:{reason}",
-  "@feedbackRefused": {"placeholders": {"reason": {"type": "String"}}},
+  "@feedbackRefused": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "feedbackRelayDown": "反馈服务自身出了故障({reason})。你的网络没问题,请稍后再试。",
-  "@feedbackRelayDown": {"placeholders": {"reason": {"type": "String"}}},
+  "@feedbackRelayDown": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "feedbackAttachLog": "附加调试日志",
   "feedbackAttachLogHint": "最近的网络跟踪记录，可能包含账户名 / SteamID",
   "feedbackLogConsentBody": "调试日志是本次会话中最近的网络跟踪记录，可能包含你的账户名与 SteamID——绝不含密钥、令牌或密码。它只会随本条反馈一并发送，详见隐私政策。",
@@ -265,8 +437,13 @@
   "commonOpen": "打开",
   "commonClear": "清空",
   "addErrFinalize": "完成失败：{detail}",
-  "@addErrFinalize": { "placeholders": { "detail": { "type": "String" } } },
-
+  "@addErrFinalize": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
   "loginTitle": "登录 Steam",
   "loginUsername": "用户名",
   "loginPassword": "密码",
@@ -291,9 +468,12 @@
   "loginWaitingDesc": "请在 Steam 手机 App 上批准这次登录。也可改用邮箱验证码或扫码登录。",
   "loginFailed": "登录失败：{error}",
   "@loginFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
-
   "approveTitle": "批准登录",
   "approveScanPrompt": "扫描你想登录的设备上显示的二维码。",
   "approvePastePrompt": "或在此粘贴二维码链接",
@@ -305,22 +485,33 @@
   "approveLocation": "位置",
   "approveDevice": "设备",
   "approveWarnStranger": "不是你本人发起的登录？请拒绝。",
-
   "importTitle": "导入账户",
   "importPickFile": "选择 .maFile 文件",
   "importSuccess": "账户已导入。",
   "importFailed": "导入失败：{error}",
   "@importFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "importDuplicateTitle": "账户已存在",
   "importDuplicateBody": "该 maFile 对应的账户 {name} 已在本设备上。要用导入的文件覆盖现有账户吗？文件中未包含的缓存头像、已存密码与现有会话会被保留。",
   "@importDuplicateBody": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "importDuplicateBodyUnreadable": "该 maFile 对应的账户 {name} 已在本设备上，但其本地数据已无法读取。导入将完全替换它。",
   "@importDuplicateBodyUnreadable": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "importDuplicateOverwrite": "覆盖",
   "importSessionDeadTitle": "激活该账户的会话？",
@@ -332,7 +523,14 @@
   "loginRequestTitle": "批准登录？",
   "loginRequestBody": "{device} 正在从 {location} 登录你的 Steam 账户。",
   "@loginRequestBody": {
-    "placeholders": { "device": { "type": "String" }, "location": { "type": "String" } }
+    "placeholders": {
+      "device": {
+        "type": "String"
+      },
+      "location": {
+        "type": "String"
+      }
+    }
   },
   "loginRequestApprove": "允许",
   "loginRequestDeny": "拒绝",
@@ -342,26 +540,32 @@
   "loginDenied": "已拒绝登录。",
   "exportFailed": "导出失败：{error}",
   "@exportFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "exportWarnTitle": "导出未加密的 maFile？",
   "exportWarnBody": "导出的 .maFile 是未加密的。它包含该账户的 Steam 令牌密钥与撤销码——任何拿到文件的人都能接管你的验证器。请妥善保存，用完及时删除。",
   "exportIncludePassword": "同时导出已保存的 Steam 密码（不建议）",
-
   "addAuthTitle": "添加验证器",
   "addAuthPhonePrompt": "请输入手机号（含国家区号）",
   "addAuthSmsPrompt": "请输入手机收到的短信验证码",
   "addAuthEmailPrompt": "请输入 Steam 发到邮箱的激活码",
   "addAuthRevocationWarn": "请记下你的撤销码：{code}",
   "@addAuthRevocationWarn": {
-    "placeholders": { "code": { "type": "String" } }
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
   },
   "addAuthConfirmRevocation": "请再次输入撤销码以确认你已保存",
   "addAuthLinked": "验证器绑定成功。",
   "addAuthStepPhone": "手机",
   "addAuthStepSms": "激活",
   "addAuthStepRevocation": "撤销码",
-
   "addPresentTitle": "该账户已有验证器",
   "addPresentIntro": "Steam 同一账户只允许一个手机验证器。请先移除现有验证器，再点「重试」。",
   "addPresentStep1": "仍有旧手机或 Steam App？打开它 → Steam 令牌 → 移除验证器。",
@@ -370,7 +574,6 @@
   "addPresentManageUrl": "store.steampowered.com/twofactor/manage",
   "addPresentCopiedUrl": "链接已复制",
   "addPresentFallbackTitle": "收不到邮件？",
-
   "addMoveInButton": "把验证器移到本设备",
   "addMoveInBlurb": "Steam 会向该账户邮箱发送验证码，无需 15 天交易冷却。",
   "addMoveInSending": "正在发送验证码…",
@@ -382,7 +585,14 @@
   "addErrBadChallengeCode": "验证码不正确，请核对邮件后重试。",
   "addMoveInSaveFailed": "验证器已迁移成功，但 AVA 未能把它保存到本设备。旧验证器已失效，以下是仅有的副本——关闭本页前请立即抄写。\n\n撤销代码：{code}\n\n密钥：{secret}",
   "@addMoveInSaveFailed": {
-    "placeholders": { "code": { "type": "String" }, "secret": { "type": "String" } }
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "secret": {
+        "type": "String"
+      }
+    }
   },
   "addMoveInCopySecrets": "复制",
   "addMoveInCopied": "已复制",
@@ -395,7 +605,6 @@
   "commonRefresh": "刷新",
   "commonExport": "导出",
   "commonDelete": "删除",
-
   "settingsEncryption": "加密",
   "settingsEncryptionDesc": "本机 maFiles 由存于设备 Keystore 的随机 256 位密钥加密（AES-256-GCM），6 位 PIN 用于解锁。",
   "settingsThemeDesc": "切换整体界面风格。",
@@ -421,7 +630,6 @@
   "themePixel": "像素",
   "themeDark": "暗色",
   "themeLight": "亮色",
-
   "settingsAbout": "关于",
   "aboutTagline": "开源的 Steam 令牌验证器，用 Flutter 打造。",
   "aboutSourceCode": "源代码",
@@ -429,7 +637,10 @@
   "aboutLicense": "许可证",
   "aboutPrivacy": "隐私政策",
   "privacyConsentTitle": "你的隐私",
-  "privacyConsentBody": "AVA 把你的全部数据都保存在本机。它没有自己的后端，只连接 Valve 的 Steam 服务器，不做任何追踪或分析。继续即表示你接受隐私政策。",
+  "privacyConsentBody": "AVA 把你的 Steam 账户与密钥保存在本机，绝不上传，也不需要注册任何账户。与 Steam 的通信直连 Valve。开发者自己的两个服务只在用得着时才连接：Pro 权益校验，以及反馈（只有你按下发送才会）。Play 版的免费档还会显示广告。不做任何追踪或分析。以上都写在隐私政策里，继续即表示你接受。",
+  "privacyUpdateTitle": "隐私政策已更新",
+  "privacyUpdateBody": "你此前同意的那份说明写着 AVA「没有自己的后端、只连接 Valve」。这个描述并不准确，现已更正——应用的行为没有变化，变的只是描述。请阅读下面这份现行说明。",
+  "privacyConsentScrollHint": "请滑到底部后继续",
   "privacyConsentRead": "阅读完整隐私政策",
   "privacyConsentAgree": "同意并继续",
   "privacyConsentExit": "退出",
@@ -451,16 +662,49 @@
   "marketListed": "已上架，去确认完成。",
   "marketListedDone": "已上架并确认。",
   "marketListedPartial": "已上架 {listed}/{total} 件（其余失败）——如有待确认项请在确认页完成。",
-  "@marketListedPartial": { "placeholders": { "listed": { "type": "int" }, "total": { "type": "int" } } },
+  "@marketListedPartial": {
+    "placeholders": {
+      "listed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "marketListedSessionExpired": "已上架 {listed}/{total} 件后会话过期——请重新登录并完成确认。",
-  "@marketListedSessionExpired": { "placeholders": { "listed": { "type": "int" }, "total": { "type": "int" } } },
+  "@marketListedSessionExpired": {
+    "placeholders": {
+      "listed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "marketConfirmPartial": "已上架——已确认 {ok}/{total}，其余请在确认页完成。",
-  "@marketConfirmPartial": { "placeholders": { "ok": { "type": "int" }, "total": { "type": "int" } } },
+  "@marketConfirmPartial": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "marketAutoConfirm": "上架后自动确认",
   "marketQuantity": "数量",
   "marketMax": "最大",
   "marketListFailed": "上架失败：{error}",
-  "@marketListFailed": { "placeholders": { "error": { "type": "String" } } },
+  "@marketListFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "marketInvalidPrice": "请输入有效价格。",
   "marketCancel": "撤销在售",
   "marketCancelled": "已撤销在售。",
@@ -469,7 +713,6 @@
   "aboutLicenses": "开源许可证",
   "aboutCredits": "致谢",
   "aboutCreditsBody": "灵感来自 Steam Desktop Authenticator，兼容其 maFile 格式。基于 Flutter、Riverpod、Dio、PointyCastle、mobile_scanner、image 等开源库独立构建。",
-
   "actionLogin": "登录 / 刷新会话",
   "actionConfirmations": "待办",
   "actionRemove": "移除账户",
@@ -486,14 +729,30 @@
   "proOpen": "查看 AVA Pro",
   "proStatusFree": "免费版",
   "proStatusPro": "Pro · 有效至 {date}",
-  "@proStatusPro": { "placeholders": { "date": {} } },
+  "@proStatusPro": {
+    "placeholders": {
+      "date": {}
+    }
+  },
   "proStatusVip": "VIP · 有效至 {date}",
-  "@proStatusVip": { "placeholders": { "date": {} } },
+  "@proStatusVip": {
+    "placeholders": {
+      "date": {}
+    }
+  },
   "proStatusLifetime": "Pro · 终身",
   "proStatusActivations": "已激活：{classes}",
-  "@proStatusActivations": { "placeholders": { "classes": {} } },
+  "@proStatusActivations": {
+    "placeholders": {
+      "classes": {}
+    }
+  },
   "proStatusClassThisDevice": "{name}（本机）",
-  "@proStatusClassThisDevice": { "placeholders": { "name": {} } },
+  "@proStatusClassThisDevice": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "proDeviceClassAndroid": "Android",
   "proDeviceClassWindows": "Windows",
   "proDeviceClassLinux": "Linux",
@@ -526,18 +785,37 @@
   "proErrDeviceRevoked": "本设备名额已被新设备占用。",
   "proErrNoVip": "奖励尚未到账，请稍后重试。",
   "proErrGeneric": "失败：{code}",
-  "@proErrGeneric": { "placeholders": { "code": {} } },
+  "@proErrGeneric": {
+    "placeholders": {
+      "code": {}
+    }
+  },
   "proErrCodeInvalid": "激活码无效，请检查是否输错。",
   "proErrCodeRedeemed": "该激活码已在另一台设备上激活。如需换机使用，请发邮件至 hi@dotslash.pro。",
   "proErrCodeActivationLimit": "该激活码近期更换设备过于频繁，请稍后再试，或联系 hi@dotslash.pro。",
   "proErrRateLimited": "尝试次数过多，请稍等一分钟再试。",
   "proErrSlotOccupied": "占用中：{slots}",
-  "@proErrSlotOccupied": { "placeholders": { "slots": {} } },
+  "@proErrSlotOccupied": {
+    "placeholders": {
+      "slots": {}
+    }
+  },
   "proSlotEntry": "{name}（{time}）",
-  "@proSlotEntry": { "placeholders": { "name": {}, "time": {} } },
+  "@proSlotEntry": {
+    "placeholders": {
+      "name": {},
+      "time": {}
+    }
+  },
   "proSlotToday": "今天",
   "proSlotDaysAgo": "{n, plural, other{{n} 天前}}",
-  "@proSlotDaysAgo": { "placeholders": { "n": { "type": "int" } } },
+  "@proSlotDaysAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "proErrRevoked": "该权益已不再有效。如有疑问，请联系 hi@dotslash.pro。",
   "privacyOptions": "隐私选项",
   "skinProNotice": "Neon 与 Pixel 皮肤现为 Pro 权益；你的选择已保留，解锁 Pro 即恢复。",

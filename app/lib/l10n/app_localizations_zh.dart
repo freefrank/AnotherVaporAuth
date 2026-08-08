@@ -1172,7 +1172,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get privacyConsentBody =>
-      'AVA 把你的全部数据都保存在本机。它没有自己的后端，只连接 Valve 的 Steam 服务器，不做任何追踪或分析。继续即表示你接受隐私政策。';
+      'AVA 把你的 Steam 账户与密钥保存在本机，绝不上传，也不需要注册任何账户。与 Steam 的通信直连 Valve。开发者自己的两个服务只在用得着时才连接：Pro 权益校验，以及反馈（只有你按下发送才会）。Play 版的免费档还会显示广告。不做任何追踪或分析。以上都写在隐私政策里，继续即表示你接受。';
+
+  @override
+  String get privacyUpdateTitle => '隐私政策已更新';
+
+  @override
+  String get privacyUpdateBody =>
+      '你此前同意的那份说明写着 AVA「没有自己的后端、只连接 Valve」。这个描述并不准确，现已更正——应用的行为没有变化，变的只是描述。请阅读下面这份现行说明。';
+
+  @override
+  String get privacyConsentScrollHint => '请滑到底部后继续';
 
   @override
   String get privacyConsentRead => '阅读完整隐私政策';
@@ -2675,7 +2685,17 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get privacyConsentBody =>
-      'AVA 把你的所有資料都留在這台裝置上。它沒有自己的後端，只連線到 Valve 的 Steam 伺服器，也不做任何追蹤或分析。繼續即代表你接受隱私權政策。';
+      'AVA 把你的 Steam 帳號與金鑰保存在這台裝置上，絕不上傳，也不需要註冊任何帳號。與 Steam 的通訊直接連到 Valve。開發者自己的兩項服務只在用得上時才會連線：Pro 權益查驗，以及意見回饋（只有你按下送出才會）。Play 版的免費方案還會顯示廣告。不做任何追蹤或分析。以上都寫在隱私權政策裡，繼續即代表你接受。';
+
+  @override
+  String get privacyUpdateTitle => '隱私權政策已更新';
+
+  @override
+  String get privacyUpdateBody =>
+      '你先前同意的那份說明寫著 AVA「沒有自己的後端，只連線到 Valve」。這個描述並不準確，現已更正——AVA 本身的行為沒有變化，變的只是描述。請閱讀下面這份現行說明。';
+
+  @override
+  String get privacyConsentScrollHint => '請捲動到底才能繼續';
 
   @override
   String get privacyConsentRead => '閱讀完整的隱私權政策';

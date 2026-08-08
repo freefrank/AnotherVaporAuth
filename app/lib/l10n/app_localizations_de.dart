@@ -1235,7 +1235,17 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get privacyConsentBody =>
-      'AVA behält all deine Daten auf diesem Gerät. Es hat kein eigenes Backend, verbindet sich nur mit den Steam-Servern von Valve und betreibt weder Tracking noch Analytik. Wenn du fortfährst, akzeptierst du die Datenschutzerklärung.';
+      'AVA speichert deine Steam-Konten und Secrets auf diesem Gerät — sie werden nie hochgeladen, und du musst dich nirgendwo registrieren. Steam-Anfragen gehen direkt an Valve. Zwei eigene Dienste des Entwicklers werden nur dann kontaktiert, wenn sie gebraucht werden: die Prüfung der Pro-Berechtigung und Feedback (nur wenn du auf Senden drückst). Die Play-Version zeigt in der kostenlosen Variante außerdem Werbung. Tracking oder Analytik gibt es nicht. All das steht in der Datenschutzerklärung — wenn du fortfährst, akzeptierst du sie.';
+
+  @override
+  String get privacyUpdateTitle => 'Datenschutzerklärung aktualisiert';
+
+  @override
+  String get privacyUpdateBody =>
+      'In dem Hinweis, dem du früher zugestimmt hast, stand, AVA habe kein eigenes Backend und verbinde sich nur mit Valve. Das stimmte nicht und wurde korrigiert — an der App selbst hat sich nichts geändert, nur an der Beschreibung. Lies bitte unten den aktuellen Hinweis.';
+
+  @override
+  String get privacyConsentScrollHint => 'Zum Fortfahren bis zum Ende scrollen';
 
   @override
   String get privacyConsentRead => 'Vollständige Datenschutzerklärung lesen';
