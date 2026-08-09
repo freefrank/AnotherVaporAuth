@@ -1,0 +1,37 @@
+TITLE:
+AVA : authentificateur Steam
+
+SHORT:
+Authentificateur Steam Guard non officiel, open source. Codes, échanges, vente.
+
+FULL:
+AVA est un authentificateur Steam Guard non officiel et open source. C'est un projet communautaire, sans aucun lien avec Valve ni avec Steam.
+
+Votre authentificateur reste sur votre appareil, chiffré. AVA est fait pour les gens qui veulent leurs codes Steam à deux facteurs et leurs confirmations d'échange au même endroit, sous leur contrôle.
+
+FONCTIONS
+
+• Codes Steam Guard — une liste en direct, avec anneaux de compte à rebours et copie en un appui.
+• Confirmations d'échange — acceptez ou refusez échanges et mises en vente, par lots, sans navigateur intégré.
+• Offres d'échange — reçues, envoyées et historique, avec les objets des deux côtés, et des avertissements cadeau, échange à sens unique ou objets retenus par Steam avant que vous acceptiez.
+• Approbation de connexion — approuvez les connexions Steam depuis AVA, avec l'appareil et le lieu affichés, comme dans l'application officielle.
+• Inventaire et Marché de la communauté — parcourez votre inventaire et mettez des objets en vente, avec les frais Steam en direct et l'historique des prix.
+• Activation de clés Steam — activez une clé de produit sur n'importe lequel de vos comptes.
+• Gestion des appareils — voyez chaque appareil connecté à votre compte et déconnectez-en n'importe lequel à distance.
+• Groupes Steam Famille — invitations avec vérifications avant l'adhésion, et vue d'ensemble du groupe.
+
+MIGRATION
+
+AVA lit et écrit le format .maFile classique (PBKDF2/SHA1 + AES-256-CBC), donc les authentificateurs de Steam Desktop Authenticator et d'outils similaires se transfèrent tels quels. Les exports de Steam++ / Watt Toolkit sont eux aussi importés. Vous pouvez exporter votre .maFile à tout moment — vos données ne sont jamais prisonnières.
+
+SÉCURITÉ
+
+• Un PIN à 6 chiffres protège une clé aléatoire de 256 bits conservée dans le keystore matériel de votre appareil ; le stockage local est chiffré en AES-256-GCM.
+• Déverrouillage par empreinte ou par le code de l'appareil.
+• Chaque action irréversible — accepter un échange, rejoindre un groupe familial — demande un appui prolongé délibéré, pas un appui par mégarde.
+• Les codes fonctionnent hors ligne. Polices et ressources sont intégrées ; rien n'est téléchargé à l'exécution.
+
+AVA Pro (facultatif) débloque les skins Neon et Pixel et supprime les publicités. La version gratuite affiche des publicités sur Google Play. Tout ce qui touche à votre compte Steam fonctionne de la même façon dans les deux cas.
+
+Code source : https://github.com/freefrank/AnotherVaporAuth
+Politique de confidentialité : https://ava.dotslash.pro/privacy/

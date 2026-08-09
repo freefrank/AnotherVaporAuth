@@ -1,0 +1,53 @@
+TITLE:
+AVA: Steam Authenticator
+
+SHORT:
+Unofficial open-source Steam Guard authenticator. Codes, trades, market.
+
+FULL:
+AVA is an unofficial, open-source Steam Guard authenticator. It is a community
+project and is not affiliated with Valve or Steam in any way.
+
+Your authenticator lives on your device, encrypted. AVA is built for people who
+want their Steam two-factor codes and trade confirmations in one place they
+control.
+
+WHAT IT DOES
+
+• Steam Guard codes — a live list with countdown rings and tap-to-copy.
+• Trade confirmations — approve or decline trades and market listings, in
+  batches, without an embedded browser.
+• Trade offers — received, sent and history, with both sides' items shown, and
+  gift / one-sided / escrow warnings before you accept.
+• Sign-in approval — approve Steam logins from inside AVA, with the device and
+  location shown, just like the official app.
+• Inventory and Community Market — browse your inventory and list items with
+  live Steam fees and price history.
+• Redeem Steam keys — activate a product key on any account you hold.
+• Device management — see every device signed into your account and sign any of
+  them out remotely.
+• Steam Family groups — invites with pre-join checks, and a group overview.
+
+MIGRATION
+
+AVA reads and writes the classic .maFile format (PBKDF2/SHA1 + AES-256-CBC), so
+authenticators from Steam Desktop Authenticator and similar tools move over
+unchanged. Exports from Steam++ / Watt Toolkit are imported too. You can export
+your .maFile at any time — your data is never locked in.
+
+SECURITY
+
+• A 6-digit PIN guards a random 256-bit key held in your device's hardware
+  keystore; local storage is encrypted with AES-256-GCM.
+• Fingerprint or device-PIN unlock.
+• Every irreversible action — accepting a trade, joining a family group — takes
+  a deliberate press-and-hold, not a stray tap.
+• Codes work offline. Fonts and assets are bundled; nothing is downloaded at
+  runtime.
+
+AVA Pro (optional) unlocks the Neon and Pixel skins and removes ads. The free
+version shows ads on Google Play. Everything to do with your Steam account works
+the same either way.
+
+Open source: https://github.com/freefrank/AnotherVaporAuth
+Privacy policy: https://ava.dotslash.pro/privacy/

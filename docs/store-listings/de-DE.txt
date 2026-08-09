@@ -1,0 +1,37 @@
+TITLE:
+AVA: Steam Authenticator
+
+SHORT:
+Inoffizieller Steam Guard-Authentifikator, quelloffen. Codes, Tausch, Markt.
+
+FULL:
+AVA ist ein inoffizieller, quelloffener Steam Guard-Authentifikator. Es ist ein Community-Projekt und steht in keiner Verbindung zu Valve oder Steam.
+
+Dein Authentifikator liegt verschlüsselt auf deinem Gerät. AVA ist für Leute gebaut, die ihre Steam-Zwei-Faktor-Codes und Tauschbestätigungen an einem Ort haben wollen, den sie selbst kontrollieren.
+
+FUNKTIONEN
+
+• Steam Guard-Codes — eine Live-Liste mit Countdown-Ringen, Tippen kopiert.
+• Tauschbestätigungen — Tauschangebote und Marktangebote annehmen oder ablehnen, auch stapelweise, ohne eingebauten Browser.
+• Tauschangebote — empfangen, gesendet und Verlauf, mit den Gegenständen beider Seiten und Hinweisen auf Geschenk, einseitigen Tausch oder zurückgehaltene Gegenstände, bevor du annimmst.
+• Anmeldebestätigung — Steam-Anmeldungen direkt in AVA bestätigen, mit Gerät und Ort, genau wie in der offiziellen App.
+• Inventar und Community-Markt — dein Inventar durchsehen und Gegenstände mit aktuellen Steam-Gebühren und Preisverlauf anbieten.
+• Steam-Produktcodes einlösen — einen Code auf jedem deiner Konten aktivieren.
+• Geräteverwaltung — jedes bei deinem Konto angemeldete Gerät sehen und aus der Ferne abmelden.
+• Steam-Familiengruppen — Einladungen mit Prüfungen vor dem Beitritt und eine Gruppenübersicht.
+
+UMSTIEG
+
+AVA liest und schreibt das klassische .maFile-Format (PBKDF2/SHA1 + AES-256-CBC), damit Authentifikatoren aus Steam Desktop Authenticator und ähnlichen Werkzeugen unverändert umziehen. Exporte aus Steam++ / Watt Toolkit werden ebenfalls importiert. Du kannst dein .maFile jederzeit exportieren — deine Daten sind nie eingesperrt.
+
+SICHERHEIT
+
+• Eine 6-stellige PIN schützt einen zufälligen 256-Bit-Schlüssel im Hardware-Keystore deines Geräts; der lokale Speicher ist mit AES-256-GCM verschlüsselt.
+• Entsperren per Fingerabdruck oder Gerätesperre.
+• Jede unwiderrufliche Aktion — ein Tauschangebot annehmen, einer Familiengruppe beitreten — verlangt bewusstes langes Drücken, keinen versehentlichen Tipp.
+• Codes funktionieren offline. Schriften und Assets sind mitgeliefert; zur Laufzeit wird nichts nachgeladen.
+
+AVA Pro (optional) schaltet die Skins Neon und Pixel frei und entfernt die Werbung. Die kostenlose Version zeigt auf Google Play Werbung. Alles, was mit deinem Steam-Konto zu tun hat, funktioniert in beiden Fällen gleich.
+
+Open Source: https://github.com/freefrank/AnotherVaporAuth
+Datenschutzerklärung: https://ava.dotslash.pro/privacy/
