@@ -5,6 +5,37 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v1.1.0] — 2026-08-11
+
+### Added
+- **Import a whole Steam Desktop Authenticator folder, encrypted ones
+  included.** Previously only a single *unencrypted* `.maFile` could be
+  imported — so anyone who had turned on SDA's encryption, which SDA's own
+  README calls "highly recommended", could not migrate at all. Home → Import an
+  SDA folder: select `manifest.json` together with your `.maFile` files, enter
+  the passphrase you set in SDA, and every account comes across at once.
+  - `manifest.json` is required, and not out of convenience: when SDA
+    encryption is on, each account's salt and IV live in its manifest row, not
+    in the `.maFile`. A lone encrypted maFile cannot be decrypted by anything.
+  - A wrong passphrase says so, instead of reporting your files as corrupt.
+  - Accounts already on this device are skipped rather than overwritten, and
+    named in the summary. Import that one file on its own to replace it.
+
+### 新增
+- **可以整个导入 Steam Desktop Authenticator 的文件夹了,加密的也能导。**
+  此前只能导入单个**未加密**的 `.maFile`——也就是说,凡是在 SDA 里开了加密的
+  人(而 SDA 自己的 README 把加密称为「强烈推荐」)根本迁移不过来。首页 →
+  导入 SDA 文件夹:把 `manifest.json` 和那些 `.maFile` 一起选中,输入当初在
+  SDA 里设的口令,所有账户一次性搬过来。
+  - **必须选上 `manifest.json`**,这不是图省事:开了加密之后,每个账户的 salt
+    与 IV 存在 manifest 的对应行里,不在 `.maFile` 内部。孤立的一个加密 maFile
+    任何工具都解不开。
+  - 口令错了会直接说口令错,而不是报告你的文件损坏。
+  - 本机已有的账户会被跳过而不是覆盖,并在结果里列出名字。要替换就单独导入
+    那一个文件。
+
+—
+
 ## [v1.0.1] — 2026-08-07
 
 ### Added
@@ -37,6 +68,11 @@ automated releases.
   that already has unrelated files in it.
 - **Redeeming a code too many times now says so** instead of reporting the
   code as invalid.
+- **The Windows portable build is 31% smaller** (24.9 MB → 17.2 MB). It is now
+  packed with NSIS instead of a closed-source tool that had to be downloaded
+  at build time. Recorded here rather than under v1.1.0 because this is the
+  binary that actually shipped in the v1.0.1 release, rebuilt from `main` and
+  uploaded shortly after the tag.
 
 —
 
@@ -58,6 +94,9 @@ automated releases.
 - **必须滑到说明末尾,「同意」按钮才可点。**
 
 ### 修复
+- **Windows 便携版体积小了 31%**(24.9 MB → 17.2 MB)。改用 NSIS 打包,不再
+  依赖一个每次构建都要现下载的闭源工具。记在这一版而不是 v1.1.0,因为它就是
+  v1.0.1 发行页上实际发出去的那个文件——在打标签之后由 `main` 重新构建并补传。
 - **卸载 Windows 版不会再删掉不是它装的文件。** 此前是整个安装目录递归删除,
   所以把安装路径指到已有文件夹(比如「文档」)的人,卸载时会连里面的东西一起
   失去。现在只删自己写入的文件,其余原样保留;并且拒绝安装到盘符根目录、用户
