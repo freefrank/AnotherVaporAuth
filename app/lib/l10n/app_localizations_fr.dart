@@ -950,6 +950,58 @@ class AppLocalizationsFr extends AppLocalizations {
   String get importSessionLater => 'Plus tard';
 
   @override
+  String get sdaImportAction => 'Importer un dossier SDA';
+
+  @override
+  String get sdaImportHint =>
+      'Sélectionnez votre dossier maFiles de Steam Desktop Authenticator : prenez manifest.json en même temps que les fichiers .maFile. Les deux sont nécessaires — si le chiffrement de SDA était activé, les paramètres de déchiffrement sont dans manifest.json, pas dans le maFile.';
+
+  @override
+  String get sdaImportNoManifest =>
+      'Pas de manifest.json dans cette sélection. Sélectionnez-le avec les fichiers .maFile.';
+
+  @override
+  String sdaImportBadManifest(String error) {
+    return 'Ce manifest.json est illisible : $error';
+  }
+
+  @override
+  String get sdaImportPassTitle => 'Phrase secrète de chiffrement SDA';
+
+  @override
+  String get sdaImportPassBody =>
+      'Ces maFiles sont chiffrés. Saisissez la phrase secrète que vous aviez définie dans Steam Desktop Authenticator.';
+
+  @override
+  String get sdaImportWrongPass =>
+      'Cette phrase secrète n\'a déchiffré aucun des fichiers.';
+
+  @override
+  String sdaImportDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comptes importés.',
+      one: '1 compte importé.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String sdaImportSkipped(int count, String names) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comptes ignorés : $names',
+      one: '1 compte ignoré : $names',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sdaImportNothing => 'Rien n\'a été importé.';
+
+  @override
   String get importSessionLoginNow => 'Se connecter';
 
   @override

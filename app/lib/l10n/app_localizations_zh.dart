@@ -901,6 +901,54 @@ class AppLocalizationsZh extends AppLocalizations {
   String get importSessionLater => '稍后';
 
   @override
+  String get sdaImportAction => '导入 SDA 文件夹';
+
+  @override
+  String get sdaImportHint =>
+      '选择你的 Steam Desktop Authenticator maFiles 文件夹：把 manifest.json 和那些 .maFile 一起选中。两者缺一不可——如果当初在 SDA 里开了加密，解密参数存在 manifest.json 里，不在 maFile 内部。';
+
+  @override
+  String get sdaImportNoManifest => '所选文件里没有 manifest.json。请把它和 .maFile 一起选中。';
+
+  @override
+  String sdaImportBadManifest(String error) {
+    return '这个 manifest.json 读不了：$error';
+  }
+
+  @override
+  String get sdaImportPassTitle => 'SDA 加密口令';
+
+  @override
+  String get sdaImportPassBody =>
+      '这些 maFile 是加密的。请输入你当初在 Steam Desktop Authenticator 里设置的口令。';
+
+  @override
+  String get sdaImportWrongPass => '这个口令解不开任何一个文件。';
+
+  @override
+  String sdaImportDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已导入 $count 个账户。',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String sdaImportSkipped(int count, String names) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '跳过了 $count 个账户：$names',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sdaImportNothing => '没有导入任何账户。';
+
+  @override
   String get importSessionLoginNow => '立即登录';
 
   @override
@@ -2411,6 +2459,54 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get importSessionLater => '稍後';
+
+  @override
+  String get sdaImportAction => '匯入 SDA 資料夾';
+
+  @override
+  String get sdaImportHint =>
+      '選擇你的 Steam Desktop Authenticator maFiles 資料夾：把 manifest.json 和那些 .maFile 一起選取。兩者缺一不可——如果當初在 SDA 裡開了加密，解密參數存在 manifest.json 裡，不在 maFile 內部。';
+
+  @override
+  String get sdaImportNoManifest => '所選檔案裡沒有 manifest.json。請把它和 .maFile 一起選取。';
+
+  @override
+  String sdaImportBadManifest(String error) {
+    return '這個 manifest.json 讀不了：$error';
+  }
+
+  @override
+  String get sdaImportPassTitle => 'SDA 加密通行碼';
+
+  @override
+  String get sdaImportPassBody =>
+      '這些 maFile 是加密的。請輸入你當初在 Steam Desktop Authenticator 裡設定的通行碼。';
+
+  @override
+  String get sdaImportWrongPass => '這個通行碼解不開任何一個檔案。';
+
+  @override
+  String sdaImportDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已匯入 $count 個帳號。',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String sdaImportSkipped(int count, String names) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '略過了 $count 個帳號：$names',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sdaImportNothing => '沒有匯入任何帳號。';
 
   @override
   String get importSessionLoginNow => '立即登入';

@@ -12,6 +12,7 @@ import '../app/providers.dart';
 import '../app/theme.dart';
 import '../core/crypto/secure_random.dart';
 import '../core/models/steam_guard_account.dart';
+import '../core/sda_import.dart';
 import '../services/session_manager.dart';
 import 'login_screen.dart';
 
@@ -97,6 +98,155 @@ Future<void> importMaFileFlow(BuildContext context, WidgetRef ref) async {
         context,
       ).showSnackBar(SnackBar(content: Text(l.importFailed('$e'))));
     }
+  }
+}
+
+/// Imports a whole Steam Desktop Authenticator `maFiles/` folder, including the
+/// encrypted case.
+///
+/// Multi-select rather than a folder picker on purpose: `getDirectoryPath` on
+/// Android hands back a SAF tree URI (`content://…`) that `dart:io` cannot
+/// enumerate, so a folder picker would work on desktop and quietly fail on the
+/// platform most users are on. Reading each [XFile] works everywhere.
+///
+/// The selection must include `manifest.json`. That is not a convenience: when
+/// SDA's encryption is on, the salt and IV for each account live in its
+/// manifest row, not in the `.maFile`, so a lone encrypted maFile is not
+/// decryptable by anyone.
+Future<void> importSdaBundleFlow(BuildContext context, WidgetRef ref) async {
+  final l = AppLocalizations.of(context);
+  final files = await openFiles();
+  if (files.isEmpty) return;
+
+  final contents = <String, String>{};
+  try {
+    for (final f in files) {
+      contents[f.name] = await f.readAsString();
+    }
+  } catch (e) {
+    if (context.mounted) _snack(context, l.importFailed('$e'));
+    return;
+  }
+
+  final manifestName = contents.keys.firstWhere(
+    (n) => n.split(RegExp(r'[/\\]')).last.toLowerCase() == 'manifest.json',
+    orElse: () => '',
+  );
+  if (manifestName.isEmpty) {
+    if (context.mounted) _snack(context, l.sdaImportNoManifest);
+    return;
+  }
+
+  final SdaManifest manifest;
+  try {
+    manifest = SdaManifest.parse(contents[manifestName]!);
+  } catch (e) {
+    if (context.mounted) _snack(context, l.sdaImportBadManifest('$e'));
+    return;
+  }
+
+  String? passKey;
+  if (manifest.encrypted) {
+    if (!context.mounted) return;
+    passKey = await _promptSdaPassKey(context, l);
+    if (passKey == null || passKey.isEmpty) return;
+  }
+
+  final read = await readSdaBundle(
+    manifest: manifest,
+    files: contents,
+    passKey: passKey,
+  );
+  if (read.wrongPassKey) {
+    if (context.mounted) _snack(context, l.sdaImportWrongPass);
+    return;
+  }
+
+  final notifier = ref.read(appControllerProvider.notifier);
+  final skipped = <String>[];
+  var imported = 0;
+  for (final r in read.results) {
+    if (!r.ok) {
+      skipped.add(r.entry.filename);
+      continue;
+    }
+    try {
+      // An account already on this device is skipped, never overwritten. The
+      // single-file flow can afford to ask; a folder of twenty cannot, and
+      // silently replacing stored secrets and sessions is the one outcome that
+      // is not recoverable. Re-import that one file on its own to overwrite.
+      if (notifier.findImportCollision(r.plaintext!,
+              sourceName: r.entry.filename) !=
+          null) {
+        skipped.add(r.entry.filename);
+        continue;
+      }
+      await notifier.importMaFile(r.plaintext!, sourceName: r.entry.filename);
+      imported++;
+    } catch (_) {
+      skipped.add(r.entry.filename);
+    }
+  }
+  skipped.addAll(read.unlistedFiles);
+
+  if (!context.mounted) return;
+  final parts = <String>[
+    if (imported > 0) l.sdaImportDone(imported) else l.sdaImportNothing,
+    if (skipped.isNotEmpty) l.sdaImportSkipped(skipped.length, skipped.join(', ')),
+  ];
+  _snack(context, parts.join(' '));
+
+  // Sessions are not reactivated per account here: a folder of twenty would
+  // mean twenty dialogs. The home screen's per-account sign-in entry covers it.
+  if (imported > 0 && context.mounted) {
+    await showBackupReminderOnce(context, ref);
+  }
+}
+
+void _snack(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+/// Asks for the passphrase set inside SDA — not AVA's PIN, and not AVA's own
+/// store passkey. Returns null when cancelled.
+Future<String?> _promptSdaPassKey(
+  BuildContext context,
+  AppLocalizations l,
+) async {
+  final controller = TextEditingController();
+  try {
+    return await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.sdaImportPassTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.sdaImportPassBody),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              obscureText: true,
+              autofocus: true,
+              onSubmitted: (v) => Navigator.pop(ctx, v),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text(l.commonOk),
+          ),
+        ],
+      ),
+    );
+  } finally {
+    controller.dispose();
   }
 }
 

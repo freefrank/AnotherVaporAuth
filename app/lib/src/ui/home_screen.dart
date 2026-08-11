@@ -574,6 +574,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   ),
                 ),
                 row(ctx, Icons.file_open_outlined, l.actionImport, 'import'),
+                row(ctx, Icons.folder_open_outlined, l.sdaImportAction, 'sda'),
                 row(ctx, Icons.add_moderator_outlined,
                     l.actionAddAuthenticator, 'login'),
               ],
@@ -586,6 +587,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     switch (value) {
       case 'import':
         await importMaFileFlow(context, ref);
+        break;
+      case 'sda':
+        await importSdaBundleFlow(context, ref);
         break;
       case 'login':
         await Navigator.of(context).push(MaterialPageRoute(

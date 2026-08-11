@@ -1727,6 +1727,66 @@ abstract class AppLocalizations {
   /// **'Later'**
   String get importSessionLater;
 
+  /// No description provided for @sdaImportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import an SDA folder'**
+  String get sdaImportAction;
+
+  /// No description provided for @sdaImportHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your Steam Desktop Authenticator maFiles folder: pick manifest.json together with the .maFile files. Both are needed — if SDA\'s encryption was on, the decryption parameters live in manifest.json, not in the maFile.'**
+  String get sdaImportHint;
+
+  /// No description provided for @sdaImportNoManifest.
+  ///
+  /// In en, this message translates to:
+  /// **'No manifest.json in that selection. Select it together with the .maFile files.'**
+  String get sdaImportNoManifest;
+
+  /// No description provided for @sdaImportBadManifest.
+  ///
+  /// In en, this message translates to:
+  /// **'That manifest.json can\'t be read: {error}'**
+  String sdaImportBadManifest(String error);
+
+  /// No description provided for @sdaImportPassTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SDA encryption passphrase'**
+  String get sdaImportPassTitle;
+
+  /// No description provided for @sdaImportPassBody.
+  ///
+  /// In en, this message translates to:
+  /// **'These maFiles are encrypted. Enter the passphrase you set in Steam Desktop Authenticator.'**
+  String get sdaImportPassBody;
+
+  /// No description provided for @sdaImportWrongPass.
+  ///
+  /// In en, this message translates to:
+  /// **'That passphrase didn\'t decrypt any of the files.'**
+  String get sdaImportWrongPass;
+
+  /// No description provided for @sdaImportDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 account imported.} other{{count} accounts imported.}}'**
+  String sdaImportDone(int count);
+
+  /// No description provided for @sdaImportSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 account was skipped: {names}} other{{count} accounts were skipped: {names}}}'**
+  String sdaImportSkipped(int count, String names);
+
+  /// No description provided for @sdaImportNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was imported.'**
+  String get sdaImportNothing;
+
   /// No description provided for @importSessionLoginNow.
   ///
   /// In en, this message translates to:

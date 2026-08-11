@@ -970,6 +970,62 @@ class AppLocalizationsRu extends AppLocalizations {
   String get importSessionLater => 'Позже';
 
   @override
+  String get sdaImportAction => 'Импорт папки SDA';
+
+  @override
+  String get sdaImportHint =>
+      'Выберите папку maFiles из Steam Desktop Authenticator: отметьте manifest.json вместе с файлами .maFile. Нужны оба — если в SDA было включено шифрование, параметры расшифровки лежат в manifest.json, а не внутри maFile.';
+
+  @override
+  String get sdaImportNoManifest =>
+      'В выбранном нет manifest.json. Отметьте его вместе с файлами .maFile.';
+
+  @override
+  String sdaImportBadManifest(String error) {
+    return 'Этот manifest.json не читается: $error';
+  }
+
+  @override
+  String get sdaImportPassTitle => 'Пароль шифрования SDA';
+
+  @override
+  String get sdaImportPassBody =>
+      'Эти maFile зашифрованы. Введите пароль, который вы задали в Steam Desktop Authenticator.';
+
+  @override
+  String get sdaImportWrongPass =>
+      'Этим паролем не удалось расшифровать ни один файл.';
+
+  @override
+  String sdaImportDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Импортировано $count аккаунтов.',
+      many: 'Импортировано $count аккаунтов.',
+      few: 'Импортировано $count аккаунта.',
+      one: 'Импортирован $count аккаунт.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String sdaImportSkipped(int count, String names) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Пропущено $count аккаунтов: $names',
+      many: 'Пропущено $count аккаунтов: $names',
+      few: 'Пропущено $count аккаунта: $names',
+      one: 'Пропущен $count аккаунт: $names',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sdaImportNothing => 'Ничего не импортировано.';
+
+  @override
   String get importSessionLoginNow => 'Войти сейчас';
 
   @override

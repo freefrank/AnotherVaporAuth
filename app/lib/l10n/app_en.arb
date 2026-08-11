@@ -524,6 +524,40 @@
   "importSessionDeadTitle": "Activate this account?",
   "importSessionDeadBody": "The Steam session in this maFile has expired. Sign in now to enable confirmations and login approvals — the Steam Guard code will be filled in automatically.",
   "importSessionLater": "Later",
+  "sdaImportAction": "Import an SDA folder",
+  "sdaImportHint": "Select your Steam Desktop Authenticator maFiles folder: pick manifest.json together with the .maFile files. Both are needed — if SDA's encryption was on, the decryption parameters live in manifest.json, not in the maFile.",
+  "sdaImportNoManifest": "No manifest.json in that selection. Select it together with the .maFile files.",
+  "sdaImportBadManifest": "That manifest.json can't be read: {error}",
+  "@sdaImportBadManifest": {
+      "placeholders": {
+          "error": {
+              "type": "String"
+          }
+      }
+  },
+  "sdaImportPassTitle": "SDA encryption passphrase",
+  "sdaImportPassBody": "These maFiles are encrypted. Enter the passphrase you set in Steam Desktop Authenticator.",
+  "sdaImportWrongPass": "That passphrase didn't decrypt any of the files.",
+  "sdaImportDone": "{count, plural, =1{1 account imported.} other{{count} accounts imported.}}",
+  "@sdaImportDone": {
+      "placeholders": {
+          "count": {
+              "type": "int"
+          }
+      }
+  },
+  "sdaImportSkipped": "{count, plural, =1{1 account was skipped: {names}} other{{count} accounts were skipped: {names}}}",
+  "@sdaImportSkipped": {
+      "placeholders": {
+          "count": {
+              "type": "int"
+          },
+          "names": {
+              "type": "String"
+          }
+      }
+  },
+  "sdaImportNothing": "Nothing was imported.",
   "importSessionLoginNow": "Sign in now",
   "actionExport": "Export maFile",
   "actionLoginRequests": "Sign-in requests",
