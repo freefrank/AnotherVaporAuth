@@ -123,22 +123,66 @@ Win32Window::~Win32Window() {
 bool Win32Window::Create(const std::wstring& title,
                          const Point& origin,
                          const Size& size) {
-  Destroy();
-
-  const wchar_t* window_class =
-      WindowClassRegistrar::GetInstance()->GetWindowClass();
-
   const POINT target_point = {static_cast<LONG>(origin.x),
                               static_cast<LONG>(origin.y)};
   HMONITOR monitor = MonitorFromPoint(target_point, MONITOR_DEFAULTTONEAREST);
   UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
   double scale_factor = dpi / 96.0;
 
-  HWND window = CreateWindow(
-      window_class, title.c_str(), WS_OVERLAPPEDWINDOW,
-      Scale(origin.x, scale_factor), Scale(origin.y, scale_factor),
-      Scale(size.width, scale_factor), Scale(size.height, scale_factor),
-      nullptr, nullptr, GetModuleHandle(nullptr), this);
+  return CreateAt(title, Scale(origin.x, scale_factor),
+                  Scale(origin.y, scale_factor), Scale(size.width, scale_factor),
+                  Scale(size.height, scale_factor));
+}
+
+bool Win32Window::CreateCentered(const std::wstring& title, const Size& size) {
+  // The cursor decides the target monitor: a new window belongs on the
+  // screen the user is currently working on, which is also the behavior
+  // virtual desktops expect (the window opens on the active desktop).
+  POINT cursor = {0, 0};
+  ::GetCursorPos(&cursor);
+  HMONITOR monitor = MonitorFromPoint(cursor, MONITOR_DEFAULTTONEAREST);
+  UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
+  double scale_factor = dpi / 96.0;
+
+  MONITORINFO monitor_info = {};
+  monitor_info.cbSize = sizeof(monitor_info);
+  RECT work_area;
+  if (GetMonitorInfo(monitor, &monitor_info)) {
+    work_area = monitor_info.rcWork;
+  } else {
+    work_area = {0, 0, GetSystemMetrics(SM_CXSCREEN),
+                 GetSystemMetrics(SM_CYSCREEN)};
+  }
+
+  const LONG work_width = work_area.right - work_area.left;
+  const LONG work_height = work_area.bottom - work_area.top;
+  LONG width = Scale(size.width, scale_factor);
+  LONG height = Scale(size.height, scale_factor);
+  // The default size at high DPI can exceed a small screen; a window larger
+  // than the work area would put its title bar off-screen.
+  if (width > work_width) {
+    width = work_width;
+  }
+  if (height > work_height) {
+    height = work_height;
+  }
+  const LONG x = work_area.left + (work_width - width) / 2;
+  const LONG y = work_area.top + (work_height - height) / 2;
+
+  return CreateAt(title, x, y, width, height);
+}
+
+bool Win32Window::CreateAt(const std::wstring& title, int x, int y, int width,
+                           int height) {
+  Destroy();
+
+  const wchar_t* window_class =
+      WindowClassRegistrar::GetInstance()->GetWindowClass();
+
+  HWND window =
+      CreateWindow(window_class, title.c_str(), WS_OVERLAPPEDWINDOW, x, y,
+                   width, height, nullptr, nullptr, GetModuleHandle(nullptr),
+                   this);
 
   if (!window) {
     return false;

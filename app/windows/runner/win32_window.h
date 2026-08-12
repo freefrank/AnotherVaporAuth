@@ -36,6 +36,12 @@ class Win32Window {
   // |Show| is called. Returns true if the window was created successfully.
   bool Create(const std::wstring& title, const Point& origin, const Size& size);
 
+  // Like |Create|, but centers the window on the work area of the monitor
+  // that currently contains the mouse cursor, so on multi-monitor setups it
+  // opens on the screen the user is working on. |size| is in logical pixels
+  // and is scaled by that monitor's DPI, then clamped to its work area.
+  bool CreateCentered(const std::wstring& title, const Size& size);
+
   // Show the current window. Returns true if the window was successfully shown.
   bool Show();
 
@@ -73,6 +79,11 @@ class Win32Window {
 
  private:
   friend class WindowClassRegistrar;
+
+  // Shared implementation of the |Create*| methods; coordinates and sizes
+  // are in physical pixels, already scaled for the target monitor.
+  bool CreateAt(const std::wstring& title, int x, int y, int width,
+                int height);
 
   // OS callback called by message pump. Handles the WM_NCCREATE message which
   // is passed when the non-client area is being created and enables automatic
