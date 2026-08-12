@@ -10,8 +10,11 @@ import '../core/entitlement.dart';
 import '../services/feedback_service.dart';
 import '../services/debug_log.dart';
 import '../services/screen_security.dart';
+import '../app/sync_providers.dart';
 import 'debug_log_screen.dart';
 import 'paywall_screen.dart';
+import 'sync/sync_screen.dart';
+import 'sync/sync_setup_screen.dart';
 import 'widgets/pin_field.dart';
 import 'widgets/scanline_overlay.dart';
 import 'widgets/ava_panel.dart';
@@ -73,6 +76,8 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 // Biometric / device-credential unlock
                 const _BiometricCard(),
+                // Account-library sync (WebDAV; spec 2026-08-12)
+                const _SyncCard(),
                 // Hold-to-confirm safety gate for irreversible accepts.
                 _Card(
                   title: l.settingsHoldConfirm,
@@ -761,6 +766,46 @@ class _PasskeyDialogState extends State<_PasskeyDialog> {
             child: Text(l.commonCancel)),
         FilledButton(onPressed: _submit, child: Text(l.commonOk)),
       ],
+    );
+  }
+}
+
+/// Entry card for account-library sync: one status line and a door. All the
+/// substance lives in SyncScreen / SyncSetupScreen.
+class _SyncCard extends ConsumerWidget {
+  const _SyncCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final status = ref.watch(syncStatusProvider);
+
+    final String description;
+    if (!status.configured) {
+      description = l.syncSettingsDesc;
+    } else if (status.conflicts.isNotEmpty) {
+      description = l.syncStatusConflicts(status.conflicts.length);
+    } else if (status.needsPassphrase) {
+      description = l.syncNeedsPassphrase;
+    } else if (status.hasError) {
+      description = l.syncStatusErrorShort;
+    } else if (status.syncing) {
+      description = l.syncStatusSyncing;
+    } else {
+      description = l.syncStatusOk;
+    }
+
+    return _Card(
+      title: l.syncTitle,
+      description: description,
+      trailing: OutlinedButton(
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => status.configured
+              ? const SyncScreen()
+              : const SyncSetupScreen(),
+        )),
+        child: Text(status.configured ? l.commonOpen : l.settingsSet),
+      ),
     );
   }
 }

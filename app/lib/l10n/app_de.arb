@@ -468,5 +468,167 @@
   "proErrRevoked": "Diese Berechtigung ist nicht mehr aktiv. Wenn das ein Fehler ist, schreib an hi@dotslash.pro.",
   "privacyOptions": "Datenschutzoptionen",
   "skinProNotice": "Neon- und Pixel-Skin sind jetzt Pro-Vorteile. Deine Auswahl bleibt gespeichert und kommt mit Pro zurück.",
-  "skinProNoticeDismiss": "Verstanden"
+  "skinProNoticeDismiss": "Verstanden",
+  "syncTitle": "Sync",
+  "syncSetupTitle": "Sync einrichten",
+  "syncSettingsDesc": "Hält deine Konten über einen Server, den du selbst kontrollierst, auf mehreren Geräten synchron. Alles wird verschlüsselt, bevor es dieses Gerät verlässt.",
+  "syncSetUp": "Sync einrichten…",
+  "syncStatusOk": "Auf dem neuesten Stand",
+  "syncStatusSyncing": "Synchronisiere…",
+  "syncStatusErrorShort": "Letzter Sync fehlgeschlagen — öffnen für Details.",
+  "syncStatusConflicts": "{count} Konflikt(e) warten auf deine Entscheidung",
+  "@syncStatusConflicts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncLastSync": "Letzter Sync: {time}",
+  "@syncLastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNever": "nie",
+  "syncBackendTitle": "Wo sollen die Daten liegen?",
+  "syncBackendWebdav": "WebDAV",
+  "syncBackendWebdavDesc": "Nextcloud, Jianguoyun (坚果云), ein NAS — jeder WebDAV-Ordner, den du kontrollierst.",
+  "syncBackendGdrive": "Google Drive",
+  "syncBackendGdriveSoon": "Pro · kommt später",
+  "syncServerTitle": "Server",
+  "syncServerHint": "Jianguoyun braucht ein App-Passwort (安全选项 → 添加应用密码), nicht dein Anmeldepasswort. Eine Nextcloud-Ordner-URL sieht so aus: https://cloud.example.com/remote.php/dav/files/BENUTZER/ava/.",
+  "syncServerUrlLabel": "WebDAV-Ordner-URL",
+  "syncServerFolderLabel": "Ordner (optional)",
+  "syncServerFolderHint": "Leer lassen, um die URL unverändert zu verwenden; ein Name legt die Bibliothek in diesem Unterordner ab und erstellt ihn bei Bedarf.",
+  "syncServerUserLabel": "Benutzername",
+  "syncServerPasswordLabel": "Passwort / App-Passwort",
+  "syncTestConnection": "Verbindung testen",
+  "syncErrUrl": "Gib eine gültige http(s)-Ordner-URL ein.",
+  "syncErrAuth": "Der Server hat Benutzername oder Passwort abgelehnt.",
+  "syncErrNetwork": "Server nicht erreichbar: {detail}",
+  "@syncErrNetwork": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrServer": "Der Server hat mit einem Fehler geantwortet: {detail}",
+  "@syncErrServer": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrTls": "Dem Zertifikat des Servers wird nicht vertraut.",
+  "syncTlsTitle": "Unbekanntes Serverzertifikat",
+  "syncTlsBody": "Das System vertraut dem Zertifikat dieses Servers nicht. Wenn es dein eigener Server mit einem selbstsignierten Zertifikat ist, vergleiche diesen Fingerabdruck mit dem auf dem Server angezeigten — vertraue ihm nur, wenn beide exakt übereinstimmen.\n\nSHA-256\n{fp}",
+  "@syncTlsBody": {
+    "placeholders": {
+      "fp": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTlsTrust": "Diesem Zertifikat vertrauen",
+  "syncHttpPrivateTitle": "Unverschlüsselte Verbindung",
+  "syncHttpPrivateBody": "Das ist eine unverschlüsselte HTTP-Adresse in einem privaten Netz. Deine Kontodaten selbst sind Ende-zu-Ende-verschlüsselt, aber das Server-Passwort läuft unverschlüsselt durch dein Netzwerk.",
+  "syncHttpPublicTitle": "Unverschlüsseltes HTTP übers Internet",
+  "syncHttpPublicBody": "Diese Adresse ist öffentlich und die Verbindung wäre unverschlüsselt: Jeder zwischen dir und dem Server kann das Server-Passwort mitlesen und sich bei deinem Server anmelden. Die Kontodaten selbst bleiben verschlüsselt. Nimm stattdessen HTTPS oder eine LAN-Adresse — fahr nur fort, wenn du dieses Risiko akzeptierst.",
+  "syncHttpPublicHold": "Trotzdem erlauben (halten)",
+  "syncContinue": "Weiter",
+  "syncPassphraseNewTitle": "Sync-Passphrase festlegen",
+  "syncPassphraseNewBody": "Alles wird vor dem Hochladen mit dieser Passphrase verschlüsselt; die Passphrase selbst verlässt deine Geräte nie.\n\nWenn du sie verlierst, kann niemand die synchronisierten Daten wiederherstellen — ein Zurücksetzen gibt es nicht. Mindestens 8 Zeichen; Länge zählt mehr als Sonderzeichen.",
+  "syncPassphraseExistingTitle": "Sync-Passphrase eingeben",
+  "syncPassphraseExistingBody": "Dieser Ordner enthält bereits eine Sync-Bibliothek mit {count} Konto/Konten. Gib die Passphrase ein, mit der sie erstellt wurde.",
+  "@syncPassphraseExistingBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPassphraseLabel": "Sync-Passphrase",
+  "syncPassphraseConfirmLabel": "Passphrase bestätigen",
+  "syncPassphraseTooShort": "Mindestens 8 Zeichen.",
+  "syncPassphraseMismatch": "Die Passphrasen stimmen nicht überein.",
+  "syncPassphraseWrong": "Diese Passphrase öffnet diese Bibliothek nicht.",
+  "syncPreviewTitle": "Erster Sync",
+  "syncPreviewEmpty": "Noch nichts zu übertragen — Konten werden ab jetzt automatisch synchronisiert.",
+  "syncPreviewPull": "Auf dieses Gerät herunterladen: {count} Konto/Konten",
+  "@syncPreviewPull": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPreviewPush": "Von diesem Gerät hochladen: {count} Konto/Konten",
+  "@syncPreviewPush": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPreviewConflict": "Auf beiden Seiten mit unterschiedlichem Inhalt: {count} — nach dem Verbinden entscheidest du pro Konto",
+  "@syncPreviewConflict": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStart": "Sync starten",
+  "syncDoneTitle": "Sync ist aktiv",
+  "syncDoneBody": "Konten werden jetzt automatisch synchronisiert. Auf einem neuen Gerät meldet sich jedes Konto bei der ersten Nutzung einmal neu an — Konten mit gespeichertem Passwort machen das von selbst, die übrigen fragen einmal nach.",
+  "syncDone": "Fertig",
+  "syncNeedsPassphrase": "Die gespeicherte Passphrase passt nicht mehr zur Bibliothek auf dem Server — gib sie erneut ein.",
+  "syncEnterPassphrase": "Passphrase eingeben",
+  "syncConditionalWarn": "Dieser Server ignoriert bedingte Schreibzugriffe; zwei Geräte, die im selben Moment synchronisieren, können sich gegenseitig überschreiben. Der Sync funktioniert trotzdem — vermeide gleichzeitige Änderungen auf zwei Geräten.",
+  "syncConflictsTitle": "Konflikte",
+  "syncConflictTrashNote": "Die Seite, die du verwirfst, bleibt 30 Tage im Sync-Papierkorb.",
+  "syncConflictEditEdit": "Auf beiden Geräten geändert",
+  "syncConflictEditDelete": "Hier geändert, auf einem anderen Gerät gelöscht",
+  "syncConflictDeleteEdit": "Hier gelöscht, auf einem anderen Gerät geändert",
+  "syncConflictKeepLocal": "Lokale Version behalten",
+  "syncConflictKeepRemote": "Andere Version behalten",
+  "syncConflictLocalSide": "Dieses Gerät",
+  "syncConflictRemoteSide": "Anderes Gerät",
+  "syncDeleted": "Gelöscht",
+  "syncConflictHasPassword": "Passwort gespeichert",
+  "syncConflictNoPassword": "Kein gespeichertes Passwort",
+  "syncAutoTitle": "Automatischer Sync",
+  "syncAutoDesc": "Synchronisiert beim Start und nach jeder Änderung. Ist das aus, synchronisiert nur der Button unten.",
+  "syncPasswordsTitle": "Kontopasswörter synchronisieren",
+  "syncPasswordsDesc": "Mit Passwörtern kann sich ein neues Gerät von selbst anmelden. Eine Änderung hier lädt alle Konten neu hoch.",
+  "syncNowButton": "Jetzt synchronisieren",
+  "syncViewRemote": "Bibliothek auf dem Server ansehen",
+  "syncRemoteEmpty": "Die Bibliothek auf dem Server ist leer.",
+  "syncRemoteDevices": "Geräte",
+  "syncTrashTitle": "Sync-Papierkorb",
+  "syncTrashEmpty": "Leer. Alles, was der Sync entfernt oder ersetzt, bleibt hier 30 Tage erhalten.",
+  "syncTrashRestore": "Wiederherstellen",
+  "syncTrashRestored": "Konto wiederhergestellt.",
+  "syncTrashRestoreFailed": "Dieser Eintrag lässt sich mit der aktuellen Passphrase nicht entschlüsseln.",
+  "syncTrashReasonRemoteDelete": "von einem anderen Gerät gelöscht",
+  "syncTrashReasonConflict": "in einem Konflikt ersetzt",
+  "syncChangePassphrase": "Sync-Passphrase ändern",
+  "syncPassphraseChanged": "Passphrase geändert; alles wurde neu verschlüsselt. Andere Geräte fragen nach der neuen Passphrase.",
+  "syncPassphraseChangeFailed": "Passphrase nicht geändert: {reason}",
+  "@syncPassphraseChangeFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "syncDisconnect": "Sync trennen",
+  "syncDisconnectBody": "Dieses Gerät hört auf zu synchronisieren. Die Sync-Bibliothek auf dem Server kann für deine anderen Geräte bestehen bleiben — oder komplett gelöscht werden.",
+  "syncDisconnectKeep": "Serverdaten behalten",
+  "syncDisconnectDeleteHold": "Serverdaten löschen (halten)"
 }

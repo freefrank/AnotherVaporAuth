@@ -15,6 +15,7 @@ import '../ui/welcome_screen.dart';
 
 import 'providers.dart';
 import 'route_observer.dart';
+import 'sync_providers.dart';
 import 'theme.dart';
 
 class AvaApp extends ConsumerStatefulWidget {
@@ -164,6 +165,9 @@ class _Root extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Keeps the sync engine alive for the whole app lifetime — its account
+    // listener and debounce timers live inside the provider.
+    ref.watch(syncStatusProvider);
     final appState = ref.watch(appControllerProvider);
     return appState.when(
       // Riverpod 3 auto-retries a failed bootstrap with backoff; without this

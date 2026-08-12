@@ -829,5 +829,167 @@
   "proErrRevoked": "该权益已不再有效。如有疑问，请联系 hi@dotslash.pro。",
   "privacyOptions": "隐私选项",
   "skinProNotice": "Neon 与 Pixel 皮肤现为 Pro 权益；你的选择已保留，解锁 Pro 即恢复。",
-  "skinProNoticeDismiss": "知道了"
+  "skinProNoticeDismiss": "知道了",
+  "syncTitle": "同步",
+  "syncSetupTitle": "设置同步",
+  "syncSettingsDesc": "通过你自己掌控的服务器在多台设备间同步账户。所有数据离开本机前都已加密。",
+  "syncSetUp": "设置同步…",
+  "syncStatusOk": "已是最新",
+  "syncStatusSyncing": "正在同步…",
+  "syncStatusErrorShort": "上次同步失败——打开查看详情。",
+  "syncStatusConflicts": "{count} 个冲突等待你决定",
+  "@syncStatusConflicts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncLastSync": "上次同步：{time}",
+  "@syncLastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNever": "从未",
+  "syncBackendTitle": "数据放在哪里？",
+  "syncBackendWebdav": "WebDAV",
+  "syncBackendWebdavDesc": "Nextcloud、坚果云、NAS——任何一个你掌控的 WebDAV 文件夹。",
+  "syncBackendGdrive": "Google Drive",
+  "syncBackendGdriveSoon": "Pro · 稍后推出",
+  "syncServerTitle": "服务器",
+  "syncServerHint": "坚果云需要「应用密码」（安全选项 → 添加应用密码），不是登录密码。Nextcloud 的文件夹 URL 形如 https://cloud.example.com/remote.php/dav/files/用户名/ava/。",
+  "syncServerUrlLabel": "WebDAV 文件夹 URL",
+  "syncServerFolderLabel": "文件夹（可选）",
+  "syncServerFolderHint": "留空则直接使用上面的 URL；填写则放入该子文件夹，不存在会自动创建。",
+  "syncServerUserLabel": "用户名",
+  "syncServerPasswordLabel": "密码 / 应用密码",
+  "syncTestConnection": "测试连接",
+  "syncErrUrl": "请输入有效的 http(s) 文件夹 URL。",
+  "syncErrAuth": "服务器拒绝了用户名或密码。",
+  "syncErrNetwork": "无法连接服务器：{detail}",
+  "@syncErrNetwork": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrServer": "服务器返回错误：{detail}",
+  "@syncErrServer": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrTls": "服务器证书不受信任。",
+  "syncTlsTitle": "未知的服务器证书",
+  "syncTlsBody": "系统不信任该服务器的证书。如果这是你自己的服务器（自签名证书），请把下面的指纹与服务器上显示的逐字比对，完全一致才信任。\n\nSHA-256\n{fp}",
+  "@syncTlsBody": {
+    "placeholders": {
+      "fp": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTlsTrust": "信任该证书",
+  "syncHttpPrivateTitle": "未加密连接",
+  "syncHttpPrivateBody": "这是内网的明文 HTTP 地址。账户数据本身是端到端加密的，但服务器密码会在你的局域网内明文传输。",
+  "syncHttpPublicTitle": "公网明文 HTTP",
+  "syncHttpPublicBody": "该地址位于公网且连接不加密：你与服务器之间的任何中间节点都能读到服务器密码并登录你的服务器。账户数据本身仍是加密的。强烈建议改用 HTTPS 或内网地址——确认风险自担才继续。",
+  "syncHttpPublicHold": "长按仍然允许",
+  "syncContinue": "继续",
+  "syncPassphraseNewTitle": "设置同步口令",
+  "syncPassphraseNewBody": "所有数据上传前都会用这个口令加密；口令本身绝不离开你的设备。\n\n口令一旦丢失，同步数据任何人都无法找回——没有重置这回事。至少 8 个字符；长度比符号更重要。",
+  "syncPassphraseExistingTitle": "输入同步口令",
+  "syncPassphraseExistingBody": "这个文件夹里已有一个包含 {count} 个账户的同步库。请输入创建它时设置的口令。",
+  "@syncPassphraseExistingBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPassphraseLabel": "同步口令",
+  "syncPassphraseConfirmLabel": "确认口令",
+  "syncPassphraseTooShort": "至少 8 个字符。",
+  "syncPassphraseMismatch": "两次输入的口令不一致。",
+  "syncPassphraseWrong": "这个口令打不开该同步库。",
+  "syncPreviewTitle": "首次同步",
+  "syncPreviewEmpty": "暂时没有要传输的内容——之后的账户变动会自动同步。",
+  "syncPreviewPull": "下载到本机：{count} 个账户",
+  "@syncPreviewPull": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPreviewPush": "从本机上传：{count} 个账户",
+  "@syncPreviewPush": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPreviewConflict": "两侧内容不同：{count} 个——连接后逐个选择",
+  "@syncPreviewConflict": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStart": "开始同步",
+  "syncDoneTitle": "同步已开启",
+  "syncDoneBody": "账户现在会自动同步。新设备上每个账户首次使用时会重新登录——存过密码的自动完成，其余的会提示输一次。",
+  "syncDone": "完成",
+  "syncNeedsPassphrase": "存储的口令与远端同步库不再匹配——请重新输入。",
+  "syncEnterPassphrase": "输入口令",
+  "syncConditionalWarn": "该服务器忽略条件写入，两台设备同时同步可能互相覆盖。同步仍可用；避免在两台设备上同时改动。",
+  "syncConflictsTitle": "冲突",
+  "syncConflictTrashNote": "被舍弃的一侧会在同步回收站保留 30 天。",
+  "syncConflictEditEdit": "两台设备都改过",
+  "syncConflictEditDelete": "本机改过，另一台设备已删除",
+  "syncConflictDeleteEdit": "本机已删除，另一台设备改过",
+  "syncConflictKeepLocal": "保留本机版本",
+  "syncConflictKeepRemote": "保留对方版本",
+  "syncConflictLocalSide": "本机",
+  "syncConflictRemoteSide": "另一台设备",
+  "syncDeleted": "已删除",
+  "syncConflictHasPassword": "已存密码",
+  "syncConflictNoPassword": "未存密码",
+  "syncAutoTitle": "自动同步",
+  "syncAutoDesc": "启动时和每次改动后同步。关闭后只有下面的按钮会同步。",
+  "syncPasswordsTitle": "同步账户密码",
+  "syncPasswordsDesc": "有密码，新设备才能自行登录。改动此项会重新上传全部账户。",
+  "syncNowButton": "立即同步",
+  "syncViewRemote": "查看远端同步库",
+  "syncRemoteEmpty": "远端同步库是空的。",
+  "syncRemoteDevices": "设备",
+  "syncTrashTitle": "同步回收站",
+  "syncTrashEmpty": "空的。被同步删除或替换的账户会在这里保留 30 天。",
+  "syncTrashRestore": "恢复",
+  "syncTrashRestored": "账户已恢复。",
+  "syncTrashRestoreFailed": "当前口令解不开这条记录。",
+  "syncTrashReasonRemoteDelete": "被另一台设备删除",
+  "syncTrashReasonConflict": "在冲突中被替换",
+  "syncChangePassphrase": "更改同步口令",
+  "syncPassphraseChanged": "口令已更改，数据已全部重新加密。其他设备会要求输入新口令。",
+  "syncPassphraseChangeFailed": "口令未更改：{reason}",
+  "@syncPassphraseChangeFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "syncDisconnect": "断开同步",
+  "syncDisconnectBody": "本机停止同步。远端同步库可以留给其他设备继续用——也可以从服务器上彻底删除。",
+  "syncDisconnectKeep": "保留远端数据",
+  "syncDisconnectDeleteHold": "长按删除远端数据"
 }

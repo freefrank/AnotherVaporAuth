@@ -2920,6 +2920,558 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Got it'**
   String get skinProNoticeDismiss;
+
+  /// No description provided for @syncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get syncTitle;
+
+  /// No description provided for @syncSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up sync'**
+  String get syncSetupTitle;
+
+  /// No description provided for @syncSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep accounts in sync across devices through a server you control. Everything is encrypted before it leaves this device.'**
+  String get syncSettingsDesc;
+
+  /// No description provided for @syncSetUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up sync…'**
+  String get syncSetUp;
+
+  /// No description provided for @syncStatusOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to date'**
+  String get syncStatusOk;
+
+  /// No description provided for @syncStatusSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get syncStatusSyncing;
+
+  /// No description provided for @syncStatusErrorShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync failed — open for details.'**
+  String get syncStatusErrorShort;
+
+  /// No description provided for @syncStatusConflicts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} conflict(s) need your decision'**
+  String syncStatusConflicts(int count);
+
+  /// No description provided for @syncLastSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Last sync: {time}'**
+  String syncLastSync(String time);
+
+  /// No description provided for @syncNever.
+  ///
+  /// In en, this message translates to:
+  /// **'never'**
+  String get syncNever;
+
+  /// No description provided for @syncBackendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Where should the data live?'**
+  String get syncBackendTitle;
+
+  /// No description provided for @syncBackendWebdav.
+  ///
+  /// In en, this message translates to:
+  /// **'WebDAV'**
+  String get syncBackendWebdav;
+
+  /// No description provided for @syncBackendWebdavDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud, Jianguoyun (坚果云), a NAS — any WebDAV folder you control.'**
+  String get syncBackendWebdavDesc;
+
+  /// No description provided for @syncBackendGdrive.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Drive'**
+  String get syncBackendGdrive;
+
+  /// No description provided for @syncBackendGdriveSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro · coming later'**
+  String get syncBackendGdriveSoon;
+
+  /// No description provided for @syncServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Server'**
+  String get syncServerTitle;
+
+  /// No description provided for @syncServerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Jianguoyun needs an app password (安全选项 → 添加应用密码), not your login password. A Nextcloud folder URL looks like https://cloud.example.com/remote.php/dav/files/USER/ava/.'**
+  String get syncServerHint;
+
+  /// No description provided for @syncServerUrlLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'WebDAV folder URL'**
+  String get syncServerUrlLabel;
+
+  /// No description provided for @syncServerFolderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder (optional)'**
+  String get syncServerFolderLabel;
+
+  /// No description provided for @syncServerFolderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave empty to use the URL as-is; a name places the library in that subfolder, created if missing.'**
+  String get syncServerFolderHint;
+
+  /// No description provided for @syncServerUserLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get syncServerUserLabel;
+
+  /// No description provided for @syncServerPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password / app password'**
+  String get syncServerPasswordLabel;
+
+  /// No description provided for @syncTestConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Test connection'**
+  String get syncTestConnection;
+
+  /// No description provided for @syncErrUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid http(s) folder URL.'**
+  String get syncErrUrl;
+
+  /// No description provided for @syncErrAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'The server rejected the username or password.'**
+  String get syncErrAuth;
+
+  /// No description provided for @syncErrNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach the server: {detail}'**
+  String syncErrNetwork(String detail);
+
+  /// No description provided for @syncErrServer.
+  ///
+  /// In en, this message translates to:
+  /// **'The server answered with an error: {detail}'**
+  String syncErrServer(String detail);
+
+  /// No description provided for @syncErrTls.
+  ///
+  /// In en, this message translates to:
+  /// **'The server\'s certificate is not trusted.'**
+  String get syncErrTls;
+
+  /// No description provided for @syncTlsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown server certificate'**
+  String get syncTlsTitle;
+
+  /// No description provided for @syncTlsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This server\'s certificate is not trusted by the system. If it is your own server with a self-signed certificate, compare this fingerprint with the one shown on the server, and only trust it if they match exactly.\n\nSHA-256\n{fp}'**
+  String syncTlsBody(String fp);
+
+  /// No description provided for @syncTlsTrust.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust this certificate'**
+  String get syncTlsTrust;
+
+  /// No description provided for @syncHttpPrivateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unencrypted connection'**
+  String get syncHttpPrivateTitle;
+
+  /// No description provided for @syncHttpPrivateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a plain-HTTP address on a private network. Your account data itself is encrypted end-to-end, but the server password travels unencrypted on your network.'**
+  String get syncHttpPrivateBody;
+
+  /// No description provided for @syncHttpPublicTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plain HTTP across the internet'**
+  String get syncHttpPublicTitle;
+
+  /// No description provided for @syncHttpPublicBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This address is public and the connection would be unencrypted: anyone between you and the server can read the server password and sign in to your server. The account data itself stays encrypted. Use HTTPS or a LAN address instead — continue only if you accept this risk.'**
+  String get syncHttpPublicBody;
+
+  /// No description provided for @syncHttpPublicHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to allow anyway'**
+  String get syncHttpPublicHold;
+
+  /// No description provided for @syncContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get syncContinue;
+
+  /// No description provided for @syncPassphraseNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a sync passphrase'**
+  String get syncPassphraseNewTitle;
+
+  /// No description provided for @syncPassphraseNewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything is encrypted with this passphrase before upload; the passphrase itself never leaves your devices.\n\nIf you lose it, the synced data cannot be recovered by anyone — there is no reset. At least 8 characters; length matters more than symbols.'**
+  String get syncPassphraseNewBody;
+
+  /// No description provided for @syncPassphraseExistingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the sync passphrase'**
+  String get syncPassphraseExistingTitle;
+
+  /// No description provided for @syncPassphraseExistingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This folder already holds a sync library with {count} account(s). Enter the passphrase it was created with.'**
+  String syncPassphraseExistingBody(int count);
+
+  /// No description provided for @syncPassphraseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync passphrase'**
+  String get syncPassphraseLabel;
+
+  /// No description provided for @syncPassphraseConfirmLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm passphrase'**
+  String get syncPassphraseConfirmLabel;
+
+  /// No description provided for @syncPassphraseTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 8 characters.'**
+  String get syncPassphraseTooShort;
+
+  /// No description provided for @syncPassphraseMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The passphrases don\'t match.'**
+  String get syncPassphraseMismatch;
+
+  /// No description provided for @syncPassphraseWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'That passphrase doesn\'t open this library.'**
+  String get syncPassphraseWrong;
+
+  /// No description provided for @syncPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'First sync'**
+  String get syncPreviewTitle;
+
+  /// No description provided for @syncPreviewEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to transfer yet — accounts will sync automatically from now on.'**
+  String get syncPreviewEmpty;
+
+  /// No description provided for @syncPreviewPull.
+  ///
+  /// In en, this message translates to:
+  /// **'Download to this device: {count} account(s)'**
+  String syncPreviewPull(int count);
+
+  /// No description provided for @syncPreviewPush.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload from this device: {count} account(s)'**
+  String syncPreviewPush(int count);
+
+  /// No description provided for @syncPreviewConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'On both sides with different content: {count} — you\'ll choose per account after connecting'**
+  String syncPreviewConflict(int count);
+
+  /// No description provided for @syncStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start syncing'**
+  String get syncStart;
+
+  /// No description provided for @syncDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync is on'**
+  String get syncDoneTitle;
+
+  /// No description provided for @syncDoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts now sync automatically. On a new device each account signs in again the first time you use it — accounts with a saved password do that by themselves; the others ask once.'**
+  String get syncDoneBody;
+
+  /// No description provided for @syncDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get syncDone;
+
+  /// No description provided for @syncNeedsPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'The stored passphrase no longer matches the remote library — enter it again.'**
+  String get syncNeedsPassphrase;
+
+  /// No description provided for @syncEnterPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter passphrase'**
+  String get syncEnterPassphrase;
+
+  /// No description provided for @syncConditionalWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'This server ignores conditional writes, so two devices syncing at the same moment may overwrite each other. Syncing still works; avoid simultaneous changes on two devices.'**
+  String get syncConditionalWarn;
+
+  /// No description provided for @syncConflictsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflicts'**
+  String get syncConflictsTitle;
+
+  /// No description provided for @syncConflictTrashNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Whichever side you discard is kept in the sync trash for 30 days.'**
+  String get syncConflictTrashNote;
+
+  /// No description provided for @syncConflictEditEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed on both devices'**
+  String get syncConflictEditEdit;
+
+  /// No description provided for @syncConflictEditDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed here, deleted on another device'**
+  String get syncConflictEditDelete;
+
+  /// No description provided for @syncConflictDeleteEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted here, changed on another device'**
+  String get syncConflictDeleteEdit;
+
+  /// No description provided for @syncConflictKeepLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this device\'s'**
+  String get syncConflictKeepLocal;
+
+  /// No description provided for @syncConflictKeepRemote.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the other\'s'**
+  String get syncConflictKeepRemote;
+
+  /// No description provided for @syncConflictLocalSide.
+  ///
+  /// In en, this message translates to:
+  /// **'This device'**
+  String get syncConflictLocalSide;
+
+  /// No description provided for @syncConflictRemoteSide.
+  ///
+  /// In en, this message translates to:
+  /// **'Other device'**
+  String get syncConflictRemoteSide;
+
+  /// No description provided for @syncDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get syncDeleted;
+
+  /// No description provided for @syncConflictHasPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password saved'**
+  String get syncConflictHasPassword;
+
+  /// No description provided for @syncConflictNoPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved password'**
+  String get syncConflictNoPassword;
+
+  /// No description provided for @syncAutoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic sync'**
+  String get syncAutoTitle;
+
+  /// No description provided for @syncAutoDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync at launch and after every change. Off means only the button below syncs.'**
+  String get syncAutoDesc;
+
+  /// No description provided for @syncPasswordsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync account passwords'**
+  String get syncPasswordsTitle;
+
+  /// No description provided for @syncPasswordsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords let a new device sign in by itself. Changing this re-uploads every account.'**
+  String get syncPasswordsDesc;
+
+  /// No description provided for @syncNowButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNowButton;
+
+  /// No description provided for @syncViewRemote.
+  ///
+  /// In en, this message translates to:
+  /// **'View remote library'**
+  String get syncViewRemote;
+
+  /// No description provided for @syncRemoteEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The remote library is empty.'**
+  String get syncRemoteEmpty;
+
+  /// No description provided for @syncRemoteDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices'**
+  String get syncRemoteDevices;
+
+  /// No description provided for @syncTrashTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync trash'**
+  String get syncTrashTitle;
+
+  /// No description provided for @syncTrashEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Empty. Anything sync removes or replaces is kept here for 30 days.'**
+  String get syncTrashEmpty;
+
+  /// No description provided for @syncTrashRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get syncTrashRestore;
+
+  /// No description provided for @syncTrashRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Account restored.'**
+  String get syncTrashRestored;
+
+  /// No description provided for @syncTrashRestoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This entry can\'t be decrypted with the current passphrase.'**
+  String get syncTrashRestoreFailed;
+
+  /// No description provided for @syncTrashReasonRemoteDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'deleted by another device'**
+  String get syncTrashReasonRemoteDelete;
+
+  /// No description provided for @syncTrashReasonConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'replaced in a conflict'**
+  String get syncTrashReasonConflict;
+
+  /// No description provided for @syncChangePassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Change sync passphrase'**
+  String get syncChangePassphrase;
+
+  /// No description provided for @syncPassphraseChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Passphrase changed; everything re-encrypted. Other devices will ask for the new passphrase.'**
+  String get syncPassphraseChanged;
+
+  /// No description provided for @syncPassphraseChangeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Passphrase not changed: {reason}'**
+  String syncPassphraseChangeFailed(String reason);
+
+  /// No description provided for @syncDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect sync'**
+  String get syncDisconnect;
+
+  /// No description provided for @syncDisconnectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This device stops syncing. The remote library can stay for your other devices — or be deleted from the server entirely.'**
+  String get syncDisconnectBody;
+
+  /// No description provided for @syncDisconnectKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep remote data'**
+  String get syncDisconnectKeep;
+
+  /// No description provided for @syncDisconnectDeleteHold.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to delete remote data'**
+  String get syncDisconnectDeleteHold;
 }
 
 class _AppLocalizationsDelegate

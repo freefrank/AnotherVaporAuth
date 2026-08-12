@@ -1672,4 +1672,359 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get skinProNoticeDismiss => 'Понятно';
+
+  @override
+  String get syncTitle => 'Синхронизация';
+
+  @override
+  String get syncSetupTitle => 'Настройка синхронизации';
+
+  @override
+  String get syncSettingsDesc =>
+      'Синхронизация аккаунтов между устройствами через сервер, которым управляете вы. Всё шифруется до того, как покинет это устройство.';
+
+  @override
+  String get syncSetUp => 'Настроить синхронизацию…';
+
+  @override
+  String get syncStatusOk => 'Всё синхронизировано';
+
+  @override
+  String get syncStatusSyncing => 'Синхронизация…';
+
+  @override
+  String get syncStatusErrorShort =>
+      'Последняя синхронизация не удалась — откройте, чтобы узнать подробности.';
+
+  @override
+  String syncStatusConflicts(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count конфликта требуют вашего решения',
+      many: '$count конфликтов требуют вашего решения',
+      few: '$count конфликта требуют вашего решения',
+      one: '$count конфликт требует вашего решения',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncLastSync(String time) {
+    return 'Последняя синхронизация: $time';
+  }
+
+  @override
+  String get syncNever => 'никогда';
+
+  @override
+  String get syncBackendTitle => 'Где хранить данные?';
+
+  @override
+  String get syncBackendWebdav => 'WebDAV';
+
+  @override
+  String get syncBackendWebdavDesc =>
+      'Nextcloud, Jianguoyun (坚果云), NAS — любая папка WebDAV, которой управляете вы.';
+
+  @override
+  String get syncBackendGdrive => 'Google Drive';
+
+  @override
+  String get syncBackendGdriveSoon => 'Pro · появится позже';
+
+  @override
+  String get syncServerTitle => 'Сервер';
+
+  @override
+  String get syncServerHint =>
+      'Jianguoyun принимает только пароль приложения (安全选项 → 添加应用密码), а не пароль от аккаунта. URL папки Nextcloud выглядит так: https://cloud.example.com/remote.php/dav/files/USER/ava/.';
+
+  @override
+  String get syncServerUrlLabel => 'URL папки WebDAV';
+
+  @override
+  String get syncServerFolderLabel => 'Папка (необязательно)';
+
+  @override
+  String get syncServerFolderHint =>
+      'Оставьте пустым, чтобы использовать URL как есть; имя помещает библиотеку в эту подпапку, она создаётся при отсутствии.';
+
+  @override
+  String get syncServerUserLabel => 'Имя пользователя';
+
+  @override
+  String get syncServerPasswordLabel => 'Пароль / пароль приложения';
+
+  @override
+  String get syncTestConnection => 'Проверить подключение';
+
+  @override
+  String get syncErrUrl => 'Введите корректный http(s)-адрес папки.';
+
+  @override
+  String get syncErrAuth => 'Сервер отклонил имя пользователя или пароль.';
+
+  @override
+  String syncErrNetwork(String detail) {
+    return 'Не удалось связаться с сервером: $detail';
+  }
+
+  @override
+  String syncErrServer(String detail) {
+    return 'Сервер ответил ошибкой: $detail';
+  }
+
+  @override
+  String get syncErrTls => 'Сертификат сервера не является доверенным.';
+
+  @override
+  String get syncTlsTitle => 'Неизвестный сертификат сервера';
+
+  @override
+  String syncTlsBody(String fp) {
+    return 'Система не доверяет сертификату этого сервера. Если это ваш собственный сервер с самоподписанным сертификатом, сравните этот отпечаток с показанным на сервере и доверяйте ему только при точном совпадении.\n\nSHA-256\n$fp';
+  }
+
+  @override
+  String get syncTlsTrust => 'Доверять этому сертификату';
+
+  @override
+  String get syncHttpPrivateTitle => 'Незашифрованное соединение';
+
+  @override
+  String get syncHttpPrivateBody =>
+      'Это адрес с обычным HTTP в частной сети. Сами данные аккаунтов защищены сквозным шифрованием, но пароль сервера передаётся по вашей сети в открытом виде.';
+
+  @override
+  String get syncHttpPublicTitle => 'Обычный HTTP через интернет';
+
+  @override
+  String get syncHttpPublicBody =>
+      'Этот адрес публичный, а соединение будет незашифрованным: любой между вами и сервером сможет прочитать пароль сервера и войти на ваш сервер. Сами данные аккаунтов остаются зашифрованными. Используйте HTTPS или адрес в локальной сети — продолжайте, только если принимаете этот риск.';
+
+  @override
+  String get syncHttpPublicHold => 'Всё равно разрешить удержанием';
+
+  @override
+  String get syncContinue => 'Продолжить';
+
+  @override
+  String get syncPassphraseNewTitle => 'Задайте парольную фразу синхронизации';
+
+  @override
+  String get syncPassphraseNewBody =>
+      'Всё шифруется этой парольной фразой перед выгрузкой; сама фраза никогда не покидает ваши устройства.\n\nЕсли вы её потеряете, синхронизированные данные не сможет восстановить никто — сброса нет. Не менее 8 символов; длина важнее спецсимволов.';
+
+  @override
+  String get syncPassphraseExistingTitle =>
+      'Введите парольную фразу синхронизации';
+
+  @override
+  String syncPassphraseExistingBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'В этой папке уже есть библиотека синхронизации с $count аккаунтами. Введите парольную фразу, с которой она была создана.',
+      many:
+          'В этой папке уже есть библиотека синхронизации с $count аккаунтами. Введите парольную фразу, с которой она была создана.',
+      few:
+          'В этой папке уже есть библиотека синхронизации с $count аккаунтами. Введите парольную фразу, с которой она была создана.',
+      one:
+          'В этой папке уже есть библиотека синхронизации с $count аккаунтом. Введите парольную фразу, с которой она была создана.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get syncPassphraseLabel => 'Парольная фраза синхронизации';
+
+  @override
+  String get syncPassphraseConfirmLabel => 'Повторите парольную фразу';
+
+  @override
+  String get syncPassphraseTooShort => 'Не менее 8 символов.';
+
+  @override
+  String get syncPassphraseMismatch => 'Парольные фразы не совпадают.';
+
+  @override
+  String get syncPassphraseWrong =>
+      'Эта парольная фраза не подходит к этой библиотеке.';
+
+  @override
+  String get syncPreviewTitle => 'Первая синхронизация';
+
+  @override
+  String get syncPreviewEmpty =>
+      'Переносить пока нечего — дальше аккаунты будут синхронизироваться автоматически.';
+
+  @override
+  String syncPreviewPull(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Скачать на это устройство: $count аккаунта',
+      many: 'Скачать на это устройство: $count аккаунтов',
+      few: 'Скачать на это устройство: $count аккаунта',
+      one: 'Скачать на это устройство: $count аккаунт',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncPreviewPush(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Выгрузить с этого устройства: $count аккаунта',
+      many: 'Выгрузить с этого устройства: $count аккаунтов',
+      few: 'Выгрузить с этого устройства: $count аккаунта',
+      one: 'Выгрузить с этого устройства: $count аккаунт',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String syncPreviewConflict(int count) {
+    return 'С обеих сторон, но с разным содержимым: $count — после подключения вы решите по каждому аккаунту отдельно';
+  }
+
+  @override
+  String get syncStart => 'Начать синхронизацию';
+
+  @override
+  String get syncDoneTitle => 'Синхронизация включена';
+
+  @override
+  String get syncDoneBody =>
+      'Теперь аккаунты синхронизируются автоматически. На новом устройстве каждый аккаунт при первом использовании входит заново — аккаунты с сохранённым паролем делают это сами, остальные один раз спросят.';
+
+  @override
+  String get syncDone => 'Готово';
+
+  @override
+  String get syncNeedsPassphrase =>
+      'Сохранённая парольная фраза больше не подходит к библиотеке на сервере — введите её заново.';
+
+  @override
+  String get syncEnterPassphrase => 'Ввести парольную фразу';
+
+  @override
+  String get syncConditionalWarn =>
+      'Этот сервер игнорирует условную запись, поэтому два устройства, синхронизирующиеся в один и тот же момент, могут перезаписать друг друга. Синхронизация всё равно работает; просто не меняйте данные одновременно на двух устройствах.';
+
+  @override
+  String get syncConflictsTitle => 'Конфликты';
+
+  @override
+  String get syncConflictTrashNote =>
+      'Сторона, которую вы отбросите, хранится в корзине синхронизации 30 дней.';
+
+  @override
+  String get syncConflictEditEdit => 'Изменён на обоих устройствах';
+
+  @override
+  String get syncConflictEditDelete =>
+      'Изменён здесь, удалён на другом устройстве';
+
+  @override
+  String get syncConflictDeleteEdit =>
+      'Удалён здесь, изменён на другом устройстве';
+
+  @override
+  String get syncConflictKeepLocal => 'Оставить с этого устройства';
+
+  @override
+  String get syncConflictKeepRemote => 'Оставить с другого устройства';
+
+  @override
+  String get syncConflictLocalSide => 'Это устройство';
+
+  @override
+  String get syncConflictRemoteSide => 'Другое устройство';
+
+  @override
+  String get syncDeleted => 'Удалён';
+
+  @override
+  String get syncConflictHasPassword => 'Пароль сохранён';
+
+  @override
+  String get syncConflictNoPassword => 'Пароль не сохранён';
+
+  @override
+  String get syncAutoTitle => 'Автоматическая синхронизация';
+
+  @override
+  String get syncAutoDesc =>
+      'Синхронизация при запуске и после каждого изменения. Если выключено, синхронизирует только кнопка ниже.';
+
+  @override
+  String get syncPasswordsTitle => 'Синхронизировать пароли аккаунтов';
+
+  @override
+  String get syncPasswordsDesc =>
+      'С паролем новое устройство входит в аккаунт само. Изменение этой настройки заново выгружает все аккаунты.';
+
+  @override
+  String get syncNowButton => 'Синхронизировать';
+
+  @override
+  String get syncViewRemote => 'Открыть библиотеку на сервере';
+
+  @override
+  String get syncRemoteEmpty => 'Библиотека на сервере пуста.';
+
+  @override
+  String get syncRemoteDevices => 'Устройства';
+
+  @override
+  String get syncTrashTitle => 'Корзина синхронизации';
+
+  @override
+  String get syncTrashEmpty =>
+      'Пусто. Всё, что синхронизация удаляет или заменяет, хранится здесь 30 дней.';
+
+  @override
+  String get syncTrashRestore => 'Восстановить';
+
+  @override
+  String get syncTrashRestored => 'Аккаунт восстановлен.';
+
+  @override
+  String get syncTrashRestoreFailed =>
+      'Эту запись не удаётся расшифровать текущей парольной фразой.';
+
+  @override
+  String get syncTrashReasonRemoteDelete => 'удалён другим устройством';
+
+  @override
+  String get syncTrashReasonConflict => 'заменён при конфликте';
+
+  @override
+  String get syncChangePassphrase => 'Сменить парольную фразу синхронизации';
+
+  @override
+  String get syncPassphraseChanged =>
+      'Парольная фраза изменена; всё перешифровано. Другие устройства запросят новую фразу.';
+
+  @override
+  String syncPassphraseChangeFailed(String reason) {
+    return 'Парольная фраза не изменена: $reason';
+  }
+
+  @override
+  String get syncDisconnect => 'Отключить синхронизацию';
+
+  @override
+  String get syncDisconnectBody =>
+      'Это устройство перестанет синхронизироваться. Библиотеку на сервере можно оставить для других ваших устройств — или полностью удалить с сервера.';
+
+  @override
+  String get syncDisconnectKeep => 'Оставить данные на сервере';
+
+  @override
+  String get syncDisconnectDeleteHold => 'Удалить данные с сервера удержанием';
 }

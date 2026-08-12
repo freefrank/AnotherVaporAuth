@@ -1560,6 +1560,308 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get skinProNoticeDismiss => '知道了';
+
+  @override
+  String get syncTitle => '同步';
+
+  @override
+  String get syncSetupTitle => '设置同步';
+
+  @override
+  String get syncSettingsDesc => '通过你自己掌控的服务器在多台设备间同步账户。所有数据离开本机前都已加密。';
+
+  @override
+  String get syncSetUp => '设置同步…';
+
+  @override
+  String get syncStatusOk => '已是最新';
+
+  @override
+  String get syncStatusSyncing => '正在同步…';
+
+  @override
+  String get syncStatusErrorShort => '上次同步失败——打开查看详情。';
+
+  @override
+  String syncStatusConflicts(int count) {
+    return '$count 个冲突等待你决定';
+  }
+
+  @override
+  String syncLastSync(String time) {
+    return '上次同步：$time';
+  }
+
+  @override
+  String get syncNever => '从未';
+
+  @override
+  String get syncBackendTitle => '数据放在哪里？';
+
+  @override
+  String get syncBackendWebdav => 'WebDAV';
+
+  @override
+  String get syncBackendWebdavDesc => 'Nextcloud、坚果云、NAS——任何一个你掌控的 WebDAV 文件夹。';
+
+  @override
+  String get syncBackendGdrive => 'Google Drive';
+
+  @override
+  String get syncBackendGdriveSoon => 'Pro · 稍后推出';
+
+  @override
+  String get syncServerTitle => '服务器';
+
+  @override
+  String get syncServerHint =>
+      '坚果云需要「应用密码」（安全选项 → 添加应用密码），不是登录密码。Nextcloud 的文件夹 URL 形如 https://cloud.example.com/remote.php/dav/files/用户名/ava/。';
+
+  @override
+  String get syncServerUrlLabel => 'WebDAV 文件夹 URL';
+
+  @override
+  String get syncServerFolderLabel => '文件夹（可选）';
+
+  @override
+  String get syncServerFolderHint => '留空则直接使用上面的 URL；填写则放入该子文件夹，不存在会自动创建。';
+
+  @override
+  String get syncServerUserLabel => '用户名';
+
+  @override
+  String get syncServerPasswordLabel => '密码 / 应用密码';
+
+  @override
+  String get syncTestConnection => '测试连接';
+
+  @override
+  String get syncErrUrl => '请输入有效的 http(s) 文件夹 URL。';
+
+  @override
+  String get syncErrAuth => '服务器拒绝了用户名或密码。';
+
+  @override
+  String syncErrNetwork(String detail) {
+    return '无法连接服务器：$detail';
+  }
+
+  @override
+  String syncErrServer(String detail) {
+    return '服务器返回错误：$detail';
+  }
+
+  @override
+  String get syncErrTls => '服务器证书不受信任。';
+
+  @override
+  String get syncTlsTitle => '未知的服务器证书';
+
+  @override
+  String syncTlsBody(String fp) {
+    return '系统不信任该服务器的证书。如果这是你自己的服务器（自签名证书），请把下面的指纹与服务器上显示的逐字比对，完全一致才信任。\n\nSHA-256\n$fp';
+  }
+
+  @override
+  String get syncTlsTrust => '信任该证书';
+
+  @override
+  String get syncHttpPrivateTitle => '未加密连接';
+
+  @override
+  String get syncHttpPrivateBody =>
+      '这是内网的明文 HTTP 地址。账户数据本身是端到端加密的，但服务器密码会在你的局域网内明文传输。';
+
+  @override
+  String get syncHttpPublicTitle => '公网明文 HTTP';
+
+  @override
+  String get syncHttpPublicBody =>
+      '该地址位于公网且连接不加密：你与服务器之间的任何中间节点都能读到服务器密码并登录你的服务器。账户数据本身仍是加密的。强烈建议改用 HTTPS 或内网地址——确认风险自担才继续。';
+
+  @override
+  String get syncHttpPublicHold => '长按仍然允许';
+
+  @override
+  String get syncContinue => '继续';
+
+  @override
+  String get syncPassphraseNewTitle => '设置同步口令';
+
+  @override
+  String get syncPassphraseNewBody =>
+      '所有数据上传前都会用这个口令加密；口令本身绝不离开你的设备。\n\n口令一旦丢失，同步数据任何人都无法找回——没有重置这回事。至少 8 个字符；长度比符号更重要。';
+
+  @override
+  String get syncPassphraseExistingTitle => '输入同步口令';
+
+  @override
+  String syncPassphraseExistingBody(int count) {
+    return '这个文件夹里已有一个包含 $count 个账户的同步库。请输入创建它时设置的口令。';
+  }
+
+  @override
+  String get syncPassphraseLabel => '同步口令';
+
+  @override
+  String get syncPassphraseConfirmLabel => '确认口令';
+
+  @override
+  String get syncPassphraseTooShort => '至少 8 个字符。';
+
+  @override
+  String get syncPassphraseMismatch => '两次输入的口令不一致。';
+
+  @override
+  String get syncPassphraseWrong => '这个口令打不开该同步库。';
+
+  @override
+  String get syncPreviewTitle => '首次同步';
+
+  @override
+  String get syncPreviewEmpty => '暂时没有要传输的内容——之后的账户变动会自动同步。';
+
+  @override
+  String syncPreviewPull(int count) {
+    return '下载到本机：$count 个账户';
+  }
+
+  @override
+  String syncPreviewPush(int count) {
+    return '从本机上传：$count 个账户';
+  }
+
+  @override
+  String syncPreviewConflict(int count) {
+    return '两侧内容不同：$count 个——连接后逐个选择';
+  }
+
+  @override
+  String get syncStart => '开始同步';
+
+  @override
+  String get syncDoneTitle => '同步已开启';
+
+  @override
+  String get syncDoneBody =>
+      '账户现在会自动同步。新设备上每个账户首次使用时会重新登录——存过密码的自动完成，其余的会提示输一次。';
+
+  @override
+  String get syncDone => '完成';
+
+  @override
+  String get syncNeedsPassphrase => '存储的口令与远端同步库不再匹配——请重新输入。';
+
+  @override
+  String get syncEnterPassphrase => '输入口令';
+
+  @override
+  String get syncConditionalWarn =>
+      '该服务器忽略条件写入，两台设备同时同步可能互相覆盖。同步仍可用；避免在两台设备上同时改动。';
+
+  @override
+  String get syncConflictsTitle => '冲突';
+
+  @override
+  String get syncConflictTrashNote => '被舍弃的一侧会在同步回收站保留 30 天。';
+
+  @override
+  String get syncConflictEditEdit => '两台设备都改过';
+
+  @override
+  String get syncConflictEditDelete => '本机改过，另一台设备已删除';
+
+  @override
+  String get syncConflictDeleteEdit => '本机已删除，另一台设备改过';
+
+  @override
+  String get syncConflictKeepLocal => '保留本机版本';
+
+  @override
+  String get syncConflictKeepRemote => '保留对方版本';
+
+  @override
+  String get syncConflictLocalSide => '本机';
+
+  @override
+  String get syncConflictRemoteSide => '另一台设备';
+
+  @override
+  String get syncDeleted => '已删除';
+
+  @override
+  String get syncConflictHasPassword => '已存密码';
+
+  @override
+  String get syncConflictNoPassword => '未存密码';
+
+  @override
+  String get syncAutoTitle => '自动同步';
+
+  @override
+  String get syncAutoDesc => '启动时和每次改动后同步。关闭后只有下面的按钮会同步。';
+
+  @override
+  String get syncPasswordsTitle => '同步账户密码';
+
+  @override
+  String get syncPasswordsDesc => '有密码，新设备才能自行登录。改动此项会重新上传全部账户。';
+
+  @override
+  String get syncNowButton => '立即同步';
+
+  @override
+  String get syncViewRemote => '查看远端同步库';
+
+  @override
+  String get syncRemoteEmpty => '远端同步库是空的。';
+
+  @override
+  String get syncRemoteDevices => '设备';
+
+  @override
+  String get syncTrashTitle => '同步回收站';
+
+  @override
+  String get syncTrashEmpty => '空的。被同步删除或替换的账户会在这里保留 30 天。';
+
+  @override
+  String get syncTrashRestore => '恢复';
+
+  @override
+  String get syncTrashRestored => '账户已恢复。';
+
+  @override
+  String get syncTrashRestoreFailed => '当前口令解不开这条记录。';
+
+  @override
+  String get syncTrashReasonRemoteDelete => '被另一台设备删除';
+
+  @override
+  String get syncTrashReasonConflict => '在冲突中被替换';
+
+  @override
+  String get syncChangePassphrase => '更改同步口令';
+
+  @override
+  String get syncPassphraseChanged => '口令已更改，数据已全部重新加密。其他设备会要求输入新口令。';
+
+  @override
+  String syncPassphraseChangeFailed(String reason) {
+    return '口令未更改：$reason';
+  }
+
+  @override
+  String get syncDisconnect => '断开同步';
+
+  @override
+  String get syncDisconnectBody => '本机停止同步。远端同步库可以留给其他设备继续用——也可以从服务器上彻底删除。';
+
+  @override
+  String get syncDisconnectKeep => '保留远端数据';
+
+  @override
+  String get syncDisconnectDeleteHold => '长按删除远端数据';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -3121,4 +3423,308 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get skinProNoticeDismiss => '知道了';
+
+  @override
+  String get syncTitle => '同步';
+
+  @override
+  String get syncSetupTitle => '設定同步';
+
+  @override
+  String get syncSettingsDesc => '透過你自己掌控的伺服器在多台裝置間同步帳號。所有資料離開這台裝置前都已加密。';
+
+  @override
+  String get syncSetUp => '設定同步…';
+
+  @override
+  String get syncStatusOk => '已是最新';
+
+  @override
+  String get syncStatusSyncing => '同步中…';
+
+  @override
+  String get syncStatusErrorShort => '上次同步失敗——點開查看詳情。';
+
+  @override
+  String syncStatusConflicts(int count) {
+    return '$count 個衝突等你決定';
+  }
+
+  @override
+  String syncLastSync(String time) {
+    return '上次同步：$time';
+  }
+
+  @override
+  String get syncNever => '從未';
+
+  @override
+  String get syncBackendTitle => '資料要放在哪裡？';
+
+  @override
+  String get syncBackendWebdav => 'WebDAV';
+
+  @override
+  String get syncBackendWebdavDesc =>
+      'Nextcloud、坚果云（Jianguoyun）、NAS——任何一個你掌控的 WebDAV 資料夾。';
+
+  @override
+  String get syncBackendGdrive => 'Google 雲端硬碟';
+
+  @override
+  String get syncBackendGdriveSoon => 'Pro · 之後推出';
+
+  @override
+  String get syncServerTitle => '伺服器';
+
+  @override
+  String get syncServerHint =>
+      '坚果云需要「應用程式密碼」（安全选项 → 添加应用密码），不是登入密碼。Nextcloud 的資料夾 URL 格式類似 https://cloud.example.com/remote.php/dav/files/使用者名稱/ava/。';
+
+  @override
+  String get syncServerUrlLabel => 'WebDAV 資料夾 URL';
+
+  @override
+  String get syncServerFolderLabel => '資料夾（選填）';
+
+  @override
+  String get syncServerFolderHint => '留空則直接使用上面的 URL；填寫則放入該子資料夾，不存在會自動建立。';
+
+  @override
+  String get syncServerUserLabel => '使用者名稱';
+
+  @override
+  String get syncServerPasswordLabel => '密碼 / 應用程式密碼';
+
+  @override
+  String get syncTestConnection => '測試連線';
+
+  @override
+  String get syncErrUrl => '請輸入有效的 http(s) 資料夾 URL。';
+
+  @override
+  String get syncErrAuth => '伺服器拒絕了使用者名稱或密碼。';
+
+  @override
+  String syncErrNetwork(String detail) {
+    return '無法連上伺服器：$detail';
+  }
+
+  @override
+  String syncErrServer(String detail) {
+    return '伺服器回應了錯誤：$detail';
+  }
+
+  @override
+  String get syncErrTls => '伺服器憑證不受信任。';
+
+  @override
+  String get syncTlsTitle => '未知的伺服器憑證';
+
+  @override
+  String syncTlsBody(String fp) {
+    return '系統不信任這個伺服器的憑證。如果這是你自己的伺服器（自簽憑證），請把下面的指紋和伺服器上顯示的逐字比對，完全一致才信任。\n\nSHA-256\n$fp';
+  }
+
+  @override
+  String get syncTlsTrust => '信任這個憑證';
+
+  @override
+  String get syncHttpPrivateTitle => '未加密連線';
+
+  @override
+  String get syncHttpPrivateBody =>
+      '這是內部網路上的明文 HTTP 位址。帳號資料本身是端對端加密的，但伺服器密碼會在你的網路上明文傳輸。';
+
+  @override
+  String get syncHttpPublicTitle => '跨網際網路的明文 HTTP';
+
+  @override
+  String get syncHttpPublicBody =>
+      '這個位址在公開網路上，連線不會加密：你和伺服器之間的任何人都能讀到伺服器密碼並登入你的伺服器。帳號資料本身仍是加密的。請改用 HTTPS 或區域網路位址——確定接受這個風險才繼續。';
+
+  @override
+  String get syncHttpPublicHold => '長按仍要允許';
+
+  @override
+  String get syncContinue => '繼續';
+
+  @override
+  String get syncPassphraseNewTitle => '設定同步密語';
+
+  @override
+  String get syncPassphraseNewBody =>
+      '所有資料上傳前都會用這組密語加密；密語本身絕不會離開你的裝置。\n\n密語一旦遺失，同步的資料任何人都救不回來——沒有重設這回事。至少 8 個字元；長度比符號更重要。';
+
+  @override
+  String get syncPassphraseExistingTitle => '輸入同步密語';
+
+  @override
+  String syncPassphraseExistingBody(int count) {
+    return '這個資料夾已經有一個包含 $count 個帳號的同步庫。請輸入建立它時設定的密語。';
+  }
+
+  @override
+  String get syncPassphraseLabel => '同步密語';
+
+  @override
+  String get syncPassphraseConfirmLabel => '確認密語';
+
+  @override
+  String get syncPassphraseTooShort => '至少 8 個字元。';
+
+  @override
+  String get syncPassphraseMismatch => '兩次輸入的密語不一致。';
+
+  @override
+  String get syncPassphraseWrong => '這組密語打不開這個同步庫。';
+
+  @override
+  String get syncPreviewTitle => '首次同步';
+
+  @override
+  String get syncPreviewEmpty => '目前沒有要傳輸的內容——之後帳號有變動就會自動同步。';
+
+  @override
+  String syncPreviewPull(int count) {
+    return '下載到這台裝置：$count 個帳號';
+  }
+
+  @override
+  String syncPreviewPush(int count) {
+    return '從這台裝置上傳：$count 個帳號';
+  }
+
+  @override
+  String syncPreviewConflict(int count) {
+    return '兩邊內容不同：$count 個——連線後逐一選擇';
+  }
+
+  @override
+  String get syncStart => '開始同步';
+
+  @override
+  String get syncDoneTitle => '同步已開啟';
+
+  @override
+  String get syncDoneBody =>
+      '帳號現在會自動同步。新裝置上每個帳號第一次使用時要重新登入——存過密碼的會自己完成，其餘的會問一次。';
+
+  @override
+  String get syncDone => '完成';
+
+  @override
+  String get syncNeedsPassphrase => '儲存的密語和遠端同步庫已對不上——請重新輸入。';
+
+  @override
+  String get syncEnterPassphrase => '輸入密語';
+
+  @override
+  String get syncConditionalWarn =>
+      '這台伺服器會忽略條件寫入，兩台裝置同時同步可能互相覆寫。同步仍可使用；請避免在兩台裝置上同時改動。';
+
+  @override
+  String get syncConflictsTitle => '衝突';
+
+  @override
+  String get syncConflictTrashNote => '被捨棄的那一邊會在同步垃圾桶保留 30 天。';
+
+  @override
+  String get syncConflictEditEdit => '兩台裝置都改過';
+
+  @override
+  String get syncConflictEditDelete => '這裡改過，另一台裝置已刪除';
+
+  @override
+  String get syncConflictDeleteEdit => '這裡已刪除，另一台裝置改過';
+
+  @override
+  String get syncConflictKeepLocal => '保留這台的版本';
+
+  @override
+  String get syncConflictKeepRemote => '保留對方的版本';
+
+  @override
+  String get syncConflictLocalSide => '這台裝置';
+
+  @override
+  String get syncConflictRemoteSide => '另一台裝置';
+
+  @override
+  String get syncDeleted => '已刪除';
+
+  @override
+  String get syncConflictHasPassword => '已存密碼';
+
+  @override
+  String get syncConflictNoPassword => '未存密碼';
+
+  @override
+  String get syncAutoTitle => '自動同步';
+
+  @override
+  String get syncAutoDesc => '啟動時和每次改動後同步。關閉後只有下面的按鈕會同步。';
+
+  @override
+  String get syncPasswordsTitle => '同步帳號密碼';
+
+  @override
+  String get syncPasswordsDesc => '有密碼，新裝置才能自行登入。變更這一項會重新上傳所有帳號。';
+
+  @override
+  String get syncNowButton => '立即同步';
+
+  @override
+  String get syncViewRemote => '檢視遠端同步庫';
+
+  @override
+  String get syncRemoteEmpty => '遠端同步庫是空的。';
+
+  @override
+  String get syncRemoteDevices => '裝置';
+
+  @override
+  String get syncTrashTitle => '同步垃圾桶';
+
+  @override
+  String get syncTrashEmpty => '空的。被同步刪除或取代的帳號會在這裡保留 30 天。';
+
+  @override
+  String get syncTrashRestore => '還原';
+
+  @override
+  String get syncTrashRestored => '帳號已還原。';
+
+  @override
+  String get syncTrashRestoreFailed => '目前的密語解不開這筆資料。';
+
+  @override
+  String get syncTrashReasonRemoteDelete => '被另一台裝置刪除';
+
+  @override
+  String get syncTrashReasonConflict => '在衝突中被取代';
+
+  @override
+  String get syncChangePassphrase => '變更同步密語';
+
+  @override
+  String get syncPassphraseChanged => '密語已變更，資料已全部重新加密。其他裝置會要求輸入新密語。';
+
+  @override
+  String syncPassphraseChangeFailed(String reason) {
+    return '密語未變更：$reason';
+  }
+
+  @override
+  String get syncDisconnect => '中斷同步';
+
+  @override
+  String get syncDisconnectBody =>
+      '這台裝置會停止同步。遠端同步庫可以留給你的其他裝置繼續用——也可以從伺服器上整個刪除。';
+
+  @override
+  String get syncDisconnectKeep => '保留遠端資料';
+
+  @override
+  String get syncDisconnectDeleteHold => '長按刪除遠端資料';
 }

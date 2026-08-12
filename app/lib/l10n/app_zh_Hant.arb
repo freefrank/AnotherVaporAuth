@@ -468,5 +468,167 @@
   "proErrRevoked": "這項權益已經失效。如果你覺得這是錯誤，請來信 hi@dotslash.pro。",
   "privacyOptions": "隱私選項",
   "skinProNotice": "Neon 與 Pixel 皮膚現在是 Pro 權益。你的選擇已保留，解鎖 Pro 後就會回來。",
-  "skinProNoticeDismiss": "知道了"
+  "skinProNoticeDismiss": "知道了",
+  "syncTitle": "同步",
+  "syncSetupTitle": "設定同步",
+  "syncSettingsDesc": "透過你自己掌控的伺服器在多台裝置間同步帳號。所有資料離開這台裝置前都已加密。",
+  "syncSetUp": "設定同步…",
+  "syncStatusOk": "已是最新",
+  "syncStatusSyncing": "同步中…",
+  "syncStatusErrorShort": "上次同步失敗——點開查看詳情。",
+  "syncStatusConflicts": "{count} 個衝突等你決定",
+  "@syncStatusConflicts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncLastSync": "上次同步：{time}",
+  "@syncLastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNever": "從未",
+  "syncBackendTitle": "資料要放在哪裡？",
+  "syncBackendWebdav": "WebDAV",
+  "syncBackendWebdavDesc": "Nextcloud、坚果云（Jianguoyun）、NAS——任何一個你掌控的 WebDAV 資料夾。",
+  "syncBackendGdrive": "Google 雲端硬碟",
+  "syncBackendGdriveSoon": "Pro · 之後推出",
+  "syncServerTitle": "伺服器",
+  "syncServerHint": "坚果云需要「應用程式密碼」（安全选项 → 添加应用密码），不是登入密碼。Nextcloud 的資料夾 URL 格式類似 https://cloud.example.com/remote.php/dav/files/使用者名稱/ava/。",
+  "syncServerUrlLabel": "WebDAV 資料夾 URL",
+  "syncServerFolderLabel": "資料夾（選填）",
+  "syncServerFolderHint": "留空則直接使用上面的 URL；填寫則放入該子資料夾，不存在會自動建立。",
+  "syncServerUserLabel": "使用者名稱",
+  "syncServerPasswordLabel": "密碼 / 應用程式密碼",
+  "syncTestConnection": "測試連線",
+  "syncErrUrl": "請輸入有效的 http(s) 資料夾 URL。",
+  "syncErrAuth": "伺服器拒絕了使用者名稱或密碼。",
+  "syncErrNetwork": "無法連上伺服器：{detail}",
+  "@syncErrNetwork": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrServer": "伺服器回應了錯誤：{detail}",
+  "@syncErrServer": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrTls": "伺服器憑證不受信任。",
+  "syncTlsTitle": "未知的伺服器憑證",
+  "syncTlsBody": "系統不信任這個伺服器的憑證。如果這是你自己的伺服器（自簽憑證），請把下面的指紋和伺服器上顯示的逐字比對，完全一致才信任。\n\nSHA-256\n{fp}",
+  "@syncTlsBody": {
+    "placeholders": {
+      "fp": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTlsTrust": "信任這個憑證",
+  "syncHttpPrivateTitle": "未加密連線",
+  "syncHttpPrivateBody": "這是內部網路上的明文 HTTP 位址。帳號資料本身是端對端加密的，但伺服器密碼會在你的網路上明文傳輸。",
+  "syncHttpPublicTitle": "跨網際網路的明文 HTTP",
+  "syncHttpPublicBody": "這個位址在公開網路上，連線不會加密：你和伺服器之間的任何人都能讀到伺服器密碼並登入你的伺服器。帳號資料本身仍是加密的。請改用 HTTPS 或區域網路位址——確定接受這個風險才繼續。",
+  "syncHttpPublicHold": "長按仍要允許",
+  "syncContinue": "繼續",
+  "syncPassphraseNewTitle": "設定同步密語",
+  "syncPassphraseNewBody": "所有資料上傳前都會用這組密語加密；密語本身絕不會離開你的裝置。\n\n密語一旦遺失，同步的資料任何人都救不回來——沒有重設這回事。至少 8 個字元；長度比符號更重要。",
+  "syncPassphraseExistingTitle": "輸入同步密語",
+  "syncPassphraseExistingBody": "這個資料夾已經有一個包含 {count} 個帳號的同步庫。請輸入建立它時設定的密語。",
+  "@syncPassphraseExistingBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPassphraseLabel": "同步密語",
+  "syncPassphraseConfirmLabel": "確認密語",
+  "syncPassphraseTooShort": "至少 8 個字元。",
+  "syncPassphraseMismatch": "兩次輸入的密語不一致。",
+  "syncPassphraseWrong": "這組密語打不開這個同步庫。",
+  "syncPreviewTitle": "首次同步",
+  "syncPreviewEmpty": "目前沒有要傳輸的內容——之後帳號有變動就會自動同步。",
+  "syncPreviewPull": "下載到這台裝置：{count} 個帳號",
+  "@syncPreviewPull": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPreviewPush": "從這台裝置上傳：{count} 個帳號",
+  "@syncPreviewPush": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPreviewConflict": "兩邊內容不同：{count} 個——連線後逐一選擇",
+  "@syncPreviewConflict": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStart": "開始同步",
+  "syncDoneTitle": "同步已開啟",
+  "syncDoneBody": "帳號現在會自動同步。新裝置上每個帳號第一次使用時要重新登入——存過密碼的會自己完成，其餘的會問一次。",
+  "syncDone": "完成",
+  "syncNeedsPassphrase": "儲存的密語和遠端同步庫已對不上——請重新輸入。",
+  "syncEnterPassphrase": "輸入密語",
+  "syncConditionalWarn": "這台伺服器會忽略條件寫入，兩台裝置同時同步可能互相覆寫。同步仍可使用；請避免在兩台裝置上同時改動。",
+  "syncConflictsTitle": "衝突",
+  "syncConflictTrashNote": "被捨棄的那一邊會在同步垃圾桶保留 30 天。",
+  "syncConflictEditEdit": "兩台裝置都改過",
+  "syncConflictEditDelete": "這裡改過，另一台裝置已刪除",
+  "syncConflictDeleteEdit": "這裡已刪除，另一台裝置改過",
+  "syncConflictKeepLocal": "保留這台的版本",
+  "syncConflictKeepRemote": "保留對方的版本",
+  "syncConflictLocalSide": "這台裝置",
+  "syncConflictRemoteSide": "另一台裝置",
+  "syncDeleted": "已刪除",
+  "syncConflictHasPassword": "已存密碼",
+  "syncConflictNoPassword": "未存密碼",
+  "syncAutoTitle": "自動同步",
+  "syncAutoDesc": "啟動時和每次改動後同步。關閉後只有下面的按鈕會同步。",
+  "syncPasswordsTitle": "同步帳號密碼",
+  "syncPasswordsDesc": "有密碼，新裝置才能自行登入。變更這一項會重新上傳所有帳號。",
+  "syncNowButton": "立即同步",
+  "syncViewRemote": "檢視遠端同步庫",
+  "syncRemoteEmpty": "遠端同步庫是空的。",
+  "syncRemoteDevices": "裝置",
+  "syncTrashTitle": "同步垃圾桶",
+  "syncTrashEmpty": "空的。被同步刪除或取代的帳號會在這裡保留 30 天。",
+  "syncTrashRestore": "還原",
+  "syncTrashRestored": "帳號已還原。",
+  "syncTrashRestoreFailed": "目前的密語解不開這筆資料。",
+  "syncTrashReasonRemoteDelete": "被另一台裝置刪除",
+  "syncTrashReasonConflict": "在衝突中被取代",
+  "syncChangePassphrase": "變更同步密語",
+  "syncPassphraseChanged": "密語已變更，資料已全部重新加密。其他裝置會要求輸入新密語。",
+  "syncPassphraseChangeFailed": "密語未變更：{reason}",
+  "@syncPassphraseChangeFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "syncDisconnect": "中斷同步",
+  "syncDisconnectBody": "這台裝置會停止同步。遠端同步庫可以留給你的其他裝置繼續用——也可以從伺服器上整個刪除。",
+  "syncDisconnectKeep": "保留遠端資料",
+  "syncDisconnectDeleteHold": "長按刪除遠端資料"
 }

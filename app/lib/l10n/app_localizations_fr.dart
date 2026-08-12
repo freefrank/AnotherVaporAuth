@@ -1652,4 +1652,329 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get skinProNoticeDismiss => 'Compris';
+
+  @override
+  String get syncTitle => 'Synchronisation';
+
+  @override
+  String get syncSetupTitle => 'Configurer la synchronisation';
+
+  @override
+  String get syncSettingsDesc =>
+      'Gardez vos comptes synchronisés entre vos appareils via un serveur que vous contrôlez. Tout est chiffré avant de quitter cet appareil.';
+
+  @override
+  String get syncSetUp => 'Configurer la synchronisation…';
+
+  @override
+  String get syncStatusOk => 'À jour';
+
+  @override
+  String get syncStatusSyncing => 'Synchronisation…';
+
+  @override
+  String get syncStatusErrorShort =>
+      'Échec de la dernière synchronisation — ouvrez pour les détails.';
+
+  @override
+  String syncStatusConflicts(int count) {
+    return '$count conflit(s) attendent votre décision';
+  }
+
+  @override
+  String syncLastSync(String time) {
+    return 'Dernière synchronisation : $time';
+  }
+
+  @override
+  String get syncNever => 'jamais';
+
+  @override
+  String get syncBackendTitle => 'Où stocker les données ?';
+
+  @override
+  String get syncBackendWebdav => 'WebDAV';
+
+  @override
+  String get syncBackendWebdavDesc =>
+      'Nextcloud, Jianguoyun (坚果云), un NAS — n\'importe quel dossier WebDAV que vous contrôlez.';
+
+  @override
+  String get syncBackendGdrive => 'Google Drive';
+
+  @override
+  String get syncBackendGdriveSoon => 'Pro · à venir';
+
+  @override
+  String get syncServerTitle => 'Serveur';
+
+  @override
+  String get syncServerHint =>
+      'Jianguoyun exige un mot de passe d\'application (安全选项 → 添加应用密码), pas votre mot de passe de connexion. Une URL de dossier Nextcloud ressemble à https://cloud.example.com/remote.php/dav/files/UTILISATEUR/ava/.';
+
+  @override
+  String get syncServerUrlLabel => 'URL du dossier WebDAV';
+
+  @override
+  String get syncServerFolderLabel => 'Dossier (facultatif)';
+
+  @override
+  String get syncServerFolderHint =>
+      'Laissez vide pour utiliser l\'URL telle quelle ; un nom place la bibliothèque dans ce sous-dossier, créé s\'il n\'existe pas.';
+
+  @override
+  String get syncServerUserLabel => 'Nom d\'utilisateur';
+
+  @override
+  String get syncServerPasswordLabel =>
+      'Mot de passe / mot de passe d\'application';
+
+  @override
+  String get syncTestConnection => 'Tester la connexion';
+
+  @override
+  String get syncErrUrl => 'Saisissez une URL de dossier http(s) valide.';
+
+  @override
+  String get syncErrAuth =>
+      'Le serveur a refusé le nom d\'utilisateur ou le mot de passe.';
+
+  @override
+  String syncErrNetwork(String detail) {
+    return 'Impossible de joindre le serveur : $detail';
+  }
+
+  @override
+  String syncErrServer(String detail) {
+    return 'Le serveur a répondu par une erreur : $detail';
+  }
+
+  @override
+  String get syncErrTls => 'Le certificat du serveur n\'est pas approuvé.';
+
+  @override
+  String get syncTlsTitle => 'Certificat de serveur inconnu';
+
+  @override
+  String syncTlsBody(String fp) {
+    return 'Le système n\'approuve pas le certificat de ce serveur. S\'il s\'agit de votre propre serveur avec un certificat auto-signé, comparez cette empreinte avec celle affichée sur le serveur, et ne l\'approuvez que si elles correspondent exactement.\n\nSHA-256\n$fp';
+  }
+
+  @override
+  String get syncTlsTrust => 'Approuver ce certificat';
+
+  @override
+  String get syncHttpPrivateTitle => 'Connexion non chiffrée';
+
+  @override
+  String get syncHttpPrivateBody =>
+      'Cette adresse est en HTTP simple sur un réseau privé. Vos données de compte restent chiffrées de bout en bout, mais le mot de passe du serveur circule en clair sur votre réseau.';
+
+  @override
+  String get syncHttpPublicTitle => 'HTTP en clair sur Internet';
+
+  @override
+  String get syncHttpPublicBody =>
+      'Cette adresse est publique et la connexion ne serait pas chiffrée : n\'importe qui entre vous et le serveur peut lire le mot de passe du serveur et se connecter à votre serveur. Les données de compte restent chiffrées. Utilisez plutôt HTTPS ou une adresse de réseau local — ne continuez que si vous acceptez ce risque.';
+
+  @override
+  String get syncHttpPublicHold => 'Appui long pour autoriser quand même';
+
+  @override
+  String get syncContinue => 'Continuer';
+
+  @override
+  String get syncPassphraseNewTitle =>
+      'Définir une phrase secrète de synchronisation';
+
+  @override
+  String get syncPassphraseNewBody =>
+      'Tout est chiffré avec cette phrase secrète avant l\'envoi ; la phrase elle-même ne quitte jamais vos appareils.\n\nSi vous la perdez, personne ne pourra récupérer les données synchronisées — il n\'existe aucune réinitialisation. Au moins 8 caractères ; la longueur compte plus que les symboles.';
+
+  @override
+  String get syncPassphraseExistingTitle =>
+      'Saisissez la phrase secrète de synchronisation';
+
+  @override
+  String syncPassphraseExistingBody(int count) {
+    return 'Ce dossier contient déjà une bibliothèque de synchronisation avec $count compte(s). Saisissez la phrase secrète utilisée à sa création.';
+  }
+
+  @override
+  String get syncPassphraseLabel => 'Phrase secrète de synchronisation';
+
+  @override
+  String get syncPassphraseConfirmLabel => 'Confirmer la phrase secrète';
+
+  @override
+  String get syncPassphraseTooShort => 'Au moins 8 caractères.';
+
+  @override
+  String get syncPassphraseMismatch =>
+      'Les phrases secrètes ne correspondent pas.';
+
+  @override
+  String get syncPassphraseWrong =>
+      'Cette phrase secrète n\'ouvre pas cette bibliothèque.';
+
+  @override
+  String get syncPreviewTitle => 'Première synchronisation';
+
+  @override
+  String get syncPreviewEmpty =>
+      'Rien à transférer pour l\'instant — les comptes se synchroniseront désormais automatiquement.';
+
+  @override
+  String syncPreviewPull(int count) {
+    return 'À télécharger vers cet appareil : $count compte(s)';
+  }
+
+  @override
+  String syncPreviewPush(int count) {
+    return 'À envoyer depuis cet appareil : $count compte(s)';
+  }
+
+  @override
+  String syncPreviewConflict(int count) {
+    return 'Présents des deux côtés avec un contenu différent : $count — vous choisirez compte par compte après la connexion';
+  }
+
+  @override
+  String get syncStart => 'Démarrer la synchronisation';
+
+  @override
+  String get syncDoneTitle => 'Synchronisation activée';
+
+  @override
+  String get syncDoneBody =>
+      'Les comptes se synchronisent désormais automatiquement. Sur un nouvel appareil, chaque compte se reconnecte à sa première utilisation — ceux dont le mot de passe est enregistré le font seuls ; les autres le demandent une fois.';
+
+  @override
+  String get syncDone => 'Terminé';
+
+  @override
+  String get syncNeedsPassphrase =>
+      'La phrase secrète enregistrée ne correspond plus à la bibliothèque distante — saisissez-la à nouveau.';
+
+  @override
+  String get syncEnterPassphrase => 'Saisir la phrase secrète';
+
+  @override
+  String get syncConditionalWarn =>
+      'Ce serveur ignore les écritures conditionnelles : deux appareils qui synchronisent au même moment peuvent s\'écraser mutuellement. La synchronisation fonctionne quand même ; évitez les modifications simultanées sur deux appareils.';
+
+  @override
+  String get syncConflictsTitle => 'Conflits';
+
+  @override
+  String get syncConflictTrashNote =>
+      'La version que vous écartez est conservée 30 jours dans la corbeille de synchronisation.';
+
+  @override
+  String get syncConflictEditEdit => 'Modifié sur les deux appareils';
+
+  @override
+  String get syncConflictEditDelete =>
+      'Modifié ici, supprimé sur un autre appareil';
+
+  @override
+  String get syncConflictDeleteEdit =>
+      'Supprimé ici, modifié sur un autre appareil';
+
+  @override
+  String get syncConflictKeepLocal => 'Garder la version locale';
+
+  @override
+  String get syncConflictKeepRemote => 'Garder la version distante';
+
+  @override
+  String get syncConflictLocalSide => 'Cet appareil';
+
+  @override
+  String get syncConflictRemoteSide => 'Autre appareil';
+
+  @override
+  String get syncDeleted => 'Supprimé';
+
+  @override
+  String get syncConflictHasPassword => 'Mot de passe enregistré';
+
+  @override
+  String get syncConflictNoPassword => 'Aucun mot de passe enregistré';
+
+  @override
+  String get syncAutoTitle => 'Synchronisation automatique';
+
+  @override
+  String get syncAutoDesc =>
+      'Synchronise au lancement et après chaque modification. Désactivé, seul le bouton ci-dessous synchronise.';
+
+  @override
+  String get syncPasswordsTitle => 'Synchroniser les mots de passe des comptes';
+
+  @override
+  String get syncPasswordsDesc =>
+      'Les mots de passe permettent à un nouvel appareil de se connecter seul. Modifier ce réglage renvoie tous les comptes.';
+
+  @override
+  String get syncNowButton => 'Synchroniser maintenant';
+
+  @override
+  String get syncViewRemote => 'Voir la bibliothèque distante';
+
+  @override
+  String get syncRemoteEmpty => 'La bibliothèque distante est vide.';
+
+  @override
+  String get syncRemoteDevices => 'Appareils';
+
+  @override
+  String get syncTrashTitle => 'Corbeille de synchronisation';
+
+  @override
+  String get syncTrashEmpty =>
+      'Vide. Tout ce que la synchronisation supprime ou remplace est conservé ici pendant 30 jours.';
+
+  @override
+  String get syncTrashRestore => 'Restaurer';
+
+  @override
+  String get syncTrashRestored => 'Compte restauré.';
+
+  @override
+  String get syncTrashRestoreFailed =>
+      'Impossible de déchiffrer cette entrée avec la phrase secrète actuelle.';
+
+  @override
+  String get syncTrashReasonRemoteDelete => 'supprimé par un autre appareil';
+
+  @override
+  String get syncTrashReasonConflict => 'remplacé lors d\'un conflit';
+
+  @override
+  String get syncChangePassphrase =>
+      'Modifier la phrase secrète de synchronisation';
+
+  @override
+  String get syncPassphraseChanged =>
+      'Phrase secrète modifiée ; tout a été rechiffré. Les autres appareils demanderont la nouvelle phrase secrète.';
+
+  @override
+  String syncPassphraseChangeFailed(String reason) {
+    return 'Phrase secrète non modifiée : $reason';
+  }
+
+  @override
+  String get syncDisconnect => 'Déconnecter la synchronisation';
+
+  @override
+  String get syncDisconnectBody =>
+      'Cet appareil cesse de synchroniser. La bibliothèque distante peut rester pour vos autres appareils — ou être entièrement supprimée du serveur.';
+
+  @override
+  String get syncDisconnectKeep => 'Conserver les données distantes';
+
+  @override
+  String get syncDisconnectDeleteHold =>
+      'Appui long pour supprimer les données distantes';
 }

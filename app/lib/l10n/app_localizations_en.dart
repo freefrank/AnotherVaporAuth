@@ -1631,4 +1631,321 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get skinProNoticeDismiss => 'Got it';
+
+  @override
+  String get syncTitle => 'Sync';
+
+  @override
+  String get syncSetupTitle => 'Set up sync';
+
+  @override
+  String get syncSettingsDesc =>
+      'Keep accounts in sync across devices through a server you control. Everything is encrypted before it leaves this device.';
+
+  @override
+  String get syncSetUp => 'Set up sync…';
+
+  @override
+  String get syncStatusOk => 'Up to date';
+
+  @override
+  String get syncStatusSyncing => 'Syncing…';
+
+  @override
+  String get syncStatusErrorShort => 'Last sync failed — open for details.';
+
+  @override
+  String syncStatusConflicts(int count) {
+    return '$count conflict(s) need your decision';
+  }
+
+  @override
+  String syncLastSync(String time) {
+    return 'Last sync: $time';
+  }
+
+  @override
+  String get syncNever => 'never';
+
+  @override
+  String get syncBackendTitle => 'Where should the data live?';
+
+  @override
+  String get syncBackendWebdav => 'WebDAV';
+
+  @override
+  String get syncBackendWebdavDesc =>
+      'Nextcloud, Jianguoyun (坚果云), a NAS — any WebDAV folder you control.';
+
+  @override
+  String get syncBackendGdrive => 'Google Drive';
+
+  @override
+  String get syncBackendGdriveSoon => 'Pro · coming later';
+
+  @override
+  String get syncServerTitle => 'Server';
+
+  @override
+  String get syncServerHint =>
+      'Jianguoyun needs an app password (安全选项 → 添加应用密码), not your login password. A Nextcloud folder URL looks like https://cloud.example.com/remote.php/dav/files/USER/ava/.';
+
+  @override
+  String get syncServerUrlLabel => 'WebDAV folder URL';
+
+  @override
+  String get syncServerFolderLabel => 'Folder (optional)';
+
+  @override
+  String get syncServerFolderHint =>
+      'Leave empty to use the URL as-is; a name places the library in that subfolder, created if missing.';
+
+  @override
+  String get syncServerUserLabel => 'Username';
+
+  @override
+  String get syncServerPasswordLabel => 'Password / app password';
+
+  @override
+  String get syncTestConnection => 'Test connection';
+
+  @override
+  String get syncErrUrl => 'Enter a valid http(s) folder URL.';
+
+  @override
+  String get syncErrAuth => 'The server rejected the username or password.';
+
+  @override
+  String syncErrNetwork(String detail) {
+    return 'Could not reach the server: $detail';
+  }
+
+  @override
+  String syncErrServer(String detail) {
+    return 'The server answered with an error: $detail';
+  }
+
+  @override
+  String get syncErrTls => 'The server\'s certificate is not trusted.';
+
+  @override
+  String get syncTlsTitle => 'Unknown server certificate';
+
+  @override
+  String syncTlsBody(String fp) {
+    return 'This server\'s certificate is not trusted by the system. If it is your own server with a self-signed certificate, compare this fingerprint with the one shown on the server, and only trust it if they match exactly.\n\nSHA-256\n$fp';
+  }
+
+  @override
+  String get syncTlsTrust => 'Trust this certificate';
+
+  @override
+  String get syncHttpPrivateTitle => 'Unencrypted connection';
+
+  @override
+  String get syncHttpPrivateBody =>
+      'This is a plain-HTTP address on a private network. Your account data itself is encrypted end-to-end, but the server password travels unencrypted on your network.';
+
+  @override
+  String get syncHttpPublicTitle => 'Plain HTTP across the internet';
+
+  @override
+  String get syncHttpPublicBody =>
+      'This address is public and the connection would be unencrypted: anyone between you and the server can read the server password and sign in to your server. The account data itself stays encrypted. Use HTTPS or a LAN address instead — continue only if you accept this risk.';
+
+  @override
+  String get syncHttpPublicHold => 'Hold to allow anyway';
+
+  @override
+  String get syncContinue => 'Continue';
+
+  @override
+  String get syncPassphraseNewTitle => 'Set a sync passphrase';
+
+  @override
+  String get syncPassphraseNewBody =>
+      'Everything is encrypted with this passphrase before upload; the passphrase itself never leaves your devices.\n\nIf you lose it, the synced data cannot be recovered by anyone — there is no reset. At least 8 characters; length matters more than symbols.';
+
+  @override
+  String get syncPassphraseExistingTitle => 'Enter the sync passphrase';
+
+  @override
+  String syncPassphraseExistingBody(int count) {
+    return 'This folder already holds a sync library with $count account(s). Enter the passphrase it was created with.';
+  }
+
+  @override
+  String get syncPassphraseLabel => 'Sync passphrase';
+
+  @override
+  String get syncPassphraseConfirmLabel => 'Confirm passphrase';
+
+  @override
+  String get syncPassphraseTooShort => 'At least 8 characters.';
+
+  @override
+  String get syncPassphraseMismatch => 'The passphrases don\'t match.';
+
+  @override
+  String get syncPassphraseWrong =>
+      'That passphrase doesn\'t open this library.';
+
+  @override
+  String get syncPreviewTitle => 'First sync';
+
+  @override
+  String get syncPreviewEmpty =>
+      'Nothing to transfer yet — accounts will sync automatically from now on.';
+
+  @override
+  String syncPreviewPull(int count) {
+    return 'Download to this device: $count account(s)';
+  }
+
+  @override
+  String syncPreviewPush(int count) {
+    return 'Upload from this device: $count account(s)';
+  }
+
+  @override
+  String syncPreviewConflict(int count) {
+    return 'On both sides with different content: $count — you\'ll choose per account after connecting';
+  }
+
+  @override
+  String get syncStart => 'Start syncing';
+
+  @override
+  String get syncDoneTitle => 'Sync is on';
+
+  @override
+  String get syncDoneBody =>
+      'Accounts now sync automatically. On a new device each account signs in again the first time you use it — accounts with a saved password do that by themselves; the others ask once.';
+
+  @override
+  String get syncDone => 'Done';
+
+  @override
+  String get syncNeedsPassphrase =>
+      'The stored passphrase no longer matches the remote library — enter it again.';
+
+  @override
+  String get syncEnterPassphrase => 'Enter passphrase';
+
+  @override
+  String get syncConditionalWarn =>
+      'This server ignores conditional writes, so two devices syncing at the same moment may overwrite each other. Syncing still works; avoid simultaneous changes on two devices.';
+
+  @override
+  String get syncConflictsTitle => 'Conflicts';
+
+  @override
+  String get syncConflictTrashNote =>
+      'Whichever side you discard is kept in the sync trash for 30 days.';
+
+  @override
+  String get syncConflictEditEdit => 'Changed on both devices';
+
+  @override
+  String get syncConflictEditDelete =>
+      'Changed here, deleted on another device';
+
+  @override
+  String get syncConflictDeleteEdit =>
+      'Deleted here, changed on another device';
+
+  @override
+  String get syncConflictKeepLocal => 'Keep this device\'s';
+
+  @override
+  String get syncConflictKeepRemote => 'Keep the other\'s';
+
+  @override
+  String get syncConflictLocalSide => 'This device';
+
+  @override
+  String get syncConflictRemoteSide => 'Other device';
+
+  @override
+  String get syncDeleted => 'Deleted';
+
+  @override
+  String get syncConflictHasPassword => 'Password saved';
+
+  @override
+  String get syncConflictNoPassword => 'No saved password';
+
+  @override
+  String get syncAutoTitle => 'Automatic sync';
+
+  @override
+  String get syncAutoDesc =>
+      'Sync at launch and after every change. Off means only the button below syncs.';
+
+  @override
+  String get syncPasswordsTitle => 'Sync account passwords';
+
+  @override
+  String get syncPasswordsDesc =>
+      'Passwords let a new device sign in by itself. Changing this re-uploads every account.';
+
+  @override
+  String get syncNowButton => 'Sync now';
+
+  @override
+  String get syncViewRemote => 'View remote library';
+
+  @override
+  String get syncRemoteEmpty => 'The remote library is empty.';
+
+  @override
+  String get syncRemoteDevices => 'Devices';
+
+  @override
+  String get syncTrashTitle => 'Sync trash';
+
+  @override
+  String get syncTrashEmpty =>
+      'Empty. Anything sync removes or replaces is kept here for 30 days.';
+
+  @override
+  String get syncTrashRestore => 'Restore';
+
+  @override
+  String get syncTrashRestored => 'Account restored.';
+
+  @override
+  String get syncTrashRestoreFailed =>
+      'This entry can\'t be decrypted with the current passphrase.';
+
+  @override
+  String get syncTrashReasonRemoteDelete => 'deleted by another device';
+
+  @override
+  String get syncTrashReasonConflict => 'replaced in a conflict';
+
+  @override
+  String get syncChangePassphrase => 'Change sync passphrase';
+
+  @override
+  String get syncPassphraseChanged =>
+      'Passphrase changed; everything re-encrypted. Other devices will ask for the new passphrase.';
+
+  @override
+  String syncPassphraseChangeFailed(String reason) {
+    return 'Passphrase not changed: $reason';
+  }
+
+  @override
+  String get syncDisconnect => 'Disconnect sync';
+
+  @override
+  String get syncDisconnectBody =>
+      'This device stops syncing. The remote library can stay for your other devices — or be deleted from the server entirely.';
+
+  @override
+  String get syncDisconnectKeep => 'Keep remote data';
+
+  @override
+  String get syncDisconnectDeleteHold => 'Hold to delete remote data';
 }

@@ -860,5 +860,167 @@
   "proErrRevoked": "This entitlement is no longer active. If you think this is a mistake, email hi@dotslash.pro.",
   "privacyOptions": "Privacy options",
   "skinProNotice": "Neon & Pixel skins are now Pro perks. Your selection is kept and comes back with Pro.",
-  "skinProNoticeDismiss": "Got it"
+  "skinProNoticeDismiss": "Got it",
+  "syncTitle": "Sync",
+  "syncSetupTitle": "Set up sync",
+  "syncSettingsDesc": "Keep accounts in sync across devices through a server you control. Everything is encrypted before it leaves this device.",
+  "syncSetUp": "Set up sync…",
+  "syncStatusOk": "Up to date",
+  "syncStatusSyncing": "Syncing…",
+  "syncStatusErrorShort": "Last sync failed — open for details.",
+  "syncStatusConflicts": "{count} conflict(s) need your decision",
+  "@syncStatusConflicts": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncLastSync": "Last sync: {time}",
+  "@syncLastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNever": "never",
+  "syncBackendTitle": "Where should the data live?",
+  "syncBackendWebdav": "WebDAV",
+  "syncBackendWebdavDesc": "Nextcloud, Jianguoyun (坚果云), a NAS — any WebDAV folder you control.",
+  "syncBackendGdrive": "Google Drive",
+  "syncBackendGdriveSoon": "Pro · coming later",
+  "syncServerTitle": "Server",
+  "syncServerHint": "Jianguoyun needs an app password (安全选项 → 添加应用密码), not your login password. A Nextcloud folder URL looks like https://cloud.example.com/remote.php/dav/files/USER/ava/.",
+  "syncServerUrlLabel": "WebDAV folder URL",
+  "syncServerFolderLabel": "Folder (optional)",
+  "syncServerFolderHint": "Leave empty to use the URL as-is; a name places the library in that subfolder, created if missing.",
+  "syncServerUserLabel": "Username",
+  "syncServerPasswordLabel": "Password / app password",
+  "syncTestConnection": "Test connection",
+  "syncErrUrl": "Enter a valid http(s) folder URL.",
+  "syncErrAuth": "The server rejected the username or password.",
+  "syncErrNetwork": "Could not reach the server: {detail}",
+  "@syncErrNetwork": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrServer": "The server answered with an error: {detail}",
+  "@syncErrServer": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrTls": "The server's certificate is not trusted.",
+  "syncTlsTitle": "Unknown server certificate",
+  "syncTlsBody": "This server's certificate is not trusted by the system. If it is your own server with a self-signed certificate, compare this fingerprint with the one shown on the server, and only trust it if they match exactly.\n\nSHA-256\n{fp}",
+  "@syncTlsBody": {
+    "placeholders": {
+      "fp": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTlsTrust": "Trust this certificate",
+  "syncHttpPrivateTitle": "Unencrypted connection",
+  "syncHttpPrivateBody": "This is a plain-HTTP address on a private network. Your account data itself is encrypted end-to-end, but the server password travels unencrypted on your network.",
+  "syncHttpPublicTitle": "Plain HTTP across the internet",
+  "syncHttpPublicBody": "This address is public and the connection would be unencrypted: anyone between you and the server can read the server password and sign in to your server. The account data itself stays encrypted. Use HTTPS or a LAN address instead — continue only if you accept this risk.",
+  "syncHttpPublicHold": "Hold to allow anyway",
+  "syncContinue": "Continue",
+  "syncPassphraseNewTitle": "Set a sync passphrase",
+  "syncPassphraseNewBody": "Everything is encrypted with this passphrase before upload; the passphrase itself never leaves your devices.\n\nIf you lose it, the synced data cannot be recovered by anyone — there is no reset. At least 8 characters; length matters more than symbols.",
+  "syncPassphraseExistingTitle": "Enter the sync passphrase",
+  "syncPassphraseExistingBody": "This folder already holds a sync library with {count} account(s). Enter the passphrase it was created with.",
+  "@syncPassphraseExistingBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPassphraseLabel": "Sync passphrase",
+  "syncPassphraseConfirmLabel": "Confirm passphrase",
+  "syncPassphraseTooShort": "At least 8 characters.",
+  "syncPassphraseMismatch": "The passphrases don't match.",
+  "syncPassphraseWrong": "That passphrase doesn't open this library.",
+  "syncPreviewTitle": "First sync",
+  "syncPreviewEmpty": "Nothing to transfer yet — accounts will sync automatically from now on.",
+  "syncPreviewPull": "Download to this device: {count} account(s)",
+  "@syncPreviewPull": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPreviewPush": "Upload from this device: {count} account(s)",
+  "@syncPreviewPush": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPreviewConflict": "On both sides with different content: {count} — you'll choose per account after connecting",
+  "@syncPreviewConflict": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStart": "Start syncing",
+  "syncDoneTitle": "Sync is on",
+  "syncDoneBody": "Accounts now sync automatically. On a new device each account signs in again the first time you use it — accounts with a saved password do that by themselves; the others ask once.",
+  "syncDone": "Done",
+  "syncNeedsPassphrase": "The stored passphrase no longer matches the remote library — enter it again.",
+  "syncEnterPassphrase": "Enter passphrase",
+  "syncConditionalWarn": "This server ignores conditional writes, so two devices syncing at the same moment may overwrite each other. Syncing still works; avoid simultaneous changes on two devices.",
+  "syncConflictsTitle": "Conflicts",
+  "syncConflictTrashNote": "Whichever side you discard is kept in the sync trash for 30 days.",
+  "syncConflictEditEdit": "Changed on both devices",
+  "syncConflictEditDelete": "Changed here, deleted on another device",
+  "syncConflictDeleteEdit": "Deleted here, changed on another device",
+  "syncConflictKeepLocal": "Keep this device's",
+  "syncConflictKeepRemote": "Keep the other's",
+  "syncConflictLocalSide": "This device",
+  "syncConflictRemoteSide": "Other device",
+  "syncDeleted": "Deleted",
+  "syncConflictHasPassword": "Password saved",
+  "syncConflictNoPassword": "No saved password",
+  "syncAutoTitle": "Automatic sync",
+  "syncAutoDesc": "Sync at launch and after every change. Off means only the button below syncs.",
+  "syncPasswordsTitle": "Sync account passwords",
+  "syncPasswordsDesc": "Passwords let a new device sign in by itself. Changing this re-uploads every account.",
+  "syncNowButton": "Sync now",
+  "syncViewRemote": "View remote library",
+  "syncRemoteEmpty": "The remote library is empty.",
+  "syncRemoteDevices": "Devices",
+  "syncTrashTitle": "Sync trash",
+  "syncTrashEmpty": "Empty. Anything sync removes or replaces is kept here for 30 days.",
+  "syncTrashRestore": "Restore",
+  "syncTrashRestored": "Account restored.",
+  "syncTrashRestoreFailed": "This entry can't be decrypted with the current passphrase.",
+  "syncTrashReasonRemoteDelete": "deleted by another device",
+  "syncTrashReasonConflict": "replaced in a conflict",
+  "syncChangePassphrase": "Change sync passphrase",
+  "syncPassphraseChanged": "Passphrase changed; everything re-encrypted. Other devices will ask for the new passphrase.",
+  "syncPassphraseChangeFailed": "Passphrase not changed: {reason}",
+  "@syncPassphraseChangeFailed": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "syncDisconnect": "Disconnect sync",
+  "syncDisconnectBody": "This device stops syncing. The remote library can stay for your other devices — or be deleted from the server entirely.",
+  "syncDisconnectKeep": "Keep remote data",
+  "syncDisconnectDeleteHold": "Hold to delete remote data"
 }
