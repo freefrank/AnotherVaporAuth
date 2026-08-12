@@ -5,6 +5,26 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v1.1.1] — 2026-08-12
+
+### Fixed
+- **The desktop window now opens centered on the screen you are working on,
+  not in the top-left corner.** The monitor that holds your mouse cursor is
+  the one the window opens on, sized for that monitor's DPI and kept inside
+  its work area, so the title bar cannot start half off-screen. On virtual
+  desktops it opens on the active one, as new windows always do. One caveat
+  on Linux: under Wayland the compositor alone decides window placement —
+  X11 sessions center as described.
+
+### 修复
+- **桌面版窗口现在会在你正在用的那块屏幕上居中打开,而不是缩在左上角。**
+  以鼠标光标所在的显示器为准,按该显示器的 DPI 取尺寸,并保证不超出其
+  工作区,标题栏不会再有一半探出屏幕外。多虚拟桌面下与所有新窗口一样,
+  开在当前活动桌面。Linux 有一处例外:Wayland 会话下窗口位置由合成器
+  全权决定,X11 会话按上述行为居中。
+
+—
+
 ## [v1.1.0] — 2026-08-11
 
 ### Added
