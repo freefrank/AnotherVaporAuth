@@ -5,6 +5,58 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v1.2.0-beta] — 2026-08-12
+
+### Added
+- **Sync your accounts between devices, through a server you control
+  (WebDAV).** Settings → Sync: point AVA at a Nextcloud / Jianguoyun (坚果云)
+  / NAS folder, set a sync passphrase, and every device connected to that
+  folder keeps the same account library — additions, changes and deletions
+  included. Highlights, because this feature handles your most sensitive
+  data:
+  - **Everything is encrypted on the device before upload**, with a
+    passphrase that never leaves your devices. The server operator sees
+    ciphertext. There is no reset if you lose it — that is the deal.
+  - **The remote folder is a standard SDA encrypted folder.** SDA,
+    steamguard-cli and AVA's own folder import can all read it: your cloud
+    copy doubles as a portable backup, not a lock-in.
+  - **Steam sessions never sync; saved account passwords do** (optional,
+    on by default). A new device signs each account in by itself the first
+    time you use it.
+  - **Nothing is ever silently destroyed.** Anything sync removes or
+    replaces — a deletion arriving from another device, either side of a
+    conflict you resolve — is kept encrypted in a local sync trash for 30
+    days, restorable in two taps. Conflicts are decided by you, per
+    account, never by a clock.
+  - Plain HTTP is refused for public hosts unless you explicitly type
+    `http://` and hold-to-confirm the risk; self-signed certificates are
+    pinned by fingerprint after you compare them.
+  - This is a **beta**: the engine is covered by 49 tests, but real-world
+    WebDAV servers vary. Keep your maFile backups (you should anyway).
+
+### 新增
+- **账户可以在多台设备间同步了，走你自己掌控的服务器（WebDAV）。**
+  设置 → 同步：填上 Nextcloud / 坚果云 / NAS 的文件夹，设一个同步口令，
+  连着同一个文件夹的每台设备就保持同一份账户库——增、改、删都会传播。
+  这个功能经手的是你最敏感的数据，所以：
+  - **所有数据在设备上加密后才上传**，口令绝不离开你的设备，服务器
+    运营者只能看到密文。口令丢失无法重置——这是明码标价的代价。
+  - **远端文件夹就是标准的 SDA 加密文件夹**，SDA、steamguard-cli 和
+    AVA 自己的文件夹导入都能读：云端副本同时是一份可带走的备份，
+    不是锁进 AVA 的私有格式。
+  - **Steam 会话绝不同步；已保存的账户密码会同步**（可选，默认开）。
+    新设备上每个账户首次使用时会自行重新登录。
+  - **任何东西都不会被静默销毁。** 被同步删除或替换的账户——别的设备
+    传来的删除、你解决冲突时舍弃的那一侧——都会加密存入本地同步
+    回收站保留 30 天，两步即可恢复。冲突逐账户由你决定，绝不由时钟
+    决定。
+  - 公网明文 HTTP 默认拒绝，除非亲手输入 `http://` 并长按确认风险；
+    自签名证书按指纹逐台钉住。
+  - 这是 **beta**：引擎有 49 个测试盯着，但现实中的 WebDAV 服务器
+    千奇百怪。maFile 备份照常留着（本来也该留）。
+
+—
+
 ## [v1.1.1] — 2026-08-12
 
 ### Fixed
