@@ -169,3 +169,22 @@ describe('router', () => {
     expect(await res.text()).toBe('');
   });
 });
+
+describe('GET /v1/version', () => {
+  it('answers with a per-channel version table and edge caching', async () => {
+    const { deps } = await setup();
+    const res = await route(
+      new Request('https://w.example/v1/version') as unknown as Request,
+      deps,
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get('cache-control')).toBe('public, max-age=3600');
+    const body = (await res.json()) as { channels: Record<string, { version: string }> };
+    // The five keys clients can ask about today. macos-dmg is deliberately
+    // absent until a DMG has actually been published.
+    for (const k of ['android-play', 'android-cn', 'windows-portable', 'windows-setup', 'linux-appimage']) {
+      expect(body.channels[k].version).toMatch(/^\d+\.\d+\.\d+$/);
+    }
+    expect(body.channels['macos-dmg']).toBeUndefined();
+  });
+});

@@ -1,6 +1,7 @@
 // Plain fetch-handler routing — a switch, no framework.
 
 import type { Deps, Res } from './logic';
+import { handleVersion } from './version';
 import {
   handleAdmobSsv,
   handleAfdianRedeem,
@@ -57,6 +58,10 @@ export async function route(request: Request, deps: Deps): Promise<Response> {
   const key = `${request.method} ${url.pathname}`;
 
   if (key === 'GET /v1/admob/ssv') return toResponse(await handleAdmobSsv(url, deps));
+
+  // Static, unauthenticated, cache-friendly; returns its own Response rather
+  // than a Res because it sets a cache-control header toResponse() does not.
+  if (key === 'GET /v1/version') return handleVersion();
 
   if (RATE_LIMITED.has(key)) {
     const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
