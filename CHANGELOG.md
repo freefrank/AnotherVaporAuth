@@ -5,7 +5,7 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
-## [v1.2.0-beta] — 2026-08-12
+## [v1.2.0] — 2026-08-14
 
 ### Added
 - **Sync your accounts between devices, through a server you control
