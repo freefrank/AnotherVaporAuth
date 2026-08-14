@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kDebugMode, visibleForTesting;
@@ -24,10 +25,12 @@ import '../services/avatar_service.dart';
 import '../services/biometric_unlock.dart';
 import '../services/credential_store.dart';
 import '../core/entitlement.dart';
+import '../core/update_check.dart';
 import '../services/debug_log.dart';
 import '../services/entitlement_store.dart';
 import '../services/play_channel.dart';
 import '../services/pro_actions.dart';
+import '../services/update_service.dart';
 import '../services/screen_security.dart';
 import '../services/session_manager.dart';
 import '../services/steam_api_client.dart';
@@ -529,6 +532,52 @@ class BlockScreenshotsController extends PersistedSettingController<bool> {
 /// The installed app version (from the platform package info).
 final appVersionProvider = FutureProvider<String>(
     (ref) async => (await PackageInfo.fromPlatform()).version);
+
+final updateServiceProvider = Provider<UpdateService>((ref) => UpdateService());
+
+/// Result of the launch-time update check. Stays [UpdateDecision.none] until
+/// (and unless) a check completes with a strictly newer, un-dismissed version;
+/// every failure mode of the check leaves it untouched.
+final updateDecisionProvider =
+    NotifierProvider<UpdateController, UpdateDecision>(UpdateController.new);
+
+class UpdateController extends Notifier<UpdateDecision> {
+  @override
+  UpdateDecision build() => UpdateDecision.none;
+
+  /// The launch-time check, fired after the first frame (AvaApp.initState)
+  /// and NEVER awaited from any startup path — offline launch is a promise
+  /// this app has shipped in writing.
+  Future<void> runStartupCheck({String? osOverride}) async {
+    try {
+      final settings = ref.read(settingsStoreProvider);
+      if (!await settings.loadUpdateCheckEnabled()) return;
+      // PackageInfo can throw where the plugin is absent (tests, exotic
+      // embedders) — feedback_service hit the same thing. No version, no
+      // check: the comparison would be meaningless.
+      final decision = await ref.read(updateServiceProvider).check(
+            currentVersion: await ref.read(appVersionProvider.future),
+            channelKey:
+                updateChannelKey(os: osOverride ?? Platform.operatingSystem),
+            dismissedVersion: await settings.loadUpdateDismissedVersion(),
+          );
+      if (decision.available && ref.mounted) state = decision;
+    } catch (e) {
+      // Fire-and-forget from startup: nothing above this may ever throw
+      // into an unawaited future.
+      dlog('update check: startup hook skipped ($e)');
+    }
+  }
+
+  /// "Not this version": persists the dismissal and drops the banner. The
+  /// next version prompts again — a dismissal is an answer, not a mute.
+  Future<void> dismiss() async {
+    final latest = state.latest;
+    if (latest == null) return;
+    state = UpdateDecision.none;
+    await ref.read(settingsStoreProvider).saveUpdateDismissedVersion(latest);
+  }
+}
 
 /// Bumped by settings → "replay tutorial"; the home screen re-arms its
 /// first-run gesture walkthrough when this changes.
