@@ -388,6 +388,18 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
               },
             ),
           ),
+          _optionRow(
+            t,
+            title: l.syncAppSettingsTitle,
+            description: l.syncAppSettingsDesc,
+            trailing: Switch(
+              value: config.syncSettings,
+              onChanged: (v) async {
+                await ref.read(syncEngineProvider).setSyncSettings(v);
+                await _loadConfig();
+              },
+            ),
+          ),
           SizedBox(height: context.r(6)),
           Row(
             children: [

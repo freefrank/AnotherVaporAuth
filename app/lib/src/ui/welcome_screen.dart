@@ -8,11 +8,15 @@ import 'widgets/app_logo.dart';
 import '../skins/skin_engine.dart';
 import 'widgets/motion.dart';
 import 'widgets/scanline_overlay.dart';
+import '../app/sync_providers.dart';
 import 'import_helper.dart';
 import 'login_screen.dart';
+import 'sync/sync_screen.dart';
+import 'sync/sync_setup_screen.dart';
 
-/// Design screen 02 — welcome / first run. Floating logo + two CTA cards:
-/// log in to set up a new authenticator, or import an existing .maFile.
+/// Design screen 02 — welcome / first run. Floating logo + three CTA cards:
+/// log in to set up a new authenticator, import an existing .maFile, or
+/// connect to an existing sync library and pull everything from there.
 class WelcomeScreen extends ConsumerWidget {
   const WelcomeScreen({super.key});
 
@@ -67,6 +71,24 @@ class WelcomeScreen extends ConsumerWidget {
                         subtitle: l.welcomeImportSub,
                         emphasized: false,
                         onTap: () => importMaFileFlow(context, ref),
+                      ),
+                      SizedBox(height: context.r(14)),
+                      // The restore path for someone whose accounts already
+                      // live in a sync library: the same wizard as settings,
+                      // whose first-merge preview will be all-downloads.
+                      _Cta(
+                        title: l.welcomeSyncCta,
+                        subtitle: l.welcomeSyncSub,
+                        emphasized: false,
+                        onTap: () {
+                          final configured =
+                              ref.read(syncStatusProvider).configured;
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (_) => configured
+                                ? const SyncScreen()
+                                : const SyncSetupScreen(),
+                          ));
+                        },
                       ),
                     ],
                   ),

@@ -43,6 +43,22 @@ abstract class SyncAccountsPort {
   Future<void> removeAccount(int steamId);
 }
 
+/// The engine's window into the curated app-settings document.
+///
+/// Settings merge by last-writer-wins on Lamport revision — no conflict UI:
+/// every value is low-stakes and re-settable in two taps, unlike account
+/// secrets. A device that has never synced settings ADOPTS the remote
+/// document rather than pushing its fresh defaults over everyone else's
+/// choices.
+abstract class SyncSettingsPort {
+  /// The current curated settings document, or null while unavailable
+  /// (store locked / not bootstrapped).
+  Future<Map<String, dynamic>?> snapshot();
+
+  /// Applies a pulled settings document (unknown keys ignored).
+  Future<void> apply(Map<String, dynamic> settings);
+}
+
 typedef SyncTransportFactory = SyncTransport Function(
     SyncConfig config, String webdavPassword);
 
@@ -156,6 +172,9 @@ class SyncPreview {
 class SyncEngine {
   final SyncConfigStore configStore;
   final SyncAccountsPort accounts;
+
+  /// Null disables settings sync entirely (tests, future backends).
+  final SyncSettingsPort? settings;
   final SyncTrash trash;
   final SyncTransportFactory transportFactory;
   final Future<String> Function() deviceId;
@@ -171,6 +190,7 @@ class SyncEngine {
     required this.trash,
     required this.transportFactory,
     required this.deviceId,
+    this.settings,
     DateTime Function()? now,
     this.debounce = const Duration(seconds: 5),
   }) : now = now ?? DateTime.now;
@@ -468,10 +488,65 @@ class SyncEngine {
       ));
     }
 
-    // 8. Pushes. Files first (revision-suffixed names never collide with
+    // 8. App settings: LWW by revision, no conflict UI (every value is
+    // re-settable in two taps). The rules that matter:
+    //  - first contact (no base) ADOPTS the remote document — a new device
+    //    must never clobber everyone's choices with its fresh defaults;
+    //  - both-changed → the local edit wins: it is the most recent user
+    //    action this device knows of;
+    //  - forcePushPending re-pushes regardless (ciphertext must change on a
+    //    passphrase rotation).
+    var newSettingsBase = state.settingsBase;
+    Map<String, dynamic>? settingsPushPayload;
+    var settingsPushRev = 0;
+    if (effectiveConfig.syncSettings && settings != null) {
+      final localSettings = await settings!.snapshot();
+      if (localSettings != null) {
+        final hash = payloadHash(localSettings);
+        final base = state.settingsBase;
+        final r = remote.settings;
+        final localChanged = base == null || hash != base.hash;
+        final remoteChanged =
+            r != null && (base == null || r.rev != base.rev);
+        if (r != null &&
+            hash == r.hash &&
+            !effectiveConfig.forcePushPending) {
+          // Identical content — converge bookkeeping, move nothing.
+          newSettingsBase = SyncBaseEntry(rev: r.rev, hash: r.hash);
+        } else if (r == null) {
+          if (localChanged || effectiveConfig.forcePushPending) {
+            settingsPushPayload = localSettings;
+            settingsPushRev = (base?.rev ?? 0) + 1;
+          }
+        } else if (base == null) {
+          final payload = await _fetchPayload(transport, r, passphrase);
+          if (payload != null) {
+            await settings!.apply(payload);
+            newSettingsBase = SyncBaseEntry(rev: r.rev, hash: r.hash);
+          }
+          if (effectiveConfig.forcePushPending) {
+            settingsPushPayload =
+                (await settings!.snapshot()) ?? localSettings;
+            settingsPushRev = r.rev + 1;
+          }
+        } else if (remoteChanged && !localChanged) {
+          final payload = await _fetchPayload(transport, r, passphrase);
+          if (payload != null) {
+            await settings!.apply(payload);
+            newSettingsBase = SyncBaseEntry(rev: r.rev, hash: r.hash);
+          }
+        } else if (localChanged || effectiveConfig.forcePushPending) {
+          settingsPushPayload = localSettings;
+          settingsPushRev = r.rev + 1;
+        }
+      }
+    }
+
+    // 9. Pushes. Files first (revision-suffixed names never collide with
     // live data), manifest next, sidecar last as the commit.
     var nextSidecar = remote;
     if (plan.pushesAnything ||
+        settingsPushPayload != null ||
         !remoteExists ||
         effectiveConfig.forcePushPending) {
       final devId = await deviceId();
@@ -518,6 +593,24 @@ class SyncEngine {
       // Mint a fresh check token when this device is committing a new
       // passphrase epoch — carrying the old token forward would lock every
       // other device out with "wrong passphrase" against the NEW phrase.
+      SyncRemoteAccount? nextSettingsEntry;
+      if (settingsPushPayload != null) {
+        final enc = encryptSyncPayload(passphrase, settingsPushPayload);
+        final filename = 'ava.settings.r$settingsPushRev.$devTag.json';
+        await transport.putFile(
+            filename, Uint8List.fromList(utf8.encode(enc.ciphertext)));
+        final settingsHash = payloadHash(settingsPushPayload);
+        nextSettingsEntry = SyncRemoteAccount(
+          rev: settingsPushRev,
+          hash: settingsHash,
+          filename: filename,
+          salt: enc.salt,
+          iv: enc.iv,
+        );
+        newSettingsBase =
+            SyncBaseEntry(rev: settingsPushRev, hash: settingsHash);
+      }
+
       final passkeyCheck = (remote.passkeyCheck == null ||
               effectiveConfig.passphraseEpoch > remote.passphraseEpoch)
           ? buildPasskeyCheck(passphrase)
@@ -528,6 +621,7 @@ class SyncEngine {
         passkeyCheck: passkeyCheck,
         accounts: newAccounts,
         tombstones: newTombstones,
+        settings: nextSettingsEntry,
         devices: {
           ...remote.devices,
           devId: SyncDeviceInfo(
@@ -568,9 +662,16 @@ class SyncEngine {
           } catch (_) {/* orphan; the next committer retries */}
         }
       }
+      final oldSettings = remote.settings;
+      if (oldSettings != null &&
+          nextSidecar.settings?.filename != oldSettings.filename) {
+        try {
+          await transport.deleteFile(oldSettings.filename);
+        } catch (_) {/* orphan; the next committer retries */}
+      }
     }
 
-    // 9. Bookkeeping the plan asked for without data movement.
+    // 10. Bookkeeping the plan asked for without data movement.
     for (final adopt in plan.baseAdopts) {
       if (adopt.drop) {
         newBase.remove(adopt.steamId);
@@ -584,8 +685,11 @@ class SyncEngine {
       }
     }
 
-    await configStore
-        .saveState(SyncLocalState(base: newBase, tombstonesSeen: newSeen));
+    await configStore.saveState(SyncLocalState(
+      base: newBase,
+      tombstonesSeen: newSeen,
+      settingsBase: newSettingsBase,
+    ));
     if (effectiveConfig.forcePushPending) {
       await configStore
           .saveConfig(effectiveConfig.copyWith(forcePushPending: false));
@@ -696,6 +800,16 @@ class SyncEngine {
     await configStore.saveConfig(config.copyWith(autoSync: enabled));
   }
 
+  /// Flips whether the curated app-settings document syncs. Turning it on
+  /// runs a round immediately (adopting the remote document when this
+  /// device never synced settings before).
+  Future<void> setSyncSettings(bool enabled) async {
+    final config = await configStore.loadConfig();
+    if (config == null) return;
+    await configStore.saveConfig(config.copyWith(syncSettings: enabled));
+    if (enabled) await syncNow();
+  }
+
   /// Flips whether payloads carry the account password. Marks a full
   /// re-push: the remote ciphertext must change for every account, not just
   /// the ones whose payload hash moved.
@@ -793,6 +907,8 @@ class SyncEngine {
             for (final a in remote.accounts.values) {
               await transport.deleteFile(a.filename);
             }
+            final s = remote.settings;
+            if (s != null) await transport.deleteFile(s.filename);
           }
           await transport.deleteFile(kSyncManifestFilename);
           await transport.deleteFile(kSyncSidecarFilename);

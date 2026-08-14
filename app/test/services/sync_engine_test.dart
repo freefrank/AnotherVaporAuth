@@ -148,11 +148,30 @@ class FakePort implements SyncAccountsPort {
   }
 }
 
+class FakeSettingsPort implements SyncSettingsPort {
+  Map<String, dynamic> values = {
+    'skin': 'none',
+    'brightness_mode': 'system',
+    'hold_confirm': true,
+  };
+  int applies = 0;
+
+  @override
+  Future<Map<String, dynamic>?> snapshot() async => Map.of(values);
+
+  @override
+  Future<void> apply(Map<String, dynamic> doc) async {
+    applies++;
+    values = {...values, ...doc};
+  }
+}
+
 /// One simulated device.
 class Device {
   final MemoryConfigStore configStore = MemoryConfigStore();
   final MemoryTrash trash = MemoryTrash();
   final FakePort port = FakePort();
+  final FakeSettingsPort settingsPort = FakeSettingsPort();
   late final SyncEngine engine;
 
   Device(InMemoryServer server, String id, {String passphrase = kPass}) {
@@ -165,6 +184,7 @@ class Device {
     engine = SyncEngine(
       configStore: configStore,
       accounts: port,
+      settings: settingsPort,
       trash: trash,
       transportFactory: (_, _) => InMemoryTransport(server),
       deviceId: () async => id,
@@ -494,6 +514,95 @@ void main() {
     // The local account itself is untouched — disconnect is about sync,
     // never about the library.
     expect(a.port.accounts, hasLength(1));
+  });
+
+  group('app-settings sync', () {
+    test('a settings change propagates A → B', () async {
+      final server = InMemoryServer();
+      final a = Device(server, 'devA0001');
+      a.port.accounts.add(account(id1));
+      await a.engine.syncNow();
+      final b = Device(server, 'devB0002');
+      await b.engine.syncNow();
+
+      a.settingsPort.values['skin'] = 'neon';
+      await a.engine.syncNow();
+      await b.engine.syncNow();
+      expect(b.settingsPort.values['skin'], 'neon');
+    });
+
+    test('a brand-new device ADOPTS the remote document instead of '
+        'clobbering it with defaults', () async {
+      final server = InMemoryServer();
+      final a = Device(server, 'devA0001');
+      a.port.accounts.add(account(id1));
+      a.settingsPort.values['skin'] = 'pixel';
+      await a.engine.syncNow();
+
+      final c = Device(server, 'devC0003'); // fresh defaults
+      await c.engine.syncNow();
+      expect(c.settingsPort.values['skin'], 'pixel');
+
+      // And A's next round sees nothing to change.
+      await a.engine.syncNow();
+      final sidecar = SyncSidecar.parse(
+          utf8.decode(server.files[kSyncSidecarFilename]!.$1));
+      final entry = sidecar.settings!;
+      final doc = decryptSyncPayload(kPass, entry.salt, entry.iv,
+          utf8.decode(server.files[entry.filename]!.$1));
+      expect(doc!['skin'], 'pixel');
+    });
+
+    test('both-changed resolves by last writer, whole document', () async {
+      final server = InMemoryServer();
+      final a = Device(server, 'devA0001');
+      a.port.accounts.add(account(id1));
+      await a.engine.syncNow();
+      final b = Device(server, 'devB0002');
+      await b.engine.syncNow();
+
+      a.settingsPort.values['skin'] = 'neon';
+      await a.engine.syncNow();
+      b.settingsPort.values['hold_confirm'] = false;
+      await b.engine.syncNow(); // B is the later writer: its document wins
+
+      await a.engine.syncNow();
+      expect(a.settingsPort.values['hold_confirm'], false);
+      // Whole-document LWW: B's document still carried the old skin.
+      expect(a.settingsPort.values['skin'], 'none');
+    });
+
+    test('the toggle stops settings from syncing, accounts unaffected',
+        () async {
+      final server = InMemoryServer();
+      final a = Device(server, 'devA0001');
+      a.port.accounts.add(account(id1));
+      await a.engine.syncNow();
+      final b = Device(server, 'devB0002');
+      await b.engine.syncNow();
+
+      await a.engine.setSyncSettings(false);
+      a.settingsPort.values['skin'] = 'neon';
+      a.port.accounts.single.password = 'stillsyncs';
+      await a.engine.syncNow();
+      await b.engine.syncNow();
+
+      expect(b.settingsPort.values['skin'], 'none');
+      expect(b.port.accounts.single.password, 'stillsyncs');
+    });
+
+    test('superseded settings files are garbage-collected', () async {
+      final server = InMemoryServer();
+      final a = Device(server, 'devA0001');
+      a.port.accounts.add(account(id1));
+      await a.engine.syncNow();
+      a.settingsPort.values['skin'] = 'neon';
+      await a.engine.syncNow();
+      final settingsFiles = server.files.keys
+          .where((k) => k.startsWith('ava.settings.'))
+          .toList();
+      expect(settingsFiles, hasLength(1));
+    });
   });
 
   test('garbage collection removes superseded payload files', () async {

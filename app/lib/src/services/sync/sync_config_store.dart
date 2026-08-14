@@ -31,6 +31,11 @@ class SyncConfig {
   final bool autoSync;
   final bool syncPasswords;
 
+  /// Whether the curated app-settings document syncs too (2026-08-12 user
+  /// decision: default on). Device-specific preferences (language, text
+  /// size) are never part of the document regardless of this flag.
+  final bool syncSettings;
+
   /// Passphrase epoch this device's stored passphrase belongs to; compared
   /// against the remote sidecar to detect a passphrase change made elsewhere.
   final int passphraseEpoch;
@@ -56,6 +61,7 @@ class SyncConfig {
     required this.deviceName,
     this.autoSync = true,
     this.syncPasswords = true,
+    this.syncSettings = true,
     this.passphraseEpoch = 1,
     this.httpOverrides = const {},
     this.pinnedCerts = const {},
@@ -70,6 +76,7 @@ class SyncConfig {
         deviceName: (json['device_name'] as String?) ?? '',
         autoSync: json['auto_sync'] != false,
         syncPasswords: json['sync_passwords'] != false,
+        syncSettings: json['sync_settings'] != false,
         passphraseEpoch: (json['passphrase_epoch'] as num?)?.toInt() ?? 1,
         httpOverrides: {
           for (final h in (json['http_overrides'] as List? ?? const []))
@@ -91,6 +98,7 @@ class SyncConfig {
         'device_name': deviceName,
         'auto_sync': autoSync,
         'sync_passwords': syncPasswords,
+        'sync_settings': syncSettings,
         'passphrase_epoch': passphraseEpoch,
         'http_overrides': [...httpOverrides],
         'pinned_certs': pinnedCerts,
@@ -101,6 +109,7 @@ class SyncConfig {
   SyncConfig copyWith({
     bool? autoSync,
     bool? syncPasswords,
+    bool? syncSettings,
     int? passphraseEpoch,
     Set<String>? httpOverrides,
     Map<String, String>? pinnedCerts,
@@ -114,6 +123,7 @@ class SyncConfig {
         deviceName: deviceName,
         autoSync: autoSync ?? this.autoSync,
         syncPasswords: syncPasswords ?? this.syncPasswords,
+        syncSettings: syncSettings ?? this.syncSettings,
         passphraseEpoch: passphraseEpoch ?? this.passphraseEpoch,
         httpOverrides: httpOverrides ?? this.httpOverrides,
         pinnedCerts: pinnedCerts ?? this.pinnedCerts,
@@ -130,7 +140,14 @@ class SyncLocalState {
   /// steamid → tombstone rev this device has already applied or noted.
   final Map<int, int> tombstonesSeen;
 
-  const SyncLocalState({this.base = const {}, this.tombstonesSeen = const {}});
+  /// Last-synced revision + hash of the app-settings document.
+  final SyncBaseEntry? settingsBase;
+
+  const SyncLocalState({
+    this.base = const {},
+    this.tombstonesSeen = const {},
+    this.settingsBase,
+  });
 
   factory SyncLocalState.fromJson(Map<String, dynamic> json) {
     final base = <int, SyncBaseEntry>{};
@@ -152,7 +169,14 @@ class SyncLocalState {
         if (id != null) seen[id] = (e.value as num?)?.toInt() ?? 0;
       }
     }
-    return SyncLocalState(base: base, tombstonesSeen: seen);
+    return SyncLocalState(
+      base: base,
+      tombstonesSeen: seen,
+      settingsBase: json['settings_base'] is Map
+          ? SyncBaseEntry.fromJson(
+              (json['settings_base'] as Map).cast<String, dynamic>())
+          : null,
+    );
   }
 
   Map<String, dynamic> toJson() => {
@@ -160,6 +184,7 @@ class SyncLocalState {
         'tombstones_seen': {
           for (final e in tombstonesSeen.entries) '${e.key}': e.value
         },
+        if (settingsBase != null) 'settings_base': settingsBase!.toJson(),
       };
 }
 

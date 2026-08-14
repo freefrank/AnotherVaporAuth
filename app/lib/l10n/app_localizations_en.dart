@@ -225,6 +225,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeImportSub => 'Migrate an existing account';
 
   @override
+  String get welcomeSyncCta => 'Restore from sync';
+
+  @override
+  String get welcomeSyncSub =>
+      'Pull your accounts from an existing sync library';
+
+  @override
   String get copyCode => 'Copy code';
 
   @override
@@ -1888,6 +1895,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get syncPasswordsDesc =>
       'Passwords let a new device sign in by itself. Changing this re-uploads every account.';
+
+  @override
+  String get syncAppSettingsTitle => 'Sync app settings';
+
+  @override
+  String get syncAppSettingsDesc =>
+      'Appearance and behavior preferences (skin, theme, hold-to-confirm…) follow you to every device. Language and text size stay per-device.';
 
   @override
   String get syncNowButton => 'Sync now';

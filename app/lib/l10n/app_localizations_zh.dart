@@ -213,6 +213,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get welcomeImportSub => '迁移已有账户';
 
   @override
+  String get welcomeSyncCta => '从同步恢复';
+
+  @override
+  String get welcomeSyncSub => '从已有的同步库拉取你的账户';
+
+  @override
   String get copyCode => '复制验证码';
 
   @override
@@ -1808,6 +1814,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncPasswordsDesc => '有密码，新设备才能自行登录。改动此项会重新上传全部账户。';
 
   @override
+  String get syncAppSettingsTitle => '同步应用设置';
+
+  @override
+  String get syncAppSettingsDesc =>
+      '外观与行为偏好（皮肤、明暗、长按确认等）跟随你到每台设备；语言与字号保持各设备独立。';
+
+  @override
   String get syncNowButton => '立即同步';
 
   @override
@@ -2071,6 +2084,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get welcomeImportSub => '把既有帳號搬過來';
+
+  @override
+  String get welcomeSyncCta => '從同步還原';
+
+  @override
+  String get welcomeSyncSub => '從既有的同步庫拉取你的帳號';
 
   @override
   String get copyCode => '複製驗證碼';
@@ -3670,6 +3689,13 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get syncPasswordsDesc => '有密碼，新裝置才能自行登入。變更這一項會重新上傳所有帳號。';
+
+  @override
+  String get syncAppSettingsTitle => '同步應用程式設定';
+
+  @override
+  String get syncAppSettingsDesc =>
+      '外觀與行為偏好（面板、明暗、長按確認等）跟著你到每台裝置；語言與文字大小維持各裝置獨立。';
 
   @override
   String get syncNowButton => '立即同步';

@@ -503,6 +503,18 @@ abstract class AppLocalizations {
   /// **'Migrate an existing account'**
   String get welcomeImportSub;
 
+  /// No description provided for @welcomeSyncCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from sync'**
+  String get welcomeSyncCta;
+
+  /// No description provided for @welcomeSyncSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull your accounts from an existing sync library'**
+  String get welcomeSyncSub;
+
   /// No description provided for @copyCode.
   ///
   /// In en, this message translates to:
@@ -3364,6 +3376,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Passwords let a new device sign in by itself. Changing this re-uploads every account.'**
   String get syncPasswordsDesc;
+
+  /// No description provided for @syncAppSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync app settings'**
+  String get syncAppSettingsTitle;
+
+  /// No description provided for @syncAppSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance and behavior preferences (skin, theme, hold-to-confirm…) follow you to every device. Language and text size stay per-device.'**
+  String get syncAppSettingsDesc;
 
   /// No description provided for @syncNowButton.
   ///

@@ -227,6 +227,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get welcomeImportSub => 'Migrar una cuenta existente';
 
   @override
+  String get welcomeSyncCta => 'Restaurar desde sincronización';
+
+  @override
+  String get welcomeSyncSub =>
+      'Recupera tus cuentas desde una biblioteca de sincronización existente';
+
+  @override
   String get copyCode => 'Copiar código';
 
   @override
@@ -1911,6 +1918,13 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get syncPasswordsDesc =>
       'Con las contraseñas, un dispositivo nuevo inicia sesión por sí solo. Cambiar esto vuelve a subir todas las cuentas.';
+
+  @override
+  String get syncAppSettingsTitle => 'Sincronizar ajustes de la app';
+
+  @override
+  String get syncAppSettingsDesc =>
+      'Las preferencias de apariencia y comportamiento (aspecto, tema, mantener para confirmar…) te siguen a cada dispositivo. El idioma y el tamaño del texto se mantienen por dispositivo.';
 
   @override
   String get syncNowButton => 'Sincronizar ahora';

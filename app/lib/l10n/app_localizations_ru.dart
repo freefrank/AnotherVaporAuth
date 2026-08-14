@@ -227,6 +227,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get welcomeImportSub => 'Перенести существующий аккаунт';
 
   @override
+  String get welcomeSyncCta => 'Восстановить из синхронизации';
+
+  @override
+  String get welcomeSyncSub =>
+      'Загрузите аккаунты из существующей библиотеки синхронизации';
+
+  @override
   String get copyCode => 'Копировать код';
 
   @override
@@ -1967,6 +1974,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get syncPasswordsDesc =>
       'С паролем новое устройство входит в аккаунт само. Изменение этой настройки заново выгружает все аккаунты.';
+
+  @override
+  String get syncAppSettingsTitle => 'Синхронизировать настройки приложения';
+
+  @override
+  String get syncAppSettingsDesc =>
+      'Настройки внешнего вида и поведения (обложка, тема, удержание для подтверждения…) следуют за вами на каждое устройство. Язык и размер текста остаются на каждом устройстве своими.';
 
   @override
   String get syncNowButton => 'Синхронизировать';

@@ -270,6 +270,12 @@ class SyncSidecar {
   final Map<int, SyncTombstone> tombstones;
   final Map<String, SyncDeviceInfo> devices;
 
+  /// The synced app-settings document (curated appearance/behavior
+  /// preferences), same envelope as an account entry: revision, payload
+  /// hash, and the crypto params of its rev-suffixed ciphertext file.
+  /// Null when no device has pushed settings yet.
+  final SyncRemoteAccount? settings;
+
   const SyncSidecar({
     this.version = currentVersion,
     this.passphraseEpoch = 1,
@@ -278,6 +284,7 @@ class SyncSidecar {
     this.accounts = const {},
     this.tombstones = const {},
     this.devices = const {},
+    this.settings,
   });
 
   factory SyncSidecar.fromJson(Map<String, dynamic> json) {
@@ -315,6 +322,10 @@ class SyncSidecar {
       accounts: byId(json['accounts'], SyncRemoteAccount.fromJson),
       tombstones: byId(json['tombstones'], SyncTombstone.fromJson),
       devices: devices,
+      settings: json['settings'] is Map
+          ? SyncRemoteAccount.fromJson(
+              (json['settings'] as Map).cast<String, dynamic>())
+          : null,
     );
   }
 
@@ -335,6 +346,7 @@ class SyncSidecar {
         'devices': {
           for (final e in devices.entries) e.key: e.value.toJson()
         },
+        if (settings != null) 'settings': settings!.toJson(),
       };
 
   String serialize() => jsonEncode(toJson());
@@ -346,6 +358,7 @@ class SyncSidecar {
     Map<int, SyncRemoteAccount>? accounts,
     Map<int, SyncTombstone>? tombstones,
     Map<String, SyncDeviceInfo>? devices,
+    SyncRemoteAccount? settings,
   }) =>
       SyncSidecar(
         version: version,
@@ -355,5 +368,6 @@ class SyncSidecar {
         accounts: accounts ?? this.accounts,
         tombstones: tombstones ?? this.tombstones,
         devices: devices ?? this.devices,
+        settings: settings ?? this.settings,
       );
 }

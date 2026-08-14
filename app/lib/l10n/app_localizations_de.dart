@@ -226,6 +226,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get welcomeImportSub => 'Bestehendes Konto übernehmen';
 
   @override
+  String get welcomeSyncCta => 'Aus Sync wiederherstellen';
+
+  @override
+  String get welcomeSyncSub =>
+      'Konten aus einer bestehenden Sync-Bibliothek laden';
+
+  @override
   String get copyCode => 'Code kopieren';
 
   @override
@@ -1902,6 +1909,13 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get syncPasswordsDesc =>
       'Mit Passwörtern kann sich ein neues Gerät von selbst anmelden. Eine Änderung hier lädt alle Konten neu hoch.';
+
+  @override
+  String get syncAppSettingsTitle => 'App-Einstellungen synchronisieren';
+
+  @override
+  String get syncAppSettingsDesc =>
+      'Darstellungs- und Verhaltenseinstellungen (Skin, Design, Halten zum Bestätigen …) begleiten dich auf jedes Gerät. Sprache und Textgröße bleiben pro Gerät.';
 
   @override
   String get syncNowButton => 'Jetzt synchronisieren';
