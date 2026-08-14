@@ -4,6 +4,12 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<!-- Outbound connections (Steam, entitlement checks). Without this a
+	     sandboxed app cannot open ANY outgoing socket: the build launches,
+	     renders, and every sign-in fails with a network error. network.server
+	     (debug) only covers inbound - it is for the hot-reload VM service. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
 	<key>com.apple.security.cs.allow-jit</key>
 	<true/>
 	<key>com.apple.security.network.server</key>

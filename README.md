@@ -120,6 +120,30 @@ single-file `AVA-…-portable.exe` (Enigma Virtual Box). It runs from anywhere
 with nothing to install; account data is stored in the regular per-user data
 directory, same as the installed build.
 
+## macOS (Apple Silicon)
+
+DMG builds ship on [Releases](https://github.com/freefrank/AnotherVaporAuth/releases)
+starting with the next tagged version — **arm64 only** (M1 and later; no Intel
+build). Open the DMG and drag **AVA** into **Applications**.
+
+The app is ad-hoc signed but **not notarized** (a $99/year Apple Developer
+membership; this is a free community project), so Gatekeeper will warn on first
+launch. To run it anyway:
+
+1. **Right-click** (or Control-click) `AVA.app` → **Open** → **Open**. On newer
+   macOS the button may only appear the second time, or under
+   **System Settings → Privacy & Security → "Open Anyway"**.
+2. If macOS instead claims the app "is damaged and can't be opened" — that is
+   the quarantine flag on an un-notarized download, not actual damage. Clear it:
+
+   ```sh
+   xattr -dr com.apple.quarantine /Applications/AVA.app
+   ```
+
+Both are one-time; later launches open normally. Only ever do this for software
+whose origin you trust — for AVA that means this repo's Releases page, where
+every DMG is built in public by GitHub Actions from the tagged commit.
+
 ## Fonts
 
 All fonts are **bundled** (no runtime download) and declared in

@@ -251,3 +251,93 @@ jobs:
         with:
           files: app/AVA-v${{ steps.ver.outputs.v }}-linux-x86_64.AppImage
           body_path: ${{ steps.notes.outputs.path }}
+
+  macos-dmg:
+    name: macOS DMG (arm64)
+    permissions:
+      contents: write   # attaches the DMG to the Release
+    # macos-14 runners are Apple Silicon; this job ships arm64 only
+    # (2026-08-14 decision — no Intel build, no universal binary).
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+        with:
+          persist-credentials: false
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2  # v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - run: flutter pub get --enforce-lockfile
+
+      - name: Read version
+        id: ver
+        run: echo "v=$(grep '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)" >> "$GITHUB_OUTPUT"
+
+      - run: flutter build macos --release --dart-define=AVA_VERSION=${{ steps.ver.outputs.v }}
+
+      # Flutter ad-hoc signs release builds (CODE_SIGN_IDENTITY="-"). On Apple
+      # Silicon an unsigned binary will not launch AT ALL, so the ad-hoc
+      # signature is load-bearing — verify it survived the build rather than
+      # find out from a user. (Ad-hoc ≠ notarized: Gatekeeper still warns on
+      # first launch; the README documents the bypass.)
+      - name: Verify the ad-hoc signature
+        run: |
+          APP="build/macos/Build/Products/Release/ava.app"
+          test -d "$APP" || { echo "::error::$APP missing"; exit 1; }
+          codesign --verify --deep --strict "$APP"
+          codesign -dv "$APP" 2>&1 | grep -q "Signature=adhoc" \
+            || { echo "::error::expected an ad-hoc signature"; exit 1; }
+
+      # hdiutil over create-dmg/npx on purpose: it ships with macOS, so the
+      # release path downloads nothing at build time. This workflow already
+      # lost days to a pack step that fetched a tool from the network
+      # (Enigma, then NSIS-not-on-runner) — the pretty icon layout create-dmg
+      # adds is not worth reintroducing that failure mode.
+      - name: Pack DMG
+        run: |
+          STAGE="$RUNNER_TEMP/dmg"
+          mkdir -p "$STAGE"
+          cp -R "build/macos/Build/Products/Release/ava.app" "$STAGE/AVA.app"
+          ln -s /Applications "$STAGE/Applications"
+          hdiutil create -volname "AVA" -srcfolder "$STAGE" -ov -format UDZO \
+            "AVA-v${{ steps.ver.outputs.v }}-macos-arm64.dmg"
+          # A DMG below a few MB means an empty staging dir shipped.
+          size=$(stat -f%z "AVA-v${{ steps.ver.outputs.v }}-macos-arm64.dmg")
+          [ "$size" -gt 5000000 ] || { echo "::error::DMG suspiciously small ($size bytes)"; exit 1; }
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: AVA-v${{ steps.ver.outputs.v }}-macos-arm64.dmg
+          path: app/AVA-v${{ steps.ver.outputs.v }}-macos-arm64.dmg
+
+      - name: Extract changelog
+        if: startsWith(github.ref, 'refs/tags/')
+        id: notes
+        working-directory: .
+        env:
+          # Match the version read from pubspec, NOT the tag — see the same
+          # step in the windows job for the four releases this cost.
+          CHANGELOG_VERSION: v${{ steps.ver.outputs.v }}
+        run: |
+          awk -v ver="$CHANGELOG_VERSION" '
+            index($0, "## [" ver "]")==1 {p=1; print; next}
+            /^## \[/ {p=0}
+            p {print}
+          ' CHANGELOG.md > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          if [ ! -s "$RUNNER_TEMP/RELEASE_NOTES.md" ]; then
+            echo "::warning::CHANGELOG.md has no '## [$CHANGELOG_VERSION]' section — release notes fall back to the bare tag name."
+            echo "Release $GITHUB_REF_NAME" > "$RUNNER_TEMP/RELEASE_NOTES.md"
+          fi
+          echo "path=$RUNNER_TEMP/RELEASE_NOTES.md" >> "$GITHUB_OUTPUT"
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65  # v2
+        with:
+          files: app/AVA-v${{ steps.ver.outputs.v }}-macos-arm64.dmg
+          body_path: ${{ steps.notes.outputs.path }}

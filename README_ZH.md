@@ -90,6 +90,29 @@ flutter build apk --release --split-per-abi --flavor cn --dart-define=AVA_CHANNE
 打包为**单文件** `AVA-…-portable.exe`（Enigma Virtual Box），免安装、放哪都能跑；
 账户数据与安装版一样写入用户数据目录。
 
+## macOS（Apple Silicon）
+
+从下一个 tag 版本起，[Releases](https://github.com/freefrank/AnotherVaporAuth/releases)
+提供 DMG——**仅 arm64**（M1 及之后的机型；不出 Intel 版）。打开 DMG，把
+**AVA** 拖进 **Applications** 即可。
+
+应用带 ad-hoc 签名但**未经 Apple 公证**（公证需要 $99/年的开发者账号；这是个
+免费的社区项目），所以首次启动会被 Gatekeeper 拦下。放行方法：
+
+1. **右键**（或按住 Control 点击）`AVA.app` → **打开** → **打开**。较新的
+   macOS 上这个按钮可能要第二次尝试才出现，或者去
+   **系统设置 → 隐私与安全性 → 「仍要打开」**。
+2. 如果 macOS 提示应用「已损坏，无法打开」——那是未公证下载被打上的隔离标记，
+   不是真的损坏。清掉它：
+
+   ```sh
+   xattr -dr com.apple.quarantine /Applications/AVA.app
+   ```
+
+两种都只需一次，之后正常启动。只对来源可信的软件做这件事——对 AVA 来说，
+可信来源就是本仓库的 Releases 页：每个 DMG 都由 GitHub Actions 从打了 tag
+的提交公开构建。
+
 ## 字体
 
 所有字体均**打包进构建**（运行时不下载），在 `app/pubspec.yaml` 中声明；
