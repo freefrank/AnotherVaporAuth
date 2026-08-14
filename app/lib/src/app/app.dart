@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +32,14 @@ class _AvaAppState extends ConsumerState<AvaApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Launch-time update check, AFTER the first frame and fire-and-forget.
+    // "No step of startup waits on the network" is a promise this app has
+    // shipped in writing (CHANGELOG v1.0.0, the store listing, the guide) —
+    // so this is not awaited by anything, and every failure inside it is
+    // silent. A test asserts the offline launch path stays clean.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(ref.read(updateDecisionProvider.notifier).runStartupCheck());
+    });
   }
 
   @override

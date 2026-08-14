@@ -167,6 +167,24 @@ class SettingsStore {
         data['privacy_accepted'] = true;
       });
 
+  /// Launch-time update check (v1.3). On by default — absence of the key
+  /// means enabled; only an explicit `false` disables. The check itself is a
+  /// single GET against a no-logging endpoint; the toggle exists for people
+  /// who want zero non-essential connections regardless.
+  Future<bool> loadUpdateCheckEnabled() async =>
+      (await _read())['update_check_auto'] != false;
+
+  Future<void> saveUpdateCheckEnabled(bool enabled) =>
+      _update((data) => data['update_check_auto'] = enabled);
+
+  /// The version the user dismissed from the update banner. Dismissing is an
+  /// answer for that version only — a newer one prompts again.
+  Future<String?> loadUpdateDismissedVersion() async =>
+      (await _read())['update_dismissed_version'] as String?;
+
+  Future<void> saveUpdateDismissedVersion(String version) =>
+      _update((data) => data['update_dismissed_version'] = version);
+
   /// Whether the one-time post-import backup reminder has been shown.
   Future<bool> loadBackupReminderShown() async =>
       (await _read())['backup_reminder_shown'] == true;
