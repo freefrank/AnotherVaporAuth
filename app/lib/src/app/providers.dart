@@ -494,6 +494,18 @@ class HoldConfirmController extends PersistedSettingController<bool> {
       : super(true, (s) => s.loadHoldConfirm(), (s, v) => s.saveHoldConfirm(v));
 }
 
+/// Launch-time update check (default on; the check itself is a single GET
+/// against a no-logging endpoint — see update_service.dart).
+final updateCheckEnabledProvider =
+    NotifierProvider<UpdateCheckEnabledController, bool>(
+        UpdateCheckEnabledController.new);
+
+class UpdateCheckEnabledController extends PersistedSettingController<bool> {
+  UpdateCheckEnabledController()
+      : super(true, (s) => s.loadUpdateCheckEnabled(),
+            (s, v) => s.saveUpdateCheckEnabled(v));
+}
+
 /// 全局触觉反馈开关（默认开）。
 final hapticsProvider =
     NotifierProvider<HapticsController, bool>(HapticsController.new);

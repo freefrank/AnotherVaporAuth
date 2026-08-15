@@ -1033,6 +1033,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sdaImportNothing => 'Ничего не импортировано.';
 
   @override
+  String updateAvailable(String version) {
+    return 'Доступна версия $version';
+  }
+
+  @override
+  String get updateView => 'Открыть';
+
+  @override
+  String get updateDismiss => 'Пропустить';
+
+  @override
+  String get settingsUpdateCheck => 'Проверять обновления при запуске';
+
+  @override
+  String get settingsUpdateCheckDesc =>
+      'Раз за запуск AVA спрашивает у своего эндпоинта версий, есть ли новее — один запрос без каких-либо данных аккаунта, к эндпоинту, который не ведёт журналов. Выключите — и AVA не проверяет вовсе; версии по-прежнему на ava.dotslash.pro.';
+
+  @override
   String get importSessionLoginNow => 'Войти сейчас';
 
   @override

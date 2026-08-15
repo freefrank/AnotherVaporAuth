@@ -955,6 +955,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sdaImportNothing => '没有导入任何账户。';
 
   @override
+  String updateAvailable(String version) {
+    return '新版本 $version 已发布';
+  }
+
+  @override
+  String get updateView => '查看';
+
+  @override
+  String get updateDismiss => '跳过';
+
+  @override
+  String get settingsUpdateCheck => '启动时检查更新';
+
+  @override
+  String get settingsUpdateCheckDesc =>
+      '每次启动向版本端点问一次有没有新版——单个请求，不带任何账户数据，端点也不留日志。关掉后 AVA 完全不检查；你仍可在 ava.dotslash.pro 查看新版本。';
+
+  @override
   String get importSessionLoginNow => '立即登录';
 
   @override
@@ -2828,6 +2846,24 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get sdaImportNothing => '沒有匯入任何帳號。';
+
+  @override
+  String updateAvailable(String version) {
+    return '新版本 $version 已發布';
+  }
+
+  @override
+  String get updateView => '檢視';
+
+  @override
+  String get updateDismiss => '略過';
+
+  @override
+  String get settingsUpdateCheck => '啟動時檢查更新';
+
+  @override
+  String get settingsUpdateCheckDesc =>
+      '每次啟動向版本端點問一次有沒有新版——單一請求，不帶任何帳號資料，端點也不留日誌。關閉後 AVA 完全不檢查；你仍可在 ava.dotslash.pro 查看新版本。';
 
   @override
   String get importSessionLoginNow => '立即登入';

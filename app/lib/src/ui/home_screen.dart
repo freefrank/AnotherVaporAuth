@@ -21,6 +21,7 @@ import 'widgets/motion.dart';
 import '../skins/skin_engine.dart';
 import '../skins/skin_spec.dart';
 import 'widgets/scanline_overlay.dart';
+import 'widgets/update_banner.dart';
 import 'widgets/steam_image_provider.dart';
 import 'approve_login_screen.dart';
 import 'paywall_screen.dart';
@@ -357,7 +358,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
         ),
       ),
-      body: ScanlineOverlay(
+      body: Column(children: [
+        // Inform-only update strip (v1.3); SizedBox.shrink almost always.
+        const UpdateBanner(),
+        Expanded(
+          child: ScanlineOverlay(
         child: !hasAccounts
             ? Stack(
                 children: [
@@ -486,7 +491,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   );
                 },
               ),
-      ),
+          ),
+        ),
+      ]),
     );
   }
 
