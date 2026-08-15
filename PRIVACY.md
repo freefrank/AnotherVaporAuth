@@ -74,6 +74,15 @@ account names and SteamIDs, but never your secrets, tokens or passwords. Like
 any web request, the relay sees your IP address; it is included in the
 forwarded e-mail and kept nowhere else.
 
+**Update check** (added in v1.3): once per launch, the app asks
+`api.ava.dotslash.pro/v1/version` whether a newer release exists. The request
+carries no account data and no identifier — the endpoint sees your IP address
+(as any web request does; the request travels over Cloudflare's network, whose
+edge infrastructure we do not control) and answers a static version table. The
+endpoint stores nothing and keeps no logs. You can turn the check off in
+**Settings → Check for updates on launch**; the app never blocks or waits on
+it, and works identically offline.
+
 The app additionally contacts `api.ava.dotslash.pro` — the AVA Pro entitlement
 service — only in the situations described in Section 4, and Google's ad
 services only as described in Section 5.
