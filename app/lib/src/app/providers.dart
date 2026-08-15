@@ -571,7 +571,6 @@ class UpdateController extends Notifier<UpdateDecision> {
             currentVersion: await ref.read(appVersionProvider.future),
             channelKey:
                 updateChannelKey(os: osOverride ?? Platform.operatingSystem),
-            dismissedVersion: await settings.loadUpdateDismissedVersion(),
           );
       if (decision.available && ref.mounted) state = decision;
     } catch (e) {
@@ -581,14 +580,12 @@ class UpdateController extends Notifier<UpdateDecision> {
     }
   }
 
-  /// "Not this version": persists the dismissal and drops the banner. The
-  /// next version prompts again — a dismissal is an answer, not a mute.
-  Future<void> dismiss() async {
-    final latest = state.latest;
-    if (latest == null) return;
-    state = UpdateDecision.none;
-    await ref.read(settingsStoreProvider).saveUpdateDismissedVersion(latest);
-  }
+  /// Hides the banner for THIS session only. With auto-check on, the next
+  /// launch announces again (2026-08-15 owner decision — the persisted
+  /// per-version skip made one stray tap silence an update forever, which is
+  /// exactly what happened during on-device testing). The off switch in
+  /// settings is the way to stop the announcements.
+  void dismiss() => state = UpdateDecision.none;
 }
 
 /// Bumped by settings → "replay tutorial"; the home screen re-arms its

@@ -1015,7 +1015,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsUpdateCheckDesc =>
-      'Once per launch, AVA asks its version endpoint whether a newer release exists — a single request carrying no account data, against an endpoint that keeps no logs. Turn it off and AVA never checks; you can still find releases on ava.dotslash.pro.';
+      'One request to the version endpoint per launch. No account data; the endpoint keeps no logs.';
 
   @override
   String get importSessionLoginNow => 'Sign in now';

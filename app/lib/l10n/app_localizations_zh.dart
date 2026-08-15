@@ -969,8 +969,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsUpdateCheck => '启动时检查更新';
 
   @override
-  String get settingsUpdateCheckDesc =>
-      '每次启动向版本端点问一次有没有新版——单个请求，不带任何账户数据，端点也不留日志。关掉后 AVA 完全不检查；你仍可在 ava.dotslash.pro 查看新版本。';
+  String get settingsUpdateCheckDesc => '每次启动向版本端点查询一次。不带账户数据，端点不留日志。';
 
   @override
   String get importSessionLoginNow => '立即登录';
@@ -2862,8 +2861,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get settingsUpdateCheck => '啟動時檢查更新';
 
   @override
-  String get settingsUpdateCheckDesc =>
-      '每次啟動向版本端點問一次有沒有新版——單一請求，不帶任何帳號資料，端點也不留日誌。關閉後 AVA 完全不檢查；你仍可在 ava.dotslash.pro 查看新版本。';
+  String get settingsUpdateCheckDesc => '每次啟動向版本端點查詢一次。不帶帳號資料，端點不留日誌。';
 
   @override
   String get importSessionLoginNow => '立即登入';

@@ -1024,7 +1024,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsUpdateCheckDesc =>
-      'À chaque lancement, AVA demande une fois à son point de version s\'il existe une version plus récente — une seule requête, sans aucune donnée de compte, vers un point qui ne garde aucun journal. Désactivé, AVA ne vérifie jamais ; les versions restent sur ava.dotslash.pro.';
+      'Une requête au point de version par lancement. Aucune donnée de compte ; aucun journal côté serveur.';
 
   @override
   String get importSessionLoginNow => 'Se connecter';

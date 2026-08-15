@@ -1048,7 +1048,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get settingsUpdateCheckDesc =>
-      'Раз за запуск AVA спрашивает у своего эндпоинта версий, есть ли новее — один запрос без каких-либо данных аккаунта, к эндпоинту, который не ведёт журналов. Выключите — и AVA не проверяет вовсе; версии по-прежнему на ava.dotslash.pro.';
+      'Один запрос к эндпоинту версий за запуск. Без данных аккаунта; журналы не ведутся.';
 
   @override
   String get importSessionLoginNow => 'Войти сейчас';

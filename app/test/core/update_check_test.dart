@@ -73,26 +73,6 @@ void main() {
       }
     });
 
-    test('a dismissed version stays dismissed', () {
-      final d = decideUpdate(
-        channels: table('1.3.0'),
-        channelKey: 'windows-setup',
-        currentVersion: '1.2.0',
-        dismissedVersion: '1.3.0',
-      );
-      expect(d.available, isFalse);
-    });
-
-    test('a dismissal does not cover the version after it', () {
-      final d = decideUpdate(
-        channels: table('1.4.0'),
-        channelKey: 'windows-setup',
-        currentVersion: '1.2.0',
-        dismissedVersion: '1.3.0',
-      );
-      expect(d.available, isTrue);
-    });
-
     test('absent key, malformed entry, and null table all degrade to silence',
         () {
       // A broken or hostile response must never produce a prompt.
