@@ -1826,7 +1826,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsUpdateCheckDesc.
   ///
   /// In en, this message translates to:
-  /// **'Once per launch, AVA asks its version endpoint whether a newer release exists — a single request carrying no account data, against an endpoint that keeps no logs. Turn it off and AVA never checks; you can still find releases on ava.dotslash.pro.'**
+  /// **'One request to the version endpoint per launch. No account data; the endpoint keeps no logs.'**
   String get settingsUpdateCheckDesc;
 
   /// No description provided for @importSessionLoginNow.

@@ -35,11 +35,10 @@ class UpdateService {
   final String _url;
 
   /// One check. [currentVersion] comes from PackageInfo, [channelKey] from
-  /// [updateChannelKey], [dismissedVersion] from settings.
+  /// [updateChannelKey].
   Future<UpdateDecision> check({
     required String currentVersion,
     required String channelKey,
-    String? dismissedVersion,
   }) async {
     try {
       // The outer timeout lives HERE, not only in the Dio options: options
@@ -50,12 +49,19 @@ class UpdateService {
           .timeout(const Duration(seconds: 8));
       if (resp.statusCode != 200) return UpdateDecision.none;
       final channels = resp.data?['channels'];
-      return decideUpdate(
+      final decision = decideUpdate(
         channels: channels is Map<String, dynamic> ? channels : null,
         channelKey: channelKey,
         currentVersion: currentVersion,
-        dismissedVersion: dismissedVersion,
       );
+      // One line either way: "checked, found X" / "checked, up to date" is
+      // exactly what a device-side debug log needs to distinguish "the check
+      // failed" from "the banner failed" — silence here cost a real-device
+      // debugging session on 2026-08-14.
+      dlog('update check: $channelKey $currentVersion '
+          'keys=${channels is Map ? channels.keys.join(',') : channels.runtimeType} -> '
+          '${decision.available ? 'update ${decision.latest}' : 'up to date'}');
+      return decision;
     } catch (e) {
       // Expected offline / captive-portal noise. Logged for the debug log
       // people attach to feedback, invisible otherwise.

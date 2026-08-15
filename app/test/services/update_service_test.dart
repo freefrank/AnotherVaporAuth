@@ -65,18 +65,6 @@ void main() {
     }
   });
 
-  test('the dismissed version does not prompt again', () async {
-    final svc = UpdateService(
-        dio: _fakeDio(() async =>
-            _json('{"channels":{"linux-appimage":{"version":"1.3.0"}}}')));
-    final d = await svc.check(
-      currentVersion: '1.2.0',
-      channelKey: 'linux-appimage',
-      dismissedVersion: '1.3.0',
-    );
-    expect(d.available, isFalse);
-  });
-
   test('a hung endpoint resolves within the service timeout, silently',
       () async {
     // Never completes — the service's own receive timeout must cut it off.

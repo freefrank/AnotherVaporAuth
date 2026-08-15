@@ -286,7 +286,7 @@
   "updateView": "Ansehen",
   "updateDismiss": "Überspringen",
   "settingsUpdateCheck": "Beim Start nach Updates suchen",
-  "settingsUpdateCheckDesc": "Einmal pro Start fragt AVA seinen Versions-Endpunkt, ob es eine neuere Version gibt — eine einzelne Anfrage ohne Kontodaten, an einen Endpunkt, der keine Logs führt. Ausgeschaltet prüft AVA nie; Releases findest du weiter auf ava.dotslash.pro.",
+  "settingsUpdateCheckDesc": "Eine Anfrage an den Versions-Endpunkt pro Start. Keine Kontodaten; der Endpunkt führt keine Logs.",
   "importSessionLoginNow": "Jetzt anmelden",
   "actionExport": "maFile exportieren",
   "actionLoginRequests": "Anmeldeanfragen",

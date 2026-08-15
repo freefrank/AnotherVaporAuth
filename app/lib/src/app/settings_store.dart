@@ -177,13 +177,6 @@ class SettingsStore {
   Future<void> saveUpdateCheckEnabled(bool enabled) =>
       _update((data) => data['update_check_auto'] = enabled);
 
-  /// The version the user dismissed from the update banner. Dismissing is an
-  /// answer for that version only — a newer one prompts again.
-  Future<String?> loadUpdateDismissedVersion() async =>
-      (await _read())['update_dismissed_version'] as String?;
-
-  Future<void> saveUpdateDismissedVersion(String version) =>
-      _update((data) => data['update_dismissed_version'] = version);
 
   /// Whether the one-time post-import backup reminder has been shown.
   Future<bool> loadBackupReminderShown() async =>

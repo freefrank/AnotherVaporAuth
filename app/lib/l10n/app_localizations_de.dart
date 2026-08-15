@@ -1019,7 +1019,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get settingsUpdateCheckDesc =>
-      'Einmal pro Start fragt AVA seinen Versions-Endpunkt, ob es eine neuere Version gibt — eine einzelne Anfrage ohne Kontodaten, an einen Endpunkt, der keine Logs führt. Ausgeschaltet prüft AVA nie; Releases findest du weiter auf ava.dotslash.pro.';
+      'Eine Anfrage an den Versions-Endpunkt pro Start. Keine Kontodaten; der Endpunkt führt keine Logs.';
 
   @override
   String get importSessionLoginNow => 'Jetzt anmelden';

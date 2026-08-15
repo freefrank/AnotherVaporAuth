@@ -56,9 +56,10 @@ int compareVersions(String a, String b) {
   return 0;
 }
 
-/// What the launch-time check concluded. [available] is only true when the
-/// remote version is strictly newer AND the user has not dismissed that exact
-/// version — a dismissal is an answer, not a snooze.
+/// What the launch-time check concluded. [available] is true when the remote
+/// version is strictly newer. Dismissal is session-only (the banner's Skip
+/// clears the in-memory state); with auto-check on, every launch re-announces
+/// — 2026-08-15 owner decision, replacing the persisted per-version skip.
 class UpdateDecision {
   const UpdateDecision({required this.available, this.latest});
 
@@ -78,7 +79,6 @@ UpdateDecision decideUpdate({
   required Map<String, dynamic>? channels,
   required String channelKey,
   required String currentVersion,
-  String? dismissedVersion,
 }) {
   if (channels == null) return UpdateDecision.none;
   final entry = channels[channelKey];
@@ -86,6 +86,5 @@ UpdateDecision decideUpdate({
   final latest = entry['version'];
   if (latest is! String || latest.isEmpty) return UpdateDecision.none;
   if (compareVersions(latest, currentVersion) <= 0) return UpdateDecision.none;
-  if (latest == dismissedVersion) return UpdateDecision.none;
   return UpdateDecision(available: true, latest: latest);
 }
