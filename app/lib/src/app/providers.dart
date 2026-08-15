@@ -548,8 +548,8 @@ final appVersionProvider = FutureProvider<String>(
 final updateServiceProvider = Provider<UpdateService>((ref) => UpdateService());
 
 /// Result of the launch-time update check. Stays [UpdateDecision.none] until
-/// (and unless) a check completes with a strictly newer, un-dismissed version;
-/// every failure mode of the check leaves it untouched.
+/// (and unless) a check completes with a strictly newer version; every
+/// failure mode of the check leaves it untouched.
 final updateDecisionProvider =
     NotifierProvider<UpdateController, UpdateDecision>(UpdateController.new);
 
