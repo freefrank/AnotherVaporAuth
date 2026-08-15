@@ -25,7 +25,6 @@ class _HangingUpdateService implements UpdateService {
   Future<UpdateDecision> check({
     required String currentVersion,
     required String channelKey,
-    String? dismissedVersion,
   }) {
     calls++;
     return Completer<UpdateDecision>().future;

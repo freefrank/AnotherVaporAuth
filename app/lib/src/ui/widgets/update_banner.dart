@@ -16,8 +16,8 @@ const _kDownloadUrl = 'https://ava.dotslash.pro/#download';
 /// v1.3 is inform-only (docs/plans/2026-08-14-update-checker.md): the action
 /// opens the store page (play) or the download page (everything else), never
 /// downloads anything itself. Renders nothing at all in the common case —
-/// the provider stays at `none` unless a check found a newer, un-dismissed
-/// version, so this widget costs an empty build almost always.
+/// the provider stays at `none` unless a check found a newer version, so
+/// this widget costs an empty build almost always.
 class UpdateBanner extends ConsumerWidget {
   const UpdateBanner({super.key});
 
