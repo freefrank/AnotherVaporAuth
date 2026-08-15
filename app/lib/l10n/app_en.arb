@@ -560,6 +560,12 @@
     }
   },
   "sdaImportNothing": "Nothing was imported.",
+  "updateAvailable": "Version {version} is available",
+  "@updateAvailable": {"placeholders": {"version": {"type": "String"}}},
+  "updateView": "View",
+  "updateDismiss": "Skip",
+  "settingsUpdateCheck": "Check for updates on launch",
+  "settingsUpdateCheckDesc": "Once per launch, AVA asks its version endpoint whether a newer release exists — a single request carrying no account data, against an endpoint that keeps no logs. Turn it off and AVA never checks; you can still find releases on ava.dotslash.pro.",
   "importSessionLoginNow": "Sign in now",
   "actionExport": "Export maFile",
   "actionLoginRequests": "Sign-in requests",

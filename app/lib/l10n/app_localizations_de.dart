@@ -1004,6 +1004,24 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sdaImportNothing => 'Es wurde nichts importiert.';
 
   @override
+  String updateAvailable(String version) {
+    return 'Version $version ist verfügbar';
+  }
+
+  @override
+  String get updateView => 'Ansehen';
+
+  @override
+  String get updateDismiss => 'Überspringen';
+
+  @override
+  String get settingsUpdateCheck => 'Beim Start nach Updates suchen';
+
+  @override
+  String get settingsUpdateCheckDesc =>
+      'Einmal pro Start fragt AVA seinen Versions-Endpunkt, ob es eine neuere Version gibt — eine einzelne Anfrage ohne Kontodaten, an einen Endpunkt, der keine Logs führt. Ausgeschaltet prüft AVA nie; Releases findest du weiter auf ava.dotslash.pro.';
+
+  @override
   String get importSessionLoginNow => 'Jetzt anmelden';
 
   @override

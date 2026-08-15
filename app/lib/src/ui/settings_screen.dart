@@ -98,6 +98,17 @@ class SettingsScreen extends ConsumerWidget {
                         ref.read(hapticsProvider.notifier).set(v),
                   ),
                 ),
+                // Launch-time update check (v1.3, inform-only). Default on;
+                // the description spells out what one check sends.
+                _Card(
+                  title: l.settingsUpdateCheck,
+                  description: l.settingsUpdateCheckDesc,
+                  trailing: Switch(
+                    value: ref.watch(updateCheckEnabledProvider),
+                    onChanged: (v) =>
+                        ref.read(updateCheckEnabledProvider.notifier).set(v),
+                  ),
+                ),
                 // Block screenshots / screen recording (Android FLAG_SECURE).
                 // Off by default and hidden where the platform can't honour
                 // it — showing a dead switch is worse than showing none.

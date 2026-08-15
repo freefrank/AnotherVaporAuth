@@ -1799,6 +1799,36 @@ abstract class AppLocalizations {
   /// **'Nothing was imported.'**
   String get sdaImportNothing;
 
+  /// No description provided for @updateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is available'**
+  String updateAvailable(String version);
+
+  /// No description provided for @updateView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get updateView;
+
+  /// No description provided for @updateDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get updateDismiss;
+
+  /// No description provided for @settingsUpdateCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates on launch'**
+  String get settingsUpdateCheck;
+
+  /// No description provided for @settingsUpdateCheckDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Once per launch, AVA asks its version endpoint whether a newer release exists — a single request carrying no account data, against an endpoint that keeps no logs. Turn it off and AVA never checks; you can still find releases on ava.dotslash.pro.'**
+  String get settingsUpdateCheckDesc;
+
   /// No description provided for @importSessionLoginNow.
   ///
   /// In en, this message translates to:
