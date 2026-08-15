@@ -5,6 +5,14 @@ name: Desktop release
 # Release with notes extracted from CHANGELOG.md.
 on:
   workflow_dispatch:
+    inputs:
+      version_url:
+        description: >-
+          Optional AVA_VERSION_URL override — point a test build at the
+          staging table (https://dl.dotslash.pro/version_dev.json) so the
+          update banner lights up. Leave empty for the production endpoint.
+        required: false
+        default: ''
   push:
     tags: ['v*']
 
@@ -38,7 +46,13 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
       - run: flutter pub get --enforce-lockfile
-      - run: flutter build windows --release
+      - name: Build app
+        shell: bash
+        # ${VAR:+...} appends the define only when the dispatch input is set;
+        # tag builds always get the production default compiled in.
+        run: flutter build windows --release ${AVA_URL:+--dart-define=AVA_VERSION_URL=$AVA_URL}
+        env:
+          AVA_URL: ${{ inputs.version_url }}
 
       - name: Read version
         id: ver
@@ -208,7 +222,10 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
       - run: flutter pub get --enforce-lockfile
-      - run: flutter build linux --release
+      - name: Build app
+        run: flutter build linux --release ${AVA_URL:+--dart-define=AVA_VERSION_URL=$AVA_URL}
+        env:
+          AVA_URL: ${{ inputs.version_url }}
 
       - name: Read version
         id: ver
@@ -311,7 +328,10 @@ jobs:
         id: ver
         run: echo "v=$(grep '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)" >> "$GITHUB_OUTPUT"
 
-      - run: flutter build macos --release --dart-define=AVA_VERSION=${{ steps.ver.outputs.v }}
+      - name: Build app
+        run: flutter build macos --release --dart-define=AVA_VERSION=${{ steps.ver.outputs.v }} ${AVA_URL:+--dart-define=AVA_VERSION_URL=$AVA_URL}
+        env:
+          AVA_URL: ${{ inputs.version_url }}
 
       # Flutter ad-hoc signs release builds (CODE_SIGN_IDENTITY="-"). On Apple
       # Silicon an unsigned binary will not launch AT ALL, so the ad-hoc
