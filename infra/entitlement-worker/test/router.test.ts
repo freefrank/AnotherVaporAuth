@@ -180,11 +180,11 @@ describe('GET /v1/version', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe('public, max-age=3600');
     const body = (await res.json()) as { channels: Record<string, { version: string }> };
-    // The five keys clients can ask about today. macos-dmg is deliberately
-    // absent until a DMG has actually been published.
-    for (const k of ['android-play', 'android-cn', 'windows-portable', 'windows-setup', 'linux-appimage']) {
+    // Every key a client can ask about. macos-dmg joined with the first
+    // published DMG (v1.2, 2026-08-15) — the rule stands that a key exists
+    // only for artifacts that are actually downloadable.
+    for (const k of ['android-play', 'android-cn', 'windows-portable', 'windows-setup', 'linux-appimage', 'macos-dmg']) {
       expect(body.channels[k].version).toMatch(/^\d+\.\d+\.\d+$/);
     }
-    expect(body.channels['macos-dmg']).toBeUndefined();
   });
 });

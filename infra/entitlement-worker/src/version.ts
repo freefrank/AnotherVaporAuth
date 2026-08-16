@@ -25,14 +25,15 @@ interface VersionEntry {
 /// advertising it here before it is downloadable would send users to a
 /// download that does not exist.
 const VERSIONS: Record<string, VersionEntry> = {
-  'android-play': { version: '1.0.1' },
-  'android-cn': { version: '1.0.1' },
-  'windows-portable': { version: '1.1.0' },
-  'windows-setup': { version: '1.1.0' },
-  'linux-appimage': { version: '1.1.0' },
-  // No macos-dmg entry yet: the DMG job lands with the next tag and no DMG
-  // has ever been published. A client asking for a key that is not here
-  // treats it as "no update information" — which is the truth.
+  // 1.2.0 released 2026-08-15: Play production versionCode 58, cn APK on R2,
+  // GitHub release v1.2 with four desktop artifacts — including the first
+  // macOS DMG, which is why macos-dmg exists now and not before.
+  'android-play': { version: '1.2.0' },
+  'android-cn': { version: '1.2.0' },
+  'windows-portable': { version: '1.2.0' },
+  'windows-setup': { version: '1.2.0' },
+  'linux-appimage': { version: '1.2.0' },
+  'macos-dmg': { version: '1.2.0' },
 };
 
 /// The whole response is static, so let the edge serve it: an hour of caching
