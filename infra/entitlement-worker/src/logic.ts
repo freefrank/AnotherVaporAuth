@@ -38,7 +38,7 @@ export interface Deps {
   tokens: TokenService;
   google: {
     /** Returns the Google account's `sub`, or null when the id_token is invalid. */
-    verifyIdToken(idToken: string): Promise<{ sub: string } | null>;
+    verifyIdToken(idToken: string): Promise<{ sub: string; email: string | null } | null>;
     getSubscription(purchaseToken: string): Promise<GoogleSubscription>;
   };
   afdian: {
@@ -272,14 +272,36 @@ export async function handlePlayVerify(body: unknown, deps: Deps): Promise<Res> 
       tier: 'pro',
       proUntil: sub.expiresAt,
       playPurchaseToken: purchaseToken,
+      subjectEmail: g.email ?? undefined,
       now,
     });
   } catch (e) {
-    if (isUniqueViolation(e)) return err(403, 'purchase_token_bound');
+    if (isUniqueViolation(e)) {
+      // Multi-account phones hit this constantly: the purchase belongs to
+      // the Play Store's active account, the sign-in sheet listed every
+      // account on the device, and the user picked a different one. A bare
+      // refusal is a dead end; naming the bound account (masked) turns it
+      // into "retry and pick that one".
+      const email = await deps.store.getEmailByPurchaseToken(purchaseToken);
+      return {
+        status: 403,
+        body: email
+          ? { error: 'purchase_token_bound', bound_hint: maskEmail(email) }
+          : { error: 'purchase_token_bound' },
+      };
+    }
     throw e;
   }
   await deps.store.claimDevice(ent.id, deviceClass, deviceId, now);
   return issueToken(deps, ent, deviceId, deviceClass);
+}
+
+/** 'ada.lovelace@gmail.com' -> 'a•••@gmail.com'. Enough for the owner to
+ * recognize the account on their own phone, useless to anyone else. */
+export function maskEmail(email: string): string {
+  const at = email.indexOf('@');
+  if (at <= 0) return '•••';
+  return `${email[0]}•••${email.slice(at)}`;
 }
 
 /** Whether a store error is a unique-constraint rejection.

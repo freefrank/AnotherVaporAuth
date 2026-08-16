@@ -463,6 +463,8 @@
   "proErrOrderNotFound": "Pedido no encontrado o el plan no coincide.",
   "proErrDeviceRevoked": "Una activación más reciente ocupó el espacio de este dispositivo.",
   "proErrNoVip": "La recompensa aún no está confirmada: inténtalo dentro de un minuto.",
+  "proErrPurchaseBound": "Esta suscripción está vinculada a otra cuenta de Google. Reinténtalo y elige en el selector la cuenta que usa tu Play Store.",
+  "proErrPurchaseBoundKnown": "Esta suscripción está vinculada a {account}. Reinténtalo y elige esa cuenta.",
   "proErrGeneric": "Error: {code}",
   "proErrCodeInvalid": "Código no reconocido: revísalo por si hay erratas.",
   "proErrCodeRedeemed": "Este código ya está activo en otro dispositivo. Para moverlo aquí, escribe a hi@dotslash.pro.",

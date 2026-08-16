@@ -86,7 +86,7 @@ describe('verifyIdToken', () => {
   it('accepts a valid RS256 id_token and returns sub', async () => {
     const { google, rsa } = await makeGoogle();
     const token = await signJwt(rsa.kp, { alg: 'RS256', kid: 'kid-1' }, ID_CLAIMS);
-    expect(await google.verifyIdToken(token)).toEqual({ sub: 'g-sub-42' });
+    expect(await google.verifyIdToken(token)).toEqual({ sub: 'g-sub-42', email: null });
   });
 
   it('rejects wrong issuer, expiry, unknown kid, tampering, and aud mismatch', async () => {

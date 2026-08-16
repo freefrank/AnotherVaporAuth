@@ -29,6 +29,11 @@ export class MemoryStore implements Store {
     return e ? { ...e } : null;
   }
 
+  async getEmailByPurchaseToken(token: string): Promise<string | null> {
+    const row = this.ents.find((e) => e.playPurchaseToken === token);
+    return row?.subjectEmail ?? null;
+  }
+
   async upsertEntitlement(i: UpsertEntitlementInput): Promise<EntitlementRow> {
     // Models migration 0003's unique index on play_purchase_token. Without it
     // the cross-account reuse tests would pass against a store that is more
@@ -48,11 +53,13 @@ export class MemoryStore implements Store {
       e.tier = i.tier;
       e.proUntil = i.proUntil;
       if (i.playPurchaseToken !== undefined) e.playPurchaseToken = i.playPurchaseToken;
+      if (i.subjectEmail !== undefined) e.subjectEmail = i.subjectEmail;
     } else {
       e = {
         id: this.nextId++,
         channel: i.channel,
         subject: i.subject,
+        subjectEmail: i.subjectEmail ?? null,
         tier: i.tier,
         proUntil: i.proUntil,
         revoked: false,
@@ -188,7 +195,7 @@ export async function setup(overrides: Partial<Deps> = {}): Promise<TestContext>
     store,
     tokens,
     google: {
-      verifyIdToken: async () => ({ sub: 'google-sub-1' }),
+      verifyIdToken: async () => ({ sub: 'google-sub-1', email: 'buyer.one@gmail.com' }),
       getSubscription: async () => ({
         valid: true,
         expiresAt: clock.t + 30 * 86400,

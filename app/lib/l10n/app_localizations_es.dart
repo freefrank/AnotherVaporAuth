@@ -1619,6 +1619,15 @@ class AppLocalizationsEs extends AppLocalizations {
       'La recompensa aún no está confirmada: inténtalo dentro de un minuto.';
 
   @override
+  String get proErrPurchaseBound =>
+      'Esta suscripción está vinculada a otra cuenta de Google. Reinténtalo y elige en el selector la cuenta que usa tu Play Store.';
+
+  @override
+  String proErrPurchaseBoundKnown(String account) {
+    return 'Esta suscripción está vinculada a $account. Reinténtalo y elige esa cuenta.';
+  }
+
+  @override
   String proErrGeneric(Object code) {
     return 'Error: $code';
   }

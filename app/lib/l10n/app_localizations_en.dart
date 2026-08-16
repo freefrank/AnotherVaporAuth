@@ -1600,6 +1600,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proErrNoVip => 'Reward not confirmed yet — try again in a minute.';
 
   @override
+  String get proErrPurchaseBound =>
+      'This subscription is tied to a different Google account. Retry, and in the account chooser pick the one your Play Store uses.';
+
+  @override
+  String proErrPurchaseBoundKnown(String account) {
+    return 'This subscription is tied to $account. Retry, and pick that account in the chooser.';
+  }
+
+  @override
   String proErrGeneric(Object code) {
     return 'Failed: $code';
   }

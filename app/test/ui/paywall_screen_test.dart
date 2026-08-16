@@ -241,6 +241,7 @@ void main() {
       'subscription_invalid',
       'order_invalid',
       'order_bound',
+      'purchase_token_bound',
       'invalid_token',
       'no_vip',
       'not_earned',
@@ -268,6 +269,17 @@ void main() {
           expect(text, isNot(en.proErrGeneric(code)), reason: code);
         }
       }
+    });
+
+    test('purchase_token_bound names the bound account when known', () {
+      // The multi-account case this exists for: with a hint, the copy must
+      // carry the masked address; without one it still gets dedicated copy,
+      // never the generic slug.
+      expect(paywallErrorText(en, 'purchase_token_bound', boundHint: 'a•••@gmail.com'),
+          contains('a•••@gmail.com'));
+      expect(paywallErrorText(en, 'purchase_token_bound'), en.proErrPurchaseBound);
+      expect(paywallErrorText(en, 'purchase_token_bound'),
+          isNot(en.proErrGeneric('purchase_token_bound')));
     });
 
     test('beta-code refusals map to their dedicated copy', () {

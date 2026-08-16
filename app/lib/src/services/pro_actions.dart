@@ -21,11 +21,16 @@ class ProResult {
   /// holds the slot instead of a dead-end "try later".
   final List<EntitlementActivation>? activations;
 
+  /// Masked bound-account hint riding 'purchase_token_bound'.
+  final String? boundHint;
+
   const ProResult.success()
       : ok = true,
         code = null,
-        activations = null;
-  const ProResult.fail(this.code, {this.activations}) : ok = false;
+        activations = null,
+        boundHint = null;
+  const ProResult.fail(this.code, {this.activations, this.boundHint})
+      : ok = false;
 }
 
 /// Orchestrates purchase / redeem / rewarded flows: native play channel →
@@ -61,7 +66,8 @@ class ProActions {
     } on PlatformException catch (e) {
       return ProResult.fail(e.code);
     } on EntitlementApiException catch (e) {
-      return ProResult.fail(e.code, activations: e.activations);
+      return ProResult.fail(e.code,
+          activations: e.activations, boundHint: e.boundHint);
     } catch (e) {
       dlog('pro: action failed: $e');
       return const ProResult.fail('network');

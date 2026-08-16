@@ -463,6 +463,8 @@
   "proErrOrderNotFound": "Bestellung nicht gefunden oder Tarif passt nicht.",
   "proErrDeviceRevoked": "Der Platz dieses Geräts wurde von einer neueren Aktivierung übernommen.",
   "proErrNoVip": "Belohnung noch nicht bestätigt — versuch es in einer Minute erneut.",
+  "proErrPurchaseBound": "Dieses Abo gehört zu einem anderen Google-Konto. Versuch es erneut und wähle im Kontodialog das Konto, das dein Play Store verwendet.",
+  "proErrPurchaseBoundKnown": "Dieses Abo gehört zu {account}. Versuch es erneut und wähle dieses Konto aus.",
   "proErrGeneric": "Fehlgeschlagen: {code}",
   "proErrCodeInvalid": "Code nicht erkannt — prüf ihn auf Tippfehler.",
   "proErrCodeRedeemed": "Dieser Code ist bereits auf einem anderen Gerät aktiv. Zum Umziehen schreib an hi@dotslash.pro.",

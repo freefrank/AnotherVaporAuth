@@ -2885,6 +2885,18 @@ abstract class AppLocalizations {
   /// **'Reward not confirmed yet — try again in a minute.'**
   String get proErrNoVip;
 
+  /// No description provided for @proErrPurchaseBound.
+  ///
+  /// In en, this message translates to:
+  /// **'This subscription is tied to a different Google account. Retry, and in the account chooser pick the one your Play Store uses.'**
+  String get proErrPurchaseBound;
+
+  /// No description provided for @proErrPurchaseBoundKnown.
+  ///
+  /// In en, this message translates to:
+  /// **'This subscription is tied to {account}. Retry, and pick that account in the chooser.'**
+  String proErrPurchaseBoundKnown(String account);
+
   /// No description provided for @proErrGeneric.
   ///
   /// In en, this message translates to:

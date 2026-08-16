@@ -34,7 +34,7 @@ interface GoogleJwk extends JsonWebKey {
 }
 
 export function createGoogle(cfg: GoogleConfig): {
-  verifyIdToken(idToken: string): Promise<{ sub: string } | null>;
+  verifyIdToken(idToken: string): Promise<{ sub: string; email: string | null } | null>;
   getSubscription(purchaseToken: string): Promise<GoogleSubscription>;
 } {
   const fetcher = cfg.fetcher ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
@@ -53,7 +53,7 @@ export function createGoogle(cfg: GoogleConfig): {
     return jwksCache.keys;
   }
 
-  async function verifyIdToken(idToken: string): Promise<{ sub: string } | null> {
+  async function verifyIdToken(idToken: string): Promise<{ sub: string; email: string | null } | null> {
     try {
       const parts = idToken.split('.');
       if (parts.length !== 3) return null;
@@ -93,7 +93,10 @@ export function createGoogle(cfg: GoogleConfig): {
       if (!cfg.clientId || claims['aud'] !== cfg.clientId) return null;
       const sub = claims['sub'];
       if (typeof sub !== 'string' || sub.length === 0) return null;
-      return { sub };
+      // The hint behind purchase_token_bound. Absent on tokens minted
+      // without the email scope — the hint is then simply omitted.
+      const email = typeof claims['email'] === 'string' ? claims['email'] : null;
+      return { sub, email };
     } catch {
       return null;
     }

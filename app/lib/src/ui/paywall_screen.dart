@@ -19,7 +19,15 @@ const kAfdianPageUrl = 'https://ifdian.net/a/anothervaporauth';
 /// proErrGeneric with the raw slug — every code the worker can emit at launch
 /// must stay out of that bucket.
 @visibleForTesting
-String paywallErrorText(AppLocalizations l, String code) => switch (code) {
+String paywallErrorText(AppLocalizations l, String code, {String? boundHint}) =>
+    switch (code) {
+      // Multi-account phones: the purchase belongs to the Play Store's
+      // account, the sign-in sheet listed every account on the device, and a
+      // different one got picked. Name the bound account when the worker
+      // could tell us (masked); the copy's job is "retry, pick that one".
+      'purchase_token_bound' => boundHint != null
+          ? l.proErrPurchaseBoundKnown(boundHint)
+          : l.proErrPurchaseBound,
       'canceled' => l.proErrCanceled,
       'network' => l.proErrNetwork,
       'not_configured' || 'unavailable' => l.proErrNotConfigured,
@@ -140,7 +148,8 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       final l = AppLocalizations.of(context);
       var text = result.ok
           ? l.proResultSuccess
-          : paywallErrorText(l, result.code ?? 'unknown');
+          : paywallErrorText(l, result.code ?? 'unknown',
+              boundHint: result.boundHint);
       // code_activation_limit carries the occupied slots — show them.
       if (!result.ok && (result.activations?.isNotEmpty ?? false)) {
         text = '$text\n${paywallSlotOccupiedLine(

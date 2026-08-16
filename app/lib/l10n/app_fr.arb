@@ -463,6 +463,8 @@
   "proErrOrderNotFound": "Commande introuvable ou formule incorrecte.",
   "proErrDeviceRevoked": "L'emplacement de cet appareil a été pris par une activation plus récente.",
   "proErrNoVip": "Récompense pas encore confirmée — réessayez dans une minute.",
+  "proErrPurchaseBound": "Cet abonnement est lié à un autre compte Google. Réessayez et choisissez, dans le sélecteur, le compte utilisé par votre Play Store.",
+  "proErrPurchaseBoundKnown": "Cet abonnement est lié à {account}. Réessayez et choisissez ce compte.",
   "proErrGeneric": "Échec : {code}",
   "proErrCodeInvalid": "Code non reconnu — vérifiez les fautes de frappe.",
   "proErrCodeRedeemed": "Ce code est déjà actif sur un autre appareil. Pour le transférer ici, écrivez à hi@dotslash.pro.",

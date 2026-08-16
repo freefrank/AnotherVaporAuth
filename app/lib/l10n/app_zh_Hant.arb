@@ -463,6 +463,8 @@
   "proErrOrderNotFound": "找不到訂單，或方案不符。",
   "proErrDeviceRevoked": "這台裝置的名額已被較新的啟用取代。",
   "proErrNoVip": "獎勵還沒確認到帳——請一分鐘後再試。",
+  "proErrPurchaseBound": "該訂閱綁定在另一個 Google 帳號上。請重試，並在帳號選擇器裡選 Play 商店正在使用的那個帳號。",
+  "proErrPurchaseBoundKnown": "該訂閱綁定在 {account}。請重試，並在選擇器裡選這個帳號。",
   "proErrGeneric": "失敗：{code}",
   "proErrCodeInvalid": "無法辨識這組兌換碼——請檢查是否打錯。",
   "proErrCodeRedeemed": "這組兌換碼已經在另一台裝置上啟用。要移到這裡，請來信 hi@dotslash.pro。",
