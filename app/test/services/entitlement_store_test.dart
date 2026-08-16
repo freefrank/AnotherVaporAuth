@@ -157,6 +157,41 @@ void main() {
       expect(c2.read(proStatusProvider), ProStatus.pro);
     });
 
+    test('adopt never trades a longer entitlement for a shorter one',
+        () async {
+      // The on-device 2026-08-16 case: rewarded VIP until +3d, then a
+      // subscribe under a Play license tester hands back a token whose
+      // period end is minutes away. Buying Pro must not shorten Pro.
+      final c = makeContainer();
+      final notifier = c.read(entitlementTokenProvider.notifier);
+      await notifier.adopt(
+          mint.mint(now: now, tier: 'vip', pro: now.add(const Duration(days: 3))));
+      final ok = await notifier.adopt(
+          mint.mint(now: now, pro: now.add(const Duration(minutes: 5))));
+      expect(ok, isTrue, reason: 'the action itself still succeeded');
+      expect(c.read(entitlementTokenProvider)?.tier.name, 'vip',
+          reason: 'the 3-day VIP outlives the 5-minute sub window');
+
+      // And the extreme: a lifetime beta token loses to nothing.
+      await notifier.adopt(mint.mint(now: now, chan: 'beta', lifetime: true));
+      await notifier.adopt(
+          mint.mint(now: now, pro: now.add(const Duration(days: 30))));
+      expect(c.read(entitlementTokenProvider)?.proUntil, isNull,
+          reason: 'lifetime survives a 30-day sub token');
+    });
+
+    test('adopt upgrades to a longer entitlement and past ones yield',
+        () async {
+      final c = makeContainer();
+      final notifier = c.read(entitlementTokenProvider.notifier);
+      await notifier.adopt(
+          mint.mint(now: now, pro: now.add(const Duration(minutes: 5))));
+      await notifier.adopt(
+          mint.mint(now: now, tier: 'vip', pro: now.add(const Duration(days: 3))));
+      expect(c.read(entitlementTokenProvider)?.tier.name, 'vip',
+          reason: 'longer replaces shorter');
+    });
+
     test('adopt rejects garbage and keeps the previous token', () async {
       final c = makeContainer();
       final notifier = c.read(entitlementTokenProvider.notifier);
