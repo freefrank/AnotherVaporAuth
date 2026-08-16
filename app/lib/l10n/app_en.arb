@@ -827,6 +827,9 @@
   "proErrOrderNotFound": "Order not found or plan mismatch.",
   "proErrDeviceRevoked": "This device's slot was taken by a newer activation.",
   "proErrNoVip": "Reward not confirmed yet — try again in a minute.",
+  "proErrPurchaseBound": "This subscription is tied to a different Google account. Retry, and in the account chooser pick the one your Play Store uses.",
+  "proErrPurchaseBoundKnown": "This subscription is tied to {account}. Retry, and pick that account in the chooser.",
+  "@proErrPurchaseBoundKnown": {"placeholders": {"account": {"type": "String"}}},
   "proErrGeneric": "Failed: {code}",
   "@proErrGeneric": {
     "placeholders": {

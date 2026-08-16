@@ -43,10 +43,17 @@ describe('play verify', () => {
       const ctx = await setup();
       expect((await playVerified(ctx)).status).toBe(200);
 
-      ctx.deps.google.verifyIdToken = async () => ({ sub: 'google-sub-2' });
+      ctx.deps.google.verifyIdToken = async () => ({ sub: 'google-sub-2', email: 'second.account@gmail.com' });
       const res = await playVerified(ctx);
       expect(res.status).toBe(403);
-      expect(res.body).toEqual({ error: 'purchase_token_bound' });
+      // The refusal names the bound account (masked): on a phone with several
+      // Google accounts this is the difference between "retry, pick the right
+      // one" and a dead end. buyer.one@gmail.com is what the first verify
+      // recorded via the id_token's email claim.
+      expect(res.body).toEqual({
+        error: 'purchase_token_bound',
+        bound_hint: 'b•••@gmail.com',
+      });
       // …and the second account got nothing, not even a revoked shell.
       expect(await ctx.store.getEntitlement('play', 'google-sub-2')).toBeNull();
     });
@@ -898,5 +905,14 @@ describe('admob ssv + vip claim', () => {
     expect(await handleVipClaim({ device_id: 'dev-A', device_class: 'android' }, ctx.deps)).toEqual(
       { status: 404, body: { error: 'no_vip' } },
     );
+  });
+});
+
+describe('maskEmail', () => {
+  it('keeps the first character and the domain', async () => {
+    const { maskEmail } = await import('../src/logic');
+    expect(maskEmail('ada.lovelace@gmail.com')).toBe('a•••@gmail.com');
+    expect(maskEmail('x@y.z')).toBe('x•••@y.z');
+    expect(maskEmail('not-an-email')).toBe('•••');
   });
 });

@@ -1593,6 +1593,15 @@ class AppLocalizationsDe extends AppLocalizations {
       'Belohnung noch nicht bestätigt — versuch es in einer Minute erneut.';
 
   @override
+  String get proErrPurchaseBound =>
+      'Dieses Abo gehört zu einem anderen Google-Konto. Versuch es erneut und wähle im Kontodialog das Konto, das dein Play Store verwendet.';
+
+  @override
+  String proErrPurchaseBoundKnown(String account) {
+    return 'Dieses Abo gehört zu $account. Versuch es erneut und wähle dieses Konto aus.';
+  }
+
+  @override
   String proErrGeneric(Object code) {
     return 'Fehlgeschlagen: $code';
   }

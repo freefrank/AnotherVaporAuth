@@ -13,6 +13,8 @@ export interface EntitlementRow {
   createdAt: number;
   /** Play purchase token, kept for re-verification on refresh. */
   playPurchaseToken: string | null;
+  /** Email of the bound Google account (play channel); hint material only. */
+  subjectEmail: string | null;
 }
 
 export interface DeviceRow {
@@ -45,10 +47,14 @@ export interface UpsertEntitlementInput {
   now: number;
   /** When set, replaces the stored token; when omitted, the stored one is kept. */
   playPurchaseToken?: string;
+  subjectEmail?: string;
 }
 
 export interface Store {
   getEntitlement(channel: string, subject: string): Promise<EntitlementRow | null>;
+  /** The email recorded for whichever subject holds this purchase token —
+   * feeds the purchase_token_bound hint. Null when unknown (pre-0004 rows). */
+  getEmailByPurchaseToken(token: string): Promise<string | null>;
   /** Insert or update on (channel, subject). Never resets `revoked` or `created_at`. */
   upsertEntitlement(input: UpsertEntitlementInput): Promise<EntitlementRow>;
   setProUntil(id: number, proUntil: number): Promise<void>;
@@ -92,6 +98,7 @@ interface EntitlementDbRow {
   revoked: number;
   created_at: number;
   play_purchase_token: string | null;
+  subject_email: string | null;
 }
 
 export class D1Store implements Store {
@@ -107,6 +114,7 @@ export class D1Store implements Store {
       revoked: r.revoked !== 0,
       createdAt: r.created_at,
       playPurchaseToken: r.play_purchase_token ?? null,
+      subjectEmail: r.subject_email ?? null,
     };
   }
 
@@ -118,15 +126,24 @@ export class D1Store implements Store {
     return r ? D1Store.ent(r) : null;
   }
 
+  async getEmailByPurchaseToken(token: string): Promise<string | null> {
+    const r = await this.db
+      .prepare(`SELECT subject_email FROM entitlements WHERE play_purchase_token = ?1`)
+      .bind(token)
+      .first<{ subject_email: string | null }>();
+    return r?.subject_email ?? null;
+  }
+
   async upsertEntitlement(input: UpsertEntitlementInput): Promise<EntitlementRow> {
     const r = await this.db
       .prepare(
-        `INSERT INTO entitlements (channel, subject, tier, pro_until, created_at, play_purchase_token)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+        `INSERT INTO entitlements (channel, subject, tier, pro_until, created_at, play_purchase_token, subject_email)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
          ON CONFLICT(channel, subject) DO UPDATE SET
            tier = excluded.tier,
            pro_until = excluded.pro_until,
-           play_purchase_token = COALESCE(excluded.play_purchase_token, entitlements.play_purchase_token)
+           play_purchase_token = COALESCE(excluded.play_purchase_token, entitlements.play_purchase_token),
+           subject_email = COALESCE(excluded.subject_email, entitlements.subject_email)
          RETURNING *`,
       )
       .bind(
@@ -136,6 +153,7 @@ export class D1Store implements Store {
         input.proUntil,
         input.now,
         input.playPurchaseToken ?? null,
+        input.subjectEmail ?? null,
       )
       .first<EntitlementDbRow>();
     if (!r) throw new Error('upsertEntitlement returned no row');

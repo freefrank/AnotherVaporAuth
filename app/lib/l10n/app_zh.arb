@@ -796,6 +796,8 @@
   "proErrOrderNotFound": "订单不存在或方案不符。",
   "proErrDeviceRevoked": "本设备名额已被新设备占用。",
   "proErrNoVip": "奖励尚未到账，请稍后重试。",
+  "proErrPurchaseBound": "该订阅绑定在另一个 Google 账户上。请重试，并在账户选择器里选 Play 商店正在用的那个账户。",
+  "proErrPurchaseBoundKnown": "该订阅绑定在 {account}。请重试，并在选择器里选这个账户。",
   "proErrGeneric": "失败：{code}",
   "@proErrGeneric": {
     "placeholders": {

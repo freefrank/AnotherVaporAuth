@@ -81,7 +81,12 @@ class EntitlementApiException implements Exception {
   /// does — it turns a dead-end refusal into an actionable one).
   final List<EntitlementActivation>? activations;
 
-  EntitlementApiException(this.status, this.code, {this.activations});
+  /// Masked email of the account holding this purchase ('purchase_token_bound'
+  /// carries it): the actionable half of a multi-account refusal.
+  final String? boundHint;
+
+  EntitlementApiException(this.status, this.code,
+      {this.activations, this.boundHint});
 
   bool get isTerminal => status == 403;
 
@@ -251,8 +256,10 @@ class DioEntitlementApi implements EntitlementApi {
       String path, int status, Map<String, dynamic>? data) {
     final code = data?['error'];
     dlog('entitlement: $path HTTP $status ${code ?? ''}');
+    final hint = data?['bound_hint'];
     return EntitlementApiException(status, code is String ? code : 'http_$status',
-        activations: _activationsFrom(data));
+        activations: _activationsFrom(data),
+        boundHint: hint is String && hint.isNotEmpty ? hint : null);
   }
 }
 

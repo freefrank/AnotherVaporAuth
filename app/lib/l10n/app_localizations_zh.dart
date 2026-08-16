@@ -1514,6 +1514,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get proErrNoVip => '奖励尚未到账，请稍后重试。';
 
   @override
+  String get proErrPurchaseBound =>
+      '该订阅绑定在另一个 Google 账户上。请重试，并在账户选择器里选 Play 商店正在用的那个账户。';
+
+  @override
+  String proErrPurchaseBoundKnown(String account) {
+    return '该订阅绑定在 $account。请重试，并在选择器里选这个账户。';
+  }
+
+  @override
   String proErrGeneric(Object code) {
     return '失败：$code';
   }
@@ -3388,6 +3397,15 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get proErrNoVip => '獎勵還沒確認到帳——請一分鐘後再試。';
+
+  @override
+  String get proErrPurchaseBound =>
+      '該訂閱綁定在另一個 Google 帳號上。請重試，並在帳號選擇器裡選 Play 商店正在使用的那個帳號。';
+
+  @override
+  String proErrPurchaseBoundKnown(String account) {
+    return '該訂閱綁定在 $account。請重試，並在選擇器裡選這個帳號。';
+  }
 
   @override
   String proErrGeneric(Object code) {

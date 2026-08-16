@@ -1620,6 +1620,15 @@ class AppLocalizationsRu extends AppLocalizations {
       'Награда ещё не подтверждена — попробуйте через минуту.';
 
   @override
+  String get proErrPurchaseBound =>
+      'Эта подписка привязана к другому аккаунту Google. Повторите и выберите в списке тот аккаунт, что использует ваш Play Store.';
+
+  @override
+  String proErrPurchaseBoundKnown(String account) {
+    return 'Эта подписка привязана к $account. Повторите и выберите этот аккаунт.';
+  }
+
+  @override
   String proErrGeneric(Object code) {
     return 'Не удалось: $code';
   }
