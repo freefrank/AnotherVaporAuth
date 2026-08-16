@@ -5,6 +5,41 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v1.2.1] — 2026-08-16
+
+### Fixed
+- **Buying Pro could shorten Pro.** Every way of gaining an entitlement —
+  subscribing, restoring, a rewarded-ad VIP day, redeeming a code — ended in
+  the same place, which simply took whatever arrived last. So watching an ad
+  for 3 days of VIP and then tapping subscribe replaced the 3-day
+  entitlement with the subscription's *current period end*. The app now keeps
+  whichever entitlement lasts longer; a lifetime code outlasts everything.
+- **"No active subscription" now says what to do about it.** Google's billing
+  API can only see purchases made by the Play Store's currently signed-in
+  account, so a subscription bought under a different Google account on the
+  same phone looks like no subscription at all. The message now says to
+  switch accounts in the Play Store and retry, rather than flatly denying a
+  subscription you are paying for.
+- **A purchase already tied to another Google account says which one**
+  (masked, e.g. `a•••@gmail.com`) instead of reporting an internal error code.
+- **Subscribing when the account already owns it** points at Restore purchase
+  instead of showing a raw billing error.
+
+### 修复
+- **购买 Pro 反而可能缩短 Pro。** 所有获得权益的路径——订阅、恢复购买、看
+  广告换 VIP、兑换码——最后都汇到同一处,而那里只认「最后到的」。于是看完
+  广告拿到 3 天 VIP 后再点订阅,3 天就被订阅的**当期止点**顶掉了。现在一律
+  保留更长的那个权益;终身码不输给任何东西。
+- **「没有有效订阅」现在会告诉你该怎么办。** Google 的计费接口只能看到
+  Play 商店当前登录账户的购买记录,所以用同一台手机的另一个 Google 账户订
+  的订阅,看起来就和没订阅一模一样。提示改为让你在 Play 商店切换账户后重试,
+  而不是干脆否认一份你正在付费的订阅。
+- **购买已绑定到另一个 Google 账户时会说明是哪一个**（脱敏,如
+  `a•••@gmail.com`）,不再只甩一个内部错误码。
+- **已拥有订阅时再点购买**会引导你去「恢复购买」,而不是显示原始计费错误。
+
+—
+
 ## [v1.2.0] — 2026-08-15
 
 ### Changed
