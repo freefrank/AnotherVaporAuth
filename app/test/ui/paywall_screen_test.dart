@@ -242,6 +242,7 @@ void main() {
       'order_invalid',
       'order_bound',
       'purchase_token_bound',
+      'already_owned',
       'invalid_token',
       'no_vip',
       'not_earned',

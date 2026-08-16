@@ -32,6 +32,9 @@ String paywallErrorText(AppLocalizations l, String code, {String? boundHint}) =>
       'network' => l.proErrNetwork,
       'not_configured' || 'unavailable' => l.proErrNotConfigured,
       'no_subscription' => l.proErrNoSubscription,
+      // The flip side of no_subscription on a multi-account phone: the
+      // active Play account DOES hold it — the user just needs Restore.
+      'already_owned' => l.proErrAlreadyOwned,
       'order_bound' => l.proErrOrderBound,
       // The worker emits order_invalid; the other two names predate it.
       'order_invalid' || 'order_not_found' || 'plan_mismatch' =>
