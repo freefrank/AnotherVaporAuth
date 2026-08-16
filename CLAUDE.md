@@ -187,6 +187,26 @@
   ~/Android/Sdk/build-tools/*/apksigner verify --print-certs -v dist/<包>.apk
   ```
 
+## 发布分发（R2 + 站点 + 版本端点）
+
+出包只是发布的一半;这三步漏掉任何一步都**不会报错**,只会让用户拿到旧版或
+死链——`site.ts` 停在 v0.80.1 九个版本、「直发 apk」按钮指着不存在的产物,
+都是这么来的。顺序执行:
+
+1. **`python3 tool/publish_r2.py --apply`**:把 `dist/AVA-v<版本>-*` 传到 R2
+   （`dl.dotslash.pro`,cn APK 必需,桌面产物有则捎带）,**逐个回读比对
+   SHA-256**,再按桶里的 `r2-manifest.json` 删上一版的对象并写新清单。
+   不带 `--apply` 是 dry-run。`version_dev.json`（dev 构建指向的 staging
+   版本表）在 `KEEP_ALWAYS` 里,清理永不碰它。
+2. **dotslashpro 仓库**:`ava/src/data/site.ts` 的 `TAG`/`VERSION` 改成新版,
+   提交推送（Pages 自动部署）,然后 `curl -sI` 实测下载链接——**看 content-type
+   是不是真文件,别只看 200**（Pages 对未知路径回落 index.html 也是 200）。
+3. **版本端点**:`infra/entitlement-worker/src/version.ts` 的表改成实际已
+   发布的版本,`wrangler deploy`,然后 curl `api.ava.dotslash.pro/v1/version`
+   核对。表过期不报错,只是所有客户端安静地查不到新版。
+
+发 Play/GitHub 的部分照旧（`b`/`p`/tag);此节只管分发面。
+
 ## 文档位置
 
 - 设计文档（spec）在 `docs/specs/`，实施计划在 `docs/plans/`（原 `docs/superpowers/` 已并入）。
