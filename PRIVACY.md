@@ -1,6 +1,6 @@
 # Privacy Policy — AVA (AnotherVaporAuth)
 
-**Effective date: 2026-07-16**
+**Effective date: 2026-08-15**
 
 <sup><a href="PRIVACY.md"><b>English</b></a> · <a href="PRIVACY_ZH.md">简体中文</a></sup>
 
@@ -73,6 +73,10 @@ debug log is included too — recent network-trace lines that may contain your
 account names and SteamIDs, but never your secrets, tokens or passwords. Like
 any web request, the relay sees your IP address; it is included in the
 forwarded e-mail and kept nowhere else.
+
+**Sync** (optional, v1.2): if — and only if — you configure sync, the app
+connects to **the WebDAV server you specified**. What travels there is
+described in Section 9; in short, ciphertext encrypted on your device.
 
 The app additionally contacts `api.ava.dotslash.pro` — the AVA Pro entitlement
 service — only in the situations described in Section 4, and Google's ad
@@ -155,23 +159,32 @@ maFile contains your Steam Guard secrets and, if you saved it, your account
 password. Anyone who obtains that file can access your account — store and share
 exports carefully. They are your responsibility.
 
-## 9. Cloud sync and other online features (not currently available)
+## 9. Sync between your devices (optional, off by default)
 
-The current version has **no cloud sync, cloud backup, or push-notification
-service**. Your authenticator data is local, as described above.
+Since v1.2 the app can sync your account library — and a curated set of app
+settings — between your devices, **through a server you choose and control**
+(any WebDAV server: Nextcloud, a NAS, a hosted provider). This is the
+opt-in online feature the previous version of this policy promised to
+describe before it could be enabled. How it works:
 
-We do plan optional online features — for example **cloud sync/backup** of your
-authenticator data, or **trade/confirmation notifications** (which may require a
-server component operated by us). Any such feature will:
+- **Off by default.** Nothing is synced until you configure a server and a
+  sync passphrase under Settings → Sync. The app keeps working fully locally
+  if you never enable it.
+- **Everything is encrypted on your device before upload**, under a key
+  derived from your sync passphrase. The server you point the app at stores
+  ciphertext only; whoever operates that server cannot decrypt your
+  authenticator data without the passphrase, which never leaves your devices.
+- **We run no sync server and receive nothing.** The app talks directly to
+  the server you configured. Its address and credentials are stored on your
+  device and are themselves excluded from sync.
+- Disabling sync stops all transfers; removing the remote data is done on
+  your server, which you control.
 
-- be **strictly opt-in and off by default** — the app keeps working fully
-  locally if you don't enable it;
-- be described by an **updated version of this policy before you can enable
-  it**, stating exactly what data is involved, where it is stored, and how it
-  is protected (for synced secrets the design intent is **end-to-end
-  encryption**, so that only your devices hold the keys; for notifications,
-  the minimum data needed to deliver them);
-- **never** enable itself or upload your data without your explicit action.
+Other online features we may add (for example trade/confirmation
+notifications, which may require a server component operated by us) will
+follow the same rules: strictly opt-in, off by default, described by an
+updated version of this policy before they can be enabled, and never
+self-enabling.
 
 ## 10. Children
 

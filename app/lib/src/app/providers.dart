@@ -578,7 +578,11 @@ final tickProvider = StreamProvider<int>((ref) async* {
 ///     true — there are two developer-run services, and the Play build shows
 ///     ads. Consent obtained under it does not carry over.
 ///  2. Corrected notice naming both services and the ads (2026-08).
-const int kPrivacyNoticeVersion = 2;
+// v3 (v1.2): the notice's "never uploaded" gained its sync qualifier when
+// WebDAV sync shipped. Everyone who accepted v1/v2 gets the lightweight
+// "notice updated" screen once — §9 of the policy promised exactly this
+// before any sync feature could be enabled.
+const int kPrivacyNoticeVersion = 3;
 
 class AppData {
   final AccountStore store;

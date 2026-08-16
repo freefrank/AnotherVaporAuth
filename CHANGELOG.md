@@ -5,7 +5,17 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
-## [v1.2.0] — 2026-08-14
+## [v1.2.0] — 2026-08-15
+
+### Changed
+- **The privacy notice asks again, once.** Sync means the notice's "your
+  secrets are never uploaded" needed a qualifier: they still never leave the
+  device *unless you enable sync to a server you choose, encrypted on-device
+  first*. Section 9 of the Privacy Policy — which used to say cloud sync
+  "is not currently available", and promised an updated policy before any
+  such feature could be enabled — now describes exactly how sync works.
+  Because the wording you may have agreed to changed, the app shows the
+  lightweight "notice updated" screen once.
 
 ### Added
 - **Sync your accounts between devices, through a server you control
@@ -33,6 +43,13 @@ automated releases.
     pinned by fingerprint after you compare them.
   - This is a **beta**: the engine is covered by 49 tests, but real-world
     WebDAV servers vary. Keep your maFile backups (you should anyway).
+
+### 变更
+- **隐私说明会再询问一次。** 有了同步,「你的密钥绝不上传」需要一个限定语:
+  它们依然不离开设备,*除非你启用同步并指定自己的服务器,且先在本机加密*。
+  隐私政策第 9 节——原先写着云同步「当前不可用」,并承诺此类功能启用前先
+  更新政策——现在如实描述了同步的工作方式。因为你当初同意的措辞变了,
+  应用会显示一次轻量的「说明已更新」页。
 
 ### 新增
 - **账户可以在多台设备间同步了，走你自己掌控的服务器（WebDAV）。**

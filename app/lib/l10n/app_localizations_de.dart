@@ -1294,14 +1294,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get privacyConsentBody =>
-      'AVA speichert deine Steam-Konten und Secrets auf diesem Gerät — sie werden nie hochgeladen, und du musst dich nirgendwo registrieren. Steam-Anfragen gehen direkt an Valve. Zwei eigene Dienste des Entwicklers werden nur dann kontaktiert, wenn sie gebraucht werden: die Prüfung der Pro-Berechtigung und Feedback (nur wenn du auf Senden drückst). Die Play-Version zeigt in der kostenlosen Variante außerdem Werbung. Tracking oder Analytik gibt es nicht. All das steht in der Datenschutzerklärung — wenn du fortfährst, akzeptierst du sie.';
+      'AVA behält deine Steam-Konten und Geheimnisse auf diesem Gerät — hochgeladen wird nie etwas, außer du richtest die optionale Synchronisierung mit einem Server deiner Wahl ein, und auch dann wird alles zuerst auf diesem Gerät verschlüsselt. Kein Konto nötig. Steam-Anfragen gehen direkt an Valve. Zwei Dienste des Entwicklers werden nur bei Bedarf kontaktiert: Pro-Berechtigungsprüfung und Feedback (nur wenn du auf Senden tippst). Die Play-Version zeigt in der Gratis-Stufe außerdem Werbung. Kein Tracking, keine Analyse. All das steht in der Datenschutzerklärung — mit dem Fortfahren akzeptierst du sie.';
 
   @override
   String get privacyUpdateTitle => 'Datenschutzerklärung aktualisiert';
 
   @override
   String get privacyUpdateBody =>
-      'In dem Hinweis, dem du früher zugestimmt hast, stand, AVA habe kein eigenes Backend und verbinde sich nur mit Valve. Das stimmte nicht und wurde korrigiert — an der App selbst hat sich nichts geändert, nur an der Beschreibung. Lies bitte unten den aktuellen Hinweis.';
+      'Der Datenschutzhinweis hat sich geändert, seit du zugestimmt hast. Neu: AVA kann deine Kontobibliothek jetzt über einen Server deiner Wahl zwischen deinen Geräten synchronisieren — standardmäßig aus, alles wird vor dem Upload auf diesem Gerät verschlüsselt, und der Entwickler betreibt keinen Sync-Server. Bitte lies den aktuellen Hinweis unten.';
 
   @override
   String get privacyConsentScrollHint => 'Zum Fortfahren bis zum Ende scrollen';

@@ -1286,14 +1286,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyConsentBody =>
-      'AVA keeps your Steam accounts and secrets on this device — they are never uploaded, and there is no account to create. Steam requests go straight to Valve. Two of the developer\'s own services are contacted only when they are needed: Pro entitlement checks, and feedback (only when you press send). The Play version also shows ads on the free tier. There is no tracking or analytics. All of it is spelled out in the Privacy Policy — by continuing, you accept it.';
+      'AVA keeps your Steam accounts and secrets on this device — they are never uploaded, unless you set up the optional sync to a server you choose, where everything is encrypted on this device first. There is no account to create. Steam requests go straight to Valve. Two of the developer\'s own services are contacted only when they are needed: Pro entitlement checks, and feedback (only when you press send). The Play version also shows ads on the free tier. There is no tracking or analytics. All of it is spelled out in the Privacy Policy — by continuing, you accept it.';
 
   @override
   String get privacyUpdateTitle => 'Privacy Policy updated';
 
   @override
   String get privacyUpdateBody =>
-      'The notice you agreed to earlier described AVA as having no backend of its own and connecting only to Valve. That was not accurate, and it has been corrected — nothing about the app changed, only the description. Please read the current notice below.';
+      'The privacy notice has changed since you accepted it. New: AVA can now sync your account library between your devices, through a server you choose — off by default, everything encrypted on this device before upload, and the developer runs no sync server. Please read the current notice below.';
 
   @override
   String get privacyConsentScrollHint => 'Scroll to the end to continue';

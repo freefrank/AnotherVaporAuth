@@ -1301,14 +1301,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get privacyConsentBody =>
-      'AVA conserve vos comptes Steam et vos secrets sur cet appareil : ils ne sont jamais téléversés, et il n\'y a aucun compte à créer. Les requêtes Steam vont directement à Valve. Deux services appartenant au développeur ne sont contactés que lorsqu\'ils sont nécessaires : la vérification du droit d\'accès Pro et les commentaires (uniquement quand vous appuyez sur Envoyer). La version Play affiche en plus des publicités dans l\'offre gratuite. Il n\'y a ni suivi ni analyse. Tout cela est détaillé dans la politique de confidentialité — en continuant, vous l\'acceptez.';
+      'AVA garde vos comptes Steam et vos secrets sur cet appareil — rien n\'est jamais envoyé, sauf si vous configurez la synchronisation optionnelle vers un serveur de votre choix, et même alors tout est d\'abord chiffré sur cet appareil. Aucun compte à créer. Les requêtes Steam vont directement chez Valve. Deux services du développeur ne sont contactés qu\'en cas de besoin : la vérification Pro, et les commentaires (seulement quand vous appuyez sur envoyer). La version Play affiche aussi des publicités en offre gratuite. Aucun pistage ni statistique. Tout est détaillé dans la politique de confidentialité — continuer vaut acceptation.';
 
   @override
   String get privacyUpdateTitle => 'Politique de confidentialité mise à jour';
 
   @override
   String get privacyUpdateBody =>
-      'L\'avis que vous aviez accepté décrivait AVA comme une application sans serveur à elle, qui ne se connecte qu\'à Valve. C\'était inexact, et c\'est désormais corrigé — rien n\'a changé dans l\'application, seule sa description a changé. Veuillez lire l\'avis actuel ci-dessous.';
+      'L\'avis de confidentialité a changé depuis votre accord. Nouveau : AVA peut désormais synchroniser votre bibliothèque de comptes entre vos appareils, via un serveur de votre choix — désactivé par défaut, tout est chiffré sur cet appareil avant l\'envoi, et le développeur n\'exploite aucun serveur de synchronisation. Merci de lire l\'avis actuel ci-dessous.';
 
   @override
   String get privacyConsentScrollHint =>
