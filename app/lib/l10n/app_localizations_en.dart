@@ -1584,7 +1584,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proErrNotConfigured => 'Not available in this build yet.';
 
   @override
-  String get proErrNoSubscription => 'No active subscription found.';
+  String get proErrNoSubscription =>
+      'No active subscription on your Play Store\'s current account. Subscribed with a different Google account? Switch to it in the Play Store app (top-right avatar), then retry.';
+
+  @override
+  String get proErrAlreadyOwned =>
+      'Your Play Store\'s current account already holds this subscription — tap Restore purchase instead.';
 
   @override
   String get proErrOrderBound => 'This order is already bound to another user.';

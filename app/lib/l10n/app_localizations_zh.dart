@@ -1516,7 +1516,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get proErrNotConfigured => '当前构建尚未开通此功能。';
 
   @override
-  String get proErrNoSubscription => '未找到有效订阅。';
+  String get proErrNoSubscription =>
+      'Play 商店当前账户名下没有有效订阅。如果是用另一个 Google 账户订的：在 Play 商店里（右上角头像）切换到那个账户，再回来重试。';
+
+  @override
+  String get proErrAlreadyOwned => 'Play 商店当前账户已持有该订阅——点「恢复购买」即可。';
 
   @override
   String get proErrOrderBound => '该订单已被其他用户绑定。';
@@ -3418,7 +3422,11 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get proErrNotConfigured => '這個版本還不支援。';
 
   @override
-  String get proErrNoSubscription => '找不到有效的訂閱。';
+  String get proErrNoSubscription =>
+      'Play 商店目前帳號名下沒有有效訂閱。如果是用另一個 Google 帳號訂的：在 Play 商店裡（右上角頭像）切換到那個帳號，再回來重試。';
+
+  @override
+  String get proErrAlreadyOwned => 'Play 商店目前帳號已持有該訂閱——點「還原購買」即可。';
 
   @override
   String get proErrOrderBound => '這筆訂單已經綁定到其他使用者。';

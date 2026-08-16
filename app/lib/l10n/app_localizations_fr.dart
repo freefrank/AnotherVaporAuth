@@ -1601,7 +1601,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get proErrNotConfigured => 'Pas encore disponible dans cette version.';
 
   @override
-  String get proErrNoSubscription => 'Aucun abonnement actif trouvé.';
+  String get proErrNoSubscription =>
+      'Aucun abonnement actif sur le compte actuel du Play Store. Abonné avec un autre compte Google ? Basculez vers ce compte dans le Play Store (avatar en haut à droite), puis réessayez.';
+
+  @override
+  String get proErrAlreadyOwned =>
+      'Le compte actuel du Play Store possède déjà cet abonnement — utilisez plutôt « Restaurer l\'achat ».';
 
   @override
   String get proErrOrderBound =>

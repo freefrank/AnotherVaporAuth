@@ -1592,7 +1592,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get proErrNotConfigured => 'In dieser Version noch nicht verfügbar.';
 
   @override
-  String get proErrNoSubscription => 'Kein aktives Abo gefunden.';
+  String get proErrNoSubscription =>
+      'Kein aktives Abo auf dem aktuellen Play-Store-Konto. Mit einem anderen Google-Konto abonniert? Wechsle im Play Store (Avatar oben rechts) zu diesem Konto und versuch es erneut.';
+
+  @override
+  String get proErrAlreadyOwned =>
+      'Das aktuelle Play-Store-Konto hat dieses Abo bereits — tippe stattdessen auf „Kauf wiederherstellen“.';
 
   @override
   String get proErrOrderBound =>

@@ -208,6 +208,11 @@ class BillingHandler(private val context: Context) : PurchasesUpdatedListener {
                 pending.error("canceled", br.debugMessage)
             BillingClient.BillingResponseCode.BILLING_UNAVAILABLE ->
                 pending.error("billing_unavailable", br.debugMessage)
+            // Multi-account: the Play Store's active account already holds the
+            // subscription (typically after a restore the user gave up on).
+            // Dedicated code so the UI can say "tap Restore", not "error 7".
+            BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED ->
+                pending.error("already_owned", br.debugMessage)
             else ->
                 pending.error(
                     "billing_error",

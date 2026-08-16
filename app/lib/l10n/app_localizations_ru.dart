@@ -1620,7 +1620,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get proErrNotConfigured => 'В этой сборке пока недоступно.';
 
   @override
-  String get proErrNoSubscription => 'Активная подписка не найдена.';
+  String get proErrNoSubscription =>
+      'На текущем аккаунте Play Маркета нет активной подписки. Оформляли её с другого аккаунта Google? Переключитесь на него в Play Маркете (аватар справа вверху) и повторите.';
+
+  @override
+  String get proErrAlreadyOwned =>
+      'Текущий аккаунт Play Маркета уже владеет этой подпиской — нажмите «Восстановить покупку».';
 
   @override
   String get proErrOrderBound =>

@@ -1600,7 +1600,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get proErrNoSubscription =>
-      'No se encontró ninguna suscripción activa.';
+      'No hay suscripción activa en la cuenta actual de Play Store. ¿Te suscribiste con otra cuenta de Google? Cambia a esa cuenta en Play Store (avatar arriba a la derecha) y reinténtalo.';
+
+  @override
+  String get proErrAlreadyOwned =>
+      'La cuenta actual de Play Store ya tiene esta suscripción: usa «Restaurar compra».';
 
   @override
   String get proErrOrderBound =>

@@ -2858,8 +2858,14 @@ abstract class AppLocalizations {
   /// No description provided for @proErrNoSubscription.
   ///
   /// In en, this message translates to:
-  /// **'No active subscription found.'**
+  /// **'No active subscription on your Play Store\'s current account. Subscribed with a different Google account? Switch to it in the Play Store app (top-right avatar), then retry.'**
   String get proErrNoSubscription;
+
+  /// No description provided for @proErrAlreadyOwned.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Play Store\'s current account already holds this subscription — tap Restore purchase instead.'**
+  String get proErrAlreadyOwned;
 
   /// No description provided for @proErrOrderBound.
   ///
