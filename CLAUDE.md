@@ -19,8 +19,8 @@
 - ~~**发 Play 轨道时发布名必须写成 `<versionCode> (<版本号>)`**~~ ——
   **2026-07-30 用户宣布该约定作废,以后不必改名。** 历史条目
   (`51 (0.94.0)`、`38 (0.91.0)`、`34 (0.90.0)`)保持原样不用回改;
-  `play-store-mcp` 的 `deploy_app*` 从 AAB 的 versionName 推发布名,
-  现在直接采用它推出来的值即可,发完**不需要**再去控制台改。
+  `tool/play_deploy.py` 直接把 versionName 写成发布名,发完**不需要**再去
+  控制台改。
 - **发布说明每语言上限 500 字符**,超了整个 commit 被 403 拒(报
   `notes in language en-US with length N, which is too long`),不是截断。
   2026-07-30 发 1.0.0 时 563 字被拒过一次,压到 489 才过。发布说明正本在
@@ -32,6 +32,8 @@
   但**商店条目(标题 / 简介 / 完整描述)目前只有 en-US 与 zh-CN**,所以德/法/
   西/俄/繁中用户看到的更新说明是母语、商店页却是英文。要补齐得每语言写
   标题 30 字符 + 简介 80 字符 + 完整描述 4000 字符(现有英文描述约 2000 字)。
+- **/play** = 发 Play:见 `.claude/commands/play.md`,上传走
+  `tool/play_deploy.py`,**不走 MCP**(原因见「Play 发布」)。
 - 可组合使用,如 **cbp**。
 - **s / sync** = **已废弃**(2026-07-26)。旧流程是把 WSL 工作树 rsync 回
   `/mnt/c/.../ownCloud/Git/AnotherVaporAuth` 镜像;WSL 与该镜像现均已不存在,
@@ -58,6 +60,37 @@
 - **依赖升级必须单开批次,验证矩阵含"出包"**:`analyze` + `test` 只覆盖 Dart
   层;插件问题只在 Gradle 构建和真机运行时现形(`flutter_secure_storage`、
   `google_mobile_ads` 尤甚)。少了出包这一步就不算验证过。
+
+## Play 发布(上传不走 MCP)
+
+- **上传一律用 `tool/play_deploy.py`**(PEP 723 脚本,`uv run` 自动装依赖,
+  不污染系统 python;凭据取 `secrets/anothervaporauth-edaab169cb99.json`):
+
+  ```sh
+  ./tool/play_deploy.py status            # 各轨道当前版本
+  ./tool/play_deploy.py deploy 1.2.1      # 演练:体检 + 打印线上状态,不上传
+  ./tool/play_deploy.py deploy 1.2.1 --apply
+  ```
+
+  演练是默认行为,`--apply` 才真传。它会拦住三类事故:pubspec 与要发的版本
+  不一致、**AAB 里的 versionCode 与 pubspec 对不上**(说明拿的是旧包)、
+  发布说明某语言超 500 字符。
+
+- **`mcp__play-store__deploy_app` / `batch_deploy` / `deploy_app_multilang`
+  已弃用,不要再调。** 它的 `MediaFileUpload(..., resumable=True)` 不带
+  `chunksize`,默认 100 MB,于是 85 MB 的 AAB 压进**单个** HTTP 请求;而
+  `build()` 没传自定义 http,走 googleapiclient 的
+  `DEFAULT_HTTP_TIMEOUT_SEC = 60`,`client.py` 里 `socket` 出现 0 次。
+  传输本身只要 ~9 秒(实测上行 9.4 MB/s),卡住的是**传完之后 Google 处理
+  bundle 的等待**,过 60 秒即断——包越大越必然失败:1.0.1 一次就过、
+  1.2.0(85 MB)三次才中、1.2.1 四次全挂。`play_deploy.py` 两处都修了
+  (8 MB 分片 + `socket.setdefaulttimeout(600)`,后者是 `build_http()` 自己
+  的 docstring 指明的唯一覆盖途径)。
+  **MCP 的只读工具照用**:`get_releases`、`get_reviews`、`get_listing`、
+  `get_vitals_*`、`get_subscription_status`。
+- **托管发布的「提交审核」没有 API。** `edits.commit` 只是把改动排进队列;
+  最后一步必须人工去 Play Console 的发布概览点,点一次会把所有排队的版本
+  一起提交。2026-08-16 就是因为没人点,1.2.0 一直停在概览页没上线。
 
 ## 构建渠道(Android 已拆 flavor)
 
