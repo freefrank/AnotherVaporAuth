@@ -257,6 +257,31 @@ class EntitlementTokenController extends Notifier<EntitlementToken?> {
     final token = EntitlementToken.tryParse(raw,
         publicKey: ref.read(entitlementPublicKeyProvider));
     if (token == null) return false;
+    // Never trade a longer entitlement for a shorter one. Every acquisition
+    // path lands here, and without this guard the LAST action wins: watching
+    // a rewarded ad (VIP until +3d) and then tapping subscribe replaced the
+    // 3-day token with the subscription's current period end — for a Play
+    // license tester that period is FIVE MINUTES, so "buying Pro" visibly
+    // shortened Pro (observed on-device 2026-08-16). Worse, a lifetime beta
+    // token (proUntil null) would lose to anything. Keeping the longer token
+    // is safe: the action still succeeded server-side, the purchase stays
+    // bound on the worker, and restore can re-adopt it whenever it actually
+    // outlasts what we hold. Tiers are equivalent today (vip = time-boxed
+    // pro); revisit the comparison if that ever changes.
+    final current = state;
+    if (current != null) {
+      final currentUntil =
+          current.proUntil ?? DateTime.fromMillisecondsSinceEpoch(1 << 52);
+      final newUntil =
+          token.proUntil ?? DateTime.fromMillisecondsSinceEpoch(1 << 52);
+      final now = ref.read(clockProvider)();
+      if (currentUntil.isAfter(now) && currentUntil.isAfter(newUntil)) {
+        dlog('entitlement: kept ${current.tier.name} until $currentUntil '
+            'over ${token.tier.name} until $newUntil');
+        _scheduleDailyRefresh();
+        return true;
+      }
+    }
     state = token;
     await ref.read(settingsStoreProvider).saveEntitlementToken(raw);
     _scheduleDailyRefresh();
