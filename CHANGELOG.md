@@ -5,6 +5,27 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v1.2.3] — 2026-08-18
+
+### Fixed
+- **A blocked or unstable network no longer reads like a crash.** When the
+  connection to Steam was cut, refused or timed out, the screen showed the
+  raw exception — `DioException [unknown]: null`, two class names and the
+  word "null" — which says nothing you can act on and looks like the app
+  broke rather than the network. Every one of those now says what happened
+  and what to try: the handshake was cut, the host is unreachable, it timed
+  out, the certificate was rejected. Thirteen screens were doing this;
+  they all changed, not just the one that was reported.
+
+### 修复
+- **网络被拦截或不稳定时,不再像是应用崩了。** 连接 Steam 被切断、被拒绝
+  或超时,页面上直接显示的是原始异常——`DioException [unknown]: null`,
+  两个类名加一个 "null",既说不出发生了什么,看着又像是应用自己坏了而不是
+  网络的问题。现在每一种都会说明发生了什么、可以试什么:握手被切断、连不上、
+  超时、证书未通过验证。原先有十三处这么干,全部改掉了,不只是被报告的那一处。
+
+—
+
 ## [v1.2.2] — 2026-08-17
 
 ### Fixed
