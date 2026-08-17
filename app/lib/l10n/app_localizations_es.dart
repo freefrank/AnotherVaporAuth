@@ -1998,4 +1998,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get syncDisconnectDeleteHold => 'Mantén para borrar los datos remotos';
+
+  @override
+  String get netErrTls =>
+      'No se pudo abrir una conexión segura con Steam. La conexión se cortó durante el saludo TLS, lo que suele significar que la red la está filtrando o es inestable. Prueba con otra red, o con un proxy.';
+
+  @override
+  String get netErrUnreachable =>
+      'No se pudo conectar con Steam. Comprueba tu conexión y vuelve a intentarlo.';
+
+  @override
+  String get netErrTimeout =>
+      'Steam no respondió a tiempo. Puede que la red sea lenta o esté filtrada.';
+
+  @override
+  String get netErrCert =>
+      'El certificado de Steam no era de confianza, así que AVA cerró la conexión. Puede que algo en esta red esté inspeccionando el tráfico.';
+
+  @override
+  String netErrServer(int code) {
+    return 'Steam devolvió un error ($code). Suele ser temporal: inténtalo de nuevo en un momento.';
+  }
 }

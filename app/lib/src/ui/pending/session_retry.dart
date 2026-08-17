@@ -9,8 +9,8 @@ import '../../core/models/steam_guard_account.dart';
 import '../../core/protocol/confirmations_client.dart'
     show ConfirmationAuthException;
 import '../../services/session_manager.dart';
-import '../../services/steam_api_client.dart'
-    show SteamApiException, isSessionDeadError;
+import '../../services/steam_api_client.dart' show isSessionDeadError;
+import '../error_text.dart';
 import '../login_screen.dart';
 
 /// 待办三页签、家庭组页与市场页共用的"会话续期 + 重登"骨架。原先每屏各养
@@ -68,11 +68,12 @@ mixin SessionRetryState<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     if (mounted) onReturn();
   }
 
-  /// User-facing text for a failed fetch that is *not* a dead session:
+  /// User-facing text for a failed fetch that is *not* a dead session.
+  ///
   /// SteamApiException 的完整 toString 对用户像未捕获的崩溃 —— 只显示其
-  /// message(如 "HTTP 405"),其余异常保持原样。
-  String fetchErrorText(Object e) =>
-      e is SteamApiException ? e.message : '$e';
+  /// message(如 "HTTP 405");传输层失败(握手被切断、连不上、超时)在
+  /// [describeError] 里各有各的说法,其余异常仍保持原样。
+  String fetchErrorText(AppLocalizations l, Object e) => describeError(l, e);
 
   /// Wraps [child] in a scrollable that fills the viewport and centers it —
   /// RefreshIndicator needs a scrollable to trigger, and the content must

@@ -139,7 +139,7 @@ class _RedeemKeyScreenState extends ConsumerState<RedeemKeyScreen>
   /// wall of advice aimed at developers, so network failures get the generic
   /// network message instead.
   String _transportErrorText(AppLocalizations l, Object e) =>
-      e is DioException ? l.keyRedeemNetworkError : fetchErrorText(e);
+      e is DioException ? l.keyRedeemNetworkError : fetchErrorText(l, e);
 
   /// User-facing copy for a key Steam refused. [KeyRedeemError.unknown] quotes
   /// Steam's own result code rather than guessing at a reason.

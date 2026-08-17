@@ -531,33 +531,33 @@
   "sdaImportNoManifest": "No manifest.json in that selection. Select it together with the .maFile files.",
   "sdaImportBadManifest": "That manifest.json can't be read: {error}",
   "@sdaImportBadManifest": {
-      "placeholders": {
-          "error": {
-              "type": "String"
-          }
+    "placeholders": {
+      "error": {
+        "type": "String"
       }
+    }
   },
   "sdaImportPassTitle": "SDA encryption passphrase",
   "sdaImportPassBody": "These maFiles are encrypted. Enter the passphrase you set in Steam Desktop Authenticator.",
   "sdaImportWrongPass": "That passphrase didn't decrypt any of the files.",
   "sdaImportDone": "{count, plural, =1{1 account imported.} other{{count} accounts imported.}}",
   "@sdaImportDone": {
-      "placeholders": {
-          "count": {
-              "type": "int"
-          }
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
+    }
   },
   "sdaImportSkipped": "{count, plural, =1{1 account was skipped: {names}} other{{count} accounts were skipped: {names}}}",
   "@sdaImportSkipped": {
-      "placeholders": {
-          "count": {
-              "type": "int"
-          },
-          "names": {
-              "type": "String"
-          }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
       }
+    }
   },
   "sdaImportNothing": "Nothing was imported.",
   "importSessionLoginNow": "Sign in now",
@@ -830,7 +830,13 @@
   "proErrNoVip": "Reward not confirmed yet — try again in a minute.",
   "proErrPurchaseBound": "This subscription is tied to a different Google account. Retry, and in the account chooser pick the one your Play Store uses.",
   "proErrPurchaseBoundKnown": "This subscription is tied to {account}. Retry, and pick that account in the chooser.",
-  "@proErrPurchaseBoundKnown": {"placeholders": {"account": {"type": "String"}}},
+  "@proErrPurchaseBoundKnown": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
   "proErrGeneric": "Failed: {code}",
   "@proErrGeneric": {
     "placeholders": {
@@ -1030,5 +1036,30 @@
   "syncDisconnect": "Disconnect sync",
   "syncDisconnectBody": "This device stops syncing. The remote library can stay for your other devices — or be deleted from the server entirely.",
   "syncDisconnectKeep": "Keep remote data",
-  "syncDisconnectDeleteHold": "Hold to delete remote data"
+  "syncDisconnectDeleteHold": "Hold to delete remote data",
+  "netErrTls": "Couldn't open a secure connection to Steam. The connection was cut during the TLS handshake, which usually means the network is filtering it or is unstable. Try another network — or a proxy — and retry.",
+  "@netErrTls": {
+    "description": "Shown when the TLS handshake to Steam is cut — the issue-#6 case."
+  },
+  "netErrUnreachable": "Couldn't reach Steam. Check your connection and retry.",
+  "@netErrUnreachable": {
+    "description": "Shown when the socket to Steam could not be opened at all."
+  },
+  "netErrTimeout": "Steam didn't answer in time. The network may be slow or filtered.",
+  "@netErrTimeout": {
+    "description": "Shown when Steam did not answer within the client timeout."
+  },
+  "netErrCert": "Steam's certificate wasn't trusted, so AVA closed the connection. Something on this network may be inspecting traffic.",
+  "@netErrCert": {
+    "description": "Shown when Steam's TLS certificate failed verification."
+  },
+  "netErrServer": "Steam returned an error ({code}). This is usually temporary — try again shortly.",
+  "@netErrServer": {
+    "description": "Shown for a non-2xx HTTP status from Steam.",
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  }
 }

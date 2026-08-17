@@ -11,6 +11,7 @@ import '../../core/protocol/confirmations_client.dart';
 import '../widgets/ava_panel.dart';
 import '../widgets/hold_button.dart';
 import 'session_retry.dart';
+import '../error_text.dart';
 
 /// Design screen 06 — confirmations. Native JSON rendering (no WebView). Top
 /// batch bar (accept all / reject all) + per-item cards with type chip, title,
@@ -89,7 +90,7 @@ class ConfirmationsTabState extends ConsumerState<ConfirmationsTab>
                 ? (e.message.isEmpty
                     ? l.confRejected
                     : '${l.confRejected}\n\nSteam: ${e.message}')
-                : '$e';
+                : describeError(l, e);
       });
     }
   }

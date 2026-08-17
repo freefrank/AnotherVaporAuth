@@ -1888,6 +1888,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncDisconnectDeleteHold => '长按删除远端数据';
+
+  @override
+  String get netErrTls =>
+      '无法与 Steam 建立安全连接。连接在 TLS 握手阶段被切断，通常是网络对它做了拦截，或者网络本身不稳定。换一个网络（或使用代理）后重试。';
+
+  @override
+  String get netErrUnreachable => '连不上 Steam。检查网络连接后重试。';
+
+  @override
+  String get netErrTimeout => 'Steam 没有在规定时间内响应。网络可能很慢，或者被拦截了。';
+
+  @override
+  String get netErrCert => 'Steam 的证书未通过验证，AVA 已中断这次连接。当前网络里可能有东西在监听流量。';
+
+  @override
+  String netErrServer(int code) {
+    return 'Steam 返回了一个错误（$code）。这通常是暂时的，稍后再试。';
+  }
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -3779,4 +3797,22 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get syncDisconnectDeleteHold => '長按刪除遠端資料';
+
+  @override
+  String get netErrTls =>
+      '無法與 Steam 建立安全連線。連線在 TLS 交握階段被切斷，通常是網路對它做了攔截，或者網路本身不穩定。換一個網路（或使用代理）後重試。';
+
+  @override
+  String get netErrUnreachable => '連不上 Steam。檢查網路連線後重試。';
+
+  @override
+  String get netErrTimeout => 'Steam 沒有在規定時間內回應。網路可能很慢，或者被攔截了。';
+
+  @override
+  String get netErrCert => 'Steam 的憑證未通過驗證，AVA 已中斷這次連線。目前網路裡可能有東西在監聽流量。';
+
+  @override
+  String netErrServer(int code) {
+    return 'Steam 回傳了一個錯誤（$code）。這通常是暫時的，稍後再試。';
+  }
 }

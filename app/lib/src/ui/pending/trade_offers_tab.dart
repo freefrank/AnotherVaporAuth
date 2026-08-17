@@ -10,6 +10,7 @@ import '../../core/models/trade_offer.dart';
 import '../../services/steam_api_client.dart' show CommunityAuthException;
 import 'offer_card.dart';
 import 'session_retry.dart';
+import '../error_text.dart';
 
 /// 报价页签：收到 / 发出 / 历史 三段。卡片可展开（双方物品 + 警示条），
 /// 接受走长按确认，拒绝/取消即点即行。Hosted inside PendingScreen。
@@ -100,7 +101,7 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
       setState(() {
         _loading = false;
         _needsLogin = needsLogin;
-        _error = needsLogin ? l.confNeedsLogin : fetchErrorText(e);
+        _error = needsLogin ? l.confNeedsLogin : fetchErrorText(l, e);
       });
     }
   }
@@ -180,7 +181,7 @@ class TradeOffersTabState extends ConsumerState<TradeOffersTab>
     } catch (e) {
       if (mounted) {
         messenger
-            .showSnackBar(SnackBar(content: Text(l.offerActionFailed('$e'))));
+            .showSnackBar(SnackBar(content: Text(l.offerActionFailed(describeError(l, e)))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

@@ -3514,6 +3514,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hold to delete remote data'**
   String get syncDisconnectDeleteHold;
+
+  /// Shown when the TLS handshake to Steam is cut — the issue-#6 case.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open a secure connection to Steam. The connection was cut during the TLS handshake, which usually means the network is filtering it or is unstable. Try another network — or a proxy — and retry.'**
+  String get netErrTls;
+
+  /// Shown when the socket to Steam could not be opened at all.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach Steam. Check your connection and retry.'**
+  String get netErrUnreachable;
+
+  /// Shown when Steam did not answer within the client timeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam didn\'t answer in time. The network may be slow or filtered.'**
+  String get netErrTimeout;
+
+  /// Shown when Steam's TLS certificate failed verification.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam\'s certificate wasn\'t trusted, so AVA closed the connection. Something on this network may be inspecting traffic.'**
+  String get netErrCert;
+
+  /// Shown for a non-2xx HTTP status from Steam.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam returned an error ({code}). This is usually temporary — try again shortly.'**
+  String netErrServer(int code);
 }
 
 class _AppLocalizationsDelegate

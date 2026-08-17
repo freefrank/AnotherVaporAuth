@@ -13,6 +13,7 @@ import '../core/protocol/qr_approval_client.dart';
 import '../services/auto_login.dart';
 import 'widgets/ava_panel.dart';
 import 'widgets/scanline_overlay.dart';
+import 'error_text.dart';
 
 /// The approval endpoints authenticate with the access token alone, and Steam
 /// access tokens are short-lived (~24 h JWTs) — anyone scanning a QR a day
@@ -87,7 +88,7 @@ Future<void> quickApproveLogin(
   } catch (e) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('${l.commonError}: $e')));
+        .showSnackBar(SnackBar(content: Text('${l.commonError}: ${describeError(l, e)}')));
   }
 }
 
@@ -220,7 +221,7 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _message = '${l.commonError}: $e';
+        _message = '${l.commonError}: ${describeError(l, e)}';
       });
     }
   }

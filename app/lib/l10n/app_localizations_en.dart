@@ -1976,4 +1976,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncDisconnectDeleteHold => 'Hold to delete remote data';
+
+  @override
+  String get netErrTls =>
+      'Couldn\'t open a secure connection to Steam. The connection was cut during the TLS handshake, which usually means the network is filtering it or is unstable. Try another network — or a proxy — and retry.';
+
+  @override
+  String get netErrUnreachable =>
+      'Couldn\'t reach Steam. Check your connection and retry.';
+
+  @override
+  String get netErrTimeout =>
+      'Steam didn\'t answer in time. The network may be slow or filtered.';
+
+  @override
+  String get netErrCert =>
+      'Steam\'s certificate wasn\'t trusted, so AVA closed the connection. Something on this network may be inspecting traffic.';
+
+  @override
+  String netErrServer(int code) {
+    return 'Steam returned an error ($code). This is usually temporary — try again shortly.';
+  }
 }

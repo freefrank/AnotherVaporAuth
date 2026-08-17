@@ -998,5 +998,10 @@
   "syncDisconnect": "断开同步",
   "syncDisconnectBody": "本机停止同步。远端同步库可以留给其他设备继续用——也可以从服务器上彻底删除。",
   "syncDisconnectKeep": "保留远端数据",
-  "syncDisconnectDeleteHold": "长按删除远端数据"
+  "syncDisconnectDeleteHold": "长按删除远端数据",
+  "netErrTls": "无法与 Steam 建立安全连接。连接在 TLS 握手阶段被切断，通常是网络对它做了拦截，或者网络本身不稳定。换一个网络（或使用代理）后重试。",
+  "netErrUnreachable": "连不上 Steam。检查网络连接后重试。",
+  "netErrTimeout": "Steam 没有在规定时间内响应。网络可能很慢，或者被拦截了。",
+  "netErrCert": "Steam 的证书未通过验证，AVA 已中断这次连接。当前网络里可能有东西在监听流量。",
+  "netErrServer": "Steam 返回了一个错误（{code}）。这通常是暂时的，稍后再试。"
 }

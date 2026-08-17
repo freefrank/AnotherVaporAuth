@@ -1990,4 +1990,25 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get syncDisconnectDeleteHold => 'Serverdaten löschen (halten)';
+
+  @override
+  String get netErrTls =>
+      'Es ließ sich keine sichere Verbindung zu Steam aufbauen. Die Verbindung wurde während des TLS-Handshakes getrennt — meist filtert das Netzwerk sie, oder es ist instabil. Versuchen Sie ein anderes Netzwerk oder einen Proxy.';
+
+  @override
+  String get netErrUnreachable =>
+      'Steam war nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.';
+
+  @override
+  String get netErrTimeout =>
+      'Steam hat nicht rechtzeitig geantwortet. Das Netzwerk ist womöglich langsam oder gefiltert.';
+
+  @override
+  String get netErrCert =>
+      'Das Zertifikat von Steam war nicht vertrauenswürdig, deshalb hat AVA die Verbindung beendet. Möglicherweise untersucht etwas in diesem Netzwerk den Datenverkehr.';
+
+  @override
+  String netErrServer(int code) {
+    return 'Steam hat einen Fehler zurückgegeben ($code). Das ist meist vorübergehend — versuchen Sie es gleich noch einmal.';
+  }
 }

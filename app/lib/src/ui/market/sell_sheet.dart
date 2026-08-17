@@ -12,6 +12,7 @@ import '../../core/models/steam_guard_account.dart';
 import '../../core/models/steam_item.dart';
 import '../../core/protocol/confirmations_client.dart';
 import '../../services/steam_api_client.dart';
+import '../error_text.dart';
 
 /// The market-listing confirmations in [latest] that are NOT in the
 /// [preExistingCreatorIds] snapshot — i.e. the ones created since the snapshot.
@@ -302,7 +303,7 @@ class _SellSheetState extends ConsumerState<SellSheet> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _error = l.marketListFailed('$e');
+          _error = l.marketListFailed(describeError(l, e));
         });
       }
     }

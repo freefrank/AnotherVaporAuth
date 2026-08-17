@@ -14,6 +14,7 @@ import 'pending/session_retry.dart';
 import 'widgets/ava_panel.dart';
 import 'widgets/hold_button.dart';
 import 'widgets/scanline_overlay.dart';
+import 'error_text.dart';
 
 /// The account's family-group hub: pending invites (discover → preflight →
 /// hold-to-join, previously the todo-center "Invites" tab) plus the read-only
@@ -102,7 +103,7 @@ class _FamilyGroupScreenState extends ConsumerState<FamilyGroupScreen>
       setState(() {
         _loading = false;
         _needsLogin = needsLogin;
-        _error = needsLogin ? l.confNeedsLogin : fetchErrorText(e);
+        _error = needsLogin ? l.confNeedsLogin : fetchErrorText(l, e);
       });
     }
   }
@@ -177,7 +178,7 @@ class _FamilyGroupScreenState extends ConsumerState<FamilyGroupScreen>
       }
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text(l.famJoinFailed('$e'))));
+      messenger.showSnackBar(SnackBar(content: Text(l.famJoinFailed(describeError(l, e)))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

@@ -11,6 +11,7 @@ import '../core/models/steam_guard_account.dart';
 import 'pending/session_retry.dart';
 import 'widgets/ava_panel.dart';
 import 'widgets/scanline_overlay.dart';
+import 'error_text.dart';
 
 /// Read-only list of the account's logged-in devices / sessions
 /// (`IAuthenticationService/EnumerateTokens`). Remote sign-out is not offered
@@ -62,7 +63,7 @@ class _DeviceSessionsScreenState extends ConsumerState<DeviceSessionsScreen>
       setState(() {
         _loading = false;
         _needsLogin = needsLogin;
-        _error = needsLogin ? l.confNeedsLogin : fetchErrorText(e);
+        _error = needsLogin ? l.confNeedsLogin : fetchErrorText(l, e);
       });
     }
   }
@@ -160,7 +161,7 @@ class _DeviceSessionsScreenState extends ConsumerState<DeviceSessionsScreen>
     } catch (e) {
       if (!mounted) return;
       messenger
-          .showSnackBar(SnackBar(content: Text(l.deviceRevokeFailed('$e'))));
+          .showSnackBar(SnackBar(content: Text(l.deviceRevokeFailed(describeError(l, e)))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

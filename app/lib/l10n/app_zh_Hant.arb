@@ -637,5 +637,10 @@
   "syncDisconnect": "中斷同步",
   "syncDisconnectBody": "這台裝置會停止同步。遠端同步庫可以留給你的其他裝置繼續用——也可以從伺服器上整個刪除。",
   "syncDisconnectKeep": "保留遠端資料",
-  "syncDisconnectDeleteHold": "長按刪除遠端資料"
+  "syncDisconnectDeleteHold": "長按刪除遠端資料",
+  "netErrTls": "無法與 Steam 建立安全連線。連線在 TLS 交握階段被切斷，通常是網路對它做了攔截，或者網路本身不穩定。換一個網路（或使用代理）後重試。",
+  "netErrUnreachable": "連不上 Steam。檢查網路連線後重試。",
+  "netErrTimeout": "Steam 沒有在規定時間內回應。網路可能很慢，或者被攔截了。",
+  "netErrCert": "Steam 的憑證未通過驗證，AVA 已中斷這次連線。目前網路裡可能有東西在監聽流量。",
+  "netErrServer": "Steam 回傳了一個錯誤（{code}）。這通常是暫時的，稍後再試。"
 }

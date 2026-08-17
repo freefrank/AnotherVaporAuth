@@ -6,6 +6,7 @@ import '../app/providers.dart';
 import '../app/responsive.dart';
 import '../app/theme.dart';
 import '../services/account_store.dart';
+import 'error_text.dart';
 
 /// Shown by the app root when bootstrap failed with [ManifestParseException]:
 /// the account database (manifest.json) is missing or corrupt. Offers retry
@@ -54,7 +55,7 @@ class _StoreRecoveryScreenState extends ConsumerState<StoreRecoveryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context).storeActionFailed('$e')),
+            content: Text(AppLocalizations.of(context).storeActionFailed(describeError(AppLocalizations.of(context), e))),
           ),
         );
       }
@@ -99,7 +100,7 @@ class _StoreRecoveryScreenState extends ConsumerState<StoreRecoveryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context).storeActionFailed('$e')),
+            content: Text(AppLocalizations.of(context).storeActionFailed(describeError(AppLocalizations.of(context), e))),
           ),
         );
       }

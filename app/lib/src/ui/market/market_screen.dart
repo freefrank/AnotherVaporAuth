@@ -12,6 +12,7 @@ import '../../services/auto_login.dart';
 import '../../services/steam_api_client.dart' show CommunityAuthException;
 import '../pending/session_retry.dart';
 import 'sell_sheet.dart';
+import '../error_text.dart';
 
 /// Inventory browser + market listings for one account.
 class MarketScreen extends ConsumerStatefulWidget {
@@ -99,7 +100,10 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _error = '$e');
+      if (mounted) {
+        final l = AppLocalizations.of(context);
+        setState(() => _error = describeError(l, e));
+      }
     }
   }
 
@@ -160,7 +164,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen>
       // Keep already-loaded items; surface the error only when there is
       // nothing to show (the scroll listener retries pagination naturally).
       if (mounted && gen == _loadGen && _stacks.isEmpty) {
-        setState(() => _itemsError = '$e');
+        final l = AppLocalizations.of(context);
+        setState(() => _itemsError = describeError(l, e));
       }
     } finally {
       if (mounted && gen == _loadGen) setState(() => _loadingItems = false);

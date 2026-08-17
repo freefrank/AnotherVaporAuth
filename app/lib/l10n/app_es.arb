@@ -567,5 +567,10 @@
   "syncDisconnect": "Desconectar sincronización",
   "syncDisconnectBody": "Este dispositivo deja de sincronizar. La biblioteca remota puede quedarse para tus otros dispositivos, o eliminarse por completo del servidor.",
   "syncDisconnectKeep": "Conservar datos remotos",
-  "syncDisconnectDeleteHold": "Mantén para borrar los datos remotos"
+  "syncDisconnectDeleteHold": "Mantén para borrar los datos remotos",
+  "netErrTls": "No se pudo abrir una conexión segura con Steam. La conexión se cortó durante el saludo TLS, lo que suele significar que la red la está filtrando o es inestable. Prueba con otra red, o con un proxy.",
+  "netErrUnreachable": "No se pudo conectar con Steam. Comprueba tu conexión y vuelve a intentarlo.",
+  "netErrTimeout": "Steam no respondió a tiempo. Puede que la red sea lenta o esté filtrada.",
+  "netErrCert": "El certificado de Steam no era de confianza, así que AVA cerró la conexión. Puede que algo en esta red esté inspeccionando el tráfico.",
+  "netErrServer": "Steam devolvió un error ({code}). Suele ser temporal: inténtalo de nuevo en un momento."
 }

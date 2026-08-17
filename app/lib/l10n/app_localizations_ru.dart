@@ -2055,4 +2055,25 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get syncDisconnectDeleteHold => 'Удалить данные с сервера удержанием';
+
+  @override
+  String get netErrTls =>
+      'Не удалось установить защищённое соединение со Steam. Соединение оборвалось во время TLS-рукопожатия — обычно это значит, что сеть его фильтрует или нестабильна. Попробуйте другую сеть или прокси.';
+
+  @override
+  String get netErrUnreachable =>
+      'Не удалось связаться со Steam. Проверьте подключение и повторите попытку.';
+
+  @override
+  String get netErrTimeout =>
+      'Steam не ответил вовремя. Сеть может быть медленной или фильтруемой.';
+
+  @override
+  String get netErrCert =>
+      'Сертификат Steam не прошёл проверку, поэтому AVA разорвала соединение. Возможно, что-то в этой сети просматривает трафик.';
+
+  @override
+  String netErrServer(int code) {
+    return 'Steam вернул ошибку ($code). Обычно это временно — повторите попытку чуть позже.';
+  }
 }

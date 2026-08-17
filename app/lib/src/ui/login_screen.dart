@@ -17,6 +17,7 @@ import 'widgets/cooldown_button.dart';
 import 'widgets/scanline_overlay.dart';
 import 'widgets/stepper3.dart';
 import 'add_authenticator_screen.dart';
+import 'error_text.dart';
 
 enum LoginReason { add, refresh }
 
@@ -295,7 +296,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           return l.loginErrCodeMismatch;
       }
     }
-    return l.loginFailed('$e');
+    return l.loginFailed(describeError(l, e));
   }
 
   @override
