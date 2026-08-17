@@ -5,6 +5,26 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v1.2.2] — 2026-08-17
+
+### Fixed
+- **An equipped avatar frame painted a white square over the avatar.** The
+  frame's own artwork drew correctly; the transparent hole in its middle came
+  out solid white, and that white sat on top of the avatar. It only showed up
+  a second after launch, because that is when the equipped frame finishes
+  loading and lands on top — so the avatar appeared to load and then vanish.
+  Anyone without a frame equipped never saw it. Reported in
+  [#3](https://github.com/freefrank/AnotherVaporAuth/issues/3).
+
+### 修复
+- **装备了头像框时,头像会被一块白色方块盖住。** 框本身的花纹画得是对的,
+  白掉的是框中间那个本该透明的洞——而那片白正压在头像上面。它只在启动一
+  两秒后出现,因为那正是装备的头像框加载完、盖上去的时刻,所以看起来像是
+  头像先正常显示、随后消失。没装头像框的用户完全不会遇到。问题报告见
+  [#3](https://github.com/freefrank/AnotherVaporAuth/issues/3)。
+
+—
+
 ## [v1.2.1] — 2026-08-16
 
 ### Fixed
