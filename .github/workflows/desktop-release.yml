@@ -131,8 +131,13 @@ jobs:
             Get-ChildItem -Recurse $dir | Select-Object -First 20 FullName | Out-String | Write-Host
             throw "install folder still present after uninstall"
           }
-          $reg = reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\AVA 2>$null
-          if ($LASTEXITCODE -eq 0) { throw "uninstall registry entry survived" }
+          # Test-Path over `reg query` on purpose: reg exits 1 when the key is
+          # missing, which is the result this step is hoping for — and the
+          # pwsh wrapper ends the step with `exit $LASTEXITCODE`, so a clean
+          # uninstall failed the job while printing that it had succeeded.
+          if (Test-Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\AVA') {
+            throw "uninstall registry entry survived"
+          }
           Write-Host "uninstalled cleanly"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
