@@ -15,6 +15,11 @@ automated releases.
   loading and lands on top — so the avatar appeared to load and then vanish.
   Anyone without a frame equipped never saw it. Reported in
   [#3](https://github.com/freefrank/AnotherVaporAuth/issues/3).
+- **Windows: uninstalling left the install folder behind.** Every file went,
+  but the empty directories under `data\` stayed, and a folder with anything
+  in it is a folder the uninstaller will not remove — so it looked like
+  nothing had happened. It now takes the empty directories with it. Anything
+  you put in that folder yourself still survives, as before.
 
 ### 修复
 - **装备了头像框时,头像会被一块白色方块盖住。** 框本身的花纹画得是对的,
@@ -22,6 +27,9 @@ automated releases.
   两秒后出现,因为那正是装备的头像框加载完、盖上去的时刻,所以看起来像是
   头像先正常显示、随后消失。没装头像框的用户完全不会遇到。问题报告见
   [#3](https://github.com/freefrank/AnotherVaporAuth/issues/3)。
+- **Windows:卸载后安装目录还在。** 文件全都删掉了,但 `data\` 下面那一层层
+  空目录留着,而只要目录里还有东西,卸载程序就不会动它——看起来就像什么都
+  没发生。现在会把空目录一并带走。你自己放进那个目录的东西依然不受影响。
 
 —
 
