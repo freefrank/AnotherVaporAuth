@@ -251,7 +251,14 @@ class InstallEngine {
       }
       final f = File(target);
       if (f.existsSync()) await f.delete();
-      dirs.add(p.dirname(target));
+      // Every ancestor up to the install root, not just the immediate
+      // parent. A Flutter install has levels that hold only directories —
+      // data\flutter_assets\packages is one — and those were never
+      // considered, so the whole empty skeleton outlived the uninstall and
+      // kept the install folder itself from being removed.
+      for (var d = p.dirname(target); p.isWithin(dir, d); d = p.dirname(d)) {
+        dirs.add(d);
+      }
     }
     // Deepest first, so a directory whose children were just removed is
     // considered after them.

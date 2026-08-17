@@ -136,6 +136,57 @@ void main() {
     });
   });
 
+  group('removeInstalled nesting', () {
+    /// REGRESSION: pruning only ever looked at each file's immediate parent,
+    /// so a directory holding nothing but other directories was never
+    /// considered. A real install has several — data\flutter_assets\packages
+    /// among them — so uninstall left the empty skeleton behind, and with it
+    /// the install folder, which reads to the user as "uninstall did not
+    /// work". Caught by the E2E uninstall test, which nothing exercised
+    /// before 2026-08-17; the unit tests here were all flat.
+    test('prunes directories that only ever held other directories', () async {
+      final dir = Directory(p.join(tmp.path, 'AVA'))..createSync();
+      final deep = p.join('data', 'flutter_assets', 'packages',
+          'cupertino_icons', 'CupertinoIcons.ttf');
+      final files = ['ava.exe', deep, InstallEngine.manifestName];
+      for (final rel in files) {
+        final f = File(p.join(dir.path, rel));
+        f.parent.createSync(recursive: true);
+        f.writeAsStringSync('x');
+      }
+      File(p.join(dir.path, InstallEngine.manifestName))
+          .writeAsStringSync(files.join('\n'));
+
+      await InstallEngine.removeInstalled(dir.path, log: (_) {});
+
+      expect(dir.existsSync(), isFalse,
+          reason: 'the install folder itself must go');
+    });
+
+    test('still refuses to take a directory the user put there', () async {
+      final dir = Directory(p.join(tmp.path, 'AVA'))..createSync();
+      final ours = p.join('data', 'flutter_assets', 'app.dill');
+      final files = ['ava.exe', ours, InstallEngine.manifestName];
+      for (final rel in files) {
+        final f = File(p.join(dir.path, rel));
+        f.parent.createSync(recursive: true);
+        f.writeAsStringSync('x');
+      }
+      File(p.join(dir.path, InstallEngine.manifestName))
+          .writeAsStringSync(files.join('\n'));
+      // Someone's own folder, nested where the pruning walks.
+      final theirs = Directory(p.join(dir.path, 'data', 'my-notes'))
+        ..createSync(recursive: true);
+      File(p.join(theirs.path, 'thesis.docx')).writeAsStringSync('mine');
+
+      await InstallEngine.removeInstalled(dir.path, log: (_) {});
+
+      expect(File(p.join(theirs.path, 'thesis.docx')).existsSync(), isTrue);
+      expect(dir.existsSync(), isTrue,
+          reason: 'the folder stays while anything not ours is in it');
+    });
+  });
+
   /// The NSIS wrapper runs this app out of a scratch directory, so
   /// Platform.resolvedExecutable is no longer the file the user launched. It
   /// passes the real one as --self=. Get this wrong and the installer looks
