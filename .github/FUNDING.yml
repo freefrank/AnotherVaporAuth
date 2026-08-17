@@ -1,0 +1,3 @@
+# 爱发电不在 GitHub 原生支持的平台列表里，只能走 custom（最多四条 URL，
+# 含 ":" 的必须加引号）。
+custom: ["https://ifdian.net/a/anothervaporauth"]
