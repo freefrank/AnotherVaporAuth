@@ -30,6 +30,38 @@ class _RawFrame {
   _RawFrame(this.rgba, this.width, this.height, this.delayMs);
 }
 
+/// Converts [f] from straight to premultiplied alpha, returning the image to
+/// hand to the engine.
+///
+/// [ui.PixelFormat.rgba8888] — the format [SteamImageCache._toUiImage] uploads
+/// with — is documented as "RGBA row-primary form **with premultiplied
+/// alpha**", but `package:image` decodes PNG/GIF to straight alpha. The two
+/// disagree exactly where alpha is low, and Steam's avatar-frame PNGs are the
+/// worst case: every one of this frame's 36360 fully-transparent pixels stores
+/// rgb(255,255,255). Read as premultiplied, each one contributes full white at
+/// zero coverage — the frame's transparent middle paints as a solid white
+/// block that hides the avatar behind it (issue #3).
+///
+/// Runs before the downscale on purpose: interpolating straight alpha would
+/// smear that same white into a halo along every edge.
+img.Image premultiplyAlpha(img.Image f) {
+  // A palette image resolves alpha through the palette; give setRgba a direct
+  // buffer to write into first.
+  final out = f.hasPalette ? f.convert(numChannels: 4) : f;
+  if (out.numChannels < 4) return out;
+  for (final p in out) {
+    final a = p.a.toInt();
+    if (a == 255) continue;
+    if (a == 0) {
+      p.setRgba(0, 0, 0, 0);
+      continue;
+    }
+    p.setRgba((p.r.toInt() * a + 127) ~/ 255, (p.g.toInt() * a + 127) ~/ 255,
+        (p.b.toInt() * a + 127) ~/ 255, a);
+  }
+  return out;
+}
+
 /// Loads + decodes (with caching) Steam profile images, including animated
 /// APNG avatars / avatar frames that Flutter's built-in codec renders as a
 /// single static frame. Bytes come from [DiskImageCache] (instant on a
@@ -94,16 +126,18 @@ class SteamImageCache {
     if (apng != null) {
       return [
         for (final fr in apng)
-          _rawFrom(_fit(fr.image), fr.delayMs),
+          _rawFrom(_prepare(fr.image), fr.delayMs),
       ];
     }
     final decoded = img.decodeImage(bytes);
     if (decoded == null) return null;
     return [
       for (final frame in decoded.frames)
-        _rawFrom(_fit(frame), frame.frameDuration),
+        _rawFrom(_prepare(frame), frame.frameDuration),
     ];
   }
+
+  static img.Image _prepare(img.Image f) => _fit(premultiplyAlpha(f));
 
   static img.Image _fit(img.Image f) {
     final m = f.width > f.height ? f.width : f.height;
