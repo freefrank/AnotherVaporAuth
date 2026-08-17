@@ -135,4 +135,61 @@ void main() {
       expect(File(p.join(dir.path, 'thesis.docx')).existsSync(), isTrue);
     });
   });
+
+  /// The NSIS wrapper runs this app out of a scratch directory, so
+  /// Platform.resolvedExecutable is no longer the file the user launched. It
+  /// passes the real one as --self=. Get this wrong and the installer looks
+  /// for its install folder in %TEMP%, and writes an uninstall.exe that is a
+  /// copy of the unpacked launcher rather than of setup.exe.
+  group('selfImage', () {
+    final original = InstallEngine.selfImage;
+    tearDown(() => InstallEngine.selfImage = original);
+
+    // Paths are built with p.join so these read the same way the production
+    // code will on Windows, while still being real paths for the host the
+    // suite runs on.
+    test('adopts the path the wrapper passes', () {
+      final path = p.join(tmp.path, 'Programs', 'AVA', 'uninstall.exe');
+      InstallEngine.adoptSelfImage(['--self=$path']);
+
+      expect(InstallEngine.selfImage, path);
+      expect(p.basename(InstallEngine.selfImage), 'uninstall.exe');
+      expect(InstallEngine.selfDir, p.join(tmp.path, 'Programs', 'AVA'));
+    });
+
+    test('a path with spaces survives intact', () {
+      final path = p.join(tmp.path, 'AVA Setup', 'setup.exe');
+      InstallEngine.adoptSelfImage(['--self=$path', '--auto']);
+
+      expect(InstallEngine.selfImage, path);
+      expect(InstallEngine.selfDir, p.join(tmp.path, 'AVA Setup'));
+    });
+
+    test('falls back to the running image when the flag is absent', () {
+      InstallEngine.adoptSelfImage(const ['--auto']);
+
+      expect(InstallEngine.selfImage, Platform.resolvedExecutable);
+    });
+
+    test('ignores an empty --self= rather than blanking the path', () {
+      InstallEngine.adoptSelfImage(const ['--self=']);
+
+      expect(InstallEngine.selfImage, Platform.resolvedExecutable);
+    });
+
+    test('recognises the %TEMP% cleanup stage through the passed path', () {
+      // Stage 2 is re-entered through the wrapper, so the only evidence that
+      // this is the staged copy is the outer name.
+      final staged = p.join(tmp.path, 'ava_uninstall_stage.exe');
+      InstallEngine.adoptSelfImage(['--self=$staged']);
+
+      expect(InstallEngine.isStaged, isTrue);
+    });
+
+    test('the setup exe is not mistaken for the staged copy', () {
+      InstallEngine.adoptSelfImage(['--self=${p.join(tmp.path, 'setup.exe')}']);
+
+      expect(InstallEngine.isStaged, isFalse);
+    });
+  });
 }

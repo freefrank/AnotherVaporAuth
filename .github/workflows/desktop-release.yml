@@ -46,8 +46,8 @@ jobs:
         run: echo "v=$(grep '^version:' pubspec.yaml | cut -d' ' -f2 | cut -d+ -f1)" >> "$GITHUB_OUTPUT"
 
       # ---- scene-style installer (installer/): app Release becomes the
-      # payload asset, the installer app is built around it, then Enigma
-      # packs the whole thing into one setup exe. ----
+      # payload asset, the installer app is built around it, then NSIS
+      # (tool/setup.nsi) packs the whole thing into one setup exe. ----
       - name: Embed payload
         shell: pwsh
         working-directory: .
@@ -62,50 +62,78 @@ jobs:
           flutter pub get --enforce-lockfile
           flutter build windows --release --dart-define=AVA_VERSION=${{ steps.ver.outputs.v }}
 
-      - name: Install Enigma Virtual Box
+      # NSIS is NOT in the windows-latest (Server 2025) image — it was in
+      # 2022, which is what an out-of-date reading of the image manifest will
+      # tell you. Install it from Chocolatey at a pinned version: choco is on
+      # the image and verifies the package checksum itself.
+      - name: Install NSIS
         shell: pwsh
-        working-directory: .
         run: |
-          $out = "$env:TEMP\enigmavb.exe"
-          foreach ($i in 1..3) {
-            curl.exe -sL -o $out https://enigmaprotector.com/assets/files/enigmavb.exe
-            if ((Get-Item $out -ErrorAction SilentlyContinue).Length -gt 5MB) { break }
-            Start-Sleep 5
-          }
-          if ((Get-Item $out).Length -le 5MB) { throw 'enigmavb.exe download failed/truncated' }
-
-          # This installer runs with the job's credentials and its output is
-          # what users execute, so "it downloaded" is not good enough. The
-          # vendor publishes no digest and the URL is unversioned, so a pinned
-          # SHA-256 would break on every upstream release; the Authenticode
-          # signature is the control that survives version bumps.
-          $sig = Get-AuthenticodeSignature $out
-          if ($sig.Status -ne 'Valid') {
-            throw "enigmavb.exe signature is $($sig.Status) — refusing to run it"
-          }
-          $subject = $sig.SignerCertificate.Subject
-          if ($subject -notmatch 'Enigma') {
-            throw "enigmavb.exe signed by an unexpected publisher: $subject"
-          }
-          Write-Host "enigmavb.exe signature OK — $subject"
-          Start-Process $out -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+          choco install nsis --version=3.12.0 -y --no-progress
+          if ($LASTEXITCODE -ne 0) { throw "choco install nsis exited $LASTEXITCODE" }
 
       - name: Pack single-file setup exe
         shell: pwsh
         working-directory: .
-        run: ./tool/pack_portable.ps1 -ReleaseDir installer/build/windows/x64/runner/Release -Output "AVA-v${{ steps.ver.outputs.v }}-windows-x64-setup.exe" -ExeName ava_installer.exe -NoTempMap
+        run: |
+          $src = (Resolve-Path installer/build/windows/x64/runner/Release).Path
+          $out = Join-Path (Get-Location).Path "AVA-v${{ steps.ver.outputs.v }}-windows-x64-setup.exe"
+          $ico = (Resolve-Path app/windows/runner/resources/app_icon.ico).Path
+          # choco does not refresh this session's PATH, so look in the known
+          # install location too before giving up.
+          $makensis = (Get-Command makensis -ErrorAction SilentlyContinue).Source
+          foreach ($c in @("${env:ProgramFiles(x86)}\NSIS\makensis.exe",
+                           "${env:ProgramFiles}\NSIS\makensis.exe")) {
+            if (-not $makensis -and (Test-Path $c)) { $makensis = $c }
+          }
+          if (-not $makensis) { throw "makensis not found after installing NSIS" }
+          & $makensis /VERSION
+          & $makensis /V2 "/DSRCDIR=$src" "/DOUTFILE=$out" "/DICONFILE=$ico" `
+            "/DAPPVER=${{ steps.ver.outputs.v }}" tool/setup.nsi
+          if ($LASTEXITCODE -ne 0) { throw "makensis exited $LASTEXITCODE" }
+          if (-not (Test-Path $out)) { throw "makensis produced no output" }
+          "packed {0:N1} MB" -f ((Get-Item $out).Length / 1MB)
 
       - name: E2E install test
         shell: pwsh
         working-directory: .
         run: |
-          $p = Start-Process ".\AVA-v${{ steps.ver.outputs.v }}-windows-x64-setup.exe" -ArgumentList '--auto' -PassThru -Wait
+          $setup = ".\AVA-v${{ steps.ver.outputs.v }}-windows-x64-setup.exe"
+          $p = Start-Process $setup -ArgumentList '--auto' -PassThru -Wait
           if ($p.ExitCode -ne 0) { throw "auto-install exited $($p.ExitCode)" }
           $dir = "$env:LOCALAPPDATA\Programs\AVA"
           foreach ($f in @('ava.exe','uninstall.exe','data\icudtl.dat')) {
             if (-not (Test-Path "$dir\$f")) { throw "missing $f after install" }
           }
           reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\AVA /v UninstallString
+
+          # The installer reproduces itself by copying its own outer image.
+          # Under the NSIS wrapper that image is no longer the running
+          # process, so it arrives via --self= — and if that plumbing ever
+          # breaks, this is what breaks: uninstall.exe would be a copy of the
+          # unpacked launcher instead of the setup exe, and would not run.
+          $a = (Get-FileHash $setup -Algorithm SHA256).Hash
+          $b = (Get-FileHash "$dir\uninstall.exe" -Algorithm SHA256).Hash
+          if ($a -ne $b) { throw "uninstall.exe is not a copy of setup.exe ($b vs $a)" }
+          Write-Host "uninstall.exe matches setup.exe — $a"
+
+      # Uninstall is two-stage and detached (the uninstaller cannot delete
+      # itself), so this asserts the end state rather than an exit code.
+      - name: E2E uninstall test
+        shell: pwsh
+        working-directory: .
+        run: |
+          $dir = "$env:LOCALAPPDATA\Programs\AVA"
+          Start-Process "$dir\uninstall.exe" -ArgumentList '--auto'
+          $deadline = (Get-Date).AddMinutes(3)
+          while ((Test-Path $dir) -and (Get-Date) -lt $deadline) { Start-Sleep 3 }
+          if (Test-Path $dir) {
+            Get-ChildItem -Recurse $dir | Select-Object -First 20 FullName | Out-String | Write-Host
+            throw "install folder still present after uninstall"
+          }
+          $reg = reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\AVA 2>$null
+          if ($LASTEXITCODE -eq 0) { throw "uninstall registry entry survived" }
+          Write-Host "uninstalled cleanly"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:

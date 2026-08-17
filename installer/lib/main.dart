@@ -9,11 +9,14 @@ import 'fx.dart';
 
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Before anything asks where this program lives: under the NSIS wrapper the
+  // running image sits in a scratch directory, and the path that matters is
+  // the one the wrapper passes in.
+  InstallEngine.adoptSelfImage(args);
   final staged = InstallEngine.isStaged;
   final uninstall = staged ||
       args.contains('--uninstall') ||
-      p.basename(Platform.resolvedExecutable).toLowerCase() ==
-          'uninstall.exe';
+      p.basename(InstallEngine.selfImage).toLowerCase() == 'uninstall.exe';
   final auto =
       args.contains('--auto') || (staged && InstallEngine.stagedAuto);
   await windowManager.ensureInitialized();

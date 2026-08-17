@@ -18,11 +18,10 @@
 ; which keeps the outer process alive for exactly as long as the app runs —
 ; that gives extract, run, clean up, with no bookkeeping of our own.
 ;
-; NOT usable for the installer (tool/pack_portable.ps1, -NoTempMap): that one
-; needs the running process image to *be* the outer exe, because engine.dart
-; copies Platform.resolvedExecutable to produce uninstall.exe. Here the running
-; image is the extracted copy, which is fine — the portable app never
-; reproduces itself.
+; The installer has its own script, tool/setup.nsi: it reproduces itself by
+; copying its outer image, so that path has to be handed to it explicitly.
+; Nothing here does — the portable app never writes a copy of itself, so
+; running from the extracted copy is all it needs.
 
 Unicode true
 ManifestDPIAware true

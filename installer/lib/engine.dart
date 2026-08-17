@@ -16,6 +16,32 @@ const _regKey = r'HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\AVA';
 class InstallEngine {
   static bool get isDryRun => !Platform.isWindows;
 
+  /// The outer executable the user actually launched — setup.exe,
+  /// uninstall.exe, or the staged copy in %TEMP%.
+  ///
+  /// The NSIS wrapper (tool/setup.nsi) unpacks this app into its own scratch
+  /// directory and runs it from there, so [Platform.resolvedExecutable]
+  /// points at that scratch copy, not at the file on the user's disk. Five
+  /// things depend on the outer path and would all be wrong without this
+  /// seam: which mode to start in, where the install lives, whether this is
+  /// the staged copy, and the two places that reproduce the program by
+  /// copying its own image. The wrapper passes it as `--self=<path>`;
+  /// [Platform.resolvedExecutable] remains the answer when the app is run
+  /// unpacked (developing on Linux, `flutter run`).
+  static String selfImage = Platform.resolvedExecutable;
+
+  /// Reads `--self=<path>` out of [args]. Call once, before anything reads
+  /// [selfImage].
+  static void adoptSelfImage(List<String> args) {
+    const flag = '--self=';
+    for (final a in args) {
+      if (a.startsWith(flag) && a.length > flag.length) {
+        selfImage = a.substring(flag.length);
+        return;
+      }
+    }
+  }
+
   static String get defaultInstallDir => Platform.isWindows
       ? p.join(
           Platform.environment['LOCALAPPDATA'] ?? r'C:\', 'Programs', 'AVA')
@@ -166,7 +192,7 @@ class InstallEngine {
     }
     log('writing uninstaller');
     final uninstaller = p.join(dir, 'uninstall.exe');
-    await File(Platform.resolvedExecutable).copy(uninstaller);
+    await File(selfImage).copy(uninstaller);
     written.add('uninstall.exe');
     // Written last and listing itself, so uninstall can clean up completely.
     written.add(manifestName);
@@ -255,16 +281,19 @@ class InstallEngine {
       File(p.join(dir, 'ava.exe')).existsSync() &&
       Directory(p.join(dir, 'data')).existsSync();
 
-  static String get selfDir => p.dirname(Platform.resolvedExecutable);
+  static String get selfDir => p.dirname(selfImage);
 
   // ---- two-stage uninstall ----
-  // The uninstaller can't clean the install dir while running from it: it
-  // can't delete its own exe, and the Enigma box overlays its virtual files
-  // (data/, flutter_windows.dll, …) onto the real dir, so deletes on the
-  // shadowed names fail. Classic solution (same as Inno Setup): copy self to
-  // %TEMP%, relaunch from there, and let the staged copy do the real work.
-  // The handover uses a sidecar file, not argv — command lines have proven
-  // unreliable across the Enigma boundary.
+  // The uninstaller can't clean the install dir while running from it:
+  // uninstall.exe is the running image and Windows will not let it delete
+  // itself. Classic solution (same as Inno Setup): copy self to %TEMP%,
+  // relaunch from there, and let the staged copy do the real work.
+  //
+  // The handover uses a sidecar file rather than argv. That began as a
+  // workaround for the Enigma boundary mangling command lines; it stays
+  // because the staged copy is re-entered through the NSIS wrapper, which
+  // owns its own argument line, and one channel we control end to end is
+  // easier to reason about than two.
 
   static const _stageExe = 'ava_uninstall_stage.exe';
   static String get _tempDir =>
@@ -272,8 +301,7 @@ class InstallEngine {
   static String get _markerPath => p.join(_tempDir, 'ava_uninstall_job.txt');
 
   /// True when this process is the staged copy running from %TEMP%.
-  static bool get isStaged =>
-      p.basename(Platform.resolvedExecutable).toLowerCase() == _stageExe;
+  static bool get isStaged => p.basename(selfImage).toLowerCase() == _stageExe;
 
   /// Auto flag recorded by the first stage for the staged copy.
   static bool get stagedAuto {
@@ -312,7 +340,7 @@ foreach (\$sf in @('Programs','Desktop')) {
     progress(0.8);
     log('handing over to cleanup stage');
     final stage = p.join(_tempDir, _stageExe);
-    await File(Platform.resolvedExecutable).copy(stage);
+    await File(selfImage).copy(stage);
     File(_markerPath).writeAsStringSync(
         [dir, if (_autoHandover) 'auto'].join('\n'));
     await Process.start(stage, const [], mode: ProcessStartMode.detached);
