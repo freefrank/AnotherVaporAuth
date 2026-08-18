@@ -1,5 +1,5 @@
 TITLE:
-AVA: Steam Authenticator
+AVA: Steam Guard Authenticator
 
 SHORT:
 Unofficial open-source Steam Guard authenticator. Codes, trades, market.
