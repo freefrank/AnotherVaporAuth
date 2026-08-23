@@ -150,8 +150,8 @@ Play 商店页**公开可见**——内部/封闭测试不公开,**公开测试(
 2. 每人生成一个终身码插入 D1 `beta_testers`(README 有 SQL 示例;码用
    `openssl rand -hex 8` 一类生成即可);
 3. 发码:可改造 `posts/zh/recruit/send_beta_invite.py` 群发;
-4. 注意 worker 语义:**一码绑定首个兑换设备**,换设备需后台清
-   `redeemed_by`(或将来加自助解绑)——发码邮件里提醒一句"在常用手机上兑换"。
+4. worker 语义见 §7:**一码四类端各一台**,`redeemed_by` 只是审计字段,
+   换机不需要人工清它。
 
 ---
 
@@ -161,15 +161,14 @@ Play 商店页**公开可见**——内部/封闭测试不公开,**公开测试(
 |---|---|---|
 | `kEntitlementPublicKeyB64` | `app/lib/src/services/entitlement_store.dart` | ✅ 已回填(生产公钥,2026-07-16) |
 | `kEntitlementApiBase` | 同上 | ✅ `api.ava.dotslash.pro` 已上线 |
-| `kGoogleServerClientId` | `app/lib/src/services/play_channel.dart` | ⏸️ **挂起,待第 2 步 Web client**(2026-07-18) |
+| `kGoogleServerClientId` | `app/lib/src/services/play_channel.dart` | ✅ 已回填(2026-07-30,见第 2 步) |
 | `kBannerAdUnitId` / `kRewardedAdUnitId` | 同上 | ✅ 真实 ID 已回填;**release 构建才用真实位,debug 恒走官方测试位**(防误点封号) |
 | AdMob `APPLICATION_ID` | `app/android/app/src/play/AndroidManifest.xml` | ✅ 已回填 |
 | `kAfdianPageUrl` | `app/lib/src/ui/paywall_screen.dart` | ✅ `ifdian.net/a/anothervaporauth` |
 | `wrangler.jsonc` D1/KV id | `infra/entitlement-worker/` | ✅ 已填并部署 |
 
-唯一剩余占位符是 `kGoogleServerClientId`:为空时订阅/恢复购买报"该构建尚未
-配置",其余功能(含爱发电解锁、beta 码、激励视频)不受影响——安全降级仍然
-成立,0.90 内测可以随时铺开。
+占位符已全部回填。(历史:`kGoogleServerClientId` 为空时订阅/恢复购买会报
+"该构建尚未配置",其余功能不受影响——那个安全降级仍然在代码里。)
 
 **2026-07-18 挂起备注**:审计修复批(commit `1dd1929`)已把订阅流程改为
 **先 Google 登录、后发起扣费**,且两条流程入口都有 `signInConfigured` 快速

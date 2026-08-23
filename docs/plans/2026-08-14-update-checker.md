@@ -13,7 +13,7 @@
 | 事实 | 影响 |
 |---|---|
 | 桌面端**没有任何包类型标记**（无 `AVA_PACKAGE` 之类） | app 无法判断该下 portable / setup / AppImage，必须先补构建期 define |
-| release 只有 **AppImage + portable.exe + setup.exe** 三件 | 无 macOS 产物 |
+| release 四件:**AppImage + portable.exe + setup.exe + macos-arm64.dmg** | DMG 自 v1.2.0 起随每个 tag 发布 |
 | 二进制**没有代码签名**（无 Authenticode、无公证） | 操作系统层面的完整性校验不存在，只能自建 |
 | `core/entitlement.dart` 已用**内嵌 Ed25519 公钥离线验签** | 更新清单照此模式即可，不是新机制 |
 | `PRIVACY.md` §3 逐条列出所有网络连接 | 加检查就要改，且**两处**（仓库正本 + 线上手工 HTML） |
@@ -25,10 +25,9 @@
 最后两步漏掉不会有任何报错，只会让所有客户端查到旧版本，或查到一个 404 的
 下载链接。
 
-**macOS 不在本计划内**（2026-08-14 决定）。顺带记一笔：`README.md` 仍写着
-「Windows · macOS · Linux · Android from a single codebase」，而 macOS 既不构建
-也不发布——站点的下载区是诚实的（只列 Android/Windows/Linux），README 不是。
-这条该单独修。
+~~**macOS 不在本计划内**（2026-08-14 决定）~~ —— **前提已消失**：macOS 自
+v1.2.0 起随每个 tag 构建并发布 DMG，`version.ts` 里有 `macos-dmg` 键，
+`update_check.dart` 也映射了 `case 'macos'`。macOS 与其他桌面端同等对待。
 
 ---
 

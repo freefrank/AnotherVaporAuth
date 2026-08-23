@@ -28,7 +28,7 @@ lib/src/
 l10n/                   # ARB localizations (en, zh, zh_Hant, de, fr, es, ru)
 ```
 
-## Status (1.0.1)
+## Status (1.2.3)
 
 Implemented and statically verified end-to-end:
 
@@ -99,7 +99,7 @@ scheme should likewise be checked against a live capture before production use.
 Both **Linux desktop and Android release builds are verified**:
 
 - Linux desktop: release bundle ~27 MB (AOT).
-- Android release: cn universal APK 85 MiB, play AAB 79 MiB (v0.94.0). Debug
+- Android release: cn universal APK 91 MiB, play AAB 85 MiB (v1.2.3). Debug
   builds are far larger — 186 MB universal, 119 MB with
   `--target-platform android-arm64`, since `lib/` is ~71% of them.
   No NDK required.

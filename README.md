@@ -116,14 +116,14 @@ dispatch, see `.github/workflows/desktop-release.yml`:
 
 **Portable build (Windows):** a separate workflow
 (`.github/workflows/windows-portable.yml`) packs the whole app into one
-single-file `AVA-…-portable.exe` (Enigma Virtual Box). It runs from anywhere
+single-file `AVA-…-portable.exe` (NSIS, `tool/portable.nsi`). It runs from anywhere
 with nothing to install; account data is stored in the regular per-user data
 directory, same as the installed build.
 
 ## macOS (Apple Silicon)
 
 DMG builds ship on [Releases](https://github.com/freefrank/AnotherVaporAuth/releases)
-starting with the next tagged version — **arm64 only** (M1 and later; no Intel
+with every tagged version since v1.2.0 — **arm64 only** (M1 and later; no Intel
 build). Open the DMG and drag **AVA** into **Applications**.
 
 The app is ad-hoc signed but **not notarized** (a $99/year Apple Developer

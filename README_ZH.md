@@ -87,13 +87,13 @@ flutter build apk --release --split-per-abi --flavor cn --dart-define=AVA_CHANNE
 - **Linux AppImage** —— 单文件 `AVA-…-linux-x86_64.AppImage`。
 
 **便携版（Windows）**：由独立 workflow（`.github/workflows/windows-portable.yml`）
-打包为**单文件** `AVA-…-portable.exe`（Enigma Virtual Box），免安装、放哪都能跑；
+打包为**单文件** `AVA-…-portable.exe`（NSIS，`tool/portable.nsi`），免安装、放哪都能跑；
 账户数据与安装版一样写入用户数据目录。
 
 ## macOS（Apple Silicon）
 
-从下一个 tag 版本起，[Releases](https://github.com/freefrank/AnotherVaporAuth/releases)
-提供 DMG——**仅 arm64**（M1 及之后的机型；不出 Intel 版）。打开 DMG，把
+自 v1.2.0 起，每个 tag 版本的 [Releases](https://github.com/freefrank/AnotherVaporAuth/releases)
+都提供 DMG——**仅 arm64**（M1 及之后的机型；不出 Intel 版）。打开 DMG，把
 **AVA** 拖进 **Applications** 即可。
 
 应用带 ad-hoc 签名但**未经 Apple 公证**（公证需要 $99/年的开发者账号；这是个
