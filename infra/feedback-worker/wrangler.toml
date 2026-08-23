@@ -8,6 +8,10 @@
 # even hello-world) — the custom domain route below is the real endpoint.
 
 name = "ava-feedback"
+# Without this, wrangler picks an account itself and every remote call fails
+# with 7403 "not authorized to access this service" — which reads like an
+# expired login and is not one.
+account_id = "a6f98d533d0a0c22b3fdaded5cd8b8b2"
 main = "src/index.js"
 compatibility_date = "2026-06-01"
 routes = [{ pattern = "ava-feedback.dotslash.pro", custom_domain = true }]

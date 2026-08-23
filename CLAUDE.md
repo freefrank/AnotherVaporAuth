@@ -98,11 +98,12 @@
 死链——`site.ts` 停在 v0.80.1 九个版本、「直发 apk」按钮指着不存在的产物,
 都是这么来的(2026-08-18 又发现它停在 v1.2.0,漏掉了 1.2.1 与 1.2.2)。顺序执行:
 
-0. **wrangler 一律带 `CLOUDFLARE_ACCOUNT_ID`**,或确认目标 worker 的
-   `wrangler.jsonc` 里写了 `account_id`（entitlement-worker 已补,
-   feedback-worker 还没）。缺了它 wrangler 会自己挑账户,远程调用一律
-   7403 `not authorized to access this service`——**那是授权错误,不是没登录**,
-   别照着字面去重新 `wrangler login`。
+0. **worker 配置里必须有 `account_id`**（entitlement-worker 与 feedback-worker
+   都已写死 `a6f98d533d0a0c22b3fdaded5cd8b8b2`;新建 worker 记得一并加）。
+   缺了它 wrangler 会自己挑账户,远程调用一律 7403
+   `not authorized to access this service`——**那是授权错误,不是没登录**,
+   别照着字面去重新 `wrangler login`。临时绕过用
+   `CLOUDFLARE_ACCOUNT_ID=… npx wrangler …`。
 1. **`python3 tool/publish_r2.py --apply`**:把 `dist/AVA-v<版本>-*` 传到 R2
    (`dl.dotslash.pro`,cn APK 必需,桌面产物有则捎带),**逐个回读比对
    SHA-256**,再按桶里的 `r2-manifest.json` 删上一版的对象并写新清单。
