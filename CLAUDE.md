@@ -16,34 +16,25 @@
   机器能判定的那部分由 `tool/docs_lint.py` 在 CI 里挡,不必等人跑。
 - **p** = push:push 前必须本地 CI 通过(`flutter analyze` 无问题 +
   `flutter test` 全绿)。
-- ~~**发 Play 轨道时发布名必须写成 `<versionCode> (<版本号>)`**~~ ——
-  **2026-07-30 用户宣布该约定作废,以后不必改名。** 历史条目
-  (`51 (0.94.0)`、`38 (0.91.0)`、`34 (0.90.0)`)保持原样不用回改;
-  `tool/play_deploy.py` 直接把 versionName 写成发布名,发完**不需要**再去
-  控制台改。
 - **发布说明每语言上限 500 字符**,超了整个 commit 被 403 拒(报
   `notes in language en-US with length N, which is too long`),不是截断。
   2026-07-30 发 1.0.0 时 563 字被拒过一次,压到 489 才过。发布说明正本在
   `dist/release-notes-v<版本>.txt`——**该目录 git 忽略**,只靠 Syncthing 同步,
   所以这条上限记在这里而不是那边。计长度时把 `\n` 按 CRLF 算(每行 +1)留余量。
-- **发布说明的语言与商店条目的语言是两套东西**(2026-08-08 实测):发布说明
-  可以给任意 Play 支持的语言,**不要求该语言有商店条目**——1.0.1 一次提交了
-  en-US / zh-CN / zh-TW / de-DE / fr-FR / es-ES / ru-RU 七种,全部被接受。
-  但**商店条目(标题 / 简介 / 完整描述)目前只有 en-US 与 zh-CN**,所以德/法/
-  西/俄/繁中用户看到的更新说明是母语、商店页却是英文。要补齐得每语言写
-  标题 30 字符 + 简介 80 字符 + 完整描述 4000 字符(现有英文描述约 2000 字)。
+- **发布说明的语言与商店条目的语言是两套东西**:发布说明可以给任意 Play 支持
+  的语言,**不要求该语言有商店条目**。两边现在都是 en-US / zh-CN / zh-TW /
+  de-DE / fr-FR / es-ES / ru-RU 七种,商店条目正本在 `docs/store-listings/`
+  ——改了线上要同步改它,否则下次照着正本推就把线上覆盖回去。
+  **标题真实上限是 30 字符**(MCP 的 `validate_listing_text` 说 50,是错的)。
 - **/play** = 发 Play:见 `.claude/commands/play.md`,上传走
   `tool/play_deploy.py`,**不走 MCP**(原因见「Play 发布」)。
 - 可组合使用,如 **cbp**。
-- **s / sync** = **已废弃**(2026-07-26)。旧流程是把 WSL 工作树 rsync 回
-  `/mnt/c/.../ownCloud/Git/AnotherVaporAuth` 镜像;WSL 与该镜像现均已不存在,
-  同步改由 Syncthing 自动完成(见「工作树」)。若将来恢复多机手工同步再重写本条。
 
 ## 工作树
 
 - **唯一工作树:`~/sync/Git/AnotherVaporAuth`**(主机 `claude`)。不再有 WSL
   原生盘正本,也不再有 Windows 侧 ownCloud 镜像——开发、`flutter analyze/test/build`
-  全在这里做(冷启动 analyze ~57s / test 609 例 ~60s)。
+  全在这里做(冷启动 analyze ~57s / test 696 例 ~5min)。
 - `~/sync` 是 ZFS 数据集(`stor/backup/freefrank/syncthing`)上的 **Syncthing
   folder**,同步守护进程在宿主机侧,本机看不到进程。跨机分发由它自动完成,
   **不需要手工 rsync**。
@@ -188,25 +179,19 @@
   政策会和应用实际行为脱节。
 - 2026-07-30 删掉了 `docs/privacy.html`：它停在 07-02、只有 10 节、缺的正是
   订阅与广告两节，而且**根本不是线上那份**。留着只会让人以为改它就能更新线上。
-- README 里那段隐私概述也要跟着核：2026-07-30 前它写着「没有后端，唯一的网络
-  连接是直连 Valve」，与本仓库自己的 `PRIVACY.md` 直接矛盾（还有权益校验、
-  反馈、Play 版广告三处）。
+- README 里那段隐私概述也要跟着核，别让它和 `PRIVACY.md` 说的不是一回事。
 
 ## 密钥与 .env
 
 - 本地密钥放仓库根 `.env`（git 忽略，权限 600），模板见 `.env.example`。
   与 `app/android/key.properties` 一样：**不进 git**，靠 Syncthing 跨机同步
   （`.stignore` 不挡它们）。
-- 目前只有 `SMTP_PASS`（`hi@dotslash.pro`，用于发内测码）。**正本是**
-  `~/sync/Deployr/mailserver/CREDENTIALS.md` 的 `hi (dotSlash)` 行——那里改了
-  密码，`.env` 要同步改。该文件自己也记着"搭建期密码应轮换"。
-- **取密码优先用 `.env`**：`set -a; . ./.env; set +a`,它就是为这件事准备的。
-  不打印明文、不写进对话。
-- **不要去 grep `CREDENTIALS.md`**。那是个 markdown 表格
-  （`| Account | Email | Login | Password | Role |`),一行里有四个反引号字段,
-  `grep -oP '(?<=`)[^`]+'` 拿到的是第一个（Email）而不是密码——2026-08-23 就
-  这么发信 535 失败过一次。真要从那里取,得数到第 4 个字段;它只是**正本**,
-  用来核对 `.env` 是否过期,不是日常取用口。
+- 目前只有 `SMTP_PASS`（`hi@dotslash.pro`，用于发内测码）。
+- **取密码用 `.env`**：`set -a; . ./.env; set +a`。不打印明文、不写进对话。
+- **别去 grep `~/sync/Deployr/mailserver/CREDENTIALS.md`**。它是密码的正本
+  （那里改了密码 `.env` 要跟着改），但格式是 markdown 表格
+  `| Account | Email | Login | Password | Role |`——一行四个反引号字段，
+  顺手 grep 第一个拿到的是 Email，2026-08-23 就这么 535 失败过一次。
 - **发信失败先查证书，别先怀疑密码**。发内测码（`send_beta_codes.py`）与应用内
   反馈（`infra/feedback-worker`）都经 `mx.deployr.ca:587` + STARTTLS。2026-07-29
   该主机的 Let's Encrypt 证书到期未续，严格校验的客户端（Cloudflare Workers）
@@ -220,12 +205,12 @@
 
 - 码在 Cloudflare D1 `ava-entitlement`（id `6f949ca5-90b5-46d2-8db0-abce6f3eeb19`）
   的 `beta_testers(code, email, redeemed_by)`；worker 入口 `POST /v1/beta/redeem`。
-- **一码四类端各一台**（代码已改，**生产尚未部署**，见 prerequisites 文档 §7）：
-  与 Play 订阅同模型，android/windows/linux/macos 各占一槽；重装同设备幂等，
-  同类换机是带上限的替换（空槽首次认领不计数；KV 配置 `ACTIVATION_CAP`=5 次 / `ACTIVATION_WINDOW_DAYS`=90 天
-  窗口，超限 403 `code_activation_limit`），被踢设备下次 refresh 收 `device_revoked`。
-  `redeemed_by` 降级为只记首个兑换者的审计字段。部署前生产仍是旧行为：
-  首个设备认领整码，其他设备一律 `code_redeemed`，换机需人工清 `redeemed_by`。
+- **一码四类端各一台**（**生产已是此行为**：`activation_log` 表在库里，
+  worker 最后部署 2026-08-16）：与 Play 订阅同模型，android/windows/linux/macos
+  各占一槽；重装同设备幂等，同类换机是带上限的替换（空槽首次认领不计数；
+  KV 配置 `ACTIVATION_CAP`=5 次 / `ACTIVATION_WINDOW_DAYS`=90 天窗口，超限
+  403 `code_activation_limit`），被踢设备下次 refresh 收 `device_revoked`。
+  `redeemed_by` 只是记首个兑换者的审计字段，不再是闸门——**换机不需要人工清它**。
 - 发码：`posts/zh/recruit/send_beta_codes.py`（`--test` 用假码预览 / `--one` /
   `--send [start]` 续发）。码**从 `testers-beta-codes.csv` 读，绝不现生成**——码已
   写进 D1，现生成会发出一批库里不存在的废码。

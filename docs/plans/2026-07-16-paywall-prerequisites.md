@@ -188,28 +188,15 @@ Play 商店页**公开可见**——内部/封闭测试不公开,**公开测试(
 - Play Console 仍需(转公测前):应用内容 → 广告 / 广告 ID 两项声明、Data
   safety 表单更新、商店描述去掉"无广告"表述。
 
-## 7. beta 码按类激活上线(2026-07-18 代码已就绪,待执行)
+## 7. beta 码按类激活上线(已完成)
 
-worker 已实现"一码四类端各一台"(commit `e77c3aa`,worker 测试 75 全绿):
-同类换机为带上限替换(超限 `code_activation_limit`),新增
-`POST /v1/entitlement/status` 供 app 展示各端激活状态。**执行顺序不可颠倒**
-(新 worker 依赖新表;旧 worker 兼容新表,反向回滚安全):
+worker 的"一码四类端各一台"已上线:`activation_log` 表在库,worker 最后部署
+2026-08-16。同类换机为带上限替换(超限 `code_activation_limit`),
+`POST /v1/entitlement/status` 供 app 展示各端激活状态。**`redeemed_by` 不再是
+闸门,换机不需要人工清它。**
 
-1. ✅ **预检(只读)已跑,结果干净**(2026-07-26):12 行已兑换,孤儿行(有
-   `redeemed_by` 无 entitlement)0 条、有 entitlement 无 device 0 条——**无需
-   任何人工清理,可直接进第 2 步**。同批还确认 `activation_log` 表**尚不存在**,
-   即 migration 与新 worker 都还没上,生产仍是旧的"一码绑定首个设备"行为。
-   复核命令(会打印明文码,慎用):
-   ```
-   npx wrangler d1 execute ava-entitlement --remote --command "SELECT bt.code, bt.redeemed_by, e.id AS ent, d.device_class FROM beta_testers bt LEFT JOIN entitlements e ON e.channel='beta' AND e.subject=bt.code LEFT JOIN devices d ON d.entitlement_id=e.id WHERE bt.redeemed_by IS NOT NULL;"
-   ```
-   有 `redeemed_by` 但 `ent` 为空的行**无需处理**(新逻辑下任意设备兑换即自愈)。
-2. `cd infra/entitlement-worker && npx wrangler d1 migrations apply ava-entitlement --remote`
-   (纯增量建表 `activation_log`)。
-3. `npm run deploy`——**已发行的 app 立即获得跨端兑换能力**(paywall 本来就能
-   在第二台设备输码,只是不再收 `code_redeemed`)。
-4. (可选)调参:`npx wrangler kv key put --binding CONFIG ACTIVATION_CAP 5` /
-   `ACTIVATION_WINDOW_DAYS 90`(不设即用默认值 5 / 90;空槽首次认领不计数,
-   计数只针对"换掉另一台同类设备"的替换)。**注意**:若远程 KV 曾被设成旧值
-   3,它会覆盖新默认 5,需一并更新或删除该键。
-5. app 侧文案与状态卡已随批次 3 落库,随下个版本发布即可(纯锦上添花,不阻塞)。
+唯一还需要留意的是配额:`ACTIVATION_CAP` / `ACTIVATION_WINDOW_DAYS` 走 KV
+`CONFIG` 绑定,不设即用默认 5 次 / 90 天(空槽首次认领不计数,计数只针对
+"换掉另一台同类设备"的替换)。**若远程 KV 里还留着旧值 3,它会覆盖新默认 5**,
+要么更新要么删掉那个键。
+

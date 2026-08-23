@@ -5,7 +5,7 @@
 
 | 渠道 | 形态 | 状态 | 文件 |
 |---|---|---|---|
-| ava.dotslash.pro 换机指南（中英双语） | 站点长文 | 已写，待部署 | 在 `dotslashpro` 仓库 |
+| ava.dotslash.pro 换机指南（中英双语） | 站点长文 | **已上线** · [/guide/move-steam-authenticator/](https://ava.dotslash.pro/guide/move-steam-authenticator/) | 在 `dotslashpro` 仓库 |
 | alternativeto.net | 登记条目 | 待执行（需账号） | [alternativeto.md](alternativeto.md) |
 | HelloGitHub 月刊 | GitHub issue | **已提交 2026-08-09** · [#3523](https://github.com/521xueweihan/HelloGitHub/issues/3523) | [hellogithub.md](hellogithub.md) |
 | 阮一峰《科技爱好者周刊》 | GitHub issue | **已提交 2026-08-09** · [#11089](https://github.com/ruanyf/weekly/issues/11089) | [ruanyf-weekly.md](ruanyf-weekly.md) |
@@ -23,9 +23,8 @@ AVA 的钩子不是「又一个验证器」，是**多账号 + 从官方 App 迁
 
 这三条都不在上面的表里，但会直接吃掉上面每一条带来的流量：
 
-1. **GitHub 仓库的 Homepage 指向爱发电**（`https://ifdian.net/a/anothervaporauth`），
-   不是 `https://ava.dotslash.pro`。仓库页右上角那个链接是点击率最高的一个，
-   现在它把人送去捐款页而不是产品页。
+1. ~~GitHub 仓库的 Homepage 指向爱发电~~ —— **已修（2026-08-17）**，现指向
+   `https://ava.dotslash.pro`；爱发电移到了 `.github/FUNDING.yml` 的 Sponsor 按钮。
 2. **仓库没有设置任何 Topics**。`steam` / `steam-guard` / `authenticator` / `2fa` /
    `totp` / `mafile` / `flutter` 这几个是 GitHub 站内搜索和 Explore 的主要入口，
    现在一个都没有，等于放弃了这条免费流量。
