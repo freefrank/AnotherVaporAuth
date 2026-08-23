@@ -5,6 +5,40 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v1.3.0] — 2026-08-23
+
+### Added
+- **AVA tells you when there is a newer version.** On launch it asks a small
+  endpoint of ours whether one exists and, if so, shows a banner. It never
+  downloads or installs anything — the banner takes you to Google Play on the
+  Play build, and to the download page everywhere else. Turn it off in
+  **Settings → Check for updates on launch**; it is on by default.
+
+  The banner comes back on every launch while an update is available. **Skip**
+  dismisses it for the current run only. That is deliberate: a version you
+  dismissed once is still a version you are not running, and an authenticator
+  is not a good thing to be out of date.
+
+  What the check sends: nothing. No account data, no identifier of any kind.
+  The endpoint sees the IP address any web request would expose, answers with
+  a static version table, stores nothing and keeps no logs. The app never
+  blocks or waits on it — offline, it behaves exactly as before. Described in
+  §3 of the privacy policy.
+
+### 新增
+- **有新版本时,AVA 会告诉你。** 启动时它会问一下我们的一个小端点有没有新版,
+  有就显示一条横幅。它**不会下载也不会安装任何东西**——Play 版点了跳商店页,
+  其他版本跳下载页。可在**设置 → 启动时检查更新**关闭;默认开启。
+
+  只要更新还在,横幅每次启动都会再出现。**跳过**只对本次运行有效。这是有意
+  的:你划掉过一次的版本,依然是你没在用的版本,而验证器不适合停留在旧版。
+
+  这次检查发送了什么:什么都没有。不带账户数据,不带任何标识。端点能看到的
+  只是任何网络请求都会暴露的 IP 地址,返回一张静态版本表,不存储、不留日志。
+  应用不会阻塞或等待它——离线时行为与以前完全一致。详见隐私政策第 3 节。
+
+—
+
 ## [v1.2.3] — 2026-08-18
 
 ### Fixed

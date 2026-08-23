@@ -19,21 +19,21 @@ interface VersionEntry {
   version: string;
 }
 
-/// Verified against the live channels on 2026-08-14:
-/// Play production 1.0.1 (versionCode 54), R2 cn APK 1.0.1, GitHub release
-/// v1.1 whose assets are 1.1.0. 1.2.0 exists in dist/ but is unpublished —
-/// advertising it here before it is downloadable would send users to a
-/// download that does not exist.
+/// Deploy this worker only once the release it advertises is actually
+/// downloadable on every channel below — telling a client about a version it
+/// cannot fetch is worse than telling it nothing.
+///
+/// 1.3.0 is the first release whose users can even read this table: the
+/// update check ships *in* 1.3.0, so nobody on 1.2.x ever asks. That makes
+/// the first deploy harmless whatever it says; every later one does not have
+/// that luxury.
 const VERSIONS: Record<string, VersionEntry> = {
-  // 1.2.0 released 2026-08-15: Play production versionCode 58, cn APK on R2,
-  // GitHub release v1.2 with four desktop artifacts — including the first
-  // macOS DMG, which is why macos-dmg exists now and not before.
-  'android-play': { version: '1.2.0' },
-  'android-cn': { version: '1.2.0' },
-  'windows-portable': { version: '1.2.0' },
-  'windows-setup': { version: '1.2.0' },
-  'linux-appimage': { version: '1.2.0' },
-  'macos-dmg': { version: '1.2.0' },
+  'android-play': { version: '1.3.0' },
+  'android-cn': { version: '1.3.0' },
+  'windows-portable': { version: '1.3.0' },
+  'windows-setup': { version: '1.3.0' },
+  'linux-appimage': { version: '1.3.0' },
+  'macos-dmg': { version: '1.3.0' },
 };
 
 /// The whole response is static, so let the edge serve it: an hour of caching
