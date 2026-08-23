@@ -16,10 +16,10 @@
 //                            it and verification fails outright when unset
 {
   "name": "ava-entitlement",
-  // Without this, wrangler picks an account itself and every remote call
-  // fails with 7403 "not authorized to access this service" — which reads
-  // like a login problem and is not one. The OAuth token can reach exactly
-  // one account; it just was never told which.
+  // Explicit rather than inferred. It is NOT the cure for the 7403
+  // "not authorized" that wrangler returns on an expired OAuth token —
+  // that one is fixed by any command refreshing the token, and remote
+  // calls work fine without this line (measured).
   "account_id": "a6f98d533d0a0c22b3fdaded5cd8b8b2",
   "main": "src/index.ts",
   "compatibility_date": "2026-06-01",

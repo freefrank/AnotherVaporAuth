@@ -98,12 +98,14 @@
 死链——`site.ts` 停在 v0.80.1 九个版本、「直发 apk」按钮指着不存在的产物,
 都是这么来的(2026-08-18 又发现它停在 v1.2.0,漏掉了 1.2.1 与 1.2.2)。顺序执行:
 
-0. **worker 配置里必须有 `account_id`**（entitlement-worker 与 feedback-worker
-   都已写死 `a6f98d533d0a0c22b3fdaded5cd8b8b2`;新建 worker 记得一并加）。
-   缺了它 wrangler 会自己挑账户,远程调用一律 7403
-   `not authorized to access this service`——**那是授权错误,不是没登录**,
-   别照着字面去重新 `wrangler login`。临时绕过用
-   `CLOUDFLARE_ACCOUNT_ID=… npx wrangler …`。
+0. **wrangler 报 7403 `not authorized to access this service` 时,先重跑一次。**
+   它的 OAuth token **只有 1 小时寿命**,过期后远程调用不是报「未登录」,
+   而是报这个长得像权限问题的 7403。随便跑一条 wrangler 命令
+   （`whoami` 最快）就会用 refresh token 换新的,然后原命令直接就通了。
+   **不要因此去 `wrangler login`,也不要去翻 account id**——2026-08-23 我
+   两样都试了,真正起作用的只是那次 whoami 顺手刷新了 token。
+   （两个 worker 的配置里确实写了 `account_id`,那是显式化,不是这个问题的解药;
+   实测删掉它照样能跑。）
 1. **`python3 tool/publish_r2.py --apply`**:把 `dist/AVA-v<版本>-*` 传到 R2
    (`dl.dotslash.pro`,cn APK 必需,桌面产物有则捎带),**逐个回读比对
    SHA-256**,再按桶里的 `r2-manifest.json` 删上一版的对象并写新清单。
