@@ -16,6 +16,11 @@
 //                            it and verification fails outright when unset
 {
   "name": "ava-entitlement",
+  // Without this, wrangler picks an account itself and every remote call
+  // fails with 7403 "not authorized to access this service" — which reads
+  // like a login problem and is not one. The OAuth token can reach exactly
+  // one account; it just was never told which.
+  "account_id": "a6f98d533d0a0c22b3fdaded5cd8b8b2",
   "main": "src/index.ts",
   "compatibility_date": "2026-06-01",
   // workers.dev serving is broken on this account (see feedback-worker), so

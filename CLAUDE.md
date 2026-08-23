@@ -98,6 +98,11 @@
 死链——`site.ts` 停在 v0.80.1 九个版本、「直发 apk」按钮指着不存在的产物,
 都是这么来的(2026-08-18 又发现它停在 v1.2.0,漏掉了 1.2.1 与 1.2.2)。顺序执行:
 
+0. **wrangler 一律带 `CLOUDFLARE_ACCOUNT_ID`**,或确认目标 worker 的
+   `wrangler.jsonc` 里写了 `account_id`（entitlement-worker 已补,
+   feedback-worker 还没）。缺了它 wrangler 会自己挑账户,远程调用一律
+   7403 `not authorized to access this service`——**那是授权错误,不是没登录**,
+   别照着字面去重新 `wrangler login`。
 1. **`python3 tool/publish_r2.py --apply`**:把 `dist/AVA-v<版本>-*` 传到 R2
    (`dl.dotslash.pro`,cn APK 必需,桌面产物有则捎带),**逐个回读比对
    SHA-256**,再按桶里的 `r2-manifest.json` 删上一版的对象并写新清单。
@@ -192,8 +197,13 @@
 - 目前只有 `SMTP_PASS`（`hi@dotslash.pro`，用于发内测码）。**正本是**
   `~/sync/Deployr/mailserver/CREDENTIALS.md` 的 `hi (dotSlash)` 行——那里改了
   密码，`.env` 要同步改。该文件自己也记着"搭建期密码应轮换"。
-- 需要密码时从上述文件**管道取用**（`PASS=$(...)` → `SMTP_PASS="$PASS" cmd`），
+- **取密码优先用 `.env`**：`set -a; . ./.env; set +a`,它就是为这件事准备的。
   不打印明文、不写进对话。
+- **不要去 grep `CREDENTIALS.md`**。那是个 markdown 表格
+  （`| Account | Email | Login | Password | Role |`),一行里有四个反引号字段,
+  `grep -oP '(?<=`)[^`]+'` 拿到的是第一个（Email）而不是密码——2026-08-23 就
+  这么发信 535 失败过一次。真要从那里取,得数到第 4 个字段;它只是**正本**,
+  用来核对 `.env` 是否过期,不是日常取用口。
 - **发信失败先查证书，别先怀疑密码**。发内测码（`send_beta_codes.py`）与应用内
   反馈（`infra/feedback-worker`）都经 `mx.deployr.ca:587` + STARTTLS。2026-07-29
   该主机的 Let's Encrypt 证书到期未续，严格校验的客户端（Cloudflare Workers）
