@@ -29,9 +29,12 @@
 
 - **maFile compatible** — reads/writes the legacy `.maFile` format
   (PBKDF2/SHA1 + AES-256-CBC), so existing accounts migrate with no changes.
-  Also imports other tools' variants (Steam++ / Watt Toolkit), including exports
-  with no SteamID (imported as a code-only account whose codes work offline).
-  Export an account's maFile at any time.
+  Also imports a whole Steam Desktop Authenticator `maFiles/` folder — **including
+  the encrypted ones** (select `manifest.json` along with the `.maFile`s; the salt
+  and IV live in the manifest, so an encrypted maFile alone is undecryptable) — and
+  other tools' variants (Steam++ / Watt Toolkit), including exports with no SteamID
+  (imported as a code-only account whose codes work offline). Export an account's
+  maFile at any time.
 - **Steam Guard codes** — a per-account list with live countdown rings and
   tap-to-copy; tap a name to cycle username / persona / id.
 - **In-app sign-in approval** — approve or deny Steam logins from a dialog inside
@@ -60,6 +63,11 @@
 - **App lock** — a mandatory 6-digit PIN gates a random 256-bit key held in the
   device's hardware Keystore, which encrypts the local store (AES-256-GCM); with
   biometric / device-credential unlock, it signs in as soon as the PIN is entered.
+- **Encrypted sync (optional)** — put your accounts on a WebDAV server you
+  control (Nextcloud, Synology, any of them). Everything is encrypted on your
+  device before it leaves — the server stores ciphertext and never sees a
+  passphrase. Conflicts resolve per account rather than per file, so two devices
+  editing different accounts both keep their work. Off until you configure it.
 - **Animated avatars** — pulls each account's Steam avatar and avatar frame and
   plays them (GIF natively; APNG parsed and composited by hand, honoring each
   frame's offset / blend / dispose, so offset-based frames don't flicker).
@@ -76,7 +84,6 @@
 - **First-run gesture tutorial** on touch devices (desktop gets right-click row
   menus instead).
 - **i18n** — English, 简体中文, 繁體中文, Deutsch, Français, Español, Русский.
-- Fully **offline**: fonts and assets are bundled, nothing is downloaded at runtime.
 - **In-app Debug log** (Settings → Debug log) — a copyable network trace of the
   Steam flows for diagnostics.
 

@@ -102,6 +102,11 @@ automated releases.
   lightweight "notice updated" screen once.
 
 ### Added
+- **macOS builds.** Every tagged release now carries an
+  `AVA-…-macos-arm64.dmg` alongside the Windows and Linux artifacts —
+  Apple Silicon only (M1 and later; no Intel build). The app is not
+  notarized, so the first launch needs right-click → Open, or a trip to
+  System Settings → Privacy & Security; the README walks through both.
 - **Sync your accounts between devices, through a server you control
   (WebDAV).** Settings → Sync: point AVA at a Nextcloud / Jianguoyun (坚果云)
   / NAS folder, set a sync passphrase, and every device connected to that
@@ -136,6 +141,10 @@ automated releases.
   应用会显示一次轻量的「说明已更新」页。
 
 ### 新增
+- **macOS 版。** 每个 tag 版本现在都会连同 Windows、Linux 产物一起发出
+  `AVA-…-macos-arm64.dmg`——**仅 Apple Silicon**（M1 及之后；不出 Intel 版）。
+  应用未经公证，首次打开需要右键 →「打开」，或者去「系统设置 → 隐私与安全性」
+  放行；README 里两种做法都写了。
 - **账户可以在多台设备间同步了，走你自己掌控的服务器（WebDAV）。**
   设置 → 同步：填上 Nextcloud / 坚果云 / NAS 的文件夹，设一个同步口令，
   连着同一个文件夹的每台设备就保持同一份账户库——增、改、删都会传播。
