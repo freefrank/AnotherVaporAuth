@@ -18,6 +18,35 @@
   <b>English</b> · <a href="README_ZH.md">简体中文</a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/freefrank/AnotherVaporAuth/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/freefrank/AnotherVaporAuth?style=flat-square&color=34F1FF" /></a>
+  <a href="https://play.google.com/store/apps/details?id=pro.dotslash.ava"><img alt="Google Play" src="https://img.shields.io/badge/Google%20Play-install-34F1FF?style=flat-square&logo=googleplay&logoColor=white" /></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/freefrank/AnotherVaporAuth?style=flat-square&color=FF4D9D" /></a>
+  <img alt="Platforms" src="https://img.shields.io/badge/platforms-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux%20%C2%B7%20Android-8A93B8?style=flat-square" />
+</p>
+
+---
+
+## Get it
+
+| | |
+|---|---|
+| **Android** | [Google Play](https://play.google.com/store/apps/details?id=pro.dotslash.ava) · [direct APK](https://ava.dotslash.pro/#download) (no Play Services needed) |
+| **Windows** | [Installer](https://github.com/freefrank/AnotherVaporAuth/releases/latest) · portable single-file build in the same release |
+| **macOS** | [DMG](https://github.com/freefrank/AnotherVaporAuth/releases/latest) — Apple Silicon only; see [first launch](#macos-apple-silicon) |
+| **Linux** | [AppImage](https://github.com/freefrank/AnotherVaporAuth/releases/latest) |
+
+Coming from **Steam Desktop Authenticator**? Import your whole `maFiles/`
+folder, encrypted ones included — nothing to re-link, no 7-day trade
+cooldown. There is a [step-by-step
+guide](https://ava.dotslash.pro/guide/move-steam-authenticator/).
+
+<p align="center">
+  <img src="posts/zh/recruit/home-neon.png" width="30%" alt="Steam Guard codes" />
+  <img src="posts/zh/recruit/confirmations.png" width="30%" alt="Trade confirmations" />
+  <img src="posts/zh/recruit/home-pixel.png" width="30%" alt="Pixel skin" />
+</p>
+
 ---
 
 > **Security note:** a desktop/PC authenticator defeats much of the purpose of
@@ -81,6 +110,10 @@
   with Steam's own rejection reasons spelled out (mistyped, already owned,
   already used, wrong country, needs the base game, rate-limited). Activation is
   permanent, so it always confirms first and never retries a key by itself.
+- **Desktop windows stay where you put them** — position, size and maximized
+  state are remembered between launches, and a window saved on a monitor you
+  have since unplugged is brought back onto a screen you still have rather
+  than restored somewhere invisible.
 - **First-run gesture tutorial** on touch devices (desktop gets right-click row
   menus instead).
 - **i18n** — English, 简体中文, 繁體中文, Deutsch, Français, Español, Русский.

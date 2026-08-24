@@ -17,6 +17,32 @@
   <a href="README.md">English</a> · <b>简体中文</b>
 </p>
 
+<p align="center">
+  <a href="https://github.com/freefrank/AnotherVaporAuth/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/freefrank/AnotherVaporAuth?style=flat-square&color=34F1FF" /></a>
+  <a href="https://play.google.com/store/apps/details?id=pro.dotslash.ava"><img alt="Google Play" src="https://img.shields.io/badge/Google%20Play-安装-34F1FF?style=flat-square&logo=googleplay&logoColor=white" /></a>
+  <a href="LICENSE"><img alt="许可证" src="https://img.shields.io/github/license/freefrank/AnotherVaporAuth?style=flat-square&color=FF4D9D" /></a>
+  <img alt="平台" src="https://img.shields.io/badge/平台-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux%20%C2%B7%20Android-8A93B8?style=flat-square" />
+</p>
+
+---
+
+## 下载
+
+| | |
+|---|---|
+| **Android** | [Google Play](https://play.google.com/store/apps/details?id=pro.dotslash.ava) · [直发 APK](https://ava.dotslash.pro/#download)（国内可直连，不需要 Play 服务） |
+| **Windows** | [安装版](https://github.com/freefrank/AnotherVaporAuth/releases/latest) · 同一个 release 里还有免安装的单文件便携版 |
+| **macOS** | [DMG](https://github.com/freefrank/AnotherVaporAuth/releases/latest) —— 仅 Apple Silicon，首次打开见 [说明](#macosapple-silicon) |
+| **Linux** | [AppImage](https://github.com/freefrank/AnotherVaporAuth/releases/latest) |
+
+从 **Steam Desktop Authenticator** 过来？整个 `maFiles/` 文件夹都能导入，**包括加密的**——不用重新绑定，也没有 7 天交易冷却。有一份[图文指南](https://ava.dotslash.pro/zh/guide/move-steam-authenticator/)。
+
+<p align="center">
+  <img src="posts/zh/recruit/home-neon.png" width="30%" alt="令牌验证码" />
+  <img src="posts/zh/recruit/confirmations.png" width="30%" alt="交易确认" />
+  <img src="posts/zh/recruit/home-pixel.png" width="30%" alt="像素皮肤" />
+</p>
+
 ---
 
 > **安全提示：** 在电脑上做二次验证会削弱 2FA 的意义 —— 设备一旦被入侵，令牌也随之暴露。
@@ -50,6 +76,7 @@
 - **兑换 Steam 密钥** —— 从账户菜单把产品密钥激活到该账户,Steam 的拒绝理由
   会写成人话(输错、已拥有、已被使用、地区不符、需要本体游戏、被限流)。
   激活不可撤销,因此提交前必定二次确认,失败也绝不自动重试。
+- **桌面端窗口记得你放在哪** —— 位置、大小与最大化状态在两次启动之间保留；如果上次那台显示器已经拔了，窗口会被挪回你还看得见的屏幕，而不是恢复到一个不可见的位置。
 - **首次启动手势教程**(触屏设备;桌面端改为账户行右键菜单)。
 - **多语言**（English、简体中文、繁體中文、Deutsch、Français、Español、Русский）。
 - **应用内调试日志**（设置 → 调试日志）—— 可复制的 Steam 流程网络追踪，便于诊断。

@@ -5,6 +5,37 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v1.3.2] — 2026-08-24
+
+### Added
+- **Desktop: the window comes back where you left it.** Position, size and
+  whether it was maximized now survive a restart, instead of every launch
+  putting AVA back at a fixed size in the middle of the screen. Un-maximizing
+  after a restart returns the size you had, not a default one.
+
+  If the window was last on a monitor you have since unplugged — or the
+  resolution changed under it — it is brought back onto a screen you still
+  have rather than restored somewhere you cannot see. It is only moved when it
+  would otherwise be unreachable; a window that is still fine is left exactly
+  where it was.
+
+  The geometry is per machine and is not synced: a laptop should not inherit
+  a window sized for a 27-inch monitor.
+
+### 新增
+- **桌面端:窗口会回到你上次放的位置。** 位置、大小、是否最大化都会在重启后
+  保留,不再每次启动都以固定尺寸出现在屏幕中央。重启后取消最大化,回到的是你
+  原来的尺寸,而不是默认值。
+
+  如果上次那台显示器已经拔了、或者分辨率变了,窗口会被挪回你还看得见的屏幕,
+  而不是恢复到一个不可见的位置。只有在「否则就够不着」时才移动;位置本来就
+  没问题的窗口原样不动。
+
+  这份几何信息按机器保存,**不参与同步**——笔记本不该去继承一个为 27 寸显示器
+  设定的窗口。
+
+—
+
 ## [v1.3.1] — 2026-08-24
 
 ### Fixed

@@ -28,7 +28,7 @@ lib/src/
 l10n/                   # ARB localizations (en, zh, zh_Hant, de, fr, es, ru)
 ```
 
-## Status (1.2.3)
+## Status (1.3.2)
 
 Implemented and statically verified end-to-end:
 
@@ -45,6 +45,7 @@ Implemented and statically verified end-to-end:
 - **Family group** page (members, roles, slots, cooldown) — read-only apart
   from the incoming invites it now hosts: pre-join checks, then hold-to-join
   (`IFamilyGroupsService`)
+- Desktop window geometry persisted and refitted to the displays present
 - Inventory browse + Community Market list/cancel with live fees
 - Login (username/password + **QR login**), Steam Guard code, session refresh
 - Add authenticator (phone → SMS → revocation confirm)
