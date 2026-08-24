@@ -22,6 +22,10 @@ automated releases.
   The geometry is per machine and is not synced: a laptop should not inherit
   a window sized for a 27-inch monitor.
 
+  You can also narrow the window past AVA's 640-pixel layout breakpoint to
+  get the single-column phone layout on desktop — handy for parking a slim
+  AVA beside something else.
+
 ### 新增
 - **桌面端:窗口会回到你上次放的位置。** 位置、大小、是否最大化都会在重启后
   保留,不再每次启动都以固定尺寸出现在屏幕中央。重启后取消最大化,回到的是你
@@ -33,6 +37,9 @@ automated releases.
 
   这份几何信息按机器保存,**不参与同步**——笔记本不该去继承一个为 27 寸显示器
   设定的窗口。
+
+  窗口也可以拖得比 AVA 的 640 像素布局断点更窄,从而在桌面上得到单栏的手机版
+  布局——想把一个细长的 AVA 停在别的窗口旁边时很好用。
 
 —
 
