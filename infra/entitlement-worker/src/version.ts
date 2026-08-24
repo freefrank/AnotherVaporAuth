@@ -28,12 +28,8 @@ interface VersionEntry {
 /// the first deploy harmless whatever it says; every later one does not have
 /// that luxury.
 const VERSIONS: Record<string, VersionEntry> = {
-  // 1.3.1 is desktop-only: it fixes a Save-as bug that never affected
-  // Android, so no new APK or bundle was built. This is the drift the
-  // per-channel shape exists for — telling an Android user about 1.3.1
-  // would point them at a download that does not exist for them.
-  'android-play': { version: '1.3.0' },
-  'android-cn': { version: '1.3.0' },
+  'android-play': { version: '1.3.1' },
+  'android-cn': { version: '1.3.1' },
   'windows-portable': { version: '1.3.1' },
   'windows-setup': { version: '1.3.1' },
   'linux-appimage': { version: '1.3.1' },
