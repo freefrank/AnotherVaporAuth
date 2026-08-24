@@ -35,17 +35,19 @@ void main() {
       expect(fitted.size, saved.size, reason: 'the size the user chose stays');
     });
 
-    test('a negative position from a display that was to the left is rescued',
-        () {
-      // Monitors arranged to the *left* of the primary give negative
-      // coordinates; unplug that one and the window is off in the void.
-      const saved = Rect.fromLTWH(-1800, 200, 1280, 720);
+    test(
+      'a negative position from a display that was to the left is rescued',
+      () {
+        // Monitors arranged to the *left* of the primary give negative
+        // coordinates; unplug that one and the window is off in the void.
+        const saved = Rect.fromLTWH(-1800, 200, 1280, 720);
 
-      final fitted = fitToDisplays(saved, const [_laptop])!;
+        final fitted = fitToDisplays(saved, const [_laptop])!;
 
-      expect(fitted.left, greaterThanOrEqualTo(_laptop.left));
-      expect(fitted.size, saved.size);
-    });
+        expect(fitted.left, greaterThanOrEqualTo(_laptop.left));
+        expect(fitted.size, saved.size);
+      },
+    );
 
     test('a window barely peeking on screen counts as lost', () {
       // 20px of overlap is technically visible and practically unusable.
@@ -80,8 +82,10 @@ void main() {
 
     test('no display information means do not restore a position', () {
       // Better to centre on the default than to guess.
-      expect(fitToDisplays(const Rect.fromLTWH(0, 0, 1280, 720), const []),
-          isNull);
+      expect(
+        fitToDisplays(const Rect.fromLTWH(0, 0, 1280, 720), const []),
+        isNull,
+      );
     });
   });
 
@@ -101,29 +105,55 @@ void main() {
     test('rejects a record that would restore an ungrabbable sliver', () {
       // A half-written or hand-edited file must not strand the user with a
       // window too small to resize.
-      expect(WindowGeometry.fromJson({'x': 0, 'y': 0, 'w': 40, 'h': 20}),
-          isNull);
+      expect(
+        WindowGeometry.fromJson({'x': 0, 'y': 0, 'w': 40, 'h': 20}),
+        isNull,
+      );
     });
 
     test('rejects incomplete, non-finite and non-map input', () {
       expect(WindowGeometry.fromJson({'x': 0, 'y': 0, 'w': 1280}), isNull);
       expect(
-          WindowGeometry.fromJson(
-              {'x': double.nan, 'y': 0, 'w': 1280, 'h': 720}),
-          isNull);
+        WindowGeometry.fromJson({'x': double.nan, 'y': 0, 'w': 1280, 'h': 720}),
+        isNull,
+      );
       expect(
-          WindowGeometry.fromJson(
-              {'x': double.infinity, 'y': 0, 'w': 1280, 'h': 720}),
-          isNull);
+        WindowGeometry.fromJson({
+          'x': double.infinity,
+          'y': 0,
+          'w': 1280,
+          'h': 720,
+        }),
+        isNull,
+      );
       expect(WindowGeometry.fromJson('nonsense'), isNull);
       expect(WindowGeometry.fromJson(null), isNull);
     });
 
     test('a missing maximized flag reads as not maximized', () {
-      final g =
-          WindowGeometry.fromJson({'x': 0, 'y': 0, 'w': 1280, 'h': 720})!;
+      final g = WindowGeometry.fromJson({'x': 0, 'y': 0, 'w': 1280, 'h': 720})!;
 
       expect(g.maximized, isFalse);
+    });
+  });
+
+  group('minWindowSize', () {
+    /// home_screen switches to the single-column phone layout below 640
+    /// logical pixels. A minimum at or above that makes the layout
+    /// unreachable on desktop — which is what shipped in 1.3.2 at 720 wide.
+    test('leaves the phone layout reachable', () {
+      const phoneBreakpoint = 640.0;
+
+      expect(
+        minWindowSize.width,
+        lessThan(phoneBreakpoint),
+        reason: 'a floor at or above the breakpoint hides the phone layout',
+      );
+    });
+
+    test('is still large enough to be a usable window', () {
+      expect(minWindowSize.width, greaterThanOrEqualTo(320));
+      expect(minWindowSize.height, greaterThanOrEqualTo(400));
     });
   });
 }

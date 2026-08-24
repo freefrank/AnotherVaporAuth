@@ -44,9 +44,16 @@ class WindowGeometry {
   }
 }
 
-/// Smaller than this and the app is unusable; also the floor for a restored
-/// window, so a saved sliver can never come back.
-const minWindowSize = Size(720, 560);
+/// The floor for both the live window constraint and a restored geometry, so
+/// a saved sliver can never come back.
+///
+/// Deliberately well under the 640-wide breakpoint at which home_screen
+/// switches between the two-column desktop layout and the single-column
+/// phone one. A floor at or above that breakpoint would make the phone
+/// layout unreachable on desktop, which is a layout people do want — a
+/// narrow AVA parked beside something else. 360 is narrower than any phone
+/// in portrait, so it is a floor and not a second breakpoint.
+const minWindowSize = Size(360, 480);
 
 /// Enough of the window's top edge must land inside a display for the user to
 /// be able to grab and move it. A window peeking 20 logical pixels onto a
