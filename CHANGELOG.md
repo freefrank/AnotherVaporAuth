@@ -5,6 +5,32 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
 automated releases.
 
+## [v1.3.1] — 2026-08-24
+
+### Fixed
+- **Desktop: exporting a maFile handed you its name instead of the file.**
+  The export went through the system share sheet, and on Windows the
+  receiving app took the file's *name* as a line of text — so what came out
+  was a string, not an authenticator. Desktop now opens a Save-as dialog and
+  writes the maFile where you point it. Android and iOS keep the share
+  sheet, which is right there and unchanged.
+
+  A side effect worth knowing: sharing needed the file on disk first, so the
+  plaintext secrets used to pass through a temporary directory. Saving
+  straight to your chosen location means that no longer happens at all on
+  desktop.
+
+### 修复
+- **桌面端:导出 maFile 给出的是文件名,不是文件。** 导出走的是系统分享面板,
+  而 Windows 的接收方把文件**名字**当成一行文本收下了——于是你拿到一个字符串,
+  而不是一个验证器。桌面端现在改为弹「另存为」对话框,把 maFile 写到你指定的
+  位置。Android 与 iOS 仍用分享面板,那里本来就是对的,没有改动。
+
+  一个附带的好处:分享必须先把文件落盘,所以明文密钥此前会经过一次临时目录。
+  改为直接写入你选的位置后,桌面端不再有这一步。
+
+—
+
 ## [v1.3.0] — 2026-08-23
 
 ### Added
