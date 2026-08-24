@@ -48,6 +48,12 @@ dependencies:
   collection: ^1.19.0
   image: ^4.9.1
   url_launcher: ^6.3.2
+  # Desktop only: remembers where the window was. Declares no Android/iOS
+  # platform, so it registers nothing there.
+  window_manager: ^0.4.3
+  # Transitive via window_manager, but imported directly for the display
+  # list used to keep a restored window on screen — so declared here.
+  screen_retriever: ^0.2.0
   flutter_slidable: ^4.0.3
   package_info_plus: ^8.3.1
   # Fast pure-Dart hashes; pointycastle's PBKDF2 is ~4.5x slower (measured),

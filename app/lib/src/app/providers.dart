@@ -34,6 +34,7 @@ import '../services/update_service.dart';
 import '../services/screen_security.dart';
 import '../services/session_manager.dart';
 import '../services/steam_api_client.dart';
+import '../services/window_service.dart';
 import '../services/steam_time.dart';
 import '../services/storage_provider.dart';
 import '../services/vault_key_store.dart';
@@ -43,6 +44,10 @@ import 'theme.dart';
 /// Platform storage (maFiles location).
 final storageProvider =
     Provider<StorageProvider>((ref) => StorageProvider.forPlatform());
+
+/// The desktop window-geometry keeper, overridden in main() on desktop.
+/// Null elsewhere — mobile has no window to remember.
+final windowServiceProvider = Provider<WindowService?>((ref) => null);
 
 /// Shared Steam HTTP client.
 final apiClientProvider = Provider<SteamApiClient>((ref) => SteamApiClient());

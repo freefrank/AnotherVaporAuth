@@ -206,6 +206,16 @@ class SettingsStore {
 
   /// Styled skin: 'none' | 'neon' | 'pixel'. Falls back to the legacy
   /// single 'theme' key ('neon'/'pixel'/'dark'/'light') for older installs.
+  /// Desktop window geometry. Deliberately **not** in
+  /// [AppSettingsPort.snapshot]'s whitelist: settings sync is per-account, not
+  /// per-machine, and adopting a 2560px window from the desktop would leave a
+  /// laptop with a window it cannot see.
+  Future<Object?> loadWindowGeometry() async =>
+      (await _read())['window_geometry'];
+
+  Future<void> saveWindowGeometry(Map<String, dynamic> value) =>
+      _update((d) => d['window_geometry'] = value);
+
   Future<String?> loadSkin() async {
     final data = await _read();
     final skin = data['skin'] as String?;
