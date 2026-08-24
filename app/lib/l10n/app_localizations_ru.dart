@@ -2094,4 +2094,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String netErrServer(int code) {
     return 'Steam вернул ошибку ($code). Обычно это временно — повторите попытку чуть позже.';
   }
+
+  @override
+  String exportSaved(String path) {
+    return 'Сохранено в $path';
+  }
 }

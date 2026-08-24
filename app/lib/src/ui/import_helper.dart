@@ -175,8 +175,10 @@ Future<void> importSdaBundleFlow(BuildContext context, WidgetRef ref) async {
       // single-file flow can afford to ask; a folder of twenty cannot, and
       // silently replacing stored secrets and sessions is the one outcome that
       // is not recoverable. Re-import that one file on its own to overwrite.
-      if (notifier.findImportCollision(r.plaintext!,
-              sourceName: r.entry.filename) !=
+      if (notifier.findImportCollision(
+            r.plaintext!,
+            sourceName: r.entry.filename,
+          ) !=
           null) {
         skipped.add(r.entry.filename);
         continue;
@@ -192,7 +194,8 @@ Future<void> importSdaBundleFlow(BuildContext context, WidgetRef ref) async {
   if (!context.mounted) return;
   final parts = <String>[
     if (imported > 0) l.sdaImportDone(imported) else l.sdaImportNothing,
-    if (skipped.isNotEmpty) l.sdaImportSkipped(skipped.length, skipped.join(', ')),
+    if (skipped.isNotEmpty)
+      l.sdaImportSkipped(skipped.length, skipped.join(', ')),
   ];
   _snack(context, parts.join(' '));
 
@@ -341,6 +344,18 @@ Future<void> showBackupReminderOnce(BuildContext context, WidgetRef ref) async {
   );
 }
 
+/// Whether the maFile export should offer a Save-as dialog rather than the
+/// system share sheet.
+///
+/// A function, not a constant, because the test suite runs on Linux: without
+/// a seam here every test would take the desktop path and the share path's
+/// guarantees — the plaintext file existing only for the duration of the
+/// share, inside a 0700 directory, deleted afterwards — would go unexercised
+/// on the platform they exist to protect.
+@visibleForTesting
+bool Function() exportUsesSaveDialog =
+    () => Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+
 /// Exports an account as an **unencrypted** `*.maFile` (plain JSON), named after
 /// the account's username, via the system share sheet (save to Files, Drive…).
 Future<void> exportMaFileFlow(
@@ -388,7 +403,8 @@ Future<void> exportMaFileFlow(
   if (confirmed != true) return;
   // Path of the plaintext maFile written below, and the private directory
   // holding it — kept outside the try so the finally block can always find
-  // them for cleanup.
+  // them for cleanup. Both stay null on desktop, which writes straight to
+  // the destination the user picked and so has nothing to clean up.
   String? path;
   Directory? dir;
   try {
@@ -398,6 +414,32 @@ Future<void> exportMaFileFlow(
     final json = const JsonEncoder.withIndent(
       '  ',
     ).convert(account.toExportJson(includePassword: includePassword));
+    // Desktop gets a Save-as dialog, not a share sheet. Sharing is a mobile
+    // idiom, and share_plus does not carry it across: shareXFiles throws
+    // UnimplementedError on Linux and on Windows before 10 RS5, and on the
+    // Windows versions where it *is* implemented the receiving app took the
+    // file name as a line of text — the user got a string, not a maFile.
+    //
+    // Writing straight to the chosen path is also the safer shape: the
+    // plaintext secrets never pass through a temp directory at all, so none
+    // of the jail below is needed here.
+    if (exportUsesSaveDialog()) {
+      final dest = await getSaveLocation(
+        suggestedName: '$safe.maFile',
+        acceptedTypeGroups: const [
+          XTypeGroup(label: 'maFile', extensions: ['maFile']),
+        ],
+      );
+      if (dest == null) return; // cancelled
+      await File(dest.path).writeAsString(json);
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l.exportSaved(dest.path))));
+      }
+      return;
+    }
+
     // This file is plaintext: shared_secret, identity_secret, revocation code
     // and the Steam session token. The system temp dir is world-readable on
     // Linux (/tmp or $TMPDIR) and `$accountName.maFile` is guessable from the
@@ -411,18 +453,16 @@ Future<void> exportMaFileFlow(
     // chmod follows creation — the window that leaves open is harmless
     // precisely because the name is not guessable.
     //
-    // Android is unaffected either way (getTemporaryDirectory is the
-    // app-private cache dir), but there is no reason to special-case it.
+    // On Android getTemporaryDirectory is already the app-private cache dir,
+    // so this is belt-and-braces there; iOS likewise.
     final tmpRoot = await getTemporaryDirectory();
     final jail = Directory('${tmpRoot.path}/export-${secureRandomHex(16)}');
     await jail.create(recursive: true);
     dir = jail;
-    if (!Platform.isWindows) {
-      // Best-effort: on a platform without chmod the random name still stands.
-      try {
-        await Process.run('chmod', ['700', jail.path]);
-      } catch (_) {}
-    }
+    // Best-effort; the random directory name is what actually protects this.
+    try {
+      await Process.run('chmod', ['700', jail.path]);
+    } catch (_) {}
     path = '${jail.path}/$safe.maFile';
     await File(path).writeAsString(json);
     // Share is asynchronous on every platform; we must await its result

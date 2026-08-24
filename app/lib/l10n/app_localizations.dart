@@ -3574,6 +3574,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Steam returned an error ({code}). This is usually temporary — try again shortly.'**
   String netErrServer(int code);
+
+  /// Snackbar after a desktop maFile export, naming the file the user chose.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to {path}'**
+  String exportSaved(String path);
 }
 
 class _AppLocalizationsDelegate

@@ -647,5 +647,6 @@
   "netErrUnreachable": "Steam war nicht erreichbar. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
   "netErrTimeout": "Steam hat nicht rechtzeitig geantwortet. Das Netzwerk ist womöglich langsam oder gefiltert.",
   "netErrCert": "Das Zertifikat von Steam war nicht vertrauenswürdig, deshalb hat AVA die Verbindung beendet. Möglicherweise untersucht etwas in diesem Netzwerk den Datenverkehr.",
-  "netErrServer": "Steam hat einen Fehler zurückgegeben ({code}). Das ist meist vorübergehend — versuchen Sie es gleich noch einmal."
+  "netErrServer": "Steam hat einen Fehler zurückgegeben ({code}). Das ist meist vorübergehend — versuchen Sie es gleich noch einmal.",
+  "exportSaved": "Gespeichert unter {path}"
 }

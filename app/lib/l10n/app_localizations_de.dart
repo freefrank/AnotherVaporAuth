@@ -2029,4 +2029,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String netErrServer(int code) {
     return 'Steam hat einen Fehler zurückgegeben ($code). Das ist meist vorübergehend — versuchen Sie es gleich noch einmal.';
   }
+
+  @override
+  String exportSaved(String path) {
+    return 'Gespeichert unter $path';
+  }
 }

@@ -2015,4 +2015,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String netErrServer(int code) {
     return 'Steam returned an error ($code). This is usually temporary — try again shortly.';
   }
+
+  @override
+  String exportSaved(String path) {
+    return 'Saved to $path';
+  }
 }

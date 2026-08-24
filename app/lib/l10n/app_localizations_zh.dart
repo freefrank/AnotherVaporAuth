@@ -1923,6 +1923,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String netErrServer(int code) {
     return 'Steam 返回了一个错误（$code）。这通常是暂时的，稍后再试。';
   }
+
+  @override
+  String exportSaved(String path) {
+    return '已保存到 $path';
+  }
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -3848,5 +3853,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String netErrServer(int code) {
     return 'Steam 回傳了一個錯誤（$code）。這通常是暫時的，稍後再試。';
+  }
+
+  @override
+  String exportSaved(String path) {
+    return '已儲存到 $path';
   }
 }

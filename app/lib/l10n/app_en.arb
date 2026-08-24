@@ -561,7 +561,13 @@
   },
   "sdaImportNothing": "Nothing was imported.",
   "updateAvailable": "Version {version} is available",
-  "@updateAvailable": {"placeholders": {"version": {"type": "String"}}},
+  "@updateAvailable": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "updateView": "View",
   "updateDismiss": "Skip",
   "settingsUpdateCheck": "Check for updates on launch",
@@ -1065,6 +1071,15 @@
     "placeholders": {
       "code": {
         "type": "int"
+      }
+    }
+  },
+  "exportSaved": "Saved to {path}",
+  "@exportSaved": {
+    "description": "Snackbar after a desktop maFile export, naming the file the user chose.",
+    "placeholders": {
+      "path": {
+        "type": "String"
       }
     }
   }

@@ -577,5 +577,6 @@
   "netErrUnreachable": "Steam est injoignable. Vérifiez votre connexion, puis réessayez.",
   "netErrTimeout": "Steam n'a pas répondu à temps. Le réseau est peut-être lent ou filtré.",
   "netErrCert": "Le certificat de Steam n'a pas été reconnu, AVA a donc fermé la connexion. Quelque chose sur ce réseau inspecte peut-être le trafic.",
-  "netErrServer": "Steam a renvoyé une erreur ({code}). C'est généralement temporaire — réessayez dans un instant."
+  "netErrServer": "Steam a renvoyé une erreur ({code}). C'est généralement temporaire — réessayez dans un instant.",
+  "exportSaved": "Enregistré dans {path}"
 }

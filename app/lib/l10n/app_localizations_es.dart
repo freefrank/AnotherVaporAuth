@@ -2037,4 +2037,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String netErrServer(int code) {
     return 'Steam devolvió un error ($code). Suele ser temporal: inténtalo de nuevo en un momento.';
   }
+
+  @override
+  String exportSaved(String path) {
+    return 'Guardado en $path';
+  }
 }

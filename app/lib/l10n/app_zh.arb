@@ -1008,5 +1008,6 @@
   "netErrUnreachable": "连不上 Steam。检查网络连接后重试。",
   "netErrTimeout": "Steam 没有在规定时间内响应。网络可能很慢，或者被拦截了。",
   "netErrCert": "Steam 的证书未通过验证，AVA 已中断这次连接。当前网络里可能有东西在监听流量。",
-  "netErrServer": "Steam 返回了一个错误（{code}）。这通常是暂时的，稍后再试。"
+  "netErrServer": "Steam 返回了一个错误（{code}）。这通常是暂时的，稍后再试。",
+  "exportSaved": "已保存到 {path}"
 }

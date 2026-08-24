@@ -39,6 +39,7 @@ class _FakeShare extends SharePlatform {
   final bool throwOnShare;
   String? sharedPath;
   bool existedDuringShare = false;
+
   /// The containing directory's permission bits *while the share is running* —
   /// after it, the export flow has already removed the directory, so a stat
   /// from the test body would read 0 and assert nothing.
@@ -77,6 +78,38 @@ class _FakeFileSelector extends FileSelectorPlatform {
     String? confirmButtonText,
   }) async =>
       XFile.fromData(Uint8List.fromList(utf8.encode(contents)), name: name);
+}
+
+/// Answers the export's Save-as dialog with a fixed destination, or with
+/// cancellation. Records whether it was asked at all.
+class _FakeSaveLocation extends FileSelectorPlatform {
+  _FakeSaveLocation(this.destination);
+
+  /// null = the user cancelled the dialog.
+  final String? destination;
+  String? suggestedNameSeen;
+  var asked = false;
+
+  @override
+  Future<FileSaveLocation?> getSaveLocation({
+    List<XTypeGroup>? acceptedTypeGroups,
+    SaveDialogOptions options = const SaveDialogOptions(),
+  }) async {
+    asked = true;
+    suggestedNameSeen = options.suggestedName;
+    return destination == null ? null : FileSaveLocation(destination!);
+  }
+}
+
+/// Lets the success SnackBar appear and then retire.
+///
+/// _runExportFlow deliberately never pumps at the end — the share path shows
+/// nothing. The Save-as path does, and a SnackBar arms a 4-second dismissal
+/// Timer; leaving it pending hangs the test at teardown rather than failing it.
+Future<void> _settleSnackBar(WidgetTester tester) async {
+  await tester.pumpAndSettle();
+  await tester.pump(const Duration(seconds: 5));
+  await tester.pumpAndSettle();
 }
 
 SteamGuardAccount _account() =>
@@ -125,9 +158,15 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('ava_export_test_');
     PathProviderPlatform.instance = _FakePathProvider(tempDir);
+    // These tests run on Linux, which the export treats as desktop. Force the
+    // share path so the guarantees below are exercised at all; the Save-as
+    // path has its own group.
+    exportUsesSaveDialog = () => false;
   });
 
   tearDown(() async {
+    exportUsesSaveDialog = () =>
+        Platform.isWindows || Platform.isLinux || Platform.isMacOS;
     if (await tempDir.exists()) {
       await tempDir.delete(recursive: true);
     }
@@ -177,17 +216,27 @@ void main() {
 
       final shared = File(fakeShare.sharedPath!);
       final parent = shared.parent;
-      expect(parent.path, isNot(tempDir.path),
-          reason: 'must not sit directly in the shared temp dir');
+      expect(
+        parent.path,
+        isNot(tempDir.path),
+        reason: 'must not sit directly in the shared temp dir',
+      );
       final name = parent.path.split(Platform.pathSeparator).last;
       expect(name, startsWith('export-'));
       // 16 random hex chars — enough that nothing can pre-exist at the path.
-      expect(RegExp(r'^export-[0-9a-f]{16}$').hasMatch(name), isTrue,
-          reason: 'directory name was "$name"');
+      expect(
+        RegExp(r'^export-[0-9a-f]{16}$').hasMatch(name),
+        isTrue,
+        reason: 'directory name was "$name"',
+      );
       if (!Platform.isWindows) {
-        expect(fakeShare.dirModeDuringShare, 0x1C0, // 0700
-            reason: 'directory mode was '
-                '${fakeShare.dirModeDuringShare.toRadixString(8)}');
+        expect(
+          fakeShare.dirModeDuringShare,
+          0x1C0, // 0700
+          reason:
+              'directory mode was '
+              '${fakeShare.dirModeDuringShare.toRadixString(8)}',
+        );
       }
       // And the whole directory goes away with the file.
       expect(parent.existsSync(), isFalse);
@@ -288,6 +337,83 @@ void main() {
       expect(
         sessionActivatedSilently(hasTokens: true, refreshSucceeded: true),
         isTrue,
+      );
+    });
+  });
+
+  group('export on desktop', () {
+    // The bug this group exists for: desktop used the share sheet, and on
+    // Windows the receiving app took the *file name* as a line of text. The
+    // user got a string where they asked for a maFile.
+    setUp(() {
+      exportUsesSaveDialog = () => true;
+      SharePlatform.instance = _FakeShare();
+    });
+
+    testWidgets('writes the maFile to the path the user chose', (tester) async {
+      final dest = '${tempDir.path}/picked/tester.maFile';
+      // createSync, not create: a real dart:io Future never completes in
+      // the fake-async zone a widget test runs in — it just hangs.
+      Directory('${tempDir.path}/picked').createSync(recursive: true);
+      final picker = _FakeSaveLocation(dest);
+      FileSelectorPlatform.instance = picker;
+
+      await _runExportFlow(tester, _account());
+      await _settleSnackBar(tester);
+
+      expect(picker.asked, isTrue);
+      expect(picker.suggestedNameSeen, 'tester.maFile');
+      final written = File(dest);
+      expect(written.existsSync(), isTrue, reason: 'the export must land here');
+      // Real content, not a placeholder or a path masquerading as one.
+      final decoded =
+          jsonDecode(written.readAsStringSync()) as Map<String, dynamic>;
+      expect(decoded['shared_secret'], 'secret');
+      expect(decoded['account_name'], 'tester');
+    });
+
+    testWidgets('never shares — that is what produced a string', (
+      tester,
+    ) async {
+      final share = _FakeShare();
+      SharePlatform.instance = share;
+      FileSelectorPlatform.instance = _FakeSaveLocation(
+        '${tempDir.path}/tester.maFile',
+      );
+
+      await _runExportFlow(tester, _account());
+      await _settleSnackBar(tester);
+
+      expect(share.sharedPath, isNull);
+    });
+
+    testWidgets('leaves no plaintext behind in the temp dir', (tester) async {
+      // The share path needs a temp copy and deletes it afterwards. This one
+      // should never create it: the secrets go straight to the destination.
+      FileSelectorPlatform.instance = _FakeSaveLocation(
+        '${tempDir.path}/tester.maFile',
+      );
+
+      await _runExportFlow(tester, _account());
+      await _settleSnackBar(tester);
+
+      final strays = tempDir.listSync().whereType<Directory>().where(
+        (d) => d.path.contains('export-'),
+      );
+      expect(strays, isEmpty);
+    });
+
+    testWidgets('cancelling writes nothing at all', (tester) async {
+      final picker = _FakeSaveLocation(null); // user pressed Cancel
+      FileSelectorPlatform.instance = picker;
+
+      await _runExportFlow(tester, _account());
+
+      expect(picker.asked, isTrue);
+      expect(
+        tempDir.listSync(),
+        isEmpty,
+        reason: 'a cancelled export must not leave secrets anywhere',
       );
     });
   });

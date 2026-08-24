@@ -2045,4 +2045,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String netErrServer(int code) {
     return 'Steam a renvoyé une erreur ($code). C\'est généralement temporaire — réessayez dans un instant.';
   }
+
+  @override
+  String exportSaved(String path) {
+    return 'Enregistré dans $path';
+  }
 }
