@@ -76,9 +76,9 @@ guide](https://ava.dotslash.pro/guide/move-steam-authenticator/).
 - **Steam Family groups** — a read-only group page (members, roles, slots, cooldown)
   from an account's menu, where incoming invites also live: pre-join checks first,
   then hold-to-join. *(experimental)*
-- **Hold-to-confirm** — every irreversible accept (a trade offer, a confirmation, a
-  family join) is one press-and-hold with accelerating haptics; toggle it and the
-  haptics off in Settings.
+- **Hold-to-confirm** — every irreversible action (a trade offer, a confirmation, a
+  family join, deleting an account) is one press-and-hold with accelerating
+  haptics; each gate and the haptics have their own Settings toggles.
 - **Inventory & Market** — browse an account's Steam inventory (Steam-style game
   picker, identical items stacked) and list items on the Community Market with
   live Steam fees, a high/low price trend, linked "you receive ⇄ buyer pays"
@@ -123,8 +123,11 @@ guide](https://ava.dotslash.pro/guide/move-steam-authenticator/).
 ## Project layout
 
 ```
-app/      Flutter application (see app/README.md)
-docs/     design spec (docs/specs/)
+app/        Flutter application (see app/README.md)
+docs/       design specs (docs/specs/) and implementation plans (docs/plans/)
+infra/      Cloudflare workers (entitlement/version, feedback)
+installer/  Windows installer packaging
+tool/       release tooling (Play upload, R2 publish, docs lint)
 ```
 
 The **`legacy`** branch preserves the original .NET WinForms Steam Desktop
@@ -138,7 +141,7 @@ Requires the Flutter SDK (3.44.x). See `app/README.md` for details.
 ```sh
 cd app
 flutter pub get --enforce-lockfile
-flutter test                       # 730 tests
+flutter test                       # 735 tests
 flutter run -d linux               # or windows / macos
 
 # Android ships in two flavors (play / cn); a build without --flavor fails.
@@ -212,10 +215,11 @@ existing users can migrate. Steam auth protocol references:
 ## Privacy
 
 Your Steam data has no backend: accounts, secrets and codes stay on your device
-and every Steam request goes straight to Valve. Three other services are
-involved and are named here rather than buried — Pro entitlement checks, in-app
-feedback (only when you press send), and ads on the Play build's free tier. The
-full [Privacy Policy](PRIVACY.md) ([简体中文](PRIVACY_ZH.md)) covers each.
+and every Steam request goes straight to Valve. Four other services are
+involved and are named here rather than buried — Pro entitlement checks, the
+launch-time update check (a single GET, off-switchable), in-app feedback (only
+when you press send), and ads on the Play build's free tier. The full
+[Privacy Policy](PRIVACY.md) ([简体中文](PRIVACY_ZH.md)) covers each.
 
 ## License
 

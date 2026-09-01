@@ -60,8 +60,8 @@
   接受后自动衔接对应的 mobileconf 确认）。
 - **Steam 家庭组** —— 从账户菜单进入的只读家庭组页（成员、角色、名额、冷却），
   收到的邀请也在这里：先做加入前预检，再长按加入。*（实验性）*
-- **长按确认** —— 所有不可逆的接受操作（交易报价、单条确认、加入家庭组）都用一次
-  按住不放完成，带逐渐加速的震动；可在设置里关闭长按与震动。
+- **长按确认** —— 所有不可逆操作（交易报价、单条确认、加入家庭组、删除账号）都用
+  一次按住不放完成，带逐渐加速的震动；各道长按门槛与震动都有独立的设置开关。
 - **库存与市场** —— 浏览账户的 Steam 库存（像 Steam 一样按游戏选择，相同物品堆叠），
   并把物品上架到社区市场：实时 Steam 费率、最高/最低成交走势、「你到手 ⇄ 买家支付」
   联动定价、批量上架、可选自动确认；「我的在售」页可撤销在售。长按账户即可进入。
@@ -84,8 +84,11 @@
 ## 目录结构
 
 ```
-app/      Flutter 应用（详见 app/README.md）
-docs/     设计文档（docs/specs/）
+app/        Flutter 应用（详见 app/README.md）
+docs/       设计文档（docs/specs/）与实施计划（docs/plans/）
+infra/      Cloudflare workers（权益/版本、反馈）
+installer/  Windows 安装包打包
+tool/       发布工具（Play 上传、R2 分发、文档 lint）
 ```
 
 **`legacy`** 分支保留了启发本项目的那个 .NET WinForms 版 Steam Desktop
@@ -98,7 +101,7 @@ Authenticator —— 仅供参考存档，AVA 与它不共享任何代码。
 ```sh
 cd app
 flutter pub get --enforce-lockfile
-flutter test                       # 730 项测试
+flutter test                       # 735 项测试
 flutter run -d linux               # 或 windows / macos
 
 # Android 分 play / cn 两个 flavor，不带 --flavor 的构建会直接失败。
@@ -166,9 +169,9 @@ AVA 是一个用 Flutter 从零写起的独立项目 —— 既非 fork 也非�
 ## 隐私
 
 你的 Steam 数据没有后端：账户、密钥与验证码全部留在设备上，所有 Steam 请求直连
-Valve。另有三处服务会联网，写在这里而不是藏起来——Pro 权益校验、应用内反馈（仅在
-你按下发送时）、以及 Play 版免费档的广告。详见[隐私政策](PRIVACY_ZH.md)
-（[English](PRIVACY.md)）。
+Valve。另有四处服务会联网，写在这里而不是藏起来——Pro 权益校验、启动时的更新检查
+（单次 GET，可关闭）、应用内反馈（仅在你按下发送时）、以及 Play 版免费档的广告。
+详见[隐私政策](PRIVACY_ZH.md)（[English](PRIVACY.md)）。
 
 ## 许可
 

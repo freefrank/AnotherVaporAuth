@@ -2,8 +2,8 @@
 
 All notable changes to **AVA (AnotherVaporAuth)**. Each version has an English
 block followed by a 中文 block. The format follows
-[Keep a Changelog](https://keepachangelog.com/); `v<MAJOR.MINOR>` tags trigger
-automated releases.
+[Keep a Changelog](https://keepachangelog.com/); `v*` tags (e.g. `v1.4.0`)
+trigger automated releases.
 
 ## [v1.3.2] — 2026-08-24
 

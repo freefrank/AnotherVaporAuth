@@ -28,7 +28,7 @@ lib/src/
 l10n/                   # ARB localizations (en, zh, zh_Hant, de, fr, es, ru)
 ```
 
-## Status (1.3.2)
+## Status (1.4.0)
 
 Implemented and statically verified end-to-end:
 
@@ -40,8 +40,12 @@ Implemented and statically verified end-to-end:
   accept/reject; **trade offers** (received/sent/history, expandable cards,
   accept via `IEconService` + community endpoints). Two tabs since v0.92.0 —
   family-group invites moved to the family group screen
-- **Hold-to-confirm** control (settings-aware) for every irreversible accept,
-  with accelerating haptics; **Hold to confirm** / **Haptic feedback** toggles
+- **Hold-to-confirm** control (settings-aware) for every irreversible action —
+  accepts and account deletion — with accelerating haptics; **Hold to
+  confirm** / **Hold to delete** / **Haptic feedback** toggles
+- **Session-invalid notice**: a definitive InvalidPassword from the background
+  refresh (password changed elsewhere) marks the account on the home screen
+  and routes to re-login; network errors never mark or absolve
 - **Family group** page (members, roles, slots, cooldown) — read-only apart
   from the incoming invites it now hosts: pre-join checks, then hold-to-join
   (`IFamilyGroupsService`)
@@ -80,7 +84,7 @@ Implemented and statically verified end-to-end:
   and Steam-served item names stay English); `test/app/locales_test.dart`
   fails if they drift apart
 
-Verification: `flutter analyze` clean, **730 tests pass** (crypto RFC vectors,
+Verification: `flutter analyze` clean, **735 tests pass** (crypto RFC vectors,
 TOTP/confirmation cross-impl vectors, protobuf round-trip incl. family-groups
 codec, trade-offer/model JSON, hold-button haptics, AccountStore end-to-end,
 entitlement signature/grace/clock-skew, sessions-client revoke HMAC vectors,
@@ -107,7 +111,7 @@ Both **Linux desktop and Android release builds are verified**:
 
 ```sh
 flutter pub get --enforce-lockfile
-flutter test                       # 730 tests
+flutter test                       # 735 tests
 flutter build linux --release      # build/linux/x64/release/bundle (~27MB)
 flutter run -d linux               # or windows / macos
 
