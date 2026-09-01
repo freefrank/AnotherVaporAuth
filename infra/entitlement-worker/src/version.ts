@@ -28,12 +28,14 @@ interface VersionEntry {
 /// the first deploy harmless whatever it says; every later one does not have
 /// that luxury.
 const VERSIONS: Record<string, VersionEntry> = {
+  // 1.4.0 is uploaded to Play but sits in review until the console's
+  // "submit for review" + approval — bump this key only once it is live.
   'android-play': { version: '1.3.2' },
-  'android-cn': { version: '1.3.2' },
-  'windows-portable': { version: '1.3.2' },
-  'windows-setup': { version: '1.3.2' },
-  'linux-appimage': { version: '1.3.2' },
-  'macos-dmg': { version: '1.3.2' },
+  'android-cn': { version: '1.4.0' },
+  'windows-portable': { version: '1.4.0' },
+  'windows-setup': { version: '1.4.0' },
+  'linux-appimage': { version: '1.4.0' },
+  'macos-dmg': { version: '1.4.0' },
 };
 
 /// The whole response is static, so let the edge serve it: an hour of caching
