@@ -5,6 +5,42 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v*` tags (e.g. `v1.4.0`)
 trigger automated releases.
 
+## [v1.4.0] — 2026-08-31
+
+### Added
+- **Deleting an account now takes a press-and-hold.** The Delete button in
+  the confirmation dialog is the same hold-to-confirm control the trade
+  accepts use: hold until the ring fills, haptic ticks along the way. The
+  swipe actions put Delete right next to Export, and a local delete has no
+  trash — an accidental double-tap could remove an account outright. A
+  dedicated switch in Settings ("Hold to delete", on by default) turns it
+  back into a plain tap; like your other preferences, it travels with
+  settings sync. Thanks to the feedback in issue #8.
+
+- **AVA now tells you when an account's sign-in has stopped working.** If
+  the background session refresh finds that Steam rejects the stored
+  password — typically because it was changed elsewhere — the account's
+  status line on the home screen turns red ("Sign-in invalid — tap to log
+  in again") and taps straight into re-login; the account list marks the
+  row with a warning icon. Only Steam's own definitive verdict triggers
+  the marker: network failures and rate limits never do, so being offline
+  does not paint your accounts red. Also from issue #8.
+
+### 新增
+- **删除账号改为长按确认。** 删除确认弹窗里的删除按钮换成了与交易接受相同的
+  长按控件：按住直到进度环蓄满才生效，过程中有逐渐加速的震动。滑动操作条里
+  删除紧挨着导出，而本地删除没有回收站——误触连点两下就可能直接删号。设置里
+  新增「删除需长按确认」开关（默认开），关闭后恢复普通点按；和其他偏好一样
+  随设置同步走。感谢 issue #8 的反馈。
+
+- **账号登录失效时会主动提醒。** 后台会话刷新若发现 Steam 拒绝了保存的密码
+  （通常是密码已在别处修改），主界面该账号的状态行会变红（「登录已失效——
+  点按重新登录」），点按直达重登；账号列表的对应行也会标警示图标。只有
+  Steam 的明确判定才会触发标记：网络故障与限流一律不算，断网不会让账号
+  集体飘红。同样来自 issue #8。
+
+—
+
 ## [v1.3.2] — 2026-08-24
 
 ### Added
