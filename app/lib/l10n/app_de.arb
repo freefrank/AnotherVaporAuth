@@ -36,6 +36,8 @@
   "settingsBiometricEnabled": "Biometrisches Entsperren ist aktiv.",
   "settingsHoldConfirm": "Zum Bestätigen halten",
   "settingsHoldConfirmDesc": "Unwiderrufliche Zusagen (Tauschangebote, Bestätigungen) verlangen langes Drücken. Ist das aus, wirkt ein einzelner Tipp sofort; Sammelaktionen fragen weiterhin nach.",
+  "settingsDeleteHold": "Löschen nur per Halten",
+  "settingsDeleteHoldDesc": "Der Löschen-Button im Bestätigungsdialog muss gehalten werden, bis er sich auflädt — ein versehentlicher Tipp entfernt kein Konto.",
   "settingsHaptics": "Haptisches Feedback",
   "settingsHapticsDesc": "Vibration beim Halten zum Bestätigen und wenn es fertig ist.",
   "settingsBlockScreenshots": "Screenshots blockieren",

@@ -122,6 +122,12 @@ class AppLocalizationsZh extends AppLocalizations {
       '不可逆的接受类操作（交易、确认）需长按生效；关闭后单击立即生效，批量操作仍会弹窗确认。';
 
   @override
+  String get settingsDeleteHold => '删除需长按确认';
+
+  @override
+  String get settingsDeleteHoldDesc => '删除账号的确认按钮需按住蓄满才生效，误触点一下不会删号。';
+
+  @override
   String get settingsHaptics => '震动反馈';
 
   @override
@@ -2046,6 +2052,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String get settingsHoldConfirmDesc =>
       '不可逆的接受動作（交易、確認）需要長按才會生效。關閉後單擊就立即生效；批次動作仍會先詢問。';
+
+  @override
+  String get settingsDeleteHold => '刪除需長按確認';
+
+  @override
+  String get settingsDeleteHoldDesc => '刪除帳號的確認按鈕需按住蓄滿才會生效，誤觸點一下不會刪除帳號。';
 
   @override
   String get settingsHaptics => '觸覺回饋';

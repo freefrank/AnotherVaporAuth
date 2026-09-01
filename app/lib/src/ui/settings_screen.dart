@@ -88,6 +88,17 @@ class SettingsScreen extends ConsumerWidget {
                         ref.read(holdConfirmProvider.notifier).set(v),
                   ),
                 ),
+                // Account deletion goes through the app's hold-to-confirm
+                // button (issue #8 — the swipe actions sit right next to it).
+                _Card(
+                  title: l.settingsDeleteHold,
+                  description: l.settingsDeleteHoldDesc,
+                  trailing: Switch(
+                    value: ref.watch(deleteHoldProvider),
+                    onChanged: (v) =>
+                        ref.read(deleteHoldProvider.notifier).set(v),
+                  ),
+                ),
                 // Haptic feedback (hold-to-confirm ticks + other touch points).
                 _Card(
                   title: l.settingsHaptics,

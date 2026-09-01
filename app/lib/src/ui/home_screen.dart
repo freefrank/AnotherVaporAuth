@@ -17,6 +17,7 @@ import 'widgets/animated_steam_image.dart';
 import 'widgets/app_logo.dart';
 import 'widgets/countdown_ring.dart';
 import 'widgets/flip_code.dart';
+import 'widgets/hold_button.dart';
 import 'widgets/motion.dart';
 import '../skins/skin_engine.dart';
 import '../skins/skin_spec.dart';
@@ -642,6 +643,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         break;
       case 'remove':
         final t = Theme.of(context).extension<AvaTokens>()!;
+        // Local delete has no trash — the confirm button is the app's
+        // standard hold-to-confirm (issue #8), unless the user turned the
+        // dedicated toggle off (then it degrades to a plain tap).
+        final holdEnabled = ref.read(deleteHoldProvider);
+        final hapticsEnabled = ref.read(hapticsProvider);
         final ok = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -651,12 +657,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   onPressed: () => Navigator.pop(ctx, false),
                   child: Text(l.commonCancel)),
               // Destructive action — red, visually separated from the accent.
-              FilledButton(
-                  style: FilledButton.styleFrom(
-                      backgroundColor: t.bad,
-                      foregroundColor: const Color(0xFF06060F)),
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: Text(l.actionRemove)),
+              HoldToConfirmButton(
+                  label: l.actionRemove,
+                  color: t.bad,
+                  holdEnabled: holdEnabled,
+                  hapticsEnabled: hapticsEnabled,
+                  onConfirmed: () => Navigator.pop(ctx, true)),
             ],
           ),
         );

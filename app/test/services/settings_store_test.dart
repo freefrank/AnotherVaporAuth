@@ -47,6 +47,22 @@ void main() {
     }
   });
 
+  test('delete hold-to-confirm defaults to true and persists', () async {
+    // 默认开:老安装升级后无 key 也要读成开(`!= false`),issue #8 的
+    // 防误删长按确认才会对存量用户生效。
+    final tmp = await Directory.systemTemp.createTemp('ava_settings');
+    try {
+      final store = SettingsStore(_TmpStorage(tmp.path));
+      expect(await store.loadDeleteHold(), isTrue);
+      await store.saveDeleteHold(false);
+      expect(await store.loadDeleteHold(), isFalse);
+      await store.saveDeleteHold(true);
+      expect(await store.loadDeleteHold(), isTrue);
+    } finally {
+      await tmp.delete(recursive: true);
+    }
+  });
+
   test('block-screenshots defaults to FALSE and persists', () async {
     // The odd one out among the switches: an absent key must read as off, so
     // this asserts the `== true` reading rather than the `!= false` one the

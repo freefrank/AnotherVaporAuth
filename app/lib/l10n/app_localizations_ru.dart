@@ -127,6 +127,13 @@ class AppLocalizationsRu extends AppLocalizations {
       'Необратимые действия (обмены, подтверждения) требуют нажатия с удержанием. Если выключено, одно нажатие срабатывает сразу; для массовых действий запрос остаётся.';
 
   @override
+  String get settingsDeleteHold => 'Удаление удержанием';
+
+  @override
+  String get settingsDeleteHoldDesc =>
+      'Кнопку удаления в диалоге подтверждения нужно удерживать, пока она не зарядится — случайное нажатие не удалит аккаунт.';
+
+  @override
   String get settingsHaptics => 'Виброотклик';
 
   @override

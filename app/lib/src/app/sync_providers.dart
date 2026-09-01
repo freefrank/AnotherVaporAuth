@@ -45,6 +45,7 @@ final syncEngineProvider = Provider<SyncEngine>((ref) {
   ref.listen(skinProvider, onSetting);
   ref.listen(brightnessModeProvider, onSetting);
   ref.listen(holdConfirmProvider, onSetting);
+  ref.listen(deleteHoldProvider, onSetting);
   ref.listen(hapticsProvider, onSetting);
   ref.listen(blockScreenshotsProvider, onSetting);
   return engine;
@@ -137,6 +138,7 @@ class AppSettingsPort implements SyncSettingsPort {
       'brightness_mode':
           (await store.loadBrightnessMode()) ?? AvaBrightnessMode.system.name,
       'hold_confirm': await store.loadHoldConfirm(),
+      'delete_hold': await store.loadDeleteHold(),
       'haptics': await store.loadHaptics(),
       'block_screenshots': await store.loadBlockScreenshots(),
       'auto_confirm_market':
@@ -165,6 +167,11 @@ class AppSettingsPort implements SyncSettingsPort {
       await ref
           .read(holdConfirmProvider.notifier)
           .set(doc['hold_confirm'] as bool);
+    }
+    if (doc['delete_hold'] is bool) {
+      await ref
+          .read(deleteHoldProvider.notifier)
+          .set(doc['delete_hold'] as bool);
     }
     if (doc['haptics'] is bool) {
       await ref.read(hapticsProvider.notifier).set(doc['haptics'] as bool);

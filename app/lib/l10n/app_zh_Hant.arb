@@ -36,6 +36,8 @@
   "settingsBiometricEnabled": "已啟用生物辨識解鎖。",
   "settingsHoldConfirm": "長按確認",
   "settingsHoldConfirmDesc": "不可逆的接受動作（交易、確認）需要長按才會生效。關閉後單擊就立即生效；批次動作仍會先詢問。",
+  "settingsDeleteHold": "刪除需長按確認",
+  "settingsDeleteHoldDesc": "刪除帳號的確認按鈕需按住蓄滿才會生效，誤觸點一下不會刪除帳號。",
   "settingsHaptics": "觸覺回饋",
   "settingsHapticsDesc": "長按確認的過程中與完成時的震動回饋。",
   "settingsBlockScreenshots": "禁止截圖",

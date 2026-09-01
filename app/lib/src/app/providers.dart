@@ -536,6 +536,15 @@ class UpdateCheckEnabledController extends PersistedSettingController<bool> {
             (s, v) => s.saveUpdateCheckEnabled(v));
 }
 
+/// 删除账号需长按确认（默认开），持久化到 app_settings.json。
+final deleteHoldProvider =
+    NotifierProvider<DeleteHoldController, bool>(DeleteHoldController.new);
+
+class DeleteHoldController extends PersistedSettingController<bool> {
+  DeleteHoldController()
+      : super(true, (s) => s.loadDeleteHold(), (s, v) => s.saveDeleteHold(v));
+}
+
 /// 全局触觉反馈开关（默认开）。
 final hapticsProvider =
     NotifierProvider<HapticsController, bool>(HapticsController.new);

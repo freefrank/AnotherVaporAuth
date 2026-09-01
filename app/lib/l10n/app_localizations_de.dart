@@ -126,6 +126,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Unwiderrufliche Zusagen (Tauschangebote, Bestätigungen) verlangen langes Drücken. Ist das aus, wirkt ein einzelner Tipp sofort; Sammelaktionen fragen weiterhin nach.';
 
   @override
+  String get settingsDeleteHold => 'Löschen nur per Halten';
+
+  @override
+  String get settingsDeleteHoldDesc =>
+      'Der Löschen-Button im Bestätigungsdialog muss gehalten werden, bis er sich auflädt — ein versehentlicher Tipp entfernt kein Konto.';
+
+  @override
   String get settingsHaptics => 'Haptisches Feedback';
 
   @override

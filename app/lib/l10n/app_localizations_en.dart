@@ -125,6 +125,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Irreversible accepts (trades, confirmations) require press-and-hold. When off, a single tap acts immediately; batch actions still ask first.';
 
   @override
+  String get settingsDeleteHold => 'Hold to delete';
+
+  @override
+  String get settingsDeleteHoldDesc =>
+      'The Delete button in the removal dialog must be held until it charges up — an accidental tap can\'t remove an account.';
+
+  @override
   String get settingsHaptics => 'Haptic feedback';
 
   @override

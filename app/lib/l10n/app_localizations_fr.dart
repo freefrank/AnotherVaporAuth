@@ -127,6 +127,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les acceptations irréversibles (échanges, confirmations) exigent un appui prolongé. Désactivé, un simple appui agit immédiatement ; les actions groupées demandent toujours confirmation.';
 
   @override
+  String get settingsDeleteHold => 'Suppression par appui prolongé';
+
+  @override
+  String get settingsDeleteHoldDesc =>
+      'Le bouton Supprimer du dialogue de confirmation doit être maintenu jusqu\'à se charger — un appui accidentel ne supprime aucun compte.';
+
+  @override
   String get settingsHaptics => 'Retour haptique';
 
   @override

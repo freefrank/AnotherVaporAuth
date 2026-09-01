@@ -127,6 +127,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Las aceptaciones irreversibles (intercambios, confirmaciones) exigen mantener pulsado. Si lo desactivas, un solo toque actúa al instante; las acciones en lote siguen preguntando antes.';
 
   @override
+  String get settingsDeleteHold => 'Mantener pulsado para eliminar';
+
+  @override
+  String get settingsDeleteHoldDesc =>
+      'El botón Eliminar del diálogo de confirmación debe mantenerse pulsado hasta cargarse; un toque accidental no elimina ninguna cuenta.';
+
+  @override
   String get settingsHaptics => 'Respuesta háptica';
 
   @override

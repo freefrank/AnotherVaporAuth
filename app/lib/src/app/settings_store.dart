@@ -295,6 +295,15 @@ class SettingsStore {
   Future<void> saveHoldConfirm(bool enabled) =>
       _update((data) => data['hold_confirm'] = enabled);
 
+  /// 删除账号需长按确认开关（默认开）。开启时删除确认按钮走通用的
+  /// HoldToConfirmButton（蓄满才提交），挡住「滑出操作条后连点两下」
+  /// 这类误触——本地删除没有任何回收站。
+  Future<bool> loadDeleteHold() async =>
+      (await _read())['delete_hold'] != false;
+
+  Future<void> saveDeleteHold(bool enabled) =>
+      _update((data) => data['delete_hold'] = enabled);
+
   /// 全局触觉反馈开关（默认开）：长按 tick/完成 impact 及现有触觉调用点。
   Future<bool> loadHaptics() async => (await _read())['haptics'] != false;
 
