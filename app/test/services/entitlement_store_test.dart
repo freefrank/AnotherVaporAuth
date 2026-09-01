@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 import '../support/entitlement_mint.dart';
+import '../support/temp_dir.dart';
 
 class _FakeApi implements EntitlementApi {
   String? nextToken;
@@ -112,7 +113,7 @@ void main() {
     api = _FakeApi();
   });
 
-  tearDown(() => tmp.delete(recursive: true));
+  tearDown(() => deleteTempDirSync(tmp));
 
   ProviderContainer makeContainer() {
     final c = ProviderContainer(overrides: [

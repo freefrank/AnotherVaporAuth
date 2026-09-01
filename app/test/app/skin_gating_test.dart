@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 import '../support/entitlement_mint.dart';
+import '../support/temp_dir.dart';
 
 class _NoApi implements EntitlementApi {
   @override
@@ -33,7 +34,7 @@ void main() {
     storage = MemoryStorageProvider(p.join(tmp.path, 'maFiles'));
   });
 
-  tearDown(() => tmp.delete(recursive: true));
+  tearDown(() => deleteTempDirSync(tmp));
 
   ProviderContainer makeContainer() {
     final c = ProviderContainer(overrides: [
@@ -117,7 +118,7 @@ void main() {
     // The 0.90.0 bug: effectiveSkinProvider existed but app.dart still fed
     // the raw selection into resolveThemeVariant, so neon kept rendering.
     final dir = Directory.systemTemp.createTempSync('ava_skin_theme');
-    addTearDown(() => dir.deleteSync(recursive: true));
+    addTearDown(() => deleteTempDirSync(dir));
     File(p.join(dir.path, 'app_settings.json')).writeAsStringSync(
         jsonEncode({'skin': 'neon', 'privacy_accepted': true}));
 

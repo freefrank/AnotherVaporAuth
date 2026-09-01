@@ -18,7 +18,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:path/path.dart' as p;
 import 'package:share_plus_platform_interface/share_plus_platform_interface.dart';
+
+import '../support/temp_dir.dart';
 
 /// Points `getTemporaryDirectory()` at a real, disposable directory so the
 /// export flow's file I/O runs against the filesystem instead of a missing
@@ -167,9 +170,7 @@ void main() {
   tearDown(() async {
     exportUsesSaveDialog = () =>
         Platform.isWindows || Platform.isLinux || Platform.isMacOS;
-    if (await tempDir.exists()) {
-      await tempDir.delete(recursive: true);
-    }
+    deleteTempDirSync(tempDir);
   });
 
   testWidgets(
@@ -221,7 +222,10 @@ void main() {
         isNot(tempDir.path),
         reason: 'must not sit directly in the shared temp dir',
       );
-      final name = parent.path.split(Platform.pathSeparator).last;
+      // p.basename, not split(Platform.pathSeparator): the export dir is
+      // joined with '/', which dart:io accepts on Windows but a '\'-only
+      // split does not see.
+      final name = p.basename(parent.path);
       expect(name, startsWith('export-'));
       // 16 random hex chars — enough that nothing can pre-exist at the path.
       expect(
