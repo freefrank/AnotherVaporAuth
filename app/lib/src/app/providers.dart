@@ -545,6 +545,37 @@ class DeleteHoldController extends PersistedSettingController<bool> {
       : super(true, (s) => s.loadDeleteHold(), (s, v) => s.saveDeleteHold(v));
 }
 
+/// steamId 集合：最近一次无头会话刷新以**凭据错误**（Steam 明确返回
+/// InvalidPassword，多半是密码已在别处修改）失败的账号。网络故障、限流、
+/// 缺密码都不算——只有 Steam 亲口说"密码不对"才标记，避免断网误报。
+/// 仅存内存：refreshSessions 每次启动/解锁都会重新得出结论。
+final sessionHealthProvider =
+    NotifierProvider<SessionHealthController, Set<int>>(
+        SessionHealthController.new);
+
+class SessionHealthController extends Notifier<Set<int>> {
+  @override
+  Set<int> build() => const {};
+
+  void record(int steamId, AutoLoginOutcome outcome) {
+    switch (outcome) {
+      case AutoLoginOutcome.invalidCredentials:
+        if (!state.contains(steamId)) state = {...state, steamId};
+      case AutoLoginOutcome.ok:
+        clear(steamId);
+      case AutoLoginOutcome.needsPassword ||
+            AutoLoginOutcome.needsInteractive ||
+            AutoLoginOutcome.failed:
+        // Inconclusive — leave whatever verdict we already have.
+        break;
+    }
+  }
+
+  void clear(int steamId) {
+    if (state.contains(steamId)) state = {...state}..remove(steamId);
+  }
+}
+
 /// 全局触觉反馈开关（默认开）。
 final hapticsProvider =
     NotifierProvider<HapticsController, bool>(HapticsController.new);
@@ -866,6 +897,8 @@ class AppController extends AsyncNotifier<AppData> {
         if (AutoLogin.accessTokenStale(acc.session.accessToken)) {
           final before = acc.session.accessToken;
           final outcome = await auto.ensureSession(acc);
+          // 凭据失效（密码大概率已改）→ 主界面标失效并引导重登（issue #8）。
+          ref.read(sessionHealthProvider.notifier).record(acc.steamId, outcome);
           if (outcome == AutoLoginOutcome.ok &&
               acc.session.accessToken != before) {
             accChanged = true;

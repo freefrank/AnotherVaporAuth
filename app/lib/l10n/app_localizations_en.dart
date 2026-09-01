@@ -132,6 +132,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'The Delete button in the removal dialog must be held until it charges up — an accidental tap can\'t remove an account.';
 
   @override
+  String get accountSessionInvalid => 'Sign-in invalid — tap to log in again';
+
+  @override
   String get settingsHaptics => 'Haptic feedback';
 
   @override

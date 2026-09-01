@@ -335,6 +335,12 @@ abstract class AppLocalizations {
   /// **'The Delete button in the removal dialog must be held until it charges up — an accidental tap can\'t remove an account.'**
   String get settingsDeleteHoldDesc;
 
+  /// No description provided for @accountSessionInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in invalid — tap to log in again'**
+  String get accountSessionInvalid;
+
   /// No description provided for @settingsHaptics.
   ///
   /// In en, this message translates to:

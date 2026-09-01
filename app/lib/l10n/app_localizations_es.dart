@@ -134,6 +134,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'El botón Eliminar del diálogo de confirmación debe mantenerse pulsado hasta cargarse; un toque accidental no elimina ninguna cuenta.';
 
   @override
+  String get accountSessionInvalid =>
+      'Sesión no válida: toca para volver a iniciar sesión';
+
+  @override
   String get settingsHaptics => 'Respuesta háptica';
 
   @override

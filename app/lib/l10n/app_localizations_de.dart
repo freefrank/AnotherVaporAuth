@@ -133,6 +133,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Der Löschen-Button im Bestätigungsdialog muss gehalten werden, bis er sich auflädt — ein versehentlicher Tipp entfernt kein Konto.';
 
   @override
+  String get accountSessionInvalid =>
+      'Anmeldung ungültig — zum erneuten Anmelden tippen';
+
+  @override
   String get settingsHaptics => 'Haptisches Feedback';
 
   @override

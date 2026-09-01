@@ -38,6 +38,7 @@
   "settingsHoldConfirmDesc": "Les acceptations irréversibles (échanges, confirmations) exigent un appui prolongé. Désactivé, un simple appui agit immédiatement ; les actions groupées demandent toujours confirmation.",
   "settingsDeleteHold": "Suppression par appui prolongé",
   "settingsDeleteHoldDesc": "Le bouton Supprimer du dialogue de confirmation doit être maintenu jusqu'à se charger — un appui accidentel ne supprime aucun compte.",
+  "accountSessionInvalid": "Connexion invalide — touchez pour vous reconnecter",
   "settingsHaptics": "Retour haptique",
   "settingsHapticsDesc": "Vibrations pendant l'appui long et une fois l'action terminée.",
   "settingsBlockScreenshots": "Bloquer les captures d'écran",

@@ -38,6 +38,7 @@
   "settingsHoldConfirmDesc": "Las aceptaciones irreversibles (intercambios, confirmaciones) exigen mantener pulsado. Si lo desactivas, un solo toque actúa al instante; las acciones en lote siguen preguntando antes.",
   "settingsDeleteHold": "Mantener pulsado para eliminar",
   "settingsDeleteHoldDesc": "El botón Eliminar del diálogo de confirmación debe mantenerse pulsado hasta cargarse; un toque accidental no elimina ninguna cuenta.",
+  "accountSessionInvalid": "Sesión no válida: toca para volver a iniciar sesión",
   "settingsHaptics": "Respuesta háptica",
   "settingsHapticsDesc": "Vibra mientras mantienes pulsado para confirmar y al terminar.",
   "settingsBlockScreenshots": "Bloquear capturas",

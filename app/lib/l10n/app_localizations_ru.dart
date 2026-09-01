@@ -134,6 +134,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Кнопку удаления в диалоге подтверждения нужно удерживать, пока она не зарядится — случайное нажатие не удалит аккаунт.';
 
   @override
+  String get accountSessionInvalid =>
+      'Вход недействителен — нажмите, чтобы войти заново';
+
+  @override
   String get settingsHaptics => 'Виброотклик';
 
   @override

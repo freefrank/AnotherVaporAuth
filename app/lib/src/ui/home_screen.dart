@@ -424,6 +424,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     wide: c.maxWidth >= 640,
                     nameMode: _nameMode,
                     onTapName: _cycleNameMode,
+                    onRelogin: () =>
+                        _onAction(context, accounts[_selected], 'login'),
                     codeLink: _codeLink,
                   );
                   final Widget content = SafeArea(
@@ -968,7 +970,7 @@ class _Sidebar extends StatelessWidget {
   }
 }
 
-class _SidebarRow extends StatelessWidget {
+class _SidebarRow extends ConsumerWidget {
   final SteamGuardAccount account;
   final String code;
   final bool selected;
@@ -1201,9 +1203,11 @@ class _SidebarRow extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = Theme.of(context).extension<AvaTokens>()!;
     final l = AppLocalizations.of(context);
+    final sessionInvalid =
+        ref.watch(sessionHealthProvider).contains(account.steamId);
     return Padding(
       padding: context.rInsets(bottom: 8),
       child: Slidable(
@@ -1309,14 +1313,27 @@ class _SidebarRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: _AnimatedName(
-                      account: account,
-                      mode: nameMode,
-                      style:
-                          TextStyle(color: t.text, fontSize: context.r(19.5)),
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: _AnimatedName(
+                          account: account,
+                          mode: nameMode,
+                          style: TextStyle(
+                              color: t.text, fontSize: context.r(19.5)),
+                        ),
+                      ),
+                      if (sessionInvalid) ...[
+                        SizedBox(width: context.r(5)),
+                        // Same verdict the main panel spells out — here just
+                        // a marker so the list scans at a glance.
+                        Tooltip(
+                          message: l.accountSessionInvalid,
+                          child: Icon(Icons.error_outline,
+                              size: context.r(15), color: t.bad),
+                        ),
+                      ],
+                    ],
                   ),
                   Text(
                     code,
@@ -1414,13 +1431,14 @@ class _PressableCardState extends State<_PressableCard> {
 }
 
 /// Main panel for the selected account.
-class _MainPanel extends StatelessWidget {
+class _MainPanel extends ConsumerWidget {
   final SteamGuardAccount account;
   final int tick;
   final void Function(String code) onCopy;
   final bool wide; // two-pane (tablet/desktop) layout
   final _NameMode nameMode;
   final VoidCallback onTapName;
+  final VoidCallback onRelogin; // invalid-session status line → re-login
   final LayerLink? codeLink; // tutorial spotlight anchor
   const _MainPanel(
       {required this.account,
@@ -1428,6 +1446,7 @@ class _MainPanel extends StatelessWidget {
       required this.onCopy,
       required this.nameMode,
       required this.onTapName,
+      required this.onRelogin,
       this.codeLink,
       this.wide = false});
 
@@ -1435,11 +1454,13 @@ class _MainPanel extends StatelessWidget {
       link == null ? child : CompositedTransformTarget(link: link, child: child);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).extension<AvaTokens>()!;
     final code = _codeFor(account, tick);
     final remaining = SteamTotp.secondsRemaining(tick);
+    final sessionInvalid =
+        ref.watch(sessionHealthProvider).contains(account.steamId);
 
     return Padding(
       padding: context.rInsets(all: 26),
@@ -1486,15 +1507,37 @@ class _MainPanel extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      PulsingDot(color: t.good, size: context.r(7)),
-                      SizedBox(width: context.r(6)),
-                      Text(l.accountReady,
-                          style:
-                              TextStyle(color: t.muted, fontSize: context.r(12))),
-                    ],
+                  // Ready / invalid status line. A credentials-rejected
+                  // account (password changed elsewhere — issue #8) turns the
+                  // dot red and the line tappable, leading straight to
+                  // re-login.
+                  GestureDetector(
+                    onTap: sessionInvalid ? onRelogin : null,
+                    behavior: HitTestBehavior.opaque,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                          maxWidth: MediaQuery.sizeOf(context).width * 0.6),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          PulsingDot(
+                              color: sessionInvalid ? t.bad : t.good,
+                              size: context.r(7)),
+                          SizedBox(width: context.r(6)),
+                          Flexible(
+                            child: Text(
+                                sessionInvalid
+                                    ? l.accountSessionInvalid
+                                    : l.accountReady,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    color: sessionInvalid ? t.bad : t.muted,
+                                    fontSize: context.r(12))),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),

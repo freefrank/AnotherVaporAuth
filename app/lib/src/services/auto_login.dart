@@ -11,7 +11,8 @@ enum AutoLoginOutcome {
   ok, // session is valid (refresh or full re-login succeeded)
   needsPassword, // no stored password to re-login with
   needsInteractive, // an email code (or other non-TOTP guard) is required
-  failed, // network / credentials error
+  invalidCredentials, // Steam said InvalidPassword — password changed elsewhere
+  failed, // network / other transient error
 }
 
 /// Headless (no-UI) Steam session maintenance: refresh the short-lived access
@@ -62,6 +63,14 @@ class AutoLogin {
       }
       dlog('auto-login: ${account.accountName} poll timed out');
       return AutoLoginOutcome.failed;
+    } on SteamApiException catch (e) {
+      dlog('auto-login failed (${account.accountName}): $e');
+      // eresult 5 (InvalidPassword) is Steam's definitive verdict on the
+      // stored password — the only failure worth surfacing as "account
+      // invalid". Everything else (throttle, transport) stays [failed].
+      return e.eresult == 5
+          ? AutoLoginOutcome.invalidCredentials
+          : AutoLoginOutcome.failed;
     } catch (e) {
       dlog('auto-login failed (${account.accountName}): $e');
       return AutoLoginOutcome.failed;

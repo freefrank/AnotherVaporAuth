@@ -245,6 +245,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
       account.fullyEnrolled = true;
       await ref.read(appControllerProvider.notifier).persistAccount(account);
+      // A fresh session settles the "sign-in invalid" verdict on the home
+      // screen without waiting for the next background refresh.
+      ref.read(sessionHealthProvider.notifier).clear(account.steamId);
       // Now stored under the real SteamID — remove the code-only placeholder.
       if (oldSteamId < 0 && account.steamId > 0 && account.steamId != oldSteamId) {
         await ref

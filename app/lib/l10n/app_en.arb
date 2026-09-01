@@ -45,6 +45,7 @@
   "settingsHoldConfirmDesc": "Irreversible accepts (trades, confirmations) require press-and-hold. When off, a single tap acts immediately; batch actions still ask first.",
   "settingsDeleteHold": "Hold to delete",
   "settingsDeleteHoldDesc": "The Delete button in the removal dialog must be held until it charges up — an accidental tap can't remove an account.",
+  "accountSessionInvalid": "Sign-in invalid — tap to log in again",
   "settingsHaptics": "Haptic feedback",
   "settingsHapticsDesc": "Vibration ticks while holding to confirm and on completion.",
   "settingsBlockScreenshots": "Block screenshots",

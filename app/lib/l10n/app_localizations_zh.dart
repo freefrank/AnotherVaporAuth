@@ -128,6 +128,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDeleteHoldDesc => '删除账号的确认按钮需按住蓄满才生效，误触点一下不会删号。';
 
   @override
+  String get accountSessionInvalid => '登录已失效——点按重新登录';
+
+  @override
   String get settingsHaptics => '震动反馈';
 
   @override
@@ -2058,6 +2061,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsDeleteHoldDesc => '刪除帳號的確認按鈕需按住蓄滿才會生效，誤觸點一下不會刪除帳號。';
+
+  @override
+  String get accountSessionInvalid => '登入已失效——點按重新登入';
 
   @override
   String get settingsHaptics => '觸覺回饋';

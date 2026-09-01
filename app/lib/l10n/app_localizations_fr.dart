@@ -134,6 +134,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le bouton Supprimer du dialogue de confirmation doit être maintenu jusqu\'à se charger — un appui accidentel ne supprime aucun compte.';
 
   @override
+  String get accountSessionInvalid =>
+      'Connexion invalide — touchez pour vous reconnecter';
+
+  @override
   String get settingsHaptics => 'Retour haptique';
 
   @override
