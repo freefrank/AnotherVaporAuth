@@ -28,9 +28,7 @@ interface VersionEntry {
 /// the first deploy harmless whatever it says; every later one does not have
 /// that luxury.
 const VERSIONS: Record<string, VersionEntry> = {
-  // 1.4.0 is uploaded to Play but sits in review until the console's
-  // "submit for review" + approval — bump this key only once it is live.
-  'android-play': { version: '1.3.2' },
+  'android-play': { version: '1.4.0' },
   'android-cn': { version: '1.4.0' },
   'windows-portable': { version: '1.4.0' },
   'windows-setup': { version: '1.4.0' },
