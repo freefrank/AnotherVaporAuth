@@ -28,7 +28,7 @@ interface VersionEntry {
 /// the first deploy harmless whatever it says; every later one does not have
 /// that luxury.
 const VERSIONS: Record<string, VersionEntry> = {
-  'android-play': { version: '1.4.0' },
+  'android-play': { version: '1.5.0' },
   'android-cn': { version: '1.5.0' },
   'windows-portable': { version: '1.5.0' },
   'windows-setup': { version: '1.5.0' },
