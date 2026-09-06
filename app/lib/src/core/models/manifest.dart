@@ -33,6 +33,10 @@ class Manifest {
   /// Internal manifest schema version. 1 = legacy PIN/CBC, 2 = vault/GCM.
   int schemaVersion;
 
+  /// Portable libraries carry a passphrase-wrapped DEK, independent of the OS.
+  Map<String, dynamic>? portableKey;
+  bool portableEnabled;
+
   Manifest({
     this.encrypted = false,
     this.firstRun = true,
@@ -46,6 +50,8 @@ class Manifest {
     this.kdfIterations = 50000,
     this.vault = false,
     this.schemaVersion = 1,
+    this.portableKey,
+    this.portableEnabled = false,
   }) : entries = entries ?? <ManifestEntry>[];
 
   factory Manifest.fromJson(Map<String, dynamic> json) => Manifest(
@@ -54,6 +60,8 @@ class Manifest {
         passkeyCheck: json['passkey_check'] as String?,
         kdfIterations: asInt(json['kdf_iterations'], fallback: 50000),
         vault: json['vault'] == true,
+        portableKey: (json['portable_key'] as Map?)?.cast<String, dynamic>(),
+        portableEnabled: json['portable_enabled'] == true,
         schemaVersion: asInt(json['schema_version'], fallback: 1),
         entries: (json['entries'] as List?)
                 ?.map((e) =>
@@ -82,6 +90,8 @@ class Manifest {
         'kdf_iterations': kdfIterations,
         'vault': vault,
         'schema_version': schemaVersion,
+        if (portableKey != null) 'portable_key': portableKey,
+        if (portableEnabled) 'portable_enabled': true,
       };
 }
 

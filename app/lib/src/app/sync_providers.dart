@@ -97,7 +97,7 @@ class AppAccountsPort implements SyncAccountsPort {
   Future<void> applyRemote(Map<String, dynamic> payload) async {
     await ref
         .read(appControllerProvider.notifier)
-        .importMaFile(jsonEncode(payload), sourceName: 'sync');
+        .importMaFile(jsonEncode(payload), sourceName: 'sync', localOnly: true);
   }
 
   @override
@@ -110,7 +110,7 @@ class AppAccountsPort implements SyncAccountsPort {
     } else {
       await ref
           .read(appControllerProvider.notifier)
-          .removeAccountBySteamId(steamId);
+          .removeAccountBySteamId(steamId, localOnly: true);
     }
   }
 }

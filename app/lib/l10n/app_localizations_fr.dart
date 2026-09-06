@@ -2070,4 +2070,79 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get accountSearchClear => 'Effacer la recherche';
+
+  @override
+  String get portableMode => 'Mode portable';
+
+  @override
+  String get portableEnable => 'Activer le mode portable';
+
+  @override
+  String get portableDisable => 'Désactiver le mode portable';
+
+  @override
+  String get portableOnHelp =>
+      'Les nouveaux comptes vont dans maFiles à côté de l’application. Les deux bibliothèques sont lues ; la copie portable est prioritaire en cas de doublon.';
+
+  @override
+  String get portableOffHelp =>
+      'Les nouveaux comptes vont dans AppData. Les deux bibliothèques déverrouillées sont lues ; la copie locale est prioritaire en cas de doublon.';
+
+  @override
+  String get portableCopyToUsb =>
+      'Copier aussi les comptes locaux dans maFiles à côté de l’application ?';
+
+  @override
+  String get portableCopyToLocal =>
+      'Recopier aussi les comptes portables dans AppData ?';
+
+  @override
+  String get portableCopyHelp =>
+      'Les copies sont vérifiées et la source conservée comme sauvegarde. Les comptes déjà présents à destination sont ignorés. Les comptes portables sont exclus de la synchronisation WebDAV de cet ordinateur.';
+
+  @override
+  String get portableNoCopy => 'Changer seulement';
+
+  @override
+  String get portableCopy => 'Copier et changer';
+
+  @override
+  String get portableSetPassword => 'Définir le mot de passe portable';
+
+  @override
+  String get portableUnlock => 'Déverrouiller maFiles';
+
+  @override
+  String get portablePasswordHelp =>
+      'Utilisez un mot de passe distinct d’au moins 12 caractères. Conservez-le : il est nécessaire sur les autres ordinateurs et ne peut pas être réinitialisé.';
+
+  @override
+  String get portableUnlockHelp =>
+      'Saisissez le mot de passe de cette bibliothèque. Pour un dossier SDA chiffré, utilisez son mot de passe SDA.';
+
+  @override
+  String get portableConfirmPassword => 'Confirmer le mot de passe';
+
+  @override
+  String get portablePasswordMismatch =>
+      'Les mots de passe ne correspondent pas.';
+
+  @override
+  String get portableWrongPassword =>
+      'Mot de passe incorrect ou bibliothèque impossible à déverrouiller.';
+
+  @override
+  String get portableFailed =>
+      'L’opération n’a pas abouti. La bibliothèque source a été conservée.';
+
+  @override
+  String get portableDone =>
+      'Mode modifié. Les comptes source ont été conservés.';
+
+  @override
+  String get portableSkipped => 'Comptes existants ignorés';
+
+  @override
+  String get portableUnreadable =>
+      'Cette bibliothèque est endommagée ou dépend de la clé de l’ancienne installation Windows. Restaurez un export maFile ; les fichiers source sont inchangés.';
 }

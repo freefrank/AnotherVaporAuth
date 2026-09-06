@@ -229,7 +229,7 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final accounts = (ref.watch(appControllerProvider).value?.accounts ??
+    final accounts = (ref.watch(appControllerProvider).value?.visibleAccounts ??
             const <SteamGuardAccount>[])
         .where((a) => a.session.hasTokens)
         .toList();

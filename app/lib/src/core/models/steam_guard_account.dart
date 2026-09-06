@@ -8,6 +8,8 @@ import 'session_data.dart';
 /// existing maFiles load and re-save losslessly. Unknown top-level keys are
 /// preserved in [extra].
 class SteamGuardAccount {
+  /// Runtime ownership only; never exported or synced.
+  bool fromPortable = false;
   String? sharedSecret; // shared_secret
   String? serialNumber; // serial_number
   String? revocationCode; // revocation_code

@@ -2062,4 +2062,78 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get accountSearchClear => 'Borrar búsqueda';
+
+  @override
+  String get portableMode => 'Modo portátil';
+
+  @override
+  String get portableEnable => 'Activar modo portátil';
+
+  @override
+  String get portableDisable => 'Desactivar modo portátil';
+
+  @override
+  String get portableOnHelp =>
+      'Las cuentas nuevas se guardan en maFiles junto a la aplicación. Se leen ambas bibliotecas; la copia portátil tiene prioridad si hay duplicados.';
+
+  @override
+  String get portableOffHelp =>
+      'Las cuentas nuevas se guardan en AppData. Se leen ambas bibliotecas desbloqueadas; la copia local tiene prioridad si hay duplicados.';
+
+  @override
+  String get portableCopyToUsb =>
+      '¿Copiar también las cuentas locales a maFiles junto a la aplicación?';
+
+  @override
+  String get portableCopyToLocal =>
+      '¿Copiar también las cuentas portátiles a AppData?';
+
+  @override
+  String get portableCopyHelp =>
+      'Se verifican las copias y se conserva el origen como respaldo. Se omiten las cuentas que ya existen en el destino. Las cuentas portátiles no participan en la sincronización WebDAV de este equipo.';
+
+  @override
+  String get portableNoCopy => 'Solo cambiar';
+
+  @override
+  String get portableCopy => 'Copiar y cambiar';
+
+  @override
+  String get portableSetPassword => 'Crear contraseña portátil';
+
+  @override
+  String get portableUnlock => 'Desbloquear maFiles';
+
+  @override
+  String get portablePasswordHelp =>
+      'Usa una contraseña distinta de al menos 12 caracteres. Guárdala: se necesita en otros equipos y no se puede restablecer.';
+
+  @override
+  String get portableUnlockHelp =>
+      'Introduce la contraseña de esta biblioteca. Para una carpeta SDA cifrada, usa su contraseña de SDA.';
+
+  @override
+  String get portableConfirmPassword => 'Confirmar contraseña';
+
+  @override
+  String get portablePasswordMismatch => 'Las contraseñas no coinciden.';
+
+  @override
+  String get portableWrongPassword =>
+      'Contraseña incorrecta o no se puede desbloquear la biblioteca.';
+
+  @override
+  String get portableFailed =>
+      'No se pudo completar la operación. Se conservó la biblioteca de origen.';
+
+  @override
+  String get portableDone =>
+      'Modo actualizado. Se conservaron las cuentas de origen.';
+
+  @override
+  String get portableSkipped => 'Cuentas existentes omitidas';
+
+  @override
+  String get portableUnreadable =>
+      'La biblioteca está dañada o depende de la clave de la instalación anterior de Windows. Restaura una exportación maFile; los archivos de origen no se han modificado.';
 }

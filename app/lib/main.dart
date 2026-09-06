@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import 'src/app/providers.dart';
 import 'src/app/settings_store.dart';
 import 'src/services/image_disk_cache.dart';
 import 'src/services/storage_provider.dart';
+import 'src/services/portable_library.dart';
 import 'src/services/window_service.dart';
 
 void main() async {
@@ -29,8 +31,15 @@ void main() async {
     }
   }
 
+  final portablePath = portableDirectory(
+    operatingSystem: Platform.operatingSystem,
+    executable: Platform.resolvedExecutable,
+    environment: Platform.environment,
+  );
+  final portable = portablePath == null ? null :
+      PortableLibrary(DirectoryStorageProvider(portablePath));
   runApp(ProviderScope(
-    overrides: [if (window != null) windowServiceProvider.overrideWithValue(window)],
+    overrides: [portableLibraryProvider.overrideWithValue(portable), if (window != null) windowServiceProvider.overrideWithValue(window)],
     child: const AvaApp(),
   ));
 }

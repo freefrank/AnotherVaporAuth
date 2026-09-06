@@ -37,7 +37,7 @@
 - **Android 发布构建工作树**：WSL `Manjaro` 的 `~/Git/AnotherVaporAuth`，
   Flutter `~/flutter`（3.44.4），SDK `~/Android/Sdk`，签名工作副本
   `~/ava-upload.jks`。2026-09-05 已核实；与 Windows 是独立 clone，提交后
-  通过 git push/pull 同步，不共享未提交改动。完整测试 740 项通过。
+  通过 git push/pull 同步，不共享未提交改动。完整测试 755 项通过。
 - Play 上传脚本可在 Windows 用 `uv run tool/play_deploy.py` 运行；R2 和
   Worker 部署使用 WSL 中项目锁定的 Wrangler。
 - 以下 `~/sync` 条目描述旧服务器的同步与备份布局，不能当作当前 WSL 路径。

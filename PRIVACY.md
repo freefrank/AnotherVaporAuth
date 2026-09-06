@@ -33,11 +33,13 @@ The app stores the following **locally, on your device only**:
 - **A short debug log** (Settings → Debug log), kept in memory only and cleared
   when the app closes.
 
-Authenticator data at rest is encrypted with **AES-256-GCM** using a random key
-held in your device's hardware-backed **Android Keystore** and unwrapped by your
-6-digit unlock PIN (and, if enabled, your device biometrics / device
-credential). Because the key is bound to your device's keystore, copies of the
-data files are useless on any other device. None of it reaches us.
+The local account vault uses **AES-256-GCM** and a random key protected by the
+platform's secure storage (Android Keystore on Android) and your unlock PIN.
+Optional desktop **Portable mode** stores an independent vault in `maFiles`
+beside the app. Its key is protected by a separate password, so you can copy
+the complete folder to another computer and unlock it with that password.
+The app can also read unencrypted maFiles you supply; configuring the portable
+vault encrypts those files. None of this account data is sent to us.
 
 ## 2. Data we collect
 

@@ -12,6 +12,7 @@ import '../services/debug_log.dart';
 import '../services/screen_security.dart';
 import '../app/sync_providers.dart';
 import 'debug_log_screen.dart';
+import 'portable_mode_card.dart';
 import 'paywall_screen.dart';
 import 'sync/sync_screen.dart';
 import 'sync/sync_setup_screen.dart';
@@ -63,6 +64,7 @@ class SettingsScreen extends ConsumerWidget {
             child: ListView(
               padding: context.rSafeInsets(all: 16),
               children: [
+                const PortableModeCard(),
                 // Encryption
                 _Card(
                   title: l.settingsEncryption,

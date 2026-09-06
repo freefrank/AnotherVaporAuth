@@ -2039,4 +2039,77 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accountSearchClear => 'Clear search';
+
+  @override
+  String get portableMode => 'Portable mode';
+
+  @override
+  String get portableEnable => 'Enable portable mode';
+
+  @override
+  String get portableDisable => 'Disable portable mode';
+
+  @override
+  String get portableOnHelp =>
+      'New accounts go to maFiles beside the app. Both libraries are read; portable copies take priority for duplicate accounts.';
+
+  @override
+  String get portableOffHelp =>
+      'New accounts go to AppData. Both unlocked libraries are read; local copies take priority for duplicate accounts.';
+
+  @override
+  String get portableCopyToUsb =>
+      'Also copy existing local accounts to maFiles beside the app?';
+
+  @override
+  String get portableCopyToLocal =>
+      'Also copy portable accounts back to AppData?';
+
+  @override
+  String get portableCopyHelp =>
+      'Copies are verified and the source is kept as a backup. Accounts already in the destination are skipped. Portable accounts are not included in this computer’s WebDAV sync.';
+
+  @override
+  String get portableNoCopy => 'Switch only';
+
+  @override
+  String get portableCopy => 'Copy and switch';
+
+  @override
+  String get portableSetPassword => 'Set portable password';
+
+  @override
+  String get portableUnlock => 'Unlock maFiles';
+
+  @override
+  String get portablePasswordHelp =>
+      'Use a separate password with at least 12 characters. Keep it safe: it is needed on other computers and cannot be reset.';
+
+  @override
+  String get portableUnlockHelp =>
+      'Enter this library’s password. For an encrypted SDA folder, use its SDA passphrase.';
+
+  @override
+  String get portableConfirmPassword => 'Confirm password';
+
+  @override
+  String get portablePasswordMismatch => 'Passwords do not match.';
+
+  @override
+  String get portableWrongPassword =>
+      'Wrong password, or this library cannot be unlocked.';
+
+  @override
+  String get portableFailed =>
+      'The operation could not finish. The source library was kept.';
+
+  @override
+  String get portableDone => 'Mode updated. Source accounts were kept.';
+
+  @override
+  String get portableSkipped => 'Existing accounts skipped';
+
+  @override
+  String get portableUnreadable =>
+      'This library is damaged or still depends on another Windows installation’s key. Restore a maFile export; the source files have not been changed.';
 }

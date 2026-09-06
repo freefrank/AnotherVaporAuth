@@ -7,8 +7,8 @@ import 'package:path_provider/path_provider.dart';
 /// Abstracts where the `maFiles/` directory lives per platform.
 ///
 /// - Desktop & mobile: the app's per-user application-support directory (stable
-///   across upgrades / bundle replacement). Older desktop builds kept it next
-///   to the executable; that store is migrated over on first run.
+///   across upgrades / bundle replacement). Adjacent libraries are loaded
+///   separately by PortableLibrary, never silently copied into AppData.
 abstract class StorageProvider {
   StorageProvider();
 
@@ -160,28 +160,10 @@ class _DesktopStorageProvider extends StorageProvider {
     // location — the user would see an empty vault or lose data.
     final support = await getApplicationSupportDirectory();
     final dir = p.join(support.path, 'maFiles');
-    await _migrateFromExeAdjacent(dir);
     return _cached = dir;
   }
 
-  /// One-time move of an existing store from the legacy exe-adjacent location
-  /// (used by older builds) into the stable [stableDir]. Runs only when the
-  /// stable dir has no manifest yet but the legacy one does. Copies (doesn't
-  /// delete the source) so an interrupted migration can't lose data.
-  Future<void> _migrateFromExeAdjacent(String stableDir) async {
-    try {
-      if (await File(p.join(stableDir, 'manifest.json')).exists()) return;
-      final legacyDir = p.join(p.dirname(Platform.resolvedExecutable), 'maFiles');
-      if (!await File(p.join(legacyDir, 'manifest.json')).exists()) return;
-      await Directory(stableDir).create(recursive: true);
-      for (final f in Directory(legacyDir).listSync().whereType<File>()) {
-        await f.copy(p.join(stableDir, p.basename(f.path)));
-      }
-    } catch (_) {
-      // Best-effort: a failed migration falls back to a fresh empty store
-      // rather than crashing; the legacy files remain for manual recovery.
-    }
-  }
+
 }
 
 class _MobileStorageProvider extends StorageProvider {
@@ -243,4 +225,12 @@ class MemoryStorageProvider extends StorageProvider {
   @override
   Future<List<String>> listFiles({String extension = '.maFile'}) async =>
       files.keys.where((k) => k.endsWith(extension)).toList();
+}
+
+/// A separately managed directory (portable library and filesystem tests).
+class DirectoryStorageProvider extends StorageProvider {
+  DirectoryStorageProvider(this.directory);
+  final String directory;
+  @override
+  Future<String> maFilesDir() async => directory;
 }

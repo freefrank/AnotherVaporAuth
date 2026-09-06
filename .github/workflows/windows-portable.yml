@@ -1,8 +1,8 @@
 name: Windows portable
 
 # Dedicated packaging workflow: builds the Windows app and packs it into a
-# single-file portable exe with NSIS (tool/portable.nsi). Account data still
-# goes to the per-user data directory.
+# single-file portable exe with NSIS (tool/portable.nsi). The desktop switch
+# selects AppData or maFiles beside the outer launcher for new accounts.
 on:
   workflow_dispatch:
   push:
@@ -74,7 +74,7 @@ jobs:
           }
           if (-not $makensis) { throw "makensis not found after installing NSIS" }
           & $makensis /VERSION
-          & $makensis /V2 "/DSRCDIR=$src" "/DOUTFILE=$out" "/DICONFILE=$ico" `
+          & $makensis /INPUTCHARSET UTF8 /V2 "/DSRCDIR=$src" "/DOUTFILE=$out" "/DICONFILE=$ico" `
             "/DAPPVER=${{ steps.ver.outputs.v }}" tool/portable.nsi
           if ($LASTEXITCODE -ne 0) { throw "makensis exited $LASTEXITCODE" }
           if (-not (Test-Path $out)) { throw "makensis produced no output" }

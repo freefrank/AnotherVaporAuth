@@ -2119,4 +2119,77 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get accountSearchClear => 'Очистить поиск';
+
+  @override
+  String get portableMode => 'Портативный режим';
+
+  @override
+  String get portableEnable => 'Включить портативный режим';
+
+  @override
+  String get portableDisable => 'Выключить портативный режим';
+
+  @override
+  String get portableOnHelp =>
+      'Новые аккаунты сохраняются в maFiles рядом с приложением. Читаются обе библиотеки; при совпадении приоритет у портативной копии.';
+
+  @override
+  String get portableOffHelp =>
+      'Новые аккаунты сохраняются в AppData. Читаются обе разблокированные библиотеки; при совпадении приоритет у локальной копии.';
+
+  @override
+  String get portableCopyToUsb =>
+      'Также скопировать локальные аккаунты в maFiles рядом с приложением?';
+
+  @override
+  String get portableCopyToLocal =>
+      'Также скопировать портативные аккаунты обратно в AppData?';
+
+  @override
+  String get portableCopyHelp =>
+      'Копии проверяются, источник сохраняется как резервная копия. Существующие аккаунты в целевой библиотеке пропускаются. Портативные аккаунты не участвуют в синхронизации WebDAV этого компьютера.';
+
+  @override
+  String get portableNoCopy => 'Только переключить';
+
+  @override
+  String get portableCopy => 'Копировать и переключить';
+
+  @override
+  String get portableSetPassword => 'Задать портативный пароль';
+
+  @override
+  String get portableUnlock => 'Разблокировать maFiles';
+
+  @override
+  String get portablePasswordHelp =>
+      'Используйте отдельный пароль длиной не менее 12 символов. Сохраните его: он нужен на других компьютерах и не подлежит сбросу.';
+
+  @override
+  String get portableUnlockHelp =>
+      'Введите пароль этой библиотеки. Для зашифрованной папки SDA используйте её пароль SDA.';
+
+  @override
+  String get portableConfirmPassword => 'Подтвердить пароль';
+
+  @override
+  String get portablePasswordMismatch => 'Пароли не совпадают.';
+
+  @override
+  String get portableWrongPassword =>
+      'Неверный пароль или библиотеку невозможно разблокировать.';
+
+  @override
+  String get portableFailed =>
+      'Не удалось завершить операцию. Исходная библиотека сохранена.';
+
+  @override
+  String get portableDone => 'Режим изменён. Исходные аккаунты сохранены.';
+
+  @override
+  String get portableSkipped => 'Пропущено существующих аккаунтов';
+
+  @override
+  String get portableUnreadable =>
+      'Библиотека повреждена или зависит от ключа прежней установки Windows. Восстановите экспорт maFile; исходные файлы не изменены.';
 }

@@ -19,6 +19,7 @@ import '../core/protocol/sessions_client.dart';
 import '../core/protocol/store_key_client.dart';
 import '../core/protocol/trade_offers_client.dart';
 import '../services/account_store.dart';
+import '../services/portable_library.dart';
 import '../skins/skin_spec.dart';
 import '../services/auto_login.dart';
 import '../services/avatar_service.dart';
@@ -44,6 +45,9 @@ import 'theme.dart';
 /// Platform storage (maFiles location).
 final storageProvider =
     Provider<StorageProvider>((ref) => StorageProvider.forPlatform());
+
+/// Explicitly supplied by the desktop entrypoint; tests/mobile never probe disks.
+final portableLibraryProvider = Provider<PortableLibrary?>((ref) => null);
 
 /// The desktop window-geometry keeper, overridden in main() on desktop.
 /// Null elsewhere — mobile has no window to remember.
@@ -715,6 +719,17 @@ const int kPrivacyNoticeVersion = 3;
 class AppData {
   final AccountStore store;
   final List<SteamGuardAccount> accounts;
+  final PortableLibrary? portable;
+
+  List<SteamGuardAccount> get visibleAccounts {
+    final merged = {for (final account in accounts) account.steamId: account};
+    for (final account in portable?.accounts ?? <SteamGuardAccount>[]) {
+      if (portable!.enabled || !merged.containsKey(account.steamId)) {
+        merged[account.steamId] = account;
+      }
+    }
+    return merged.values.toList(growable: false);
+  }
   final bool locked; // encrypted and not yet unlocked
   final String? passKey; // held in memory only while unlocked
   /// Which revision of the Privacy Policy notice this install has accepted;
@@ -724,6 +739,7 @@ class AppData {
   const AppData({
     required this.store,
     required this.accounts,
+    this.portable,
     required this.locked,
     this.passKey,
     this.privacyVersion = kPrivacyNoticeVersion,
@@ -748,6 +764,7 @@ class AppData {
   }) =>
       AppData(
         store: store,
+        portable: portable,
         accounts: accounts ?? this.accounts,
         locked: locked ?? this.locked,
         passKey: passKey ?? this.passKey,
@@ -790,6 +807,9 @@ class AppController extends AsyncNotifier<AppData> {
   Future<AppData> build() async {
     final storage = ref.read(storageProvider);
     final store = await AccountStore.load(storage);
+    final portable = ref.read(portableLibraryProvider);
+    await portable?.discover();
+    ref.onDispose(() => portable?.lock());
     final privacyVersion =
         await ref.read(settingsStoreProvider).loadPrivacyAcceptedVersion();
     final privacyAccepted = privacyVersion >= kPrivacyNoticeVersion;
@@ -801,6 +821,7 @@ class AppController extends AsyncNotifier<AppData> {
     if (store.encrypted) {
       return AppData(
           store: store,
+          portable: portable,
           accounts: const [],
           locked: true,
           privacyVersion: privacyVersion);
@@ -812,6 +833,7 @@ class AppController extends AsyncNotifier<AppData> {
     }
     return AppData(
         store: store,
+        portable: portable,
         accounts: accounts,
         locked: false,
         privacyVersion: privacyVersion);
@@ -877,7 +899,7 @@ class AppController extends AsyncNotifier<AppData> {
       final creds = ref.read(credentialStoreProvider);
       // The exact instances this loop mutates: the fast republish below is
       // only valid while state still holds this very list.
-      final target = data.accounts;
+      final target = data.visibleAccounts;
       var changed = false;
       for (final acc in target) {
         if (acc.steamId == 0) continue;
@@ -885,7 +907,7 @@ class AppController extends AsyncNotifier<AppData> {
         var migratedLegacyPassword = false;
         // One-time migration: earlier builds stored the password in the keystore;
         // move it into the maFile so it travels with the account.
-        if ((acc.password ?? '').isEmpty) {
+        if (!acc.fromPortable && (acc.password ?? '').isEmpty) {
           final legacy = await creds.password(acc.steamId);
           if (legacy != null && legacy.isNotEmpty) {
             acc.password = legacy;
@@ -905,8 +927,7 @@ class AppController extends AsyncNotifier<AppData> {
           }
         }
         if (accChanged) {
-          final saved = await data.store
-              .saveAccount(acc, data.store.encrypted, passKey: data.passKey);
+          final saved = await _saveToSource(acc);
           changed = true;
           if (saved && migratedLegacyPassword) {
             // Drop the keystore copy now that the maFile owns the password.
@@ -922,7 +943,7 @@ class AppController extends AsyncNotifier<AppData> {
         }
       }
       if (changed && state.value != null) {
-        if (!identical(state.value?.accounts, target)) {
+        if (!identical(state.value?.accounts, data.accounts)) {
           // A concurrent reload/unlock/import replaced the account list
           // mid-refresh: the renewed tokens live on the old instances (and
           // on disk), not on what state now holds — republishing that list
@@ -935,7 +956,7 @@ class AppController extends AsyncNotifier<AppData> {
           // only re-decrypts what memory holds (and used to race the unlock
           // migration's file swap). Callers that truly need disk use
           // reload().
-          state = AsyncData(state.value!.copyWith(accounts: [...target]));
+          state = AsyncData(state.value!.copyWith(accounts: [...data.accounts]));
         }
       }
     } finally {
@@ -958,7 +979,7 @@ class AppController extends AsyncNotifier<AppData> {
       final svc = ref.read(avatarServiceProvider);
       final only = steamIds?.toSet();
       // Same instance-tracking rationale as refreshSessions above.
-      final target = data.accounts;
+      final target = data.visibleAccounts;
       final targets = [
         for (final acc in target)
           if (acc.steamId != 0 && (only == null || only.contains(acc.steamId)))
@@ -971,12 +992,12 @@ class AppController extends AsyncNotifier<AppData> {
       final results = await Future.wait(
           [for (final acc in targets) _refreshOneAvatar(acc, svc, data)]);
       if (results.any((changed) => changed) && state.value != null) {
-        if (!identical(state.value?.accounts, target)) {
+        if (!identical(state.value?.accounts, data.accounts)) {
           // Same concurrent-replacement hazard as refreshSessions above.
           await reload();
         } else {
           // Same republish-in-memory rationale as refreshSessions above.
-          state = AsyncData(state.value!.copyWith(accounts: [...target]));
+          state = AsyncData(state.value!.copyWith(accounts: [...data.accounts]));
         }
       }
     } finally {
@@ -1032,8 +1053,7 @@ class AppController extends AsyncNotifier<AppData> {
         accChanged = true;
       }
       if (accChanged) {
-        await data.store
-            .saveAccount(acc, data.store.encrypted, passKey: data.passKey);
+        await _saveToSource(acc);
       }
       return accChanged;
     } catch (e) {
@@ -1141,10 +1161,11 @@ class AppController extends AsyncNotifier<AppData> {
     if (data == null) return null;
     final incoming =
         data.store.parseMaFileContents(contents, sourceName: sourceName);
-    if (!data.store.entries.any((e) => e.steamId == incoming.steamId)) {
+    if (!data.store.entries.any((e) => e.steamId == incoming.steamId) &&
+        !(data.portable?.ids.contains(incoming.steamId) ?? false)) {
       return null;
     }
-    for (final a in data.accounts) {
+    for (final a in data.visibleAccounts) {
       if (a.steamId == incoming.steamId) {
         return (account: a, storedReadable: true);
       }
@@ -1156,10 +1177,19 @@ class AppController extends AsyncNotifier<AppData> {
   /// it right away (e.g. reactivating its session) without re-scanning the
   /// freshly reloaded account list.
   Future<SteamGuardAccount> importMaFile(String contents,
-      {String? sourceName}) async {
+      {String? sourceName, bool localOnly = false}) async {
     final data = state.value;
     if (data == null) {
       throw StateError('importMaFile called before the store is ready');
+    }
+    final incoming = data.store.parseMaFileContents(contents, sourceName: sourceName);
+    final existingPortable = !data.store.entries.any((e) => e.steamId == incoming.steamId) &&
+        (data.portable?.ids.contains(incoming.steamId) ?? false);
+    if (!localOnly && ((data.portable?.enabled ?? false) || existingPortable)) {
+      final account = data.store.parseMaFileContents(contents, sourceName: sourceName);
+      await data.portable!.save(account);
+      await reload();
+      return data.portable!.accounts.firstWhere((a) => a.steamId == account.steamId);
     }
     SteamGuardAccount? existing;
     final incomingId = data.store
@@ -1181,9 +1211,14 @@ class AppController extends AsyncNotifier<AppData> {
 
   /// Drops a code-only account's synthetic-id placeholder entry after it has
   /// been re-saved under a real SteamID (post sign-in).
-  Future<void> removeAccountBySteamId(int steamId) async {
+  Future<void> removeAccountBySteamId(int steamId, {bool localOnly = false}) async {
     final data = state.value;
     if (data == null) return;
+    if (!localOnly && data.visibleAccounts.any((a) => a.steamId == steamId && a.fromPortable)) {
+      await data.portable!.remove(steamId);
+      await reload();
+      return;
+    }
     await data.store.removeEntryById(steamId);
     await ref.read(credentialStoreProvider).clear(steamId);
     await reload();
@@ -1192,6 +1227,11 @@ class AppController extends AsyncNotifier<AppData> {
   Future<void> removeAccount(SteamGuardAccount account) async {
     final data = state.value;
     if (data == null) return;
+    if (account.fromPortable) {
+      await data.portable!.remove(account.steamId);
+      await reload();
+      return;
+    }
     await data.store.removeAccount(account);
     await ref.read(credentialStoreProvider).clear(account.steamId);
     await reload();
@@ -1238,8 +1278,7 @@ class AppController extends AsyncNotifier<AppData> {
   Future<bool> persistAccount(SteamGuardAccount account) async {
     final data = state.value;
     if (data == null) return false;
-    final ok = await data.store
-        .saveAccount(account, data.store.encrypted, passKey: data.passKey);
+    final ok = await _saveToSource(account, allowNew: true);
     if (!ok) return false;
     await reload();
     unawaited(refreshAvatars(steamIds: [account.steamId]));
@@ -1258,8 +1297,8 @@ class AppController extends AsyncNotifier<AppData> {
     final data = state.value;
     if (data == null) return false;
     SteamGuardAccount? target;
-    for (final a in data.accounts) {
-      if (a.steamId == account.steamId) {
+    for (final a in data.visibleAccounts) {
+      if (a.steamId == account.steamId && a.fromPortable == account.fromPortable) {
         target = a;
         break;
       }
@@ -1269,8 +1308,58 @@ class AppController extends AsyncNotifier<AppData> {
     // entry and resurrect the deleted account's secrets on disk.
     if (target == null) return false;
     if (!identical(target, account)) target.session = account.session;
-    return data.store
-        .saveAccount(target, data.store.encrypted, passKey: data.passKey);
+    return _saveToSource(target);
+  }
+
+  Future<bool> _saveToSource(SteamGuardAccount account, {bool allowNew = false}) async {
+    final data = state.value;
+    if (data == null) return false;
+    final isNew = !data.store.entries.any((e) => e.steamId == account.steamId) &&
+        !(data.portable?.ids.contains(account.steamId) ?? false);
+    if (account.fromPortable || (allowNew && isNew && (data.portable?.enabled ?? false))) {
+      try {
+        if (!allowNew && !(data.portable?.ids.contains(account.steamId) ?? false)) return false;
+        await data.portable!.save(account);
+        account.fromPortable = true;
+        return true;
+      } catch (_) { return false; }
+    }
+    return data.store.saveAccount(account, data.store.encrypted, passKey: data.passKey);
+  }
+
+  /// Copies without replacing collisions; verifies target secrets before
+  /// switching the default destination. The source library remains a backup.
+  Future<int> setPortableMode(bool enabled, {required bool migrate}) async {
+    final data = state.value!;
+    final portable = data.portable!;
+    var skipped = 0;
+    if (migrate) {
+      if (portable.locked) throw StateError('Unlock the portable library first');
+      final source = enabled ? data.accounts : portable.accounts;
+      for (final account in List<SteamGuardAccount>.of(source)) {
+        if (enabled) {
+          if (portable.ids.contains(account.steamId)) { skipped++; continue; }
+          await portable.save(account);
+          final check = portable.accounts.firstWhere((a) => a.steamId == account.steamId);
+          if (check.sharedSecret != account.sharedSecret || check.identitySecret != account.identitySecret) {
+            throw StateError('Portable copy verification failed');
+          }
+        } else {
+          if (data.store.entries.any((e) => e.steamId == account.steamId)) { skipped++; continue; }
+          if (!await data.store.saveAccount(account, data.store.encrypted, passKey: data.passKey)) {
+            throw StateError('Local copy failed');
+          }
+          final check = (await data.store.getAllAccounts(passKey: data.passKey))
+              .firstWhere((a) => a.steamId == account.steamId);
+          if (check.sharedSecret != account.sharedSecret || check.identitySecret != account.identitySecret) {
+            throw StateError('Local copy verification failed');
+          }
+        }
+      }
+    }
+    await portable.setEnabled(enabled);
+    await reload();
+    return skipped;
   }
 
   /// Changes (or sets) the unlock PIN.

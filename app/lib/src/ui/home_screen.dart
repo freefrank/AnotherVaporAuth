@@ -36,6 +36,7 @@ import 'login_screen.dart';
 import 'market/market_screen.dart';
 import 'redeem_key_screen.dart';
 import 'settings_screen.dart';
+import 'portable_mode_card.dart';
 import 'tutorial.dart';
 
 const _palette = [
@@ -258,7 +259,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   /// by the neon pull overlay and the pixel-theme RefreshIndicator.
   Future<void> _runRefresh() async {
     final accounts =
-        ref.read(appControllerProvider).value?.accounts ?? const [];
+        ref.read(appControllerProvider).value?.visibleAccounts ?? const [];
     await ref.read(appControllerProvider.notifier).refreshAvatars();
     if (mounted && accounts.isNotEmpty) {
       await checkPendingLogins(context, ref, accounts[_selected],
@@ -295,7 +296,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final neon = Theme.of(context).extension<AvaTokens>()?.variant ==
         AvaThemeVariant.neon;
     final accounts =
-        ref.watch(appControllerProvider).value?.accounts ??
+        ref.watch(appControllerProvider).value?.visibleAccounts ??
             const <SteamGuardAccount>[];
     final tick =
         ref.watch(tickProvider).value ?? SteamTime.currentSteamTime;
@@ -365,6 +366,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       body: Column(children: [
         // Inform-only update strip (v1.3); SizedBox.shrink almost always.
         const UpdateBanner(),
+        const PortableLibraryBanner(),
         Expanded(
           child: ScanlineOverlay(
         child: !hasAccounts
@@ -412,8 +414,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     refreshing: _refreshing,
                     firstRowLink: _firstRowLink,
                     demoSlidable: _demoSlidable,
-                    sorting: _sortMode,
-                    onToggleSort: () =>
+                    sorting: _sortMode && !accounts.any((a) => a.fromPortable),
+                    onToggleSort: accounts.any((a) => a.fromPortable) ? null : () =>
                         setState(() => _sortMode = !_sortMode),
                     onReorder: (from, to) {
                       // Keep the selection on the same account across the move.
@@ -1289,7 +1291,7 @@ class _SidebarRow extends ConsumerWidget {
     return Padding(
       padding: context.rInsets(bottom: 8),
       child: Slidable(
-        key: ValueKey(account.steamId),
+        key: ValueKey((account.steamId, account.fromPortable)),
         controller: controller,
         // Swipe RIGHT → enter the pending center (full swipe enters directly).
         startActionPane: ActionPane(
@@ -1400,6 +1402,11 @@ class _SidebarRow extends ConsumerWidget {
                           style: TextStyle(
                               color: t.text, fontSize: context.r(19.5)),
                         ),
+                      ),
+                      if (account.fromPortable) Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Tooltip(message: l.portableMode,
+                          child: Icon(Icons.usb, size: context.r(14), color: t.muted)),
                       ),
                       if (sessionInvalid) ...[
                         SizedBox(width: context.r(5)),

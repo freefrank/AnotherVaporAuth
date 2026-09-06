@@ -2054,4 +2054,78 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get accountSearchClear => 'Suche löschen';
+
+  @override
+  String get portableMode => 'Portabler Modus';
+
+  @override
+  String get portableEnable => 'Portablen Modus aktivieren';
+
+  @override
+  String get portableDisable => 'Portablen Modus deaktivieren';
+
+  @override
+  String get portableOnHelp =>
+      'Neue Konten werden in maFiles neben der App gespeichert. Beide Bibliotheken werden gelesen; bei Duplikaten hat die portable Kopie Vorrang.';
+
+  @override
+  String get portableOffHelp =>
+      'Neue Konten werden in AppData gespeichert. Beide entsperrten Bibliotheken werden gelesen; bei Duplikaten hat die lokale Kopie Vorrang.';
+
+  @override
+  String get portableCopyToUsb =>
+      'Vorhandene lokale Konten auch nach maFiles neben der App kopieren?';
+
+  @override
+  String get portableCopyToLocal =>
+      'Portable Konten auch zurück nach AppData kopieren?';
+
+  @override
+  String get portableCopyHelp =>
+      'Kopien werden geprüft, die Quelle bleibt als Sicherung erhalten. Bereits vorhandene Zielkonten werden übersprungen. Portable Konten nehmen nicht am WebDAV-Sync dieses Computers teil.';
+
+  @override
+  String get portableNoCopy => 'Nur umschalten';
+
+  @override
+  String get portableCopy => 'Kopieren und umschalten';
+
+  @override
+  String get portableSetPassword => 'Portables Passwort festlegen';
+
+  @override
+  String get portableUnlock => 'maFiles entsperren';
+
+  @override
+  String get portablePasswordHelp =>
+      'Verwende ein eigenes Passwort mit mindestens 12 Zeichen. Bewahre es sicher auf: Es wird auf anderen Computern benötigt und kann nicht zurückgesetzt werden.';
+
+  @override
+  String get portableUnlockHelp =>
+      'Gib das Passwort dieser Bibliothek ein. Für einen verschlüsselten SDA-Ordner verwende das SDA-Passwort.';
+
+  @override
+  String get portableConfirmPassword => 'Passwort bestätigen';
+
+  @override
+  String get portablePasswordMismatch =>
+      'Die Passwörter stimmen nicht überein.';
+
+  @override
+  String get portableWrongPassword =>
+      'Falsches Passwort oder Bibliothek nicht entsperrbar.';
+
+  @override
+  String get portableFailed =>
+      'Der Vorgang konnte nicht abgeschlossen werden. Die Quellbibliothek bleibt erhalten.';
+
+  @override
+  String get portableDone => 'Modus geändert. Quellkonten bleiben erhalten.';
+
+  @override
+  String get portableSkipped => 'Vorhandene Konten übersprungen';
+
+  @override
+  String get portableUnreadable =>
+      'Die Bibliothek ist beschädigt oder benötigt den Schlüssel der ursprünglichen Windows-Installation. Stelle einen maFile-Export wieder her; die Quelldateien wurden nicht verändert.';
 }

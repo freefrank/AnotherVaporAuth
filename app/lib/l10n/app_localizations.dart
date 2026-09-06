@@ -3616,6 +3616,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear search'**
   String get accountSearchClear;
+
+  /// No description provided for @portableMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Portable mode'**
+  String get portableMode;
+
+  /// No description provided for @portableEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable portable mode'**
+  String get portableEnable;
+
+  /// No description provided for @portableDisable.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable portable mode'**
+  String get portableDisable;
+
+  /// No description provided for @portableOnHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'New accounts go to maFiles beside the app. Both libraries are read; portable copies take priority for duplicate accounts.'**
+  String get portableOnHelp;
+
+  /// No description provided for @portableOffHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'New accounts go to AppData. Both unlocked libraries are read; local copies take priority for duplicate accounts.'**
+  String get portableOffHelp;
+
+  /// No description provided for @portableCopyToUsb.
+  ///
+  /// In en, this message translates to:
+  /// **'Also copy existing local accounts to maFiles beside the app?'**
+  String get portableCopyToUsb;
+
+  /// No description provided for @portableCopyToLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Also copy portable accounts back to AppData?'**
+  String get portableCopyToLocal;
+
+  /// No description provided for @portableCopyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Copies are verified and the source is kept as a backup. Accounts already in the destination are skipped. Portable accounts are not included in this computer’s WebDAV sync.'**
+  String get portableCopyHelp;
+
+  /// No description provided for @portableNoCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch only'**
+  String get portableNoCopy;
+
+  /// No description provided for @portableCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy and switch'**
+  String get portableCopy;
+
+  /// No description provided for @portableSetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Set portable password'**
+  String get portableSetPassword;
+
+  /// No description provided for @portableUnlock.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock maFiles'**
+  String get portableUnlock;
+
+  /// No description provided for @portablePasswordHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a separate password with at least 12 characters. Keep it safe: it is needed on other computers and cannot be reset.'**
+  String get portablePasswordHelp;
+
+  /// No description provided for @portableUnlockHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter this library’s password. For an encrypted SDA folder, use its SDA passphrase.'**
+  String get portableUnlockHelp;
+
+  /// No description provided for @portableConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm password'**
+  String get portableConfirmPassword;
+
+  /// No description provided for @portablePasswordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match.'**
+  String get portablePasswordMismatch;
+
+  /// No description provided for @portableWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong password, or this library cannot be unlocked.'**
+  String get portableWrongPassword;
+
+  /// No description provided for @portableFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The operation could not finish. The source library was kept.'**
+  String get portableFailed;
+
+  /// No description provided for @portableDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Mode updated. Source accounts were kept.'**
+  String get portableDone;
+
+  /// No description provided for @portableSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing accounts skipped'**
+  String get portableSkipped;
+
+  /// No description provided for @portableUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'This library is damaged or still depends on another Windows installation’s key. Restore a maFile export; the source files have not been changed.'**
+  String get portableUnreadable;
 }
 
 class _AppLocalizationsDelegate

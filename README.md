@@ -141,7 +141,7 @@ Requires the Flutter SDK (3.44.x). See `app/README.md` for details.
 ```sh
 cd app
 flutter pub get --enforce-lockfile
-flutter test                       # 740 tests
+flutter test                       # 755 tests
 flutter run -d linux               # or windows / macos
 
 # Android ships in two flavors (play / cn); a build without --flavor fails.
@@ -160,8 +160,16 @@ dispatch, see `.github/workflows/desktop-release.yml`:
 **Portable build (Windows):** a separate workflow
 (`.github/workflows/windows-portable.yml`) packs the whole app into one
 single-file `AVA-…-portable.exe` (NSIS, `tool/portable.nsi`). It runs from anywhere
-with nothing to install; account data is stored in the regular per-user data
-directory, same as the installed build.
+with nothing to install. Desktop Settings includes a **Portable mode** switch:
+new accounts go to `maFiles` beside the app when enabled, or to AppData when
+disabled. Both libraries remain readable. Each switch offers to copy existing
+accounts; source copies are retained and matching Steam IDs are skipped.
+Portable accounts use a separate password (at least 12 characters), so the
+whole `maFiles` folder can travel to another computer. Keep its `manifest.json`
+with the encrypted account files. Settings are not carried in `maFiles`;
+existing WebDAV settings sync is unchanged, and portable accounts are excluded
+from account sync. On a new computer, accept the privacy notice and set a local
+unlock PIN first, then unlock `maFiles` with its separate password.
 
 ## macOS (Apple Silicon)
 

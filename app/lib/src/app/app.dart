@@ -202,7 +202,7 @@ class _Root extends ConsumerWidget {
         if (data.locked) return const UnlockScreen();
         // A PIN is mandatory: if the store isn't protected yet, set one first.
         if (!data.encrypted) return const SetupPinScreen();
-        if (data.accounts.isEmpty) return const WelcomeScreen();
+        if (data.visibleAccounts.isEmpty && data.portable == null) return const WelcomeScreen();
         return const HomeScreen();
       },
     );

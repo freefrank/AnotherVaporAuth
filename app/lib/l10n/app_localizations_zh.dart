@@ -1946,6 +1946,71 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get accountSearchClear => '清除搜索';
+
+  @override
+  String get portableMode => '便携模式';
+
+  @override
+  String get portableEnable => '开启便携模式';
+
+  @override
+  String get portableDisable => '关闭便携模式';
+
+  @override
+  String get portableOnHelp => '新账号保存到程序旁的 maFiles。同时读取两个库，同号优先使用便携库。';
+
+  @override
+  String get portableOffHelp => '新账号保存到 AppData。同时读取两个已解锁的库，同号优先使用本机库。';
+
+  @override
+  String get portableCopyToUsb => '是否同时把现有本机账号复制到程序旁的 maFiles？';
+
+  @override
+  String get portableCopyToLocal => '是否同时把便携账号复制回 AppData？';
+
+  @override
+  String get portableCopyHelp =>
+      '复制后会校验，原库保留作备份。目标库已有的账号会跳过，不覆盖。便携账号不参与本机的 WebDAV 同步。';
+
+  @override
+  String get portableNoCopy => '仅切换';
+
+  @override
+  String get portableCopy => '复制并切换';
+
+  @override
+  String get portableSetPassword => '设置便携密码';
+
+  @override
+  String get portableUnlock => '解锁 maFiles';
+
+  @override
+  String get portablePasswordHelp => '请使用至少 12 个字符的独立密码并妥善保管。换电脑仍需此密码，无法重置。';
+
+  @override
+  String get portableUnlockHelp => '请输入这个账号库的密码。若是 SDA 加密文件夹，请使用原 SDA 密码。';
+
+  @override
+  String get portableConfirmPassword => '确认密码';
+
+  @override
+  String get portablePasswordMismatch => '两次密码不一致。';
+
+  @override
+  String get portableWrongPassword => '密码错误，或此账号库无法解锁。';
+
+  @override
+  String get portableFailed => '操作未完成，原账号库已保留。';
+
+  @override
+  String get portableDone => '模式已更新，原账号已保留。';
+
+  @override
+  String get portableSkipped => '跳过已有账号';
+
+  @override
+  String get portableUnreadable =>
+      '账号库损坏，或仍依赖原 Windows 的密钥。请从导出的 maFile 恢复，源文件未改动。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -3895,4 +3960,69 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get accountSearchClear => '清除搜尋';
+
+  @override
+  String get portableMode => '可攜模式';
+
+  @override
+  String get portableEnable => '開啟可攜模式';
+
+  @override
+  String get portableDisable => '關閉可攜模式';
+
+  @override
+  String get portableOnHelp => '新帳號儲存至程式旁的 maFiles。同時讀取兩個庫，同帳號優先使用可攜庫。';
+
+  @override
+  String get portableOffHelp => '新帳號儲存至 AppData。同時讀取兩個已解鎖的庫，同帳號優先使用本機庫。';
+
+  @override
+  String get portableCopyToUsb => '是否同時將現有本機帳號複製到程式旁的 maFiles？';
+
+  @override
+  String get portableCopyToLocal => '是否同時將可攜帳號複製回 AppData？';
+
+  @override
+  String get portableCopyHelp =>
+      '複製後會驗證，原庫保留作備份。目標庫已有的帳號會略過，不覆寫。可攜帳號不參與本機的 WebDAV 同步。';
+
+  @override
+  String get portableNoCopy => '僅切換';
+
+  @override
+  String get portableCopy => '複製並切換';
+
+  @override
+  String get portableSetPassword => '設定可攜密碼';
+
+  @override
+  String get portableUnlock => '解鎖 maFiles';
+
+  @override
+  String get portablePasswordHelp => '請使用至少 12 個字元的獨立密碼並妥善保管。換電腦仍需此密碼，無法重設。';
+
+  @override
+  String get portableUnlockHelp => '請輸入此帳號庫的密碼。若為 SDA 加密資料夾，請使用原 SDA 密碼。';
+
+  @override
+  String get portableConfirmPassword => '確認密碼';
+
+  @override
+  String get portablePasswordMismatch => '兩次密碼不一致。';
+
+  @override
+  String get portableWrongPassword => '密碼錯誤，或此帳號庫無法解鎖。';
+
+  @override
+  String get portableFailed => '操作未完成，原帳號庫已保留。';
+
+  @override
+  String get portableDone => '模式已更新，原帳號已保留。';
+
+  @override
+  String get portableSkipped => '略過已有帳號';
+
+  @override
+  String get portableUnreadable =>
+      '帳號庫損毀，或仍依賴原 Windows 的金鑰。請從匯出的 maFile 還原，來源檔案未變更。';
 }

@@ -101,7 +101,7 @@ Authenticator —— 仅供参考存档，AVA 与它不共享任何代码。
 ```sh
 cd app
 flutter pub get --enforce-lockfile
-flutter test                       # 740 项测试
+flutter test                       # 755 项测试
 flutter run -d linux               # 或 windows / macos
 
 # Android 分 play / cn 两个 flavor，不带 --flavor 的构建会直接失败。
@@ -118,7 +118,13 @@ flutter build apk --release --split-per-abi --flavor cn --dart-define=AVA_CHANNE
 
 **便携版（Windows）**：由独立 workflow（`.github/workflows/windows-portable.yml`）
 打包为**单文件** `AVA-…-portable.exe`（NSIS，`tool/portable.nsi`），免安装、放哪都能跑；
-账户数据与安装版一样写入用户数据目录。
+桌面端设置里有独立的**便携模式**开关：开启后新账号写入程序旁的 `maFiles`，
+关闭后写入 AppData，两个目录中的账号仍会同时读取。开启、关闭时都可选择复制现有
+账号，源数据保留，同 Steam ID 的账号跳过。便携库使用独立密码（至少 12 位），
+将整个 `maFiles` 文件夹带到另一台电脑即可解锁；加密文件必须与 `manifest.json`
+一起保留。程序设置不随 `maFiles` 携带，已有的 WebDAV 设置同步不变，便携账号
+不参与账号同步。新电脑首次打开时，先同意隐私说明并设置本机 PIN，再用独立密码
+解锁 `maFiles`。
 
 ## macOS（Apple Silicon）
 

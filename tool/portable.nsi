@@ -11,7 +11,7 @@
 ; Windows runners, and this script lives in the repo where it can be reviewed.
 ;
 ; Build:
-;   makensis /DSRCDIR=<Release dir> /DOUTFILE=<out.exe> /DAPPVER=<x.y.z> portable.nsi
+;   makensis /INPUTCHARSET UTF8 /DSRCDIR=<Release dir> /DOUTFILE=<out.exe> /DAPPVER=<x.y.z> portable.nsi
 ;
 ; $PLUGINSDIR is NSIS's own scratch directory: created by InitPluginsDir, and
 ; **deleted automatically when this process exits**. Combined with ExecWait —
@@ -38,9 +38,8 @@ ManifestDPIAware true
 
 Name "AVA"
 OutFile "${OUTFILE}"
-; Portable means portable: no elevation prompt, and nothing written outside
-; the user's own profile. Account data still goes to the per-user data
-; directory, exactly as in the installed build.
+; No elevation prompt. The app reads both the per-user account library and
+; maFiles beside this launcher; its portable switch chooses the default store.
 RequestExecutionLevel user
 SilentInstall silent
 SetCompressor /SOLID lzma
@@ -66,6 +65,12 @@ Section
   ; Forward whatever the user passed, so the packed exe behaves like the
   ; unpacked one rather than silently dropping arguments.
   ${GetParameters} $R0
+
+  ; The child runs in a temporary directory. Pass the OUTER exe location,
+  ; never $PLUGINSDIR, so its maFiles survive extraction cleanup.
+  System::Call 'kernel32::SetEnvironmentVariableW(w "AVA_PORTABLE_ROOT", w "$EXEDIR") i.r2'
+  StrCmp $2 0 0 +2
+    Abort "Cannot pass the portable data directory"
 
   ; ExecWait, not Exec: returning immediately would tear down $PLUGINSDIR out
   ; from under the app that is still reading its own DLLs out of it.
