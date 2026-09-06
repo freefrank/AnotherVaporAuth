@@ -7,6 +7,23 @@ trigger automated releases.
 
 ## [v1.5.0] — 2026-09-05
 
+### Desktop refresh — 2026-09-05
+- Desktop Settings now has a **Portable mode** switch. New accounts go to
+  `maFiles` beside the app when enabled, or AppData when disabled. Both
+  libraries are read; matching Steam IDs prefer the selected library.
+- Enabling or disabling offers to copy existing accounts, retaining the source
+  and skipping duplicates. Portable accounts use a separate password and are
+  excluded from the host's WebDAV sync. Keep the complete folder, including
+  `manifest.json`, when moving to another computer.
+- This replaces the desktop downloads only. Android builds are unchanged.
+
+### 桌面版补充更新 — 2026-09-05
+- 桌面设置新增**便携模式**开关：开启后新账号写入程序旁的 `maFiles`，关闭后
+  写入 AppData。同时读取两个库，同 Steam ID 优先使用当前模式对应的库。
+- 开启、关闭时均可选择复制已有账号，保留源数据并跳过重复账号。便携库使用
+  独立密码，不参与本机 WebDAV 同步。换电脑请携带整个文件夹，包括 `manifest.json`。
+- 本次仅替换桌面下载文件，Android 安装包不变。
+
 ### Added
 - **Account search.** Tap the search button above the account list to find an
   account by username, display name or SteamID. Search ignores case; closing

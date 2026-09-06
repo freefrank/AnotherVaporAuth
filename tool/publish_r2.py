@@ -29,6 +29,7 @@ import argparse
 import hashlib
 import json
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -57,6 +58,7 @@ ARTIFACTS = [
 
 
 def sh(args: list[str], **kw) -> subprocess.CompletedProcess:
+    args[0] = shutil.which(args[0]) or args[0]
     return subprocess.run(args, check=True, capture_output=True, **kw)
 
 
@@ -100,13 +102,11 @@ def upload_and_verify(path: Path, content_type: str, apply: bool) -> None:
              f"--file={path}", f"--content-type={content_type}", "--remote")
     # Read back THROUGH R2 and compare. An upload nobody verified is an
     # upload nobody can trust.
-    with tempfile.NamedTemporaryFile(dir=ROOT / "dist", suffix=".verify") as tmp:
-        with open(tmp.name, "wb") as f:
-            subprocess.run(
-                ["npx", "wrangler", "r2", "object", "get",
-                 f"{BUCKET}/{path.name}", "--remote", "--pipe"],
-                check=True, stdout=f, cwd=ROOT)
-        remote = sha256_file(Path(tmp.name))
+    with tempfile.TemporaryDirectory(dir=ROOT / "dist") as tmp:
+        downloaded = Path(tmp) / "download.verify"
+        wrangler("r2", "object", "get", f"{BUCKET}/{path.name}",
+                 "--remote", f"--file={downloaded}")
+        remote = sha256_file(downloaded)
     local = sha256_file(path)
     if remote != local:
         sys.exit(f"VERIFY FAILED for {path.name}: local {local[:16]}… "
@@ -120,6 +120,8 @@ def main() -> None:
                     help="actually upload/delete (default: dry-run)")
     ap.add_argument("--version", default=None,
                     help="override the version read from app/pubspec.yaml")
+    ap.add_argument("--desktop-only", action="store_true",
+                    help="replace desktop artifacts only; no Android upload or pruning")
     args = ap.parse_args()
     v = args.version or pubspec_version()
     mode = "APPLY" if args.apply else "DRY-RUN"
@@ -127,16 +129,28 @@ def main() -> None:
 
     uploads: list[tuple[Path, str]] = []
     for tmpl, ctype, required in ARTIFACTS:
+        if args.desktop_only and tmpl.endswith('.apk'):
+            continue
         p = ROOT / "dist" / tmpl.format(v=v)
         if p.exists():
             uploads.append((p, ctype))
-        elif required:
+        elif required or args.desktop_only:
             sys.exit(f"missing required artifact: {p} — build it first")
         else:
             print(f"  skip (absent): {p.name}")
     print(f"-- uploading {len(uploads)} artifact(s)")
+    if args.desktop_only and args.apply:
+        inventory = set(fetch_inventory())
+        if not all(p.name in inventory for p, _ in uploads):
+            sys.exit("desktop-only requires existing same-version inventory entries")
     for p, ctype in uploads:
         upload_and_verify(p, ctype, args.apply)
+
+    if args.desktop_only:
+        # Same-version desktop refresh: existing inventory and Android objects
+        # remain valid (checked before uploading).
+        print("  desktop refresh complete; inventory and Android unchanged")
+        return
 
     print("-- pruning")
     current = {p.name for p, _ in uploads}
