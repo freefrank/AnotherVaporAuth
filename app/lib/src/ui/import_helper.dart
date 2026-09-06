@@ -109,10 +109,8 @@ Future<void> importMaFileFlow(BuildContext context, WidgetRef ref) async {
 /// enumerate, so a folder picker would work on desktop and quietly fail on the
 /// platform most users are on. Reading each [XFile] works everywhere.
 ///
-/// The selection must include `manifest.json`. That is not a convenience: when
-/// SDA's encryption is on, the salt and IV for each account live in its
-/// manifest row, not in the `.maFile`, so a lone encrypted maFile is not
-/// decryptable by anyone.
+/// Plaintext maFiles can be selected on their own. Encrypted SDA exports also
+/// need manifest.json, which carries each account's salt and IV.
 Future<void> importSdaBundleFlow(BuildContext context, WidgetRef ref) async {
   final l = AppLocalizations.of(context);
   final files = await openFiles();
@@ -132,21 +130,18 @@ Future<void> importSdaBundleFlow(BuildContext context, WidgetRef ref) async {
     (n) => n.split(RegExp(r'[/\\]')).last.toLowerCase() == 'manifest.json',
     orElse: () => '',
   );
-  if (manifestName.isEmpty) {
-    if (context.mounted) _snack(context, l.sdaImportNoManifest);
-    return;
-  }
-
-  final SdaManifest manifest;
-  try {
-    manifest = SdaManifest.parse(contents[manifestName]!);
-  } catch (e) {
-    if (context.mounted) _snack(context, l.sdaImportBadManifest('$e'));
-    return;
+  SdaManifest? manifest;
+  if (manifestName.isNotEmpty) {
+    try {
+      manifest = SdaManifest.parse(contents[manifestName]!);
+    } catch (e) {
+      if (context.mounted) _snack(context, l.sdaImportBadManifest('$e'));
+      return;
+    }
   }
 
   String? passKey;
-  if (manifest.encrypted) {
+  if (manifest?.encrypted ?? false) {
     if (!context.mounted) return;
     passKey = await _promptSdaPassKey(context, l);
     if (passKey == null || passKey.isEmpty) return;
@@ -353,8 +348,8 @@ Future<void> showBackupReminderOnce(BuildContext context, WidgetRef ref) async {
 /// share, inside a 0700 directory, deleted afterwards — would go unexercised
 /// on the platform they exist to protect.
 @visibleForTesting
-bool Function() exportUsesSaveDialog =
-    () => Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+bool Function() exportUsesSaveDialog = () =>
+    Platform.isWindows || Platform.isLinux || Platform.isMacOS;
 
 /// Exports an account as an **unencrypted** `*.maFile` (plain JSON), named after
 /// the account's username, via the system share sheet (save to Files, Drive…).

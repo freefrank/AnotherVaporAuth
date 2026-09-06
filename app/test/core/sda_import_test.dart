@@ -48,6 +48,32 @@ String _maFile(int steamId) => jsonEncode({
 }
 
 void main() {
+  test('imports multiple plaintext maFiles without a manifest', () async {
+    final read = await readSdaBundle(
+      files: {
+        'first.maFile': _maFile(1),
+        'SECOND.MAFILE': _maFile(2),
+        'broken.maFile': 'invalid',
+        'notes.txt': 'not an account',
+      },
+    );
+    expect(read.imported.map((r) => r.plaintext), [_maFile(1), _maFile(2)]);
+    expect(read.failed.single.entry.filename, 'broken.maFile');
+    expect(read.unlistedFiles, ['notes.txt']);
+    expect(read.wrongPassKey, isFalse);
+  });
+
+  test(
+    'encrypted data without manifest is not imported as plaintext',
+    () async {
+      final b = _bundle([1], passKey: 'secret');
+      final read = await readSdaBundle(files: b.files);
+      expect(read.imported, isEmpty);
+      expect(read.failed.single.problem, SdaEntryProblem.notReadable);
+      expect(read.wrongPassKey, isFalse);
+    },
+  );
+
   group('SdaManifest.parse', () {
     test('reads entries and the encrypted flag', () {
       final b = _bundle([1, 2], passKey: 'hunter2');

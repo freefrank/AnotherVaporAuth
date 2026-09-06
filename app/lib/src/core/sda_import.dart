@@ -8,8 +8,8 @@
 ///
 /// That is the whole reason this module exists. A lone encrypted `.maFile`
 /// cannot be imported by anyone, ever — without the manifest there is nothing
-/// to derive the key with. Import has to take the manifest and the files
-/// together.
+/// to derive the key with. Encrypted imports need both; plaintext maFiles
+/// can be imported without a manifest.
 ///
 /// Everything here is pure: no Flutter, no file system. The UI layer reads the
 /// bytes and shows the errors; the decisions are all testable without either.
@@ -174,12 +174,21 @@ bool looksLikeMaFile(String text) {
 ///
 /// [files] maps the *basename* of each selected file to its contents;
 /// `manifest.json` itself may be present and is ignored. [passKey] is required
-/// when [manifest] is encrypted and ignored otherwise.
+/// when [manifest] is encrypted and ignored otherwise. Without a manifest,
+/// selected .maFile files are read as plaintext; unrelated files are skipped.
 Future<SdaImportResult> readSdaBundle({
-  required SdaManifest manifest,
+  SdaManifest? manifest,
   required Map<String, String> files,
   String? passKey,
 }) async {
+  manifest ??= SdaManifest(
+    encrypted: false,
+    entries: [
+      for (final name in files.keys)
+        if (_key(name).endsWith('.mafile'))
+          SdaManifestEntry(filename: name, steamId: 0),
+    ],
+  );
   final byName = {for (final e in files.entries) _key(e.key): e.value};
   final results = <SdaEntryResult>[];
 
