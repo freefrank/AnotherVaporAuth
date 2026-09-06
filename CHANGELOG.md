@@ -5,6 +5,32 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v*` tags (e.g. `v1.4.0`)
 trigger automated releases.
 
+## [v1.5.0] — 2026-09-05
+
+### Added
+- **Account search.** Tap the search button above the account list to find an
+  account by username, display name or SteamID. Search ignores case; closing
+  it restores the full list and keeps the selected account.
+
+### Fixed
+- **Batch import no longer requires manifest.json for plaintext maFiles.**
+  Files exported from AVA on your phone can now be imported together on PC.
+  Encrypted SDA files still need their manifest. Existing accounts are kept,
+  and unreadable files are skipped.
+- Long account names now fit within the phone's account panel.
+
+### 新增
+- **账号搜索。** 点击账号列表上方的搜索按钮，展开后可按账号名、昵称或
+  SteamID 筛选，不区分大小写。收起搜索恢复完整列表，保留当前选中的账号。
+
+### 修复
+- **批量导入未加密 maFile 不再要求 manifest.json。** 手机 AVA 导出的多个
+  账号文件可直接在 PC 批量导入。SDA 加密文件仍需 manifest；已有账号保留，
+  无法读取的文件跳过。
+- 修复手机账号面板中较长的账号名超出边界。
+
+—
+
 ## [v1.4.0] — 2026-08-31
 
 ### Added

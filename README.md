@@ -90,7 +90,7 @@ guide](https://ava.dotslash.pro/guide/move-steam-authenticator/).
 - **Login flows** — password + **QR**, session refresh, add authenticator, and
   approving another device's login by scanning its QR.
 - **App lock** — a mandatory 6-digit PIN gates a random 256-bit key held in the
-  device's hardware Keystore, which encrypts the local store (AES-256-GCM); with
+  platform's secure storage, which encrypts the local store (AES-256-GCM); with
   biometric / device-credential unlock, it signs in as soon as the PIN is entered.
 - **Encrypted sync (optional)** — put your accounts on a WebDAV server you
   control (Nextcloud, Synology, any of them). Everything is encrypted on your
@@ -141,7 +141,7 @@ Requires the Flutter SDK (3.44.x). See `app/README.md` for details.
 ```sh
 cd app
 flutter pub get --enforce-lockfile
-flutter test                       # 735 tests
+flutter test                       # 740 tests
 flutter run -d linux               # or windows / macos
 
 # Android ships in two flavors (play / cn); a build without --flavor fails.

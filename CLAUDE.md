@@ -32,15 +32,15 @@
 
 ## 工作树
 
-- **发布正本工作树:`~/sync/Git/AnotherVaporAuth`**(主机 `claude`,不再有
-  WSL 原生盘正本)——Android 出包、签名密钥、`dist/` 分发都以它为准
-  (冷启动 analyze ~57s / test 735 例 ~5min)。
-- **Windows 侧另有一棵可用工作树**:`C:\Users\freefrank\ownCloud\Git\
-  AnotherVaporAuth`(2026-08-31 更正:此前写「不再有 ownCloud 镜像」已不属实)。
-  toolchain `E:\SDK\flutter`(3.44.4),analyze/test/桌面出包都能跑;测试对
-  Windows 的平台差异已修(`test/support/temp_dir.dart`)。Android 签名与
-  `/play`、R2 分发仍在 Linux 正本上做。两棵树各自是独立 git clone,靠
-  push/pull 同步,**不共享未提交改动**。
+- **Windows 开发工作树**：`C:\Users\freefrank\ownCloud\Git\AnotherVaporAuth`，
+  Flutter `E:\SDK\flutter`（3.44.4），可运行 analyze/test 和桌面构建。
+- **Android 发布构建工作树**：WSL `Manjaro` 的 `~/Git/AnotherVaporAuth`，
+  Flutter `~/flutter`（3.44.4），SDK `~/Android/Sdk`，签名工作副本
+  `~/ava-upload.jks`。2026-09-05 已核实；与 Windows 是独立 clone，提交后
+  通过 git push/pull 同步，不共享未提交改动。完整测试 740 项通过。
+- Play 上传脚本可在 Windows 用 `uv run tool/play_deploy.py` 运行；R2 和
+  Worker 部署使用 WSL 中项目锁定的 Wrangler。
+- 以下 `~/sync` 条目描述旧服务器的同步与备份布局，不能当作当前 WSL 路径。
 - `~/sync` 是 ZFS 数据集(`stor/backup/freefrank/syncthing`)上的 **Syncthing
   folder**,同步守护进程在宿主机侧,本机看不到进程。跨机分发由它自动完成,
   **不需要手工 rsync**。
