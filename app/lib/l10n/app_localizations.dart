@@ -1766,7 +1766,7 @@ abstract class AppLocalizations {
   /// No description provided for @sdaImportHint.
   ///
   /// In en, this message translates to:
-  /// **'Select your Steam Desktop Authenticator maFiles folder: pick manifest.json together with the .maFile files. Both are needed — if SDA\'s encryption was on, the decryption parameters live in manifest.json, not in the maFile.'**
+  /// **'Select .maFile files to import in bulk. manifest.json is optional for unencrypted files. For encrypted SDA files, select manifest.json too; it contains the decryption parameters.'**
   String get sdaImportHint;
 
   /// No description provided for @sdaImportNoManifest.
@@ -3598,6 +3598,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saved to {path}'**
   String exportSaved(String path);
+
+  /// No description provided for @accountSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search accounts'**
+  String get accountSearchHint;
+
+  /// No description provided for @accountSearchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching accounts'**
+  String get accountSearchEmpty;
+
+  /// No description provided for @accountSearchClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get accountSearchClear;
 }
 
 class _AppLocalizationsDelegate

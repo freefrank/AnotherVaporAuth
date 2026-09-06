@@ -13,6 +13,7 @@ import 'package:ava/src/app/theme.dart';
 import 'package:ava/src/core/models/steam_guard_account.dart';
 import 'package:ava/src/services/storage_provider.dart';
 import 'package:ava/src/ui/import_helper.dart';
+import 'package:ava/src/ui/home_screen.dart';
 import 'package:file_selector_platform_interface/file_selector_platform_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -81,6 +82,25 @@ class _FakeFileSelector extends FileSelectorPlatform {
     String? confirmButtonText,
   }) async =>
       XFile.fromData(Uint8List.fromList(utf8.encode(contents)), name: name);
+}
+
+class _FakeMultiSelector extends FileSelectorPlatform {
+  _FakeMultiSelector(this.files);
+  final Map<String, String> files;
+
+  @override
+  Future<List<XFile>> openFiles({
+    List<XTypeGroup>? acceptedTypeGroups,
+    String? initialDirectory,
+    String? confirmButtonText,
+  }) async => [
+    for (final entry in files.entries)
+      XFile.fromData(
+        Uint8List.fromList(utf8.encode(entry.value)),
+        name: entry.key,
+        path: entry.key,
+      ),
+  ];
 }
 
 /// Answers the export's Save-as dialog with a fixed destination, or with
@@ -321,6 +341,133 @@ void main() {
     expect(storage.files['$steamId.maFile'], isNot(contains('R22222')));
     expect(find.text(l.importSuccess), findsNothing);
   });
+
+  testWidgets(
+    'batch import without manifest stores new accounts and keeps duplicates',
+    (tester) async {
+      final storage = MemoryStorageProvider(tempDir.path);
+      final container = ProviderContainer(
+        overrides: [
+          storageProvider.overrideWithValue(storage),
+          timeAlignerProvider.overrideWithValue(() async {}),
+        ],
+      );
+      addTearDown(container.dispose);
+      String payload(int id, String code) => jsonEncode({
+        'account_name': 'user$id',
+        'shared_secret': 'c2VjcmV0',
+        'revocation_code': code,
+        'Session': {'SteamID': id},
+      });
+      await tester.runAsync(() async {
+        await container.read(appControllerProvider.future);
+        await container.read(settingsStoreProvider).saveBackupReminderShown();
+        await container
+            .read(appControllerProvider.notifier)
+            .importMaFile(payload(76561198000000123, 'OLD'));
+      });
+      FileSelectorPlatform.instance = _FakeMultiSelector({
+        'old.maFile': payload(76561198000000123, 'REPLACEMENT'),
+        'new.maFile': payload(76561198000000124, 'NEW'),
+        'broken.maFile': 'bad data',
+      });
+      late BuildContext ctx;
+      late WidgetRef widgetRef;
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Consumer(
+              builder: (context, ref, _) {
+                ctx = context;
+                widgetRef = ref;
+                return const Scaffold(body: SizedBox());
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.runAsync(() => importSdaBundleFlow(ctx, widgetRef));
+      await tester.pump();
+      expect(container.read(appControllerProvider).value!.accounts.length, 2);
+      expect(storage.files['76561198000000123.maFile'], contains('OLD'));
+      expect(
+        storage.files['76561198000000123.maFile'],
+        isNot(contains('REPLACEMENT')),
+      );
+      expect(storage.files['76561198000000124.maFile'], contains('NEW'));
+      expect(find.textContaining('manifest.json'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  for (final width in [390.0, 900.0]) {
+    testWidgets(
+      'account search expands, selects the actual matching account and clears ($width)',
+      (tester) async {
+        await tester.binding.setSurfaceSize(Size(width, 900));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final container = ProviderContainer(
+          overrides: [
+            storageProvider.overrideWithValue(
+              MemoryStorageProvider(tempDir.path),
+            ),
+            timeAlignerProvider.overrideWithValue(() async {}),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.runAsync(() async {
+          await container.read(appControllerProvider.future);
+          await container.read(settingsStoreProvider).saveTutorialSeen();
+          for (var i = 0; i < 25; i++) {
+            await container
+                .read(appControllerProvider.notifier)
+                .importMaFile(
+                  jsonEncode({
+                    'account_name': i == 24 ? 'TargetUser' : 'user$i',
+                    'shared_secret': 'c2VjcmV0',
+                    'Session': {'SteamID': 76561198000000100 + i},
+                  }),
+                );
+          }
+        });
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              theme: buildAvaTheme(AvaThemeVariant.neon),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const HomeScreen(),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 500));
+        expect(find.byType(TextField), findsNothing);
+        await tester.tap(find.byIcon(Icons.search));
+        await tester.pump();
+        await tester.enterText(find.byType(TextField), 'targetuser');
+        await tester.pump();
+        expect(find.text('TargetUser'), findsOneWidget);
+        await tester.tap(find.text('TargetUser'));
+        await tester.pump(const Duration(milliseconds: 500));
+        expect(find.text('TargetUser'), findsNWidgets(2));
+        await tester.enterText(find.byType(TextField), 'not-present');
+        await tester.pump();
+        expect(find.text('No matching accounts'), findsOneWidget);
+        await tester.tap(find.byIcon(Icons.search_off));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 600));
+        expect(find.byType(TextField), findsNothing);
+        expect(find.text('user0'), findsOneWidget);
+        expect(find.text('TargetUser'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
+  }
 
   group('sessionActivatedSilently', () {
     test('no tokens in the imported maFile needs a sign-in prompt', () {

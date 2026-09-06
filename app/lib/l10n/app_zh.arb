@@ -523,7 +523,7 @@
   "importSessionDeadBody": "该 maFile 中的 Steam 会话已失效。现在登录即可使用交易确认与登录批准——令牌验证码会自动填写。",
   "importSessionLater": "稍后",
   "sdaImportAction": "导入 SDA 文件夹",
-  "sdaImportHint": "选择你的 Steam Desktop Authenticator maFiles 文件夹：把 manifest.json 和那些 .maFile 一起选中。两者缺一不可——如果当初在 SDA 里开了加密，解密参数存在 manifest.json 里，不在 maFile 内部。",
+  "sdaImportHint": "选择多个 .maFile 文件批量导入。未加密文件不需要 manifest.json；SDA 加密文件需同时选中 manifest.json，其中包含解密参数。",
   "sdaImportNoManifest": "所选文件里没有 manifest.json。请把它和 .maFile 一起选中。",
   "sdaImportBadManifest": "这个 manifest.json 读不了：{error}",
   "sdaImportPassTitle": "SDA 加密口令",
@@ -1012,5 +1012,8 @@
   "netErrTimeout": "Steam 没有在规定时间内响应。网络可能很慢，或者被拦截了。",
   "netErrCert": "Steam 的证书未通过验证，AVA 已中断这次连接。当前网络里可能有东西在监听流量。",
   "netErrServer": "Steam 返回了一个错误（{code}）。这通常是暂时的，稍后再试。",
-  "exportSaved": "已保存到 {path}"
+  "exportSaved": "已保存到 {path}",
+  "accountSearchHint": "搜索账号",
+  "accountSearchEmpty": "没有匹配的账号",
+  "accountSearchClear": "清除搜索"
 }

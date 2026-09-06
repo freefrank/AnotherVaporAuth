@@ -276,7 +276,7 @@
   "importSessionDeadBody": "Die Steam-Sitzung in diesem maFile ist abgelaufen. Melde dich jetzt an, um Bestätigungen und Anmeldefreigaben zu nutzen — der Steam Guard-Code wird automatisch eingetragen.",
   "importSessionLater": "Später",
   "sdaImportAction": "SDA-Ordner importieren",
-  "sdaImportHint": "Wähle deinen maFiles-Ordner aus Steam Desktop Authenticator: nimm manifest.json zusammen mit den .maFile-Dateien. Beides wird gebraucht — war SDAs Verschlüsselung an, stehen die Entschlüsselungsparameter in manifest.json, nicht in der maFile.",
+  "sdaImportHint": "Wähle mehrere .maFile-Dateien zum Importieren. Für unverschlüsselte Dateien ist manifest.json optional. Wähle bei verschlüsselten SDA-Dateien auch manifest.json aus; sie enthält die Entschlüsselungsparameter.",
   "sdaImportNoManifest": "In dieser Auswahl ist keine manifest.json. Wähle sie zusammen mit den .maFile-Dateien aus.",
   "sdaImportBadManifest": "Diese manifest.json lässt sich nicht lesen: {error}",
   "sdaImportPassTitle": "SDA-Verschlüsselungspasswort",
@@ -651,5 +651,8 @@
   "netErrTimeout": "Steam hat nicht rechtzeitig geantwortet. Das Netzwerk ist womöglich langsam oder gefiltert.",
   "netErrCert": "Das Zertifikat von Steam war nicht vertrauenswürdig, deshalb hat AVA die Verbindung beendet. Möglicherweise untersucht etwas in diesem Netzwerk den Datenverkehr.",
   "netErrServer": "Steam hat einen Fehler zurückgegeben ({code}). Das ist meist vorübergehend — versuchen Sie es gleich noch einmal.",
-  "exportSaved": "Gespeichert unter {path}"
+  "exportSaved": "Gespeichert unter {path}",
+  "accountSearchHint": "Konten suchen",
+  "accountSearchEmpty": "Keine passenden Konten",
+  "accountSearchClear": "Suche löschen"
 }

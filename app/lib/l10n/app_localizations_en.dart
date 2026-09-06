@@ -962,7 +962,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sdaImportHint =>
-      'Select your Steam Desktop Authenticator maFiles folder: pick manifest.json together with the .maFile files. Both are needed — if SDA\'s encryption was on, the decryption parameters live in manifest.json, not in the maFile.';
+      'Select .maFile files to import in bulk. manifest.json is optional for unencrypted files. For encrypted SDA files, select manifest.json too; it contains the decryption parameters.';
 
   @override
   String get sdaImportNoManifest =>
@@ -2030,4 +2030,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String exportSaved(String path) {
     return 'Saved to $path';
   }
+
+  @override
+  String get accountSearchHint => 'Search accounts';
+
+  @override
+  String get accountSearchEmpty => 'No matching accounts';
+
+  @override
+  String get accountSearchClear => 'Clear search';
 }

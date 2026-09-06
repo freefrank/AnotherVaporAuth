@@ -972,7 +972,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sdaImportHint =>
-      'Sélectionnez votre dossier maFiles de Steam Desktop Authenticator : prenez manifest.json en même temps que les fichiers .maFile. Les deux sont nécessaires — si le chiffrement de SDA était activé, les paramètres de déchiffrement sont dans manifest.json, pas dans le maFile.';
+      'Sélectionnez plusieurs fichiers .maFile à importer. manifest.json est facultatif pour les fichiers non chiffrés. Pour les fichiers SDA chiffrés, sélectionnez aussi manifest.json : il contient les paramètres de déchiffrement.';
 
   @override
   String get sdaImportNoManifest =>
@@ -2061,4 +2061,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String exportSaved(String path) {
     return 'Enregistré dans $path';
   }
+
+  @override
+  String get accountSearchHint => 'Rechercher un compte';
+
+  @override
+  String get accountSearchEmpty => 'Aucun compte correspondant';
+
+  @override
+  String get accountSearchClear => 'Effacer la recherche';
 }

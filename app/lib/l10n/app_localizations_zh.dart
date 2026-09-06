@@ -920,7 +920,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sdaImportHint =>
-      '选择你的 Steam Desktop Authenticator maFiles 文件夹：把 manifest.json 和那些 .maFile 一起选中。两者缺一不可——如果当初在 SDA 里开了加密，解密参数存在 manifest.json 里，不在 maFile 内部。';
+      '选择多个 .maFile 文件批量导入。未加密文件不需要 manifest.json；SDA 加密文件需同时选中 manifest.json，其中包含解密参数。';
 
   @override
   String get sdaImportNoManifest => '所选文件里没有 manifest.json。请把它和 .maFile 一起选中。';
@@ -1937,6 +1937,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String exportSaved(String path) {
     return '已保存到 $path';
   }
+
+  @override
+  String get accountSearchHint => '搜索账号';
+
+  @override
+  String get accountSearchEmpty => '没有匹配的账号';
+
+  @override
+  String get accountSearchClear => '清除搜索';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -2857,7 +2866,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get sdaImportHint =>
-      '選擇你的 Steam Desktop Authenticator maFiles 資料夾：把 manifest.json 和那些 .maFile 一起選取。兩者缺一不可——如果當初在 SDA 裡開了加密，解密參數存在 manifest.json 裡，不在 maFile 內部。';
+      '選取多個 .maFile 檔案批次匯入。未加密檔案不需要 manifest.json；SDA 加密檔案需同時選取 manifest.json，其中包含解密參數。';
 
   @override
   String get sdaImportNoManifest => '所選檔案裡沒有 manifest.json。請把它和 .maFile 一起選取。';
@@ -3877,4 +3886,13 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String exportSaved(String path) {
     return '已儲存到 $path';
   }
+
+  @override
+  String get accountSearchHint => '搜尋帳號';
+
+  @override
+  String get accountSearchEmpty => '沒有符合的帳號';
+
+  @override
+  String get accountSearchClear => '清除搜尋';
 }

@@ -146,6 +146,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with TickerProviderStateMixin {
   int _selected = 0;
+  final _searchController = TextEditingController();
+  bool _searchOpen = false;
   bool _checkedLogins = false;
   bool _checkedTutorial = false;
   int _lastTutorialReplay = 0;
@@ -179,6 +181,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   void dispose() {
+    _searchController.dispose();
     _demoSlidable.dispose();
     super.dispose();
   }
@@ -375,7 +378,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 builder: (context, c) {
                   final sidebar = _Sidebar(
                     accounts: accounts,
-                    selected: _selected,
+                    searchController: _searchController,
+                          searchOpen: _searchOpen,
+                          onToggleSearch: () => setState(() {
+                            _searchOpen = !_searchOpen;
+                            _sortMode = false;
+                            if (!_searchOpen) _searchController.clear();
+                          }),
+                          onSearchChanged: (_) =>
+                              setState(() => _sortMode = false),
+                          selected: _selected,
                     tick: tick,
                     onSelect: (i) {
                       setState(() => _selected = i);
@@ -686,6 +698,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 /// Left/bottom account list. Each row shows the account's own live code.
 class _Sidebar extends StatelessWidget {
   final List<SteamGuardAccount> accounts;
+  final TextEditingController searchController;
+  final bool searchOpen;
+  final VoidCallback onToggleSearch;
+  final ValueChanged<String> onSearchChanged;
+
+  List<int> get visibleIndices {
+    final query = searchController.text.trim().toLowerCase();
+    return [
+      for (var i = 0; i < accounts.length; i++)
+        if (query.isEmpty ||
+            (accounts[i].accountName ?? '').toLowerCase().contains(query) ||
+            (accounts[i].personaName ?? '').toLowerCase().contains(query) ||
+            '${accounts[i].steamId}'.contains(query))
+          i,
+    ];
+  }
+
   final int selected;
   final int tick;
   final void Function(int index) onSelect;
@@ -706,6 +735,10 @@ class _Sidebar extends StatelessWidget {
   final void Function(int from, int to)? onReorder;
   const _Sidebar({
     required this.accounts,
+    required this.searchController,
+    required this.searchOpen,
+    required this.onToggleSearch,
+    required this.onSearchChanged,
     required this.selected,
     required this.tick,
     required this.onSelect,
@@ -726,36 +759,47 @@ class _Sidebar extends StatelessWidget {
     this.onReorder,
   });
 
-  Widget _list(BuildContext context) => SlidableAutoCloseBehavior(
-        child: ListView.builder(
-          // Bouncing so the custom pull-to-refresh reads overscroll on both
-          // themes (neon fill / pixel blocks).
-          physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics()),
-          // Bottom clearance so the floating settings button doesn't cover the
-          // last row.
-          padding: context.rSafeInsets(left: 8, right: 8, top: 4, bottom: 78),
-          itemCount: accounts.length,
-          itemBuilder: (context, i) {
-            final row = _SidebarRow(
-              account: accounts[i],
-              code: _codeFor(accounts[i], tick),
-              selected: i == selected,
-              nameMode: nameMode,
-              neon: neon,
-              haptics: haptics,
-              onTap: () => onSelect(i),
-              onAction: onAction,
-              controller: i == 0 ? demoSlidable : null,
-            );
-            // The first row anchors the tutorial spotlight (+ its swipe demo).
-            if (i == 0 && firstRowLink != null) {
-              return CompositedTransformTarget(link: firstRowLink!, child: row);
-            }
-            return row;
-          },
-        ),
+  Widget _list(BuildContext context) {
+    final indices = visibleIndices;
+    if (indices.isEmpty) {
+      return Center(
+        child: Text(AppLocalizations.of(context).accountSearchEmpty),
       );
+    }
+    return SlidableAutoCloseBehavior(
+      child: ListView.builder(
+        // Bouncing so the custom pull-to-refresh reads overscroll on both
+        // themes (neon fill / pixel blocks).
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        // Bottom clearance so the floating settings button doesn't cover the
+        // last row.
+        padding: context.rSafeInsets(left: 8, right: 8, top: 4, bottom: 78),
+        key: ValueKey(searchController.text),
+        itemCount: indices.length,
+        itemBuilder: (context, visibleIndex) {
+          final i = indices[visibleIndex];
+          final row = _SidebarRow(
+            account: accounts[i],
+            code: _codeFor(accounts[i], tick),
+            selected: i == selected,
+            nameMode: nameMode,
+            neon: neon,
+            haptics: haptics,
+            onTap: () => onSelect(i),
+            onAction: onAction,
+            controller: i == 0 ? demoSlidable : null,
+          );
+          // The first row anchors the tutorial spotlight (+ its swipe demo).
+          if (i == 0 && firstRowLink != null) {
+            return CompositedTransformTarget(link: firstRowLink!, child: row);
+          }
+          return row;
+        },
+      ),
+    );
+  }
 
   /// Sort mode: rows lose their tap/swipe gestures and gain a drag handle;
   /// dragging the handle reorders, everything else still scrolls.
@@ -840,6 +884,15 @@ class _Sidebar extends StatelessWidget {
                           letterSpacing: context.r(1)),
                     ),
                   ),
+                  IconButton(
+                    tooltip: l.accountSearchHint,
+                    onPressed: onToggleSearch,
+                    icon: Icon(
+                      searchOpen ? Icons.search_off : Icons.search,
+                      color: t.accent,
+                      size: context.r(18),
+                    ),
+                  ),
                   // Mouse users can't pull-to-refresh — give desktop a button.
                   if (onRefresh != null &&
                       switch (Theme.of(context).platform) {
@@ -879,7 +932,8 @@ class _Sidebar extends StatelessWidget {
                       ),
                     ),
                   // Manual reorder toggle — only meaningful with 2+ accounts.
-                  if (onToggleSort != null && accounts.length > 1)
+                  if (onToggleSort != null && accounts.length > 1 &&
+                      searchController.text.isEmpty)
                     InkWell(
                       onTap: onToggleSort,
                       borderRadius: BorderRadius.circular(t.radiusSm),
@@ -932,6 +986,30 @@ class _Sidebar extends StatelessWidget {
               ),
             ),
           ),
+          if (searchOpen)
+            Padding(
+              padding: context.rInsets(h: 10, bottom: 8),
+              child: TextField(
+                controller: searchController,
+                autofocus: true,
+                onChanged: onSearchChanged,
+                decoration: InputDecoration(
+                  hintText: l.accountSearchHint,
+                  prefixIcon: const Icon(Icons.search),
+                  isDense: true,
+                  suffixIcon: searchController.text.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: l.accountSearchClear,
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            searchController.clear();
+                            onSearchChanged('');
+                          },
+                        ),
+                ),
+              ),
+            ),
           Expanded(
             child: Listener(
               onPointerUp: (_) => onPullEnd(),
@@ -1472,7 +1550,8 @@ class _MainPanel extends ConsumerWidget {
             children: [
               _Avatar(account: account, size: context.r(104)),
               SizedBox(width: context.r(18)),
-              Column(
+              Flexible(
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Tap to cycle username / persona / id; long-press to copy.
@@ -1540,6 +1619,7 @@ class _MainPanel extends ConsumerWidget {
                     ),
                   ),
                 ],
+                ),
               ),
             ],
           ),

@@ -530,7 +530,7 @@
   "importSessionDeadBody": "The Steam session in this maFile has expired. Sign in now to enable confirmations and login approvals — the Steam Guard code will be filled in automatically.",
   "importSessionLater": "Later",
   "sdaImportAction": "Import an SDA folder",
-  "sdaImportHint": "Select your Steam Desktop Authenticator maFiles folder: pick manifest.json together with the .maFile files. Both are needed — if SDA's encryption was on, the decryption parameters live in manifest.json, not in the maFile.",
+  "sdaImportHint": "Select .maFile files to import in bulk. manifest.json is optional for unencrypted files. For encrypted SDA files, select manifest.json too; it contains the decryption parameters.",
   "sdaImportNoManifest": "No manifest.json in that selection. Select it together with the .maFile files.",
   "sdaImportBadManifest": "That manifest.json can't be read: {error}",
   "@sdaImportBadManifest": {
@@ -1085,5 +1085,8 @@
         "type": "String"
       }
     }
-  }
+  },
+  "accountSearchHint": "Search accounts",
+  "accountSearchEmpty": "No matching accounts",
+  "accountSearchClear": "Clear search"
 }

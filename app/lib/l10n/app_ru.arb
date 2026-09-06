@@ -276,7 +276,7 @@
   "importSessionDeadBody": "Сессия Steam в этом maFile истекла. Войдите сейчас, чтобы работали подтверждения и одобрение входов — код Steam Guard подставится автоматически.",
   "importSessionLater": "Позже",
   "sdaImportAction": "Импорт папки SDA",
-  "sdaImportHint": "Выберите папку maFiles из Steam Desktop Authenticator: отметьте manifest.json вместе с файлами .maFile. Нужны оба — если в SDA было включено шифрование, параметры расшифровки лежат в manifest.json, а не внутри maFile.",
+  "sdaImportHint": "Выберите несколько файлов .maFile для импорта. Для незашифрованных файлов manifest.json необязателен. Для зашифрованных файлов SDA выберите также manifest.json: он содержит параметры расшифровки.",
   "sdaImportNoManifest": "В выбранном нет manifest.json. Отметьте его вместе с файлами .maFile.",
   "sdaImportBadManifest": "Этот manifest.json не читается: {error}",
   "sdaImportPassTitle": "Пароль шифрования SDA",
@@ -581,5 +581,8 @@
   "netErrTimeout": "Steam не ответил вовремя. Сеть может быть медленной или фильтруемой.",
   "netErrCert": "Сертификат Steam не прошёл проверку, поэтому AVA разорвала соединение. Возможно, что-то в этой сети просматривает трафик.",
   "netErrServer": "Steam вернул ошибку ({code}). Обычно это временно — повторите попытку чуть позже.",
-  "exportSaved": "Сохранено в {path}"
+  "exportSaved": "Сохранено в {path}",
+  "accountSearchHint": "Поиск аккаунтов",
+  "accountSearchEmpty": "Аккаунты не найдены",
+  "accountSearchClear": "Очистить поиск"
 }

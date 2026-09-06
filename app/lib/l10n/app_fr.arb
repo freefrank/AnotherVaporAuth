@@ -276,7 +276,7 @@
   "importSessionDeadBody": "La session Steam contenue dans ce maFile a expiré. Connectez-vous maintenant pour activer les confirmations et les approbations de connexion — le code Steam Guard sera saisi automatiquement.",
   "importSessionLater": "Plus tard",
   "sdaImportAction": "Importer un dossier SDA",
-  "sdaImportHint": "Sélectionnez votre dossier maFiles de Steam Desktop Authenticator : prenez manifest.json en même temps que les fichiers .maFile. Les deux sont nécessaires — si le chiffrement de SDA était activé, les paramètres de déchiffrement sont dans manifest.json, pas dans le maFile.",
+  "sdaImportHint": "Sélectionnez plusieurs fichiers .maFile à importer. manifest.json est facultatif pour les fichiers non chiffrés. Pour les fichiers SDA chiffrés, sélectionnez aussi manifest.json : il contient les paramètres de déchiffrement.",
   "sdaImportNoManifest": "Pas de manifest.json dans cette sélection. Sélectionnez-le avec les fichiers .maFile.",
   "sdaImportBadManifest": "Ce manifest.json est illisible : {error}",
   "sdaImportPassTitle": "Phrase secrète de chiffrement SDA",
@@ -581,5 +581,8 @@
   "netErrTimeout": "Steam n'a pas répondu à temps. Le réseau est peut-être lent ou filtré.",
   "netErrCert": "Le certificat de Steam n'a pas été reconnu, AVA a donc fermé la connexion. Quelque chose sur ce réseau inspecte peut-être le trafic.",
   "netErrServer": "Steam a renvoyé une erreur ({code}). C'est généralement temporaire — réessayez dans un instant.",
-  "exportSaved": "Enregistré dans {path}"
+  "exportSaved": "Enregistré dans {path}",
+  "accountSearchHint": "Rechercher un compte",
+  "accountSearchEmpty": "Aucun compte correspondant",
+  "accountSearchClear": "Effacer la recherche"
 }
