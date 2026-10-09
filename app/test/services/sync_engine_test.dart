@@ -22,6 +22,10 @@ class InMemoryServer {
   int etagSeq = 0;
   bool enforceConditionals = true;
 
+  /// Fails every If-Match PUT, like an origin behind a proxy that rewrites
+  /// the ETags it hands out.
+  bool rejectIfMatch = false;
+
   /// Called before every PUT — lets a test inject a concurrent commit.
   void Function(String name)? onPut;
 }
@@ -43,6 +47,9 @@ class InMemoryTransport implements SyncTransport {
   Future<String?> putFile(String name, Uint8List bytes,
       {String? ifMatch, bool ifAbsent = false}) async {
     server.onPut?.call(name);
+    if (server.rejectIfMatch && ifMatch != null) {
+      throw const SyncPreconditionFailed('etag rewritten');
+    }
     if (server.enforceConditionals) {
       final existing = server.files[name];
       if (ifAbsent && existing != null) {
@@ -426,6 +433,29 @@ void main() {
     final sidecar = SyncSidecar.parse(
         utf8.decode(server.files[kSyncSidecarFilename]!.$1));
     expect(sidecar.accounts.keys, containsAll([id1, id2]));
+  });
+
+  test('a 412 against an untouched sidecar is reported, not retried',
+      () async {
+    final server = InMemoryServer();
+    final a = Device(server, 'devA0001');
+    a.port.accounts.add(account(id1));
+    await a.engine.syncNow();
+    final before = server.files[kSyncSidecarFilename];
+
+    server.rejectIfMatch = true;
+    var commits = 0;
+    server.onPut = (name) {
+      if (name == kSyncSidecarFilename) commits++;
+    };
+    a.port.accounts.single.password = 'changed';
+    await a.engine.syncNow();
+
+    // One retry shows nobody else committed; no blind retries after that.
+    expect(commits, 2);
+    expect(a.engine.status.errorKind, SyncErrorKind.server);
+    expect(a.engine.status.errorDetail, contains('although nobody changed'));
+    expect(server.files[kSyncSidecarFilename], same(before));
   });
 
   test('wrong passphrase is reported as a passphrase problem, not '

@@ -189,7 +189,11 @@ class WebDavTransport implements SyncTransport {
 
   @override
   Future<RemoteFile?> getFile(String name) async {
-    final res = await _request('GET', _fileUrl(name));
+    // identity, not dart:io's default gzip: a CDN in front of the server
+    // (Cloudflare out of the box) compresses on the fly and downgrades the
+    // origin's strong ETag to W/"…" when it does.
+    final res = await _request('GET', _fileUrl(name),
+        headers: const {'Accept-Encoding': 'identity'});
     if (res.statusCode == 404) {
       await _drain(res);
       return null;
@@ -199,8 +203,18 @@ class WebDavTransport implements SyncTransport {
       _fail(res, 'download $name');
     }
     final bytes = await _drain(res);
-    return RemoteFile(bytes, res.headers.value(HttpHeaders.etagHeader));
+    return RemoteFile(
+        bytes, _strongEtag(res.headers.value(HttpHeaders.etagHeader)));
   }
+
+  /// `W/"x"` → `"x"`. If-Match always compares strongly, so a weak tag can
+  /// never match and every guarded PUT would 412 forever. A weak tag here is
+  /// normally the origin's strong one, downgraded by an intermediary that
+  /// re-encoded the body; the opaque value is untouched, so the strong form
+  /// is exactly what the origin compares against. Should the origin itself
+  /// have minted it weak, the origin still judges the match.
+  static String? _strongEtag(String? etag) =>
+      etag != null && etag.startsWith('W/') ? etag.substring(2) : etag;
 
   @override
   Future<String?> putFile(String name, Uint8List bytes,

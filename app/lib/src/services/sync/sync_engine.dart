@@ -8,7 +8,8 @@
 ///    of a conflict resolution) writes the losing payload to the trash first.
 ///  - The sidecar PUT is the commit point, guarded by If-Match; a 412 means
 ///    another device won — re-pull, re-merge, retry (bounded), never
-///    overwrite blind.
+///    overwrite blind. A 412 against a sidecar nobody changed is not a race
+///    (typically a proxy rewriting ETags) and is reported, not retried.
 ///
 /// The engine knows nothing about Flutter or Riverpod. Its window into the
 /// account store is [SyncAccountsPort]; providers adapt it to AppController
@@ -19,7 +20,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:collection/collection.dart' show IterableExtension;
+import 'package:collection/collection.dart'
+    show IterableExtension, ListEquality;
 
 import '../../core/models/steam_guard_account.dart';
 import '../../core/sync/sync_payload.dart';
@@ -287,15 +289,28 @@ class SyncEngine {
     SyncTransport? transport;
     try {
       transport = transportFactory(config, webdavPassword);
-      var outcome = await _attemptRound(transport, config, passphrase);
+      var lost = await _attemptRound(transport, config, passphrase);
       var retries = 0;
-      while (outcome == _RoundOutcome.commitRaced &&
-          retries < _maxCommitRetries) {
+      while (lost != null && retries < _maxCommitRetries) {
         retries++;
         dlog('sync: commit raced, retry $retries/$_maxCommitRetries');
-        outcome = await _attemptRound(transport, config, passphrase);
+        final again = await _attemptRound(transport, config, passphrase);
+        if (again != null && again.sameBaseAs(lost)) {
+          // Nobody committed in between, yet the guard failed again: the
+          // server is refusing the precondition built from what it served
+          // (typically a proxy rewriting ETags). Retrying cannot help.
+          dlog('sync: 412 against an unchanged sidecar (etag ${again.etag})');
+          _publish(_status.copyWith(
+            syncing: false,
+            errorKind: SyncErrorKind.server,
+            errorDetail: '412 on $kSyncSidecarFilename although nobody '
+                'changed it — a proxy or CDN may be rewriting ETags',
+          ));
+          return;
+        }
+        lost = again;
       }
-      if (outcome == _RoundOutcome.commitRaced) {
+      if (lost != null) {
         _publish(_status.copyWith(
           syncing: false,
           errorKind: SyncErrorKind.server,
@@ -325,10 +340,13 @@ class SyncEngine {
     }
   }
 
-  Future<_RoundOutcome> _attemptRound(
+  /// One fetch → plan → execute → commit pass. Null when the round is over
+  /// (synced, or an error was published); a [_LostCommit] when the sidecar
+  /// guard failed and the caller should retry.
+  Future<_LostCommit?> _attemptRound(
       SyncTransport transport, SyncConfig config, String passphrase) async {
     final local = accounts.snapshot();
-    if (local == null) return _RoundOutcome.done;
+    if (local == null) return null;
 
     // 1. Fetch the sidecar — the remote's source of truth.
     final sidecarFile = await transport.getFile(kSyncSidecarFilename);
@@ -344,7 +362,7 @@ class SyncEngine {
           errorKind: SyncErrorKind.server,
           errorDetail: 'remote sidecar is unreadable: $e',
         ));
-        return _RoundOutcome.done;
+        return null;
       }
     }
 
@@ -360,7 +378,7 @@ class SyncEngine {
           errorKind: SyncErrorKind.passphrase,
           errorDetail: 'stored passphrase no longer opens the remote',
         ));
-        return _RoundOutcome.done;
+        return null;
       }
       // The passphrase still opens the remote but the epoch moved (a
       // passphrase "change" elsewhere to the same phrase, or a re-setup):
@@ -442,7 +460,7 @@ class SyncEngine {
         errorKind: SyncErrorKind.passphrase,
         errorDetail: 'no remote account could be decrypted',
       ));
-      return _RoundOutcome.done;
+      return null;
     }
 
     // 6. Apply remote deletions locally — trash first, then remove.
@@ -650,7 +668,7 @@ class SyncEngine {
           ifAbsent: !remoteExists,
         );
       } on SyncPreconditionFailed {
-        return _RoundOutcome.commitRaced;
+        return _LostCommit(sidecarFile?.etag, sidecarFile?.bytes);
       }
 
       // Post-commit GC: files the new sidecar no longer references.
@@ -705,7 +723,7 @@ class SyncEngine {
       lastPushed: pushed,
       lastPulled: pulled,
     ));
-    return _RoundOutcome.done;
+    return null;
   }
 
   Future<Map<String, dynamic>?> _fetchPayload(SyncTransport transport,
@@ -923,4 +941,16 @@ class SyncEngine {
   }
 }
 
-enum _RoundOutcome { done, commitRaced }
+/// A sidecar commit whose guard failed, and the sidecar version it was based
+/// on (both null when the sidecar did not exist yet). A real race always
+/// moves the sidecar before the retry re-reads it; an identical base means
+/// the guard failed against a sidecar nobody touched.
+class _LostCommit {
+  final String? etag;
+  final Uint8List? sidecar;
+  const _LostCommit(this.etag, this.sidecar);
+
+  bool sameBaseAs(_LostCommit other) =>
+      etag == other.etag &&
+      const ListEquality<int>().equals(sidecar, other.sidecar);
+}
