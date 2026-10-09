@@ -29,11 +29,11 @@ interface VersionEntry {
 /// that luxury.
 const VERSIONS: Record<string, VersionEntry> = {
   'android-play': { version: '1.5.0' },
-  'android-cn': { version: '1.5.0' },
-  'windows-portable': { version: '1.5.0' },
-  'windows-setup': { version: '1.5.0' },
-  'linux-appimage': { version: '1.5.0' },
-  'macos-dmg': { version: '1.5.0' },
+  'android-cn': { version: '1.5.1' },
+  'windows-portable': { version: '1.5.1' },
+  'windows-setup': { version: '1.5.1' },
+  'linux-appimage': { version: '1.5.1' },
+  'macos-dmg': { version: '1.5.1' },
 };
 
 /// The whole response is static, so let the edge serve it: an hour of caching
