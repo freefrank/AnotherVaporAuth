@@ -168,11 +168,13 @@ def main() -> None:
     if args.apply:
         inv = json.dumps({"version": v, "objects": sorted(current)},
                          indent=2).encode()
-        with tempfile.NamedTemporaryFile(dir=ROOT / "dist",
-                                         suffix=".json") as tmp:
-            Path(tmp.name).write_bytes(inv)
+        # A directory, not NamedTemporaryFile: Windows refuses to reopen a
+        # file that is still held open (2026-10-09 failed here after pruning).
+        with tempfile.TemporaryDirectory(dir=ROOT / "dist") as tmp:
+            inv_path = Path(tmp) / INVENTORY
+            inv_path.write_bytes(inv)
             wrangler("r2", "object", "put", f"{BUCKET}/{INVENTORY}",
-                     f"--file={tmp.name}", "--content-type=application/json",
+                     f"--file={inv_path}", "--content-type=application/json",
                      "--remote")
         print(f"  inventory written ({len(current)} objects)")
 
