@@ -5,6 +5,21 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v*` tags (e.g. `v1.4.0`)
 trigger automated releases.
 
+## [v1.5.1] — 2026-10-09
+
+### Fixed
+- **WebDAV sync now works behind Cloudflare and similar proxies.** Sync used
+  to stop with "commit kept racing after 3 retries" and never finish. If a
+  proxy still blocks it, the error now says so instead of retrying over and
+  over.
+
+### 修复
+- **WebDAV 服务器在 Cloudflare 等代理之后时，现在可以正常同步。** 此前同步会
+  停在 "commit kept racing after 3 retries"，始终无法完成。若代理仍然阻止
+  同步，现在会直接报错说明，不再反复重试。
+
+—
+
 ## [v1.5.0] — 2026-09-05
 
 ### Desktop refresh — 2026-09-05

@@ -20,8 +20,9 @@ ROOT = Path(__file__).resolve().parent.parent
 # records what was true on its date, a shipped spec records what was designed,
 # and CHANGELOG entries are immutable once released. Only live documents —
 # the READMEs, CLAUDE.md, active plans — are held to current reality.
+# .planning/.codex hold local agent scratch notes, never committed.
 SKIP_DIRS = {'.git', 'node_modules', 'build', 'dist', '.dart_tool',
-             'archive', 'specs'}
+             'archive', 'specs', '.planning', '.codex'}
 SKIP_FILES = {'CHANGELOG.md', 'AUDIT.md'}
 SKIP_PATTERNS = ('audit',)
 
