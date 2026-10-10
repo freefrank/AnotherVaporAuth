@@ -11,6 +11,8 @@ import {
   handlePlayVerify,
   handleRefresh,
   handleVipClaim,
+  reconcileAfdianOrders,
+  type AfdianOrder,
   type Res,
 } from '../src/logic';
 import { MemoryStore, NOW, decodeClaims, setup, type TestContext } from './helpers';
@@ -500,6 +502,74 @@ describe('afdian webhook', () => {
       body: { ec: 200 },
     });
     expect(ctx.store.ents).toHaveLength(0);
+  });
+});
+
+describe('afdian reconciliation', () => {
+  const order = (no: string, paidAt: number, extra: Partial<AfdianOrder> = {}): AfdianOrder => ({
+    outTradeNo: no,
+    userId: 'afd-u1',
+    planId: 'plan-pro',
+    month: 1,
+    paidAt,
+    ...extra,
+  });
+  const redeem = (ctx: TestContext, no: string) =>
+    handleAfdianRedeem({ order_no: no, device_id: 'dev-A', device_class: 'android' }, ctx.deps);
+
+  it('applies a renewal whose webhook never arrived, exactly once', async () => {
+    const ctx = await setup();
+    ctx.afdianOrders.set('ord-1', order('ord-1', NOW));
+    const token = tokenOf(await redeem(ctx, 'ord-1'));
+    // Pro lapses; the renewal is paid but its push is lost.
+    ctx.clock.t = NOW + MONTH_SECONDS + 100;
+    ctx.afdianOrders.set('ord-2', order('ord-2', ctx.clock.t));
+    expect(await reconcileAfdianOrders(ctx.deps)).toBe(1);
+    expect(ctx.store.ents[0].proUntil).toBe(ctx.clock.t + MONTH_SECONDS);
+    expect((await ctx.store.getOrder('ord-2'))?.entitlementId).toBe(ctx.store.ents[0].id);
+    const res = await handleRefresh({ token, device_id: 'dev-A' }, ctx.deps);
+    expect(decodeClaims(tokenOf(res)).pro).toBe(ctx.clock.t + MONTH_SECONDS);
+
+    // A second run and a late webhook for the same order change nothing.
+    expect(await reconcileAfdianOrders(ctx.deps)).toBe(0);
+    await handleAfdianWebhook({ data: { order: { out_trade_no: 'ord-2' } } }, ctx.deps);
+    expect(ctx.store.ents[0].proUntil).toBe(ctx.clock.t + MONTH_SECONDS);
+  });
+
+  it("stores nothing about a buyer who never redeemed; redeem still applies it once", async () => {
+    const ctx = await setup();
+    ctx.afdianOrders.set('ord-1', order('ord-1', NOW));
+    expect(await reconcileAfdianOrders(ctx.deps)).toBe(0);
+    expect(await ctx.store.getOrder('ord-1')).toBeNull();
+    expect(ctx.store.ents).toHaveLength(0);
+    expect(decodeClaims(tokenOf(await redeem(ctx, 'ord-1'))).pro).toBe(NOW + MONTH_SECONDS);
+    expect(await reconcileAfdianOrders(ctx.deps)).toBe(0);
+    expect(ctx.store.ents[0].proUntil).toBe(NOW + MONTH_SECONDS);
+  });
+
+  it('ignores other plans and changes nothing when the API is down', async () => {
+    const ctx = await setup();
+    ctx.afdianOrders.set('ord-x', order('ord-x', NOW, { planId: 'unrelated' }));
+    expect(await reconcileAfdianOrders(ctx.deps)).toBe(0);
+    expect(await ctx.store.getOrder('ord-x')).toBeNull();
+
+    ctx.afdianOrders.set('ord-1', order('ord-1', NOW));
+    ctx.deps.afdian.listOrders = async () => null;
+    expect(await reconcileAfdianOrders(ctx.deps)).toBeNull();
+    expect(await ctx.store.getOrder('ord-1')).toBeNull();
+  });
+
+  it('stops paging after the first page that reaches a recorded order', async () => {
+    const ctx = await setup();
+    ctx.afdianOrders.set('ord-1', order('ord-1', NOW));
+    await redeem(ctx, 'ord-1');
+    const pages: number[] = [];
+    ctx.deps.afdian.listOrders = async (page) => {
+      pages.push(page);
+      return { orders: page === 1 ? [order('ord-2', NOW + 10), order('ord-1', NOW)] : [], totalPage: 3 };
+    };
+    expect(await reconcileAfdianOrders(ctx.deps)).toBe(1);
+    expect(pages).toEqual([1]);
   });
 });
 

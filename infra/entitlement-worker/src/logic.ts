@@ -44,6 +44,9 @@ export interface Deps {
   afdian: {
     /** Returns the paid order, or null when missing/unpaid/API failure. */
     queryOrder(outTradeNo: string): Promise<AfdianOrder | null>;
+    /** One page (1-based, newest first) of paid plan orders, or null on API
+     * failure. */
+    listOrders(page: number): Promise<{ orders: AfdianOrder[]; totalPage: number } | null>;
   };
   admob: {
     /** Verifies the AdMob SSV ECDSA signature on the callback URL. */
@@ -393,33 +396,80 @@ export async function handleAfdianWebhook(body: unknown, deps: Deps): Promise<Re
   // Duplicate push: already recorded.
   if (await deps.store.getOrder(outTradeNo)) return ok({ ec: 200 });
 
+  await applyNewAfdianOrder(deps, verified);
+  return ok({ ec: 200 });
+}
+
+/** Applies a verified plan order the store has not recorded yet — shared by
+ * the webhook and the scheduled reconciliation. */
+async function applyNewAfdianOrder(deps: Deps, order: AfdianOrder): Promise<void> {
   const now = deps.now();
-  const ent = await deps.store.getEntitlement('afdian', verified.userId);
+  const ent = await deps.store.getEntitlement('afdian', order.userId);
   if (ent && !ent.revoked) {
     const proUntil =
       ent.proUntil === 0
         ? 0
-        : (ent.proUntil > now ? ent.proUntil : now) + verified.month * MONTH_SECONDS;
+        : (ent.proUntil > now ? ent.proUntil : now) + order.month * MONTH_SECONDS;
     await deps.store.setProUntil(ent.id, proUntil);
     await deps.store.recordOrder({
-      outTradeNo,
-      userId: verified.userId,
-      planId: verified.planId,
-      paidAt: verified.paidAt,
+      outTradeNo: order.outTradeNo,
+      userId: order.userId,
+      planId: order.planId,
+      paidAt: order.paidAt,
       entitlementId: ent.id,
     });
   } else {
     // No entitlement yet (user paid before ever redeeming in-app) — remember
     // the order unbound; /v1/afdian/redeem will bind and apply it.
     await deps.store.recordOrder({
-      outTradeNo,
-      userId: verified.userId,
-      planId: verified.planId,
-      paidAt: verified.paidAt,
+      outTradeNo: order.outTradeNo,
+      userId: order.userId,
+      planId: order.planId,
+      paidAt: order.paidAt,
       entitlementId: null,
     });
   }
-  return ok({ ec: 200 });
+}
+
+/** Upper bound on query-order pages one reconciliation walks (50 orders each).
+ * Skipped orders (buyers who never redeemed) are never recorded, so they never
+ * end the walk; if more than a page of them piles up above the newest recorded
+ * order, every run pages down to this cap. Kept small so that worst case stays
+ * a handful of calls an hour. */
+const AFDIAN_RECONCILE_MAX_PAGES = 5;
+
+/** Scheduled pull of the creator's Afdian orders. Afdian's guide warns that
+ * webhook pushes can be late, repeated or lost and recommends polling the API
+ * alongside them; without this, a renewal whose push never arrived lets the
+ * payer's Pro lapse on schedule. An unseen plan order is applied exactly as
+ * the webhook would — but only for a buyer who already redeemed in the app.
+ * Anyone else's order is left alone: PRIVACY.md promises to keep only the
+ * order number a user enters and the Afdian id it resolves to, and redeem
+ * handles a fresh order on its own. Orders come newest first, so the walk
+ * stops after the first page that contains an already-recorded order: a
+ * steady-state run is a single API call. Returns the number of orders
+ * applied, or null when the first page could not be read (nothing has
+ * changed then). */
+export async function reconcileAfdianOrders(deps: Deps): Promise<number | null> {
+  let applied = 0;
+  for (let page = 1; page <= AFDIAN_RECONCILE_MAX_PAGES; page++) {
+    const res = await deps.afdian.listOrders(page);
+    if (!res) return page === 1 ? null : applied;
+    let reachedKnown = false;
+    for (const order of res.orders) {
+      if (order.planId !== deps.config.afdianPlanId()) continue;
+      if (await deps.store.getOrder(order.outTradeNo)) {
+        reachedKnown = true;
+        continue;
+      }
+      const ent = await deps.store.getEntitlement('afdian', order.userId);
+      if (!ent || ent.revoked) continue;
+      await applyNewAfdianOrder(deps, order);
+      applied++;
+    }
+    if (reachedKnown || page >= res.totalPage) break;
+  }
+  return applied;
 }
 
 /** POST /v1/beta/redeem {code, device_id, device_class} */

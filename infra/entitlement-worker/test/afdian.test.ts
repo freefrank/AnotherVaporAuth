@@ -69,3 +69,43 @@ describe('afdian queryOrder', () => {
     expect((await client.queryOrder('ord-1'))?.month).toBe(1);
   });
 });
+
+describe('afdian listOrders', () => {
+  function pagedClient(list: object[], opts: { ec?: number; totalPage?: number } = {}) {
+    const params: unknown[] = [];
+    const fetcher = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      params.push(JSON.parse(String(body.params)));
+      return new Response(
+        JSON.stringify({
+          ec: opts.ec ?? 200,
+          data: { list, total_count: list.length, total_page: opts.totalPage ?? 1 },
+        }),
+      );
+    }) as unknown as typeof fetch;
+    const client = createAfdian({ userId: 'afd-dev', token: 'secret-token', fetcher, now: () => NOW });
+    return { client, params };
+  }
+
+  it('pages by number and keeps only paid plan orders', async () => {
+    const { client, params } = pagedClient(
+      [
+        { out_trade_no: 'ord-3', user_id: 'u1', plan_id: 'plan-pro', month: 1, status: 2, create_time: NOW },
+        { out_trade_no: 'ord-2', user_id: 'u2', plan_id: '', month: 1, status: 2 }, // custom amount
+        { out_trade_no: 'ord-1', user_id: 'u3', plan_id: 'plan-pro', month: 1, status: 1 }, // unpaid
+      ],
+      { totalPage: 3 },
+    );
+    const page = await client.listOrders(2);
+    expect(params).toEqual([{ page: 2 }]);
+    expect(page).toEqual({
+      orders: [{ outTradeNo: 'ord-3', userId: 'u1', planId: 'plan-pro', month: 1, paidAt: NOW }],
+      totalPage: 3,
+    });
+  });
+
+  it('returns null on API errors', async () => {
+    const { client } = pagedClient([], { ec: 400 });
+    expect(await client.listOrders(1)).toBeNull();
+  });
+});

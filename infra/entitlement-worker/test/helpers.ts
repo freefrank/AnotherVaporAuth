@@ -204,6 +204,14 @@ export async function setup(overrides: Partial<Deps> = {}): Promise<TestContext>
     },
     afdian: {
       queryOrder: async (no) => afdianOrders.get(no) ?? null,
+      // Newest first, 50 per page — the real query-order paging.
+      listOrders: async (page) => {
+        const all = [...afdianOrders.values()].sort((a, b) => b.paidAt - a.paidAt);
+        return {
+          orders: all.slice((page - 1) * 50, page * 50),
+          totalPage: Math.max(1, Math.ceil(all.length / 50)),
+        };
+      },
     },
     admob: { verify: async () => true },
     config: {

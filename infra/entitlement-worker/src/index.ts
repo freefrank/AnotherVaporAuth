@@ -7,7 +7,7 @@ import { createAfdian } from './afdian';
 import type { Env } from './env';
 import { createGoogle } from './google';
 import { createTokenService, importSigningKeys, type TokenService } from './jwt';
-import type { Deps } from './logic';
+import { reconcileAfdianOrders, type Deps } from './logic';
 import { route } from './router';
 import { D1Store } from './store';
 
@@ -96,6 +96,15 @@ export default {
         status: 500,
         headers: { 'content-type': 'application/json' },
       });
+    }
+  },
+
+  // Cron Trigger (wrangler.jsonc `triggers.crons`): Afdian order
+  // reconciliation. Throwing marks the run failed in the dashboard's Cron
+  // Events, which is how an expired AFDIAN_TOKEN surfaces.
+  async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
+    if ((await reconcileAfdianOrders(buildDeps(env))) === null) {
+      throw new Error('afdian reconcile: order list unreadable');
     }
   },
 } satisfies ExportedHandler<Env>;
