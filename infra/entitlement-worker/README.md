@@ -13,7 +13,7 @@ EdDSA(Ed25519)JWT;客户端(`app/lib/src/core/entitlement.dart`)用内嵌公钥
 | `POST /v1/play/verify` `{id_token, purchase_token, device_id, device_class}` | 验 Google id_token + Play 订阅,upsert 权益并占设备名额,签 token。**购买令牌与账户是一对一绑定的**:令牌已属于另一个 Google `sub` → 403 `purchase_token_bound`;订阅的 `productId` 不是 `ava_pro_monthly`(可用 `PLAY_PRODUCT_ID` 覆盖)→ 403 `subscription_invalid` |
 | `POST /v1/afdian/redeem` `{order_no, device_id, device_class}` | 通过爱发电开放平台核验订单;订单绑定他人 → 403 `order_bound` |
 | `POST /v1/afdian/webhook` | 爱发电续订推送。推送无签名,靠回查 query-order 鉴别真伪;响应 `{ec:200}` |
-| Cron(`scheduled`,每小时一次,见 wrangler.jsonc) | 爱发电订单对账:按页拉 query-order(新单在前,遇到已记录的订单那页就停,至多 5 页),把**已兑换过的用户**的未入账续费按 webhook 同样规则延期。推送可能延迟、重复或丢失,官方建议 API 与 webhook 并用。没兑换过的买家的订单不碰(隐私政策只承诺保存用户输入的订单号);首页读取失败则本次运行抛错,在 Cron Events 里可见 |
+| Cron(`scheduled`,每天一次,见 wrangler.jsonc) | 爱发电订单对账:按页拉 query-order(新单在前,遇到已记录的订单那页就停,至多 5 页),把**已兑换过的用户**的未入账续费按 webhook 同样规则延期。推送可能延迟、重复或丢失,官方建议 API 与 webhook 并用。没兑换过的买家的订单不碰(隐私政策只承诺保存用户输入的订单号);首页读取失败则本次运行抛错,在 Cron Events 里可见 |
 | `POST /v1/beta/redeem` `{code, device_id, device_class}` | beta 码兑换,签终身 pro(pro=0);按设备类占名额(同 Play),同类换机为受限 REPLACE,超出激活上限 403 `code_activation_limit`(附 `activations` 名额表,只含类与时间戳);`redeemed_by` 仅留作首兑审计,不再作门禁 |
 | `POST /v1/entitlement/status` `{token}` | 查询权益与各设备类名额:`{channel, tier, pro_until, activations:[{device_class, activated_at, this_device}]}`;验签名 + 当前名额持有者、不看过期(同 refresh);403:`invalid_token` / `entitlement_ended` / `revoked` / `device_revoked`(名额已被同类新设备顶掉) |
 | `POST /v1/vip/claim` `{device_id, device_class}` | 领取 SSV 已建立的 VIP 权益(客户端看完广告后轮询);无有效 VIP → 404 `{error:'no_vip'}` |

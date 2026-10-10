@@ -27,10 +27,10 @@
   // the API lives on a custom domain instead:
   "workers_dev": false,
   "routes": [{ "pattern": "api.ava.dotslash.pro", "custom_domain": true }],
-  // Hourly Afdian order reconciliation (index.ts `scheduled`): picks up
-  // renewals whose webhook push never arrived. Steady state is one
-  // query-order call per run.
-  "triggers": { "crons": ["17 * * * *"] },
+  // Daily Afdian order reconciliation (index.ts `scheduled`), 01:17 UTC =
+  // 09:17 Beijing: picks up renewals whose webhook push never arrived.
+  // Steady state is one query-order call per run.
+  "triggers": { "crons": ["17 1 * * *"] },
   "d1_databases": [
     {
       "binding": "DB",

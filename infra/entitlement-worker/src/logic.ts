@@ -435,7 +435,7 @@ async function applyNewAfdianOrder(deps: Deps, order: AfdianOrder): Promise<void
  * Skipped orders (buyers who never redeemed) are never recorded, so they never
  * end the walk; if more than a page of them piles up above the newest recorded
  * order, every run pages down to this cap. Kept small so that worst case stays
- * a handful of calls an hour. */
+ * a handful of calls per run. */
 const AFDIAN_RECONCILE_MAX_PAGES = 5;
 
 /** Scheduled pull of the creator's Afdian orders. Afdian's guide warns that
