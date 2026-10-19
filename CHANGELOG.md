@@ -5,6 +5,46 @@ block followed by a 中文 block. The format follows
 [Keep a Changelog](https://keepachangelog.com/); `v*` tags (e.g. `v1.4.0`)
 trigger automated releases.
 
+## [v1.6.0] — 2026-10-19
+
+### Added
+- **Choose whether Steam remembers your password when you approve a
+  sign-in.** The approval prompt, after scanning a login QR and for pending
+  sign-ins alike, now has the official app's "Remember my password on this
+  device" box. It starts checked, which is what AVA always sent before.
+- **Scan a login QR from a picture.** The phone scanner has a gallery button
+  for codes that arrive as a screenshot.
+
+### Changed
+- The account name display (username, nickname or SteamID) stays as you left
+  it after a restart.
+
+### Fixed
+- **Afdian renewals no longer go missing** (direct download and desktop
+  builds). When Afdian's renewal notification never arrived, Pro ran out
+  even though you had paid. Renewals are now also checked once a day, so a
+  lapse like that is restored within a day. This runs on the server and is
+  already live.
+
+Based on #13 by @ADAIBLOG — thanks.
+
+### 新增
+- **批准登录时可以选择是否让 Steam 记住密码。** 扫码批准和待确认登录的弹窗都
+  加了官方应用同款的「在此设备上记住我的密码」，默认勾选，与 AVA 以往的行为一致。
+- **从图片识别登录二维码。** 手机扫码页加了相册按钮，二维码是截图时也能用。
+
+### 变更
+- 账户名显示方式（账号名、昵称或 SteamID）重启后保持上次的选择。
+
+### 修复
+- **爱发电续费不再丢失**（直装版与桌面版）。以前爱发电的续费通知没送到时，
+  付了款 Pro 仍会到期。现在每天还会主动核对一次续费，这种中断最晚一天内恢复。
+  此项在服务端运行，已经上线。
+
+以 @ADAIBLOG 的 #13 为基础，感谢。
+
+—
+
 ## [v1.5.1] — 2026-10-09
 
 ### Fixed

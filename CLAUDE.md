@@ -37,9 +37,14 @@
 - **Android 发布构建工作树**：WSL `Manjaro` 的 `~/Git/AnotherVaporAuth`，
   Flutter `~/flutter`（3.44.4），SDK `~/Android/Sdk`，签名工作副本
   `~/ava-upload.jks`。2026-09-05 已核实；与 Windows 是独立 clone，提交后
-  通过 git push/pull 同步，不共享未提交改动。完整测试 757 项通过。
-- Play 上传脚本可在 Windows 用 `uv run tool/play_deploy.py` 运行；R2 和
-  Worker 部署使用 WSL 中项目锁定的 Wrangler。
+  通过 git push/pull 同步，不共享未提交改动。完整测试 761 项通过。
+- Play 上传脚本可在 Windows 用 `uv run tool/play_deploy.py` 运行。Worker
+  部署用 `infra/entitlement-worker` 里锁定的 wrangler（`npm run deploy`）；
+  `tool/publish_r2.py` 在仓库根调 `npx wrangler`，**没有锁版本**。2026-10-09
+  起 WSL 的 wrangler OAuth 已过期（refresh token 也失效，非交互刷不回来），
+  v1.5.1 的 R2 与 Worker 都改在 Windows 发；回 WSL 发前需交互式
+  `npx wrangler login`。Android 包在 WSL 出，拷到 Windows 树的 `dist/` 后在
+  Windows 侧上传 Play / R2。
 - 以下 `~/sync` 条目描述旧服务器的同步与备份布局，不能当作当前 WSL 路径。
 - `~/sync` 是 ZFS 数据集(`stor/backup/freefrank/syncthing`)上的 **Syncthing
   folder**,同步守护进程在宿主机侧,本机看不到进程。跨机分发由它自动完成,

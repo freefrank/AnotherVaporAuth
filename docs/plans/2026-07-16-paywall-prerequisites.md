@@ -10,7 +10,7 @@
 | 1 | Play Console 订阅商品 | 商品 ID(已定 `ava_pro_monthly`) | ✅ **已创建**(2026-07-30 用户确认)。商品 ID 与基础方案激活状态未经我核实——错了沙盒查不到商品,报错只说 "product not found" |
 | 2 | Google Cloud SA + OAuth | SA 邮箱/JSON 密钥、Web client_id | ✅ **已解冻并落地**(2026-07-30):SA 建好、三个 OAuth 客户端(1 web + 2 android)就位、worker 八个 secret 全齐、`kGoogleServerClientId` 已回填。明细见 [`2026-07-30-google-oauth-checklist.md`](2026-07-30-google-oauth-checklist.md)。沙盒联调 **2026-07-30 用户实测通过** |
 | 3 | AdMob | App ID、两个单元 ID、SSV 回调 | ✅ 开户+建应用+双单元完成,真实 ID 已回填;app-ads.txt 双域上线;SSV 回调探测已修(worker 侧),后台保存待确认 |
-| 4 | 爱发电 | user_id、token、plan_id、主页 URL | ✅ secrets 已入 worker,sign 算法已实测核验,主页 URL 已回填;webhook 测试推送已修通,**后台保存待确认**;首笔真实订单联调待做 |
+| 4 | 爱发电 | user_id、token、plan_id、主页 URL | ✅ secrets 已入 worker,sign 算法已实测核验,主页 URL 已回填;webhook 测试推送已修通,**后台保存待确认**;真实订单已跑通(2026-10-19 查 D1:`afdian_orders` 2 笔,08-28 与 10-08,均已兑换绑定);2026-10-10 起另有每日对账 cron 兜底漏推的续费 |
 | 5 | Cloudflare worker 部署 | D1/KV id、Ed25519 公钥、api 子域 | ✅ **已上线** `api.ava.dotslash.pro`,beta 码全链路验签通过;私钥正本 `~/sync/ava-entitlement-signing.pem`(2026-07-28 更正:原写 ownCloud 根,该镜像已不存在) |
 | 6 | 内测名单 | 终身码清单(入 D1) | ✅ **已完成**(2026-07-26 查库核实:`beta_testers` 51 行,12 个已兑换);2026-07-16 已向 50 名内测成员各发一码 |
 
@@ -18,7 +18,8 @@
 2026-07-30 用户实测通过(登录 → 订阅 → worker 验 `purchaseToken` → 签发权益
 → 客户端解锁),订阅随 1.0.0 上了 production——`google.ts` 那三条
 `TODO(launch)` 的纸面推理已被真实链路验证。仍待确认的只剩 #3 AdMob SSV 与
-#4 爱发电的「后台保存」,以及爱发电首笔真实订单联调。
+#4 爱发电的「后台保存」。爱发电真实订单已跑通(2026-10-19 更新:08-28、10-08
+两笔均兑换成功)。
 
 ---
 
