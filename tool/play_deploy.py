@@ -252,9 +252,11 @@ def deploy(args: argparse.Namespace) -> int:
         svc.edits().delete(packageName=PACKAGE_NAME, editId=edit_id).execute()
         raise
 
-    print("-- 之后（人工，API 没有对应接口）")
-    print("   1. Play Console → 发布概览 → 提交审核（开着托管发布时必须手点）")
-    print("   2. 审核通过后回来核对：tool/play_deploy.py status")
+    print("-- 之后")
+    print("   1. 等 Play 审核（公司账号无需手点提交；若停在「可以发送以供审核」，")
+    print("      说明托管发布又被打开了，才需要去 Play Console 点）")
+    print("   2. 审核通过后回来核对：tool/play_deploy.py status，")
+    print("      再把 version.ts 的 android-play 改成新版并部署 worker")
     return 0
 
 
