@@ -181,6 +181,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   static const double _pullThreshold = 130;
 
   @override
+  void initState() {
+    super.initState();
+    _loadNameMode();
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     _demoSlidable.dispose();
@@ -218,10 +224,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     });
   }
 
-  void _cycleNameMode() => setState(() {
-        _nameMode =
-            _NameMode.values[(_nameMode.index + 1) % _NameMode.values.length];
-      });
+  /// Cycles username → persona → SteamID and persists the choice, so the
+  /// display mode survives an app restart.
+  void _cycleNameMode() {
+    setState(() {
+      _nameMode =
+          _NameMode.values[(_nameMode.index + 1) % _NameMode.values.length];
+    });
+    ref.read(settingsStoreProvider).saveNameMode(_nameMode.name);
+  }
+
+  /// Restores the persisted name display mode (username by default).
+  Future<void> _loadNameMode() async {
+    final s = await ref.read(settingsStoreProvider).loadNameMode();
+    if (s == null || !mounted) return;
+    for (final m in _NameMode.values) {
+      if (m.name == s && m != _nameMode) {
+        setState(() => _nameMode = m);
+        return;
+      }
+    }
+  }
 
   /// Accumulates the finger's real vertical travel while the list is
   /// overscrolled at the top (dy > 0 pulls further; dy < 0 — dragging back

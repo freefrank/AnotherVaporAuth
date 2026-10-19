@@ -287,6 +287,13 @@ class SettingsStore {
   Future<void> saveTextSize(String size) =>
       _update((data) => data['text_size'] = size);
 
+  /// 账户名显示模式（username / persona / id，默认 username）。
+  Future<String?> loadNameMode() async =>
+      (await _read())['name_mode'] as String?;
+
+  Future<void> saveNameMode(String mode) =>
+      _update((data) => data['name_mode'] = mode);
+
   /// 长按确认开关（默认开）。关闭后单条接受退回普通点按；
   /// 批量“全部接受”保留弹窗二次确认作为安全底线。
   Future<bool> loadHoldConfirm() async =>
