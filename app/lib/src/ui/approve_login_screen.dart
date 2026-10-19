@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -76,10 +77,12 @@ Future<void> quickApproveLogin(
     info = await client.sessionInfo(account, challenge.clientId);
   } catch (_) {}
   if (!context.mounted) return;
-  final approve = await _confirmApproveDialog(context, account, info);
-  if (approve == null || !context.mounted) return;
+  final decision = await _confirmApproveDialog(context, account, info);
+  if (decision == null || !context.mounted) return;
+  final (approve, remember) = decision;
   try {
-    final ok = await client.respond(account, challenge, approve: approve);
+    final ok = await client.respond(account, challenge,
+        approve: approve, rememberPassword: remember);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(ok
@@ -92,7 +95,12 @@ Future<void> quickApproveLogin(
   }
 }
 
-Future<bool?> _confirmApproveDialog(BuildContext context,
+/// Decision returned by the approval confirm dialog: whether the login was
+/// approved and whether Steam should remember the password on the requesting
+/// device (the official app's "remember my password" checkbox).
+typedef ApproveDecision = (bool approve, bool rememberPassword);
+
+Future<ApproveDecision?> _confirmApproveDialog(BuildContext context,
     SteamGuardAccount account, AuthSessionInfo? info) {
   final l = AppLocalizations.of(context);
   final t = Theme.of(context).extension<AvaTokens>()!;
@@ -101,38 +109,51 @@ Future<bool?> _confirmApproveDialog(BuildContext context,
         child: Text(text,
             style: TextStyle(color: t.muted, fontSize: context.r(13))),
       );
-  return showDialog<bool>(
+  // Checked by default: AVA always sent Persistent before the box existed.
+  var remember = true;
+  return showDialog<ApproveDecision>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(l.approveTitle),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(account.accountName ?? '${account.steamId}',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: context.r(15))),
-          SizedBox(height: context.r(6)),
-          if (info != null) ...[
-            if (info.location.isNotEmpty)
-              detail('${l.approveLocation}: ${info.location}'),
-            if (info.ip.isNotEmpty) detail('IP: ${info.ip}'),
-            if (info.deviceName.isNotEmpty)
-              detail('${l.approveDevice}: ${info.deviceName}'),
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => AlertDialog(
+        title: Text(l.approveTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(account.accountName ?? '${account.steamId}',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: context.r(15))),
+            SizedBox(height: context.r(6)),
+            if (info != null) ...[
+              if (info.location.isNotEmpty)
+                detail('${l.approveLocation}: ${info.location}'),
+              if (info.ip.isNotEmpty) detail('IP: ${info.ip}'),
+              if (info.deviceName.isNotEmpty)
+                detail('${l.approveDevice}: ${info.deviceName}'),
+            ],
+            SizedBox(height: context.r(12)),
+            Text(l.approveWarnStranger,
+                style: TextStyle(color: t.warn, fontSize: context.r(12.5))),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              dense: true,
+              value: remember,
+              onChanged: (v) => setState(() => remember = v ?? false),
+              title: Text(l.approveRememberPassword,
+                  style: TextStyle(fontSize: context.r(13))),
+            ),
           ],
-          SizedBox(height: context.r(12)),
-          Text(l.approveWarnStranger,
-              style: TextStyle(color: t.warn, fontSize: context.r(12.5))),
+        ),
+        actions: [
+          OutlinedButton(
+              onPressed: () => Navigator.pop(ctx, (false, remember)),
+              child: Text(l.approveReject)),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, (true, remember)),
+              child: Text(l.approveButton)),
         ],
       ),
-      actions: [
-        OutlinedButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l.approveReject)),
-        FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l.approveButton)),
-      ],
     ),
   );
 }
@@ -189,6 +210,7 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
     if (!mounted) return;
     final client = QrApprovalClient(ref.read(apiClientProvider));
     var finalApprove = approve;
+    var remember = true;
     if (approve) {
       // Anti-phishing gate: never approve blind. Pull best-effort context
       // (IP / location / device) and make the user confirm it's really them
@@ -205,11 +227,11 @@ class _ApproveLoginScreenState extends ConsumerState<ApproveLoginScreen> {
         setState(() => _busy = false);
         return;
       }
-      finalApprove = confirmed;
+      (finalApprove, remember) = confirmed;
     }
     try {
-      final ok =
-          await client.respond(account, challenge, approve: finalApprove);
+      final ok = await client.respond(account, challenge,
+          approve: finalApprove, rememberPassword: remember);
       if (!mounted) return;
       setState(() {
         _busy = false;
@@ -330,6 +352,53 @@ class _ScannerPageState extends State<_ScannerPage> {
   // animation plays; without this latch each extra detection pops another
   // route *below* the scanner, leaving a blank Navigator.
   bool _done = false;
+  bool _picking = false;
+  final MobileScannerController _controller = MobileScannerController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String? _firstCode(BarcodeCapture? capture) {
+    if (capture == null) return null;
+    return capture.barcodes
+        .map((b) => b.rawValue)
+        .firstWhere((v) => v != null && v.isNotEmpty, orElse: () => null);
+  }
+
+  /// Bottom-right button: pick a screenshot/photo that contains the login QR
+  /// and decode it with the same scanner stack — for devices where the code
+  /// arrives as an image (chat app, second phone) instead of a live screen.
+  Future<void> _pickFromGallery() async {
+    if (_picking || _done) return;
+    final l = AppLocalizations.of(context);
+    setState(() => _picking = true);
+    try {
+      final XFile? file = await openFile(acceptedTypeGroups: const [
+        XTypeGroup(label: 'Images', mimeTypes: ['image/*']),
+      ]);
+      if (file == null) return; // cancelled
+      final capture = await _controller.analyzeImage(file.path);
+      if (!mounted || _done) return;
+      final code = _firstCode(capture);
+      if (code == null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l.approveNoQrInImage)));
+        return;
+      }
+      _done = true;
+      Navigator.of(context).pop(code);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l.approveNoQrInImage)));
+      }
+    } finally {
+      if (mounted) setState(() => _picking = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -338,15 +407,25 @@ class _ScannerPageState extends State<_ScannerPage> {
       // sense on the confirm step that follows.
       appBar: AppBar(title: Text(AppLocalizations.of(context).loginViaQr)),
       body: MobileScanner(
+        controller: _controller,
         onDetect: (capture) {
           if (_done) return;
-          final code = capture.barcodes
-              .map((b) => b.rawValue)
-              .firstWhere((v) => v != null && v.isNotEmpty, orElse: () => null);
+          final code = _firstCode(capture);
           if (code == null) return;
           _done = true;
           Navigator.of(context).pop(code);
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _picking ? null : _pickFromGallery,
+        tooltip: AppLocalizations.of(context).approvePickImage,
+        child: _picking
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.photo_library),
       ),
     );
   }

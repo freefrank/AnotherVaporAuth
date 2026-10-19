@@ -140,20 +140,28 @@ class QrApprovalClient {
     SteamGuardAccount account,
     QrChallenge challenge, {
     required bool approve,
+    bool rememberPassword = true,
   }) =>
       respondToSession(account,
           version: challenge.version,
           clientId: challenge.clientId,
-          approve: approve);
+          approve: approve,
+          rememberPassword: rememberPassword);
 
   /// Approves/denies a specific auth session (by client id + version). Signs the
   /// (version, client_id, steamid) tuple with the account's shared secret
   /// (HMAC-SHA256) and calls UpdateAuthSessionWithMobileConfirmation.
+  ///
+  /// [rememberPassword] is the official app's "remember my password on this
+  /// device" box: field 6 `persistence`, ESessionPersistence Persistent (1) or
+  /// Ephemeral (0). The proto defaults the field to Persistent, so it is always
+  /// written — leaving it out would mean "remember" whatever the box said.
   Future<bool> respondToSession(
     SteamGuardAccount account, {
     required int version,
     required int clientId,
     required bool approve,
+    bool rememberPassword = true,
   }) async {
     final accessToken = requireAccessToken(account);
     final signature = _signature(account,
@@ -165,7 +173,7 @@ class QrApprovalClient {
       ..writeFixed64(3, account.steamId) // steamid (fixed64!)
       ..writeBytes(4, signature) // signature
       ..writeBool(5, approve) // confirm
-      ..writeVarint(6, 1); // persistence = Persistent
+      ..writeVarint(6, rememberPassword ? 1 : 0); // persistence
 
     final fields = (await api.callProtobuf(
       'IAuthenticationService',

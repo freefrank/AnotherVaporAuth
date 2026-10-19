@@ -918,6 +918,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Didn\'t start this sign-in yourself? Reject it.';
 
   @override
+  String get approveRememberPassword => 'Remember my password on this device';
+
+  @override
+  String get approvePickImage => 'Pick QR code from gallery';
+
+  @override
+  String get approveNoQrInImage => 'No QR code found in that image.';
+
+  @override
   String get importTitle => 'Import account';
 
   @override

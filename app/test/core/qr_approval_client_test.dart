@@ -16,6 +16,7 @@ class _FakeApi extends SteamApiClient {
   final List<ProtoReader> responses;
   bool called = false;
   String? lastAccessToken;
+  ProtoWriter? lastRequest;
   _FakeApi(this.responses);
 
   @override
@@ -29,6 +30,7 @@ class _FakeApi extends SteamApiClient {
   }) async {
     called = true;
     lastAccessToken = accessToken;
+    lastRequest = request;
     return responses.removeAt(0);
   }
 }
@@ -194,6 +196,41 @@ void main() {
       expect(ok, isTrue);
       expect(api.called, isTrue);
       expect(api.lastAccessToken, 'atok');
+    });
+  });
+
+  group('respondToSession — remember password is persistence (field 6)', () {
+    // ESessionPersistence: Ephemeral = 0, Persistent = 1. The proto defaults
+    // field 6 to Persistent, so an absent field would mean "remember".
+    Future<int?> persistenceOf({bool? remember, bool approve = true}) async {
+      final api = _FakeApi([ProtoReader(Uint8List(0))]); // empty = success
+      final client = QrApprovalClient(api);
+      final account = _account(accessToken: 'atok');
+      if (remember == null) {
+        await client.respondToSession(account,
+            version: 1, clientId: 123, approve: approve);
+      } else {
+        await client.respondToSession(account,
+            version: 1, clientId: 123, approve: approve,
+            rememberPassword: remember);
+      }
+      return ProtoReader(api.lastRequest!.toBytes()).parse()[6]?.varint;
+    }
+
+    test('checked → Persistent (1)', () async {
+      expect(await persistenceOf(remember: true), 1);
+    });
+
+    test('unchecked → Ephemeral (0), written explicitly', () async {
+      expect(await persistenceOf(remember: false), 0);
+    });
+
+    test('callers that do not ask keep the old behaviour: Persistent', () async {
+      expect(await persistenceOf(), 1);
+    });
+
+    test('a rejection carries the value too', () async {
+      expect(await persistenceOf(remember: false, approve: false), 0);
     });
   });
 }

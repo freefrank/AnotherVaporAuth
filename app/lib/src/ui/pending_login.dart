@@ -66,27 +66,51 @@ Future<void> checkPendingLogins(
     if (!context.mounted) return;
     final info = await client.sessionInfo(account, id);
     if (info == null || !context.mounted) continue;
-    final approve = await showDialog<bool>(
+    // (approve, rememberPassword) — the checkbox mirrors the official app's
+    // "remember my password on this device" option shown when approving.
+    // Checked by default: AVA always sent Persistent before the box existed.
+    var remember = true;
+    final decision = await showDialog<(bool, bool)>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l.loginRequestTitle),
-        content: Text(l.loginRequestBody(
-          info.deviceName.isEmpty ? 'Steam' : info.deviceName,
-          info.location.isEmpty ? info.ip : info.location,
-        )),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l.loginRequestDeny)),
-          FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l.loginRequestApprove)),
-        ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: Text(l.loginRequestTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l.loginRequestBody(
+                info.deviceName.isEmpty ? 'Steam' : info.deviceName,
+                info.location.isEmpty ? info.ip : info.location,
+              )),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                dense: true,
+                value: remember,
+                onChanged: (v) => setState(() => remember = v ?? false),
+                title: Text(l.approveRememberPassword),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, (false, remember)),
+                child: Text(l.loginRequestDeny)),
+            FilledButton(
+                onPressed: () => Navigator.pop(ctx, (true, remember)),
+                child: Text(l.loginRequestApprove)),
+          ],
+        ),
       ),
     );
-    if (approve == null) continue; // dismissed — leave it pending
+    if (decision == null) continue; // dismissed — leave it pending
+    final (approve, rememberPassword) = decision;
     final ok = await client.respondToSession(account,
-        version: info.version, clientId: id, approve: approve);
+        version: info.version,
+        clientId: id,
+        approve: approve,
+        rememberPassword: rememberPassword);
     if (ok) toast(approve ? l.loginApproved : l.loginDenied);
   }
 }

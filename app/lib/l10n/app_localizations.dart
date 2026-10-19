@@ -1691,6 +1691,24 @@ abstract class AppLocalizations {
   /// **'Didn\'t start this sign-in yourself? Reject it.'**
   String get approveWarnStranger;
 
+  /// No description provided for @approveRememberPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember my password on this device'**
+  String get approveRememberPassword;
+
+  /// No description provided for @approvePickImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick QR code from gallery'**
+  String get approvePickImage;
+
+  /// No description provided for @approveNoQrInImage.
+  ///
+  /// In en, this message translates to:
+  /// **'No QR code found in that image.'**
+  String get approveNoQrInImage;
+
   /// No description provided for @importTitle.
   ///
   /// In en, this message translates to:

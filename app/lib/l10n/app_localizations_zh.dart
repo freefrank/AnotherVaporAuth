@@ -876,6 +876,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get approveWarnStranger => '不是你本人发起的登录？请拒绝。';
 
   @override
+  String get approveRememberPassword => '在此设备上记住我的密码';
+
+  @override
+  String get approvePickImage => '从相册选择二维码图片';
+
+  @override
+  String get approveNoQrInImage => '图片中未识别到二维码。';
+
+  @override
   String get importTitle => '导入账户';
 
   @override
@@ -2885,6 +2894,15 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get approveWarnStranger => '不是你自己發起的登入嗎？請拒絕。';
+
+  @override
+  String get approveRememberPassword => '在此裝置上記住我的密碼';
+
+  @override
+  String get approvePickImage => '從相簿選擇 QR Code 圖片';
+
+  @override
+  String get approveNoQrInImage => '圖片中未識別到 QR Code。';
 
   @override
   String get importTitle => '匯入帳號';

@@ -923,6 +923,17 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Anmeldung nicht selbst gestartet? Lehn sie ab.';
 
   @override
+  String get approveRememberPassword =>
+      'Mein Passwort auf diesem Gerät speichern';
+
+  @override
+  String get approvePickImage => 'QR-Code aus der Galerie wählen';
+
+  @override
+  String get approveNoQrInImage =>
+      'In diesem Bild wurde kein QR-Code gefunden.';
+
+  @override
   String get importTitle => 'Konto importieren';
 
   @override

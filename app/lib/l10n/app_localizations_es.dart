@@ -928,6 +928,17 @@ class AppLocalizationsEs extends AppLocalizations {
       '¿No has iniciado tú este acceso? Recházalo.';
 
   @override
+  String get approveRememberPassword =>
+      'Recordar mi contraseña en este dispositivo';
+
+  @override
+  String get approvePickImage => 'Elegir un QR de la galería';
+
+  @override
+  String get approveNoQrInImage =>
+      'No se encontró ningún código QR en esa imagen.';
+
+  @override
   String get importTitle => 'Importar cuenta';
 
   @override

@@ -948,6 +948,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String get approveWarnStranger => 'Вход начали не вы? Отклоните его.';
 
   @override
+  String get approveRememberPassword =>
+      'Запомнить мой пароль на этом устройстве';
+
+  @override
+  String get approvePickImage => 'Выбрать QR-код из галереи';
+
+  @override
+  String get approveNoQrInImage => 'На изображении не найден QR-код.';
+
+  @override
   String get importTitle => 'Импорт аккаунта';
 
   @override

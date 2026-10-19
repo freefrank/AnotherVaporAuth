@@ -928,6 +928,16 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ce n\'est pas vous qui avez lancé cette connexion ? Refusez-la.';
 
   @override
+  String get approveRememberPassword =>
+      'Mémoriser mon mot de passe sur cet appareil';
+
+  @override
+  String get approvePickImage => 'Choisir un QR code dans la galerie';
+
+  @override
+  String get approveNoQrInImage => 'Aucun QR code trouvé dans cette image.';
+
+  @override
   String get importTitle => 'Importer un compte';
 
   @override
